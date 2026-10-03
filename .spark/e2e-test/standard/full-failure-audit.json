@@ -1,0 +1,29 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "未登录首页：记录所有Network失败请求和Console红色错误"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "未登录公开页面遍历：登录/注册/搜索/话题/文章详情/用户主页，记录所有失败"
+    },
+    {
+      "id": 3,
+      "priority": "p0",
+      "description": "登录后核心页面：首页/发布/我的/设置/通知/私信，记录所有失败"
+    },
+    {
+      "id": 4,
+      "priority": "p0",
+      "description": "管理后台全部Tab：仪表盘/用户管理/通行码/内容管理/举报/审核/站点设置，记录失败"
+    },
+    {
+      "id": 5,
+      "priority": "p1",
+      "description": "会议列表页和会议详情页：记录所有失败请求"
+    }
+  ]
+}

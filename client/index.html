@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+  <meta name="theme-color" content="#1d9bf0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="长文">
+  <link rel="manifest" href="/app/app_17ea4bnn0xw/manifest.json">
+  <link rel="apple-touch-icon" href="/app/app_17ea4bnn0xw/icon-192.png">
+  <link rel="icon" href="/app/app_17ea4bnn0xw/favicon.png">
+  <title>{{#if ogTitle}}{{ogTitle}}{{else}}LongPost{{/if}}</title>
+  <meta property="og:title" content="{{#if ogTitle}}{{ogTitle}}{{else}}LongPost{{/if}}">
+  <meta property="og:description" content="{{#if ogDescription}}{{ogDescription}}{{else}}长文发布平台{{/if}}">
+  {{#if ogImage}}
+  <meta property="og:image" content="{{ogImage}}">
+  {{/if}}
+  {{#if ogUrl}}
+  <meta property="og:url" content="{{ogUrl}}">
+  {{/if}}
+  <meta property="og:type" content="article">
+  <meta name="twitter:card" content="{{#if twitterCard}}{{twitterCard}}{{else}}summary_large_image{{/if}}">
+  <meta name="twitter:title" content="{{#if ogTitle}}{{ogTitle}}{{else}}LongPost{{/if}}">
+  <meta name="twitter:description" content="{{#if ogDescription}}{{ogDescription}}{{else}}长文发布平台{{/if}}">
+  {{#if ogImage}}
+  <meta name="twitter:image" content="{{ogImage}}">
+  {{/if}}
+  <script>
+    try {
+      window.__platform__ = JSON.parse('{{{__platform__}}}');
+    } catch (e) {
+      console.error('Failed to parse __platform__', e);
+    }
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/client/src/index.tsx"></script>
+</body>
+
+</html>

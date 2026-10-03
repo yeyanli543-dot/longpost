@@ -1,0 +1,14 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "核心功能实测：发帖+点赞+通知+长文"
+    },
+    {
+      "id": 2,
+      "priority": "p1",
+      "description": "管理功能实测：用户管理+站点设置保存"
+    }
+  ]
+}

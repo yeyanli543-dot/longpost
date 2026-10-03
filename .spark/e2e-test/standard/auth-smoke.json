@@ -1,0 +1,1 @@
+{"cases":[{"id":1,"priority":"p0","description":"打开登录页，验证登录表单正常渲染"},{"id":2,"priority":"p0","description":"打开注册页，验证注册表单正常渲染"},{"id":3,"priority":"p0","description":"未登录访问发布页，显示登录引导而非发布表单"},{"id":4,"priority":"p1","description":"左侧导航栏用户区域：未登录时显示登录入口，点击跳登录页"},{"id":5,"priority":"p1","description":"首页时间线正常展示，公开内容免登录可读"}]}

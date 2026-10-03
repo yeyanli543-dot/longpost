@@ -1,0 +1,29 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "访问首页时间线，页面正常渲染且有帖子内容，无Console JS错误"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "注册页正常显示表单，无白屏无Console错误"
+    },
+    {
+      "id": 3,
+      "priority": "p0",
+      "description": "登录页显示邮箱密码Tab和通行码Tab，切换正常无报错"
+    },
+    {
+      "id": 4,
+      "priority": "p1",
+      "description": "搜索页正常显示搜索框和分类，搜索关键词后有结果"
+    },
+    {
+      "id": 5,
+      "priority": "p1",
+      "description": "文章详情页正常渲染，有标题和正文内容"
+    }
+  ]
+}

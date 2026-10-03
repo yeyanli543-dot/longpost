@@ -1,0 +1,9 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "全页面失败请求和Console错误精确审计"
+    }
+  ]
+}

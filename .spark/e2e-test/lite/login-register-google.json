@@ -1,0 +1,1 @@
+{"cases":[{"id":1,"priority":"p0","description":"打开登录页 /login，页面正确渲染，显示 Google 登录按钮和「本站仅支持 Google 账号登录」说明文字，不显示邮箱注册入口"},{"id":2,"priority":"p0","description":"打开注册页 /register，页面正确渲染，仅显示 Google 注册按钮和「本站仅支持 Google 账号注册」说明，不显示邮箱注册表单"},{"id":3,"priority":"p1","description":"登录页点击「已有账号？使用邮箱登录」可展开邮箱登录表单，包含邮箱和密码输入框"}]}

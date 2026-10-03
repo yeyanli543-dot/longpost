@@ -1,0 +1,14 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "管理员登录后访问管理后台"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "普通用户与未登录访问管理后台"
+    }
+  ]
+}

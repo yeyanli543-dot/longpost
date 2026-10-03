@@ -1,0 +1,14 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "登录后首页+发布+我的页面失败统计"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "设置+通知+私信页失败统计"
+    }
+  ]
+}

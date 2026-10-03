@@ -1,0 +1,38 @@
+import { Controller, Get, Header } from '@nestjs/common';
+
+const manifest = {
+  name: '长文发布',
+  short_name: '长文',
+  description: '发布长文、分享想法的社区平台',
+  start_url: './',
+  scope: './',
+  display: 'standalone',
+  background_color: '#000000',
+  theme_color: '#1d9bf0',
+  orientation: 'portrait-primary',
+  icons: [
+    {
+      src: 'icon-192.png',
+      sizes: '192x192',
+      type: 'image/png',
+      purpose: 'any maskable',
+    },
+    {
+      src: 'icon-512.png',
+      sizes: '512x512',
+      type: 'image/png',
+      purpose: 'any maskable',
+    },
+  ],
+  categories: ['social', 'news', 'productivity'],
+};
+
+@Controller('manifest.json')
+export class PwaController {
+  @Get()
+  @Header('Content-Type', 'application/manifest+json')
+  @Header('Cache-Control', 'public, max-age=3600')
+  getManifest(): typeof manifest {
+    return manifest;
+  }
+}

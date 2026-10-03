@@ -1,0 +1,19 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "首页三Tab失败请求统计"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "搜索+话题+文章+用户页失败统计"
+    },
+    {
+      "id": 3,
+      "priority": "p0",
+      "description": "登录注册页+会议页失败统计"
+    }
+  ]
+}

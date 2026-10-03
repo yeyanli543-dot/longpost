@@ -1,0 +1,54 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "未登录首页：打开首页，Network面板0个失败请求（4xx/5xx），Console无红色错误，时间线有帖子内容"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "注册新账号并发布短帖：注册→登录→发布短帖→时间线出现新帖，全程无失败请求"
+    },
+    {
+      "id": 3,
+      "priority": "p0",
+      "description": "发布长文并分享：发布长文→生成分享链接→复制链接→匿名打开能看到文章内容"
+    },
+    {
+      "id": 4,
+      "priority": "p1",
+      "description": "社交交互：点赞帖子→发布评论→收藏文章→关注作者，全部操作成功无报错"
+    },
+    {
+      "id": 5,
+      "priority": "p1",
+      "description": "登录态持久化：刷新页面后仍保持登录，用户头像和昵称正确显示"
+    },
+    {
+      "id": 6,
+      "priority": "p0",
+      "description": "管理员登录与仪表盘：用admin@longpost.com/admin123登录→左侧出现管理后台→仪表盘数据正常加载"
+    },
+    {
+      "id": 7,
+      "priority": "p0",
+      "description": "通行码管理：生成新通行码→列表显示→复制成功→停用后状态更新"
+    },
+    {
+      "id": 8,
+      "priority": "p1",
+      "description": "用户管理与站点设置：用户管理列表正常→封禁用户成功→站点设置保存成功"
+    },
+    {
+      "id": 9,
+      "priority": "p0",
+      "description": "通行码登录：退出管理员→用生成的通行码登录→成功进入首页，身份为通行码用户"
+    },
+    {
+      "id": 10,
+      "priority": "p1",
+      "description": "移动端体验：375px视口→底部导航正常→无横向滚动→FAB按钮可点击"
+    }
+  ]
+}

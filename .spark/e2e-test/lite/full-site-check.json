@@ -1,0 +1,54 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "首页/时间线正常渲染，有帖子卡片，无白屏无明显错误"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "搜索页/正常显示搜索框和分类Tab，无白屏"
+    },
+    {
+      "id": 3,
+      "priority": "p1",
+      "description": "通知页/未登录状态显示登录引导，无白屏无报错"
+    },
+    {
+      "id": 4,
+      "priority": "p1",
+      "description": "设置页/未登录状态显示登录引导，无白屏无报错"
+    },
+    {
+      "id": 5,
+      "priority": "p1",
+      "description": "我的内容页/未登录状态显示登录引导，无白屏无报错"
+    },
+    {
+      "id": 6,
+      "priority": "p1",
+      "description": "发布页/未登录状态显示登录引导，无白屏无报错"
+    },
+    {
+      "id": 7,
+      "priority": "p1",
+      "description": "私信页/未登录状态显示登录引导，无白屏无报错"
+    },
+    {
+      "id": 8,
+      "priority": "p0",
+      "description": "登录页/显示邮箱密码登录表单和通行码登录Tab，无白屏"
+    },
+    {
+      "id": 9,
+      "priority": "p0",
+      "description": "注册页/显示注册表单，无白屏"
+    },
+    {
+      "id": 10,
+      "priority": "p0",
+      "description": "管理后台/仪表盘正常显示数据卡片和左侧菜单，无白屏"
+    }
+  ]
+}

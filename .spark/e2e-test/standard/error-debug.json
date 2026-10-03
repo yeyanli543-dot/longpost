@@ -1,0 +1,24 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "访问注册页，检查Console是否有JS错误，页面是否真的白屏"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "访问登录页，切换到通行码Tab，检查Console是否有错误"
+    },
+    {
+      "id": 3,
+      "priority": "p1",
+      "description": "访问首页，检查是否有未登录导致的401请求报错Console"
+    },
+    {
+      "id": 4,
+      "priority": "p1",
+      "description": "访问管理后台仪表盘，检查Console是否有错误，Network是否有失败请求"
+    }
+  ]
+}

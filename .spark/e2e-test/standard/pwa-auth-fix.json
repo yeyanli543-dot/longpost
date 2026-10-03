@@ -1,0 +1,29 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "未登录打开首页，Network 中不应出现 /api/notifications/unread-count、/api/dm/unread-count、/api/me/posts、/api/me/articles、/api/auth/me/bookmarks 等鉴权接口请求；Console 无红色 error"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "首页 head 中包含 link[rel=manifest] 和 meta[name=theme-color]；manifest.json 可访问返回 200"
+    },
+    {
+      "id": 3,
+      "priority": "p1",
+      "description": "首页包含 apple-mobile-web-app-capable 和 apple-touch-icon 等 iOS PWA meta 标签"
+    },
+    {
+      "id": 4,
+      "priority": "p1",
+      "description": "首页首页时间线正常渲染，公开内容正常加载（帖子/文章列表有内容）"
+    },
+    {
+      "id": 5,
+      "priority": "p1",
+      "description": "访问 /notifications 通知页，未登录时显示登录引导，不应发出通知列表 API 请求且不崩溃"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "移动端未登录首页：抓取所有失败请求和Console错误"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "移动端公开页面：登录/注册/搜索/话题/文章详情/用户主页"
+    },
+    {
+      "id": 3,
+      "priority": "p0",
+      "description": "移动端登录后：首页/发布/我的/设置/通知/私信"
+    },
+    {
+      "id": 4,
+      "priority": "p0",
+      "description": "移动端管理后台全部Tab：逐一记录失败"
+    },
+    {
+      "id": 5,
+      "priority": "p1",
+      "description": "移动端会议列表和详情页：记录失败"
+    }
+  ]
+}

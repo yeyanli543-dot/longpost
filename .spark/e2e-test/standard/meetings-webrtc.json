@@ -1,0 +1,54 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "首页能正常打开，时间线有内容，无白屏"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "会议列表页可正常打开，显示会议列表和创建按钮"
+    },
+    {
+      "id": 3,
+      "priority": "p0",
+      "description": "点击创建会议按钮，弹窗可正常打开，表单字段齐全"
+    },
+    {
+      "id": 4,
+      "priority": "p1",
+      "description": "创建会议成功后列表中出现新会议，状态为即将开始"
+    },
+    {
+      "id": 5,
+      "priority": "p0",
+      "description": "点击会议可进入详情页，显示标题、时间、参会人、纪要等信息"
+    },
+    {
+      "id": 6,
+      "priority": "p1",
+      "description": "详情页点击加入会议可进入房间页，页面布局正常（视频区+控制面板+侧栏）"
+    },
+    {
+      "id": 7,
+      "priority": "p1",
+      "description": "房间页底部控制栏有麦克风、摄像头、屏幕共享、聊天、离开等按钮"
+    },
+    {
+      "id": 8,
+      "priority": "p2",
+      "description": "房间页侧栏有参会人和聊天两个Tab，切换正常"
+    },
+    {
+      "id": 9,
+      "priority": "p1",
+      "description": "文章详情页可正常打开，长文内容完整渲染"
+    },
+    {
+      "id": 10,
+      "priority": "p2",
+      "description": "登录/注册页面可正常打开，表单可用"
+    }
+  ]
+}

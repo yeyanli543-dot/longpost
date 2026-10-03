@@ -1,0 +1,29 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "管理员登录并进入仪表盘，验证数据加载正常无报错"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "通行码列表加载正常，切换分页无报错"
+    },
+    {
+      "id": 3,
+      "priority": "p0",
+      "description": "生成单个通行码成功，列表中出现新通行码"
+    },
+    {
+      "id": 4,
+      "priority": "p1",
+      "description": "编辑通行码备注成功，状态更新正确"
+    },
+    {
+      "id": 5,
+      "priority": "p1",
+      "description": "停用通行码成功，通行码状态变为已停用"
+    }
+  ]
+}

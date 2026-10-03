@@ -1,0 +1,54 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "打开首页，确认页面渲染正常、无白屏，Console 无红色错误"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "访问 /login，确认登录页表单正常渲染，无控制台错误"
+    },
+    {
+      "id": 3,
+      "priority": "p0",
+      "description": "访问 /register，确认注册页正常渲染，无控制台错误"
+    },
+    {
+      "id": 4,
+      "priority": "p1",
+      "description": "访问 /compose，确认发布页渲染正常（未登录也不崩溃）"
+    },
+    {
+      "id": 5,
+      "priority": "p1",
+      "description": "访问 /search，确认搜索页渲染正常"
+    },
+    {
+      "id": 6,
+      "priority": "p1",
+      "description": "访问 /settings，确认设置页渲染正常"
+    },
+    {
+      "id": 7,
+      "priority": "p1",
+      "description": "访问 /notifications，确认通知页渲染正常"
+    },
+    {
+      "id": 8,
+      "priority": "p1",
+      "description": "访问 /messages，确认私信页渲染正常"
+    },
+    {
+      "id": 9,
+      "priority": "p1",
+      "description": "访问 /admin，确认管理后台页渲染正常"
+    },
+    {
+      "id": 10,
+      "priority": "p1",
+      "description": "访问 /meetings，确认会议页渲染正常"
+    }
+  ]
+}

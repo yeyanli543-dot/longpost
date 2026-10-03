@@ -1,0 +1,103 @@
+/* ===== Bell shake animation (for unread notifications) ===== */
+@keyframes bell-shake {
+  0%, 100% { transform: rotate(0deg); }
+  20% { transform: rotate(-12deg); }
+  40% { transform: rotate(10deg); }
+  60% { transform: rotate(-8deg); }
+  80% { transform: rotate(6deg); }
+}
+
+.animate-bell-shake {
+  animation: bell-shake 1.2s ease-in-out infinite;
+  transform-origin: top center;
+}
+
+/* ===== Badge pulse animation ===== */
+@keyframes badge-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.85;
+  }
+}
+
+.animate-badge-pulse {
+  animation: badge-pulse 1.8s ease-in-out infinite;
+}
+
+/* ===== Skeleton shimmer animation ===== */
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    #1f2226 0%,
+    #2a2e33 50%,
+    #1f2226 100%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ===== Button micro-interaction utility ===== */
+.btn-micro {
+  transition: transform 150ms ease-out, background-color 150ms ease-out, color 150ms ease-out, border-color 150ms ease-out;
+}
+
+.btn-micro:hover {
+  transform: scale(1.02);
+}
+
+.btn-micro:active {
+  transform: scale(0.97);
+}
+
+/* ===== Pin badge breathing animation ===== */
+@keyframes pin-breathe {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+.animate-pin-breathe {
+  animation: pin-breathe 2s ease-in-out infinite;
+}
+
+/* ===== Image fade-in on load ===== */
+.img-fade-in {
+  opacity: 0;
+  transition: opacity 0.5s ease-out;
+}
+
+.img-fade-in.loaded {
+  opacity: 1;
+}
+
+/* ===== Bouncing dots loader ===== */
+@keyframes dot-bounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.dot-bounce {
+  animation: dot-bounce 1.4s ease-in-out infinite both;
+}
+
+.dot-bounce-0 { animation-delay: -0.32s; }
+.dot-bounce-1 { animation-delay: -0.16s; }
+.dot-bounce-2 { animation-delay: 0s; }

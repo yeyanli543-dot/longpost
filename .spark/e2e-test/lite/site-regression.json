@@ -1,0 +1,54 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "首页时间线正常渲染，无白屏，左侧导航完整"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "文章详情页正常打开，长文内容完整渲染"
+    },
+    {
+      "id": 3,
+      "priority": "p0",
+      "description": "搜索页正常打开，搜索框可用"
+    },
+    {
+      "id": 4,
+      "priority": "p1",
+      "description": "用户个人主页正常显示"
+    },
+    {
+      "id": 5,
+      "priority": "p1",
+      "description": "通知中心页面正常打开"
+    },
+    {
+      "id": 6,
+      "priority": "p1",
+      "description": "话题聚合页正常渲染"
+    },
+    {
+      "id": 7,
+      "priority": "p1",
+      "description": "私信页面正常打开，会话列表显示"
+    },
+    {
+      "id": 8,
+      "priority": "p2",
+      "description": "设置页正常打开，多个Tab可切换"
+    },
+    {
+      "id": 9,
+      "priority": "p2",
+      "description": "登录页和注册页表单正常显示"
+    },
+    {
+      "id": 10,
+      "priority": "p0",
+      "description": "会议列表和详情页正常，无回归问题"
+    }
+  ]
+}

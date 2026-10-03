@@ -1,0 +1,34 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "首页/正常渲染，时间线区域有内容或空状态文案，无白屏无报错"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "登录页/正常显示登录表单，邮箱密码输入框和登录按钮可见"
+    },
+    {
+      "id": 3,
+      "priority": "p0",
+      "description": "注册页/正常显示注册表单，各字段和注册按钮可见"
+    },
+    {
+      "id": 4,
+      "priority": "p1",
+      "description": "搜索页/页面正常渲染，搜索框和分类Tab可见"
+    },
+    {
+      "id": 5,
+      "priority": "p1",
+      "description": "管理后台/admin/进入后无权限提示或正常显示，无白屏"
+    },
+    {
+      "id": 6,
+      "priority": "p1",
+      "description": "通知页/notifications/未登录时正常跳转或显示提示，无白屏无报错"
+    }
+  ]
+}

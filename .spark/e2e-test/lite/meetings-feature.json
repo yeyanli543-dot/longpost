@@ -1,0 +1,24 @@
+{
+  "cases": [
+    {
+      "id": 1,
+      "priority": "p0",
+      "description": "打开/meetings会议列表页，页面正常渲染不白屏，有标题和列表容器"
+    },
+    {
+      "id": 2,
+      "priority": "p0",
+      "description": "打开/meetings/:id会议详情页（使用已有会议ID），页面正常渲染不白屏，展示会议信息区域"
+    },
+    {
+      "id": 3,
+      "priority": "p1",
+      "description": "打开/meetings/:id/room会议房间页，页面正常渲染不白屏，有视频区域和控制栏元素"
+    },
+    {
+      "id": 4,
+      "priority": "p1",
+      "description": "左侧导航栏有「会议」入口菜单项"
+    }
+  ]
+}
