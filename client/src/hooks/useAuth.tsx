@@ -58,26 +58,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       return;
     }
-    try {
-      const currentUser = await getCurrentUser();
-      if (currentUser) {
-        setUser(currentUser);
-      } else {
-        clearToken();
-        setUser(null);
+
+    // 冷启动、容器刚起来、网络抖动时后端可能还没就绪。
+    // 以前一次失败就当作未登录，表现就是"明明刚登录，刷新一下又要登录"。
+    // 现在只认 401，其它情况重试一次，并且不动本地 token。
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+        } else {
+          clearToken();
+          setUser(null);
+        }
+        setLoading(false);
+        return;
+      } catch (err) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 401) {
+          logger.warn('Token 无效，清除登录态');
+          clearToken();
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        logger.warn(
+          `获取当前用户失败（第 ${attempt + 1} 次，非 401），保留本地 token`,
+          err,
+        );
+        if (attempt === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 600));
+        }
       }
-    } catch (err) {
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status === 401) {
-        logger.warn('Token 无效，清除登录态');
-        clearToken();
-        setUser(null);
-      } else {
-        logger.warn('获取当前用户失败（非 401），保留本地 token 重试', err);
-      }
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false);
   }, []);
 
   useEffect(() => {

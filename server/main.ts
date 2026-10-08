@@ -5,7 +5,10 @@ import { join } from 'path';
 import { __express as hbsExpressEngine } from 'hbs';
 
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import { mkdirSync } from 'fs';
 import { AppModule } from './app.module';
+import { uploadConfig } from './config/upload.config';
+import { vendorConfig } from './config/vendor.config';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -14,6 +17,12 @@ async function bootstrap() {
   await configureApp(app, { 
     disableSwagger: true,
   });
+  // 用户上传的文件落在磁盘上，由本站直接托管
+  mkdirSync(uploadConfig.dir, { recursive: true });
+  app.useStaticAssets(uploadConfig.dir, { prefix: `${uploadConfig.urlPrefix}/` });
+  // 第三方前端静态资源（echarts 等），公开阅读页要靠它渲染图表
+  app.useStaticAssets(vendorConfig.dir, { prefix: `${vendorConfig.urlPrefix}/` });
+
   const logger = new Logger('Bootstrap');
   const host = process.env.SERVER_HOST || 'localhost';
   const port = Number(process.env.SERVER_PORT || '3000');

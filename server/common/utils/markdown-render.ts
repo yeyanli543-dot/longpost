@@ -1,3 +1,9 @@
+import {
+  chartCardToEchartsOption,
+  chartHeight,
+  splitChartCards,
+} from '@shared/chart-card';
+
 export function escapeHtml(text: string): string {
   return text
     .replace(/&/g, '&amp;')
@@ -137,6 +143,56 @@ export function markdownToHtml(markdown: string): string {
   flushParagraph();
 
   return wrapListItems(html.join('\n'));
+}
+
+export interface ArticleBodyRenderResult {
+  html: string;
+  /** 正文中的图表数量，用于决定是否加载 echarts */
+  chartCount: number;
+}
+
+/**
+ * 渲染文章正文：普通段落交给 markdown 渲染，```chart 围栏块替换成 echarts 容器。
+ *
+ * 容器上只放 data-option（转义后的 option JSON），真正的初始化交给页面里的一小段脚本，
+ * 这样服务端不需要理解图表细节，也不会把 1MB 的 echarts 内联进 HTML。
+ */
+export function renderArticleBody(
+  markdown: string,
+  theme: 'light' | 'dark' = 'dark',
+): ArticleBodyRenderResult {
+  const segments = splitChartCards(markdown ?? '');
+  const html: string[] = [];
+  let chartCount = 0;
+
+  for (const segment of segments) {
+    if (segment.kind === 'markdown') {
+      const rendered = markdownToHtml(segment.content).trim();
+      if (rendered) html.push(rendered);
+      continue;
+    }
+
+    if (segment.kind === 'chart') {
+      const option = chartCardToEchartsOption(segment.card, theme);
+      const height = chartHeight(segment.card);
+      html.push(
+        `<div class="lp-chart" style="height:${height}px" data-option="${escapeHtml(
+          JSON.stringify(option),
+        )}"></div>`,
+      );
+      chartCount += 1;
+      continue;
+    }
+
+    // 图表块写错了：原样留成代码块，作者在阅读页上一眼就能看出问题
+    html.push(
+      `<pre class="lp-chart-error"><code>${escapeHtml(
+        segment.raw.trim(),
+      )}</code></pre>`,
+    );
+  }
+
+  return { html: html.join('\n'), chartCount };
 }
 
 export function formatSize(sizeBytes: number | null): string {

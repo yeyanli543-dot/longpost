@@ -8,6 +8,7 @@ import {
   Query,
   UseGuards,
   Req,
+  Logger,
 } from '@nestjs/common';
 import { JwtAuthGuard, OptionalJwtAuthGuard, type AuthRequest } from '../auth/jwt-auth.guard';
 import { DmService } from './dm.service';
@@ -25,6 +26,8 @@ import type {
 
 @Controller('api/dm')
 export class DmController {
+  private readonly logger = new Logger(DmController.name);
+
   constructor(private readonly dmService: DmService) {}
 
   @UseGuards(JwtAuthGuard)
@@ -91,7 +94,15 @@ export class DmController {
     if (!req.user) {
       return { totalUnread: 0 };
     }
-    return this.dmService.getUnreadCount(req.user.id);
+    // 同未读通知：角标数据失败不该把页面拖垮
+    try {
+      return await this.dmService.getUnreadCount(req.user.id);
+    } catch (err) {
+      this.logger.warn(
+        `私信未读数查询失败，降级为 0：${err instanceof Error ? err.message : String(err)}`,
+      );
+      return { totalUnread: 0 };
+    }
   }
 
   @UseGuards(JwtAuthGuard)

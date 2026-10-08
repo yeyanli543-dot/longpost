@@ -43,6 +43,8 @@ const ARTICLE_STYLE = `
     .article-stats { margin-top: 40px; padding-top: 20px; border-top: 1px solid #2f3336; display: flex; gap: 24px; color: #71767b; font-size: 14px; flex-wrap: wrap; }
     .article-footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid #2f3336; text-align: center; color: #71767b; font-size: 13px; }
     .article-footer a { color: #1d9bf0; text-decoration: none; }
+    .article-body .lp-chart { width: 100%; margin: 28px 0; }
+    .article-body .lp-chart-error { background: #16181c; border: 1px solid #2f3336; border-radius: 8px; padding: 12px 16px; overflow-x: auto; font-size: 13px; color: #71767b; }
     @media (max-width: 640px) {
       .article-title { font-size: 26px; }
       .article-body { font-size: 16px; }
@@ -59,6 +61,10 @@ export interface ArticleTemplateParams {
   authorName: string;
   publishedAt: string;
   bodyHtml: string;
+  /** 客户端静态资源前缀：平台部署为 /app/<appId>，独立部署为空字符串 */
+  assetBasePath: string;
+  /** 正文是否含图表；含才加载 echarts，纯文字文章不背这 1MB */
+  hasCharts: boolean;
   images: string[];
   attachments: Array<{
     fileName: string;
@@ -83,6 +89,8 @@ export function buildArticleHtml(params: ArticleTemplateParams): string {
     authorName,
     publishedAt,
     bodyHtml,
+    assetBasePath,
+    hasCharts,
     images,
     attachments,
     readCount,
@@ -98,6 +106,40 @@ export function buildArticleHtml(params: ArticleTemplateParams): string {
   const safeAuthor = escapeHtml(authorName);
   const safeDate = escapeHtml(publishedAt);
   const safeSite = escapeHtml(siteName);
+  const safeAssetBase = escapeHtml(assetBasePath);
+
+  const chartScriptTag = hasCharts
+    ? `  <script src="${safeAssetBase}/vendor/echarts.min.js"></script>
+  <script>
+    (function () {
+      function boot() {
+        if (!window.echarts) return;
+        var nodes = document.querySelectorAll('.lp-chart');
+        Array.prototype.forEach.call(nodes, function (el) {
+          if (el.getAttribute('data-lp-ready') === '1') return;
+          var option;
+          try {
+            option = JSON.parse(el.getAttribute('data-option') || '{}');
+          } catch (err) {
+            return;
+          }
+          try {
+            var chart = window.echarts.init(el, null, { renderer: 'canvas' });
+            chart.setOption(option);
+            el.setAttribute('data-lp-ready', '1');
+            window.addEventListener('resize', function () { chart.resize(); });
+          } catch (err) {}
+        });
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+      } else {
+        boot();
+      }
+      window.addEventListener('load', boot);
+    })();
+  </script>`
+    : '';
 
   const ogImageMeta = coverUrl
     ? `  <meta property="og:image" content="${safeCover}">\n`
@@ -164,9 +206,9 @@ ${ogImageMeta}  <meta property="og:url" content="${safeUrl}">
   <meta name="twitter:title" content="${safeTitle}">
   <meta name="theme-color" content="#1d9bf0">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="icon" href="/app/app_17ea4bnn0xw/favicon.png">
-  <link rel="apple-touch-icon" href="/app/app_17ea4bnn0xw/icon-192.png">
-  <link rel="manifest" href="/app/app_17ea4bnn0xw/manifest.json">
+  <link rel="icon" href="${safeAssetBase}/favicon.png">
+  <link rel="apple-touch-icon" href="${safeAssetBase}/icon-192.png">
+  <link rel="manifest" href="${safeAssetBase}/manifest.json">
   <script>
     try {
       window.__platform__ = JSON.parse('${platformJson}');
@@ -218,6 +260,8 @@ ${attachmentsHtml}
       <p>本文由 <strong>${safeSite}</strong> 发布 · 分享自 <a href="${safeUrl}">${safeUrl}</a></p>
     </div>
   </article>
+
+${chartScriptTag}
 </body>
 
 </html>`;

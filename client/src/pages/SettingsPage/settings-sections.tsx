@@ -50,8 +50,7 @@ import {
   DialogFooter,
 } from '@client/src/components/ui/dialog';
 import { Image } from '@client/src/components/ui/image';
-import { getDataloom } from '@lark-apaas/client-toolkit/dataloom';
-import { getDefaultBucketId } from '@lark-apaas/client-toolkit/tools/storage';
+import { uploadFile as uploadToServer } from '@client/src/api/upload';
 import { logger } from '@lark-apaas/client-toolkit/logger';
 import type { SiteSettings, ThemeMode, FontSize } from '@shared/api.interface';
 
@@ -114,17 +113,8 @@ export function ProfileSection({
 
     setUploading(true);
     try {
-      const dataloom = await getDataloom();
-      const bucketId = getDefaultBucketId();
-      const { data, error } = await dataloom.storage.from(bucketId).uploadFile(file);
-      if (error || !data) {
-        const msg =
-          error?.message ||
-          (error as { error_msg?: string })?.error_msg ||
-          '上传失败';
-        throw new Error(msg);
-      }
-      setAvatarUrl(data.download_url);
+      const result = await uploadToServer(file);
+      setAvatarUrl(result.url);
       toast.success('头像已更新');
     } catch (err) {
       logger.error('头像上传失败', err);

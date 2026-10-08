@@ -10,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Inject } from '@nestjs/common';
 import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@lark-apaas/fullstack-nestjs-core';
 import * as bcrypt from 'bcryptjs';
-import { eq, and, desc, count, sum, inArray } from 'drizzle-orm';
+import { eq, and, desc, count, sum, inArray, ne } from 'drizzle-orm';
 import { appUsers, siteSettings, posts, articles, bookmarks } from '../../database/schema';
 import type {
   AuthResponse,
@@ -23,6 +23,7 @@ import type {
   BookmarkListResponse,
 } from '@shared/api.interface';
 import { authConfig } from '../../config/auth.config';
+import { isOwnerEmail } from '../../config/owner.config';
 
 export interface JwtPayload {
   sub: string;
@@ -83,7 +84,7 @@ export class AuthService {
       .select({ count: count() })
       .from(appUsers);
     const isFirstUser = Number(countRow.count) === 0;
-    const role = isFirstUser ? 'admin' : 'user';
+    const role = isFirstUser || isOwnerEmail(email) ? 'admin' : 'user';
 
     const [inserted] = await this.db
       .insert(appUsers)
@@ -160,7 +161,8 @@ export class AuthService {
       throw new UnauthorizedException('邮箱或密码错误');
     }
 
-    const user = this.mapUser(row);
+    const isOwner = await this.ensureOwnerRole(row.id, row.email);
+    const user = this.mapUser(isOwner ? { ...row, role: 'admin' } : row);
     const token = this.signToken(user.id, user.email);
 
     await this.db
@@ -203,7 +205,9 @@ export class AuthService {
       throw new NotFoundException('用户不存在');
     }
 
-    return this.mapUser(rows[0]);
+    const row = rows[0];
+    const isOwner = await this.ensureOwnerRole(row.id, row.email);
+    return this.mapUser(isOwner ? { ...row, role: 'admin' } : row);
   }
 
   async updateProfile(
@@ -315,6 +319,20 @@ export class AuthService {
     }
 
     return this.mapUser(updated);
+  }
+
+  /**
+   * 站长引导：如果该账号的邮箱命中 OWNER_EMAIL，就确保它的角色是 admin。
+   * 返回该账号是否为站长。因为 login 与 getCurrentUser（每次 /api/auth/me）
+   * 都会调用它，所以配置好 OWNER_EMAIL 后无需重新登录即可生效。
+   */
+  async ensureOwnerRole(userId: string, email: string): Promise<boolean> {
+    if (!isOwnerEmail(email)) return false;
+    await this.db
+      .update(appUsers)
+      .set({ role: 'admin' })
+      .where(and(eq(appUsers.id, userId), ne(appUsers.role, 'admin')));
+    return true;
   }
 
   async isAdmin(userId: string): Promise<boolean> {

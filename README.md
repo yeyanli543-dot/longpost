@@ -14,12 +14,16 @@
 | 长文 | 完整文章，支持配图与文件附件 |
 | 免登录分享页 | 每篇长文生成短码链接，未登录访客可直接阅读全文 |
 | 短帖挂长文 | 在短帖中挂载指向长文的链接，形成「短帖引流 + 长文阅读」 |
+| 图表卡片 | 正文里可插入柱状 / 折线 / 面积 / 饼图，站内阅读与公开分享页同款渲染 |
+| 文件附件 | 长文可挂附件，读者在分享页上直接下载 |
+| 自建上传 | 图片、头像、附件走站点自己的上传接口，不依赖第三方存储 |
 
 ## 功能清单
 
 **内容**
 - 发短帖、发长文、短帖挂长文链接
 - 长文配图、文件附件
+- 长文正文插入图表卡片（柱状 / 折线 / 面积 / 饼图，可视化编辑 + 实时预览）
 - 长文免登录分享页（短码）
 - 话题标签聚合页、热门话题榜
 - 全站搜索（全部 / 帖子 / 用户 / 话题）
@@ -124,6 +128,11 @@ npm run start        # 以生产模式运行
 | 变量 | 必需 | 说明 |
 |---|---|---|
 | `JWT_SECRET` | **是（生产）** | JWT 签名密钥。生产环境缺失会**直接拒绝启动**，避免用公开默认值签发令牌 |
+| `OWNER_EMAIL` | **强烈建议** | 站长邮箱。命中该邮箱的账号（注册 / 登录 / Google 登录）自动成为 `admin`。不配置时系统会创建一个 `admin@longpost.com` 临时账号，密码随机生成、只在启动日志里出现一次 |
+| `SUDA_DATABASE_URL` | 自由部署时必填 | PostgreSQL 连接串（也认标准名 `DATABASE_URL`）；平台部署由平台注入 |
+| `UPLOAD_DIR` | 自由部署时必填 | 用户上传目录。**必须挂持久化卷**，否则重新部署会丢文件 |
+| `CLIENT_BASE_PATH` | 否 | 客户端资源前缀。平台部署为 `/app/<appId>`，独立部署留空字符串 |
+| `POSTGRES_SSL` | 否 | 托管数据库通常要求 SSL，填 `true` 开启 |
 | `GOOGLE_CLIENT_ID` | 否 | Google OAuth 客户端 ID，与 secret 同时配置才启用 Google 登录 |
 | `GOOGLE_CLIENT_SECRET` | 否 | Google OAuth 客户端密钥 |
 | `GOOGLE_CALLBACK_URL` | 否 | Google OAuth 回调地址 |
@@ -143,8 +152,23 @@ npm run start        # 以生产模式运行
 ## 部署说明
 
 本项目派生自飞书 aPaaS（妙搭）全栈模板，`@lark-apaas/*` 系列包为其运行时依赖，
-数据库连接由平台注入。脱离平台自行部署时，需要自备 PostgreSQL 并补齐相应的运行时环境变量。
+数据库连接由平台注入。
+
+**关于"把链接贴到 X 上，别人点开就能读"**：这条链路要求公开分享页对**未登录访客**可访问。
+平台侧会在请求到达应用之前就跳转到登录页（官方文档明确 AI-Coding 页面不支持公开访问），
+因此要真正实现免登录阅读，必须把应用部署到自己的服务器 / 标准 Node 托管上，并自备 PostgreSQL。
+
+已知的搬运工作量（尚未完成，欢迎 PR）：
+
+1. 服务端 `server/` 下有若干文件从 `@lark-apaas/fullstack-nestjs-core` 引入
+   `DRIZZLE_DATABASE` 等运行时对象，需要换成标准的 Drizzle + postgres-js 数据库模块；
+2. 前端 `client/` 下约 70 余个文件使用了 `@lark-apaas/client-toolkit`
+   （`logger` / `axiosForBackend` / `resolveAppUrl` / `UniversalLink` 等），需要替换为等价实现；
+3. 数据库结构可直接由 `server/database/schema.ts` 用 `drizzle-kit` 生成建表 SQL。
+
+数据库连接、上传目录、站长邮箱等外部部署所需的变量都已在
+[`.env.example`](.env.example) 中列出，配置项本身已经就位。
 
 ## 许可证
 
-本仓库未附加开源许可证，默认保留所有权利。
+[MIT](LICENSE) © 2026 yeyanli543-dot

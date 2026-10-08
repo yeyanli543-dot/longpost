@@ -21,7 +21,7 @@ import {
 } from '@server/database/schema';
 import { eq, and, asc, sql } from 'drizzle-orm';
 import {
-  markdownToHtml,
+  renderArticleBody,
   formatSize,
   getFileExt,
   formatDate,
@@ -30,6 +30,7 @@ import {
   buildArticleHtml,
   buildNotFoundHtml,
 } from '@server/common/utils/article-template';
+import { ASSET_BASE_PATH } from '@server/config/client.config';
 
 function getRequestBaseUrl(req: Request): string {
   const forwardedHost = req.headers['x-forwarded-host'];
@@ -165,6 +166,8 @@ export class ViewController {
         toAbsoluteUrl(img, fullUrl, req.path),
       );
 
+      const bodyRender = renderArticleBody(article.content, 'dark');
+
       const html = buildArticleHtml({
         siteName: this.siteName,
         platformJson,
@@ -174,7 +177,9 @@ export class ViewController {
         fullUrl,
         authorName: article.authorName,
         publishedAt: formatDate(article.createdAt),
-        bodyHtml: markdownToHtml(article.content),
+        bodyHtml: bodyRender.html,
+        assetBasePath: ASSET_BASE_PATH,
+        hasCharts: bodyRender.chartCount > 0,
         images: absoluteImages,
         attachments: article.attachments.map((att) => ({
           fileName: att.fileName,

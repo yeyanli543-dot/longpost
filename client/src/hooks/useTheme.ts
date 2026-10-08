@@ -16,9 +16,9 @@ function applyTheme(resolved: 'light' | 'dark'): void {
   const root = document.documentElement;
   if (resolved === 'light') {
     root.classList.add('light-mode');
-    root.classList.remove('dark-mode');
+    root.classList.remove('dark-mode', 'dark');
   } else {
-    root.classList.add('dark-mode');
+    root.classList.add('dark-mode', 'dark');
     root.classList.remove('light-mode');
   }
 }

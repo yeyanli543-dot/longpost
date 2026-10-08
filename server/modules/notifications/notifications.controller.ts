@@ -6,6 +6,7 @@ import {
   Query,
   UseGuards,
   Req,
+  Logger,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import {
@@ -20,6 +21,8 @@ import type {
 
 @Controller('api/notifications')
 export class NotificationsController {
+  private readonly logger = new Logger(NotificationsController.name);
+
   constructor(private readonly notificationsService: NotificationsService) {}
 
   @UseGuards(JwtAuthGuard)
@@ -42,8 +45,16 @@ export class NotificationsController {
     if (!req.user) {
       return { unreadCount: 0 };
     }
-    const count = await this.notificationsService.getUnreadCount(req.user.id);
-    return { unreadCount: count };
+    // 未读数只是导航栏上的角标，查不出来不该把整个页面拖成报错，降级为 0
+    try {
+      const count = await this.notificationsService.getUnreadCount(req.user.id);
+      return { unreadCount: count };
+    } catch (err) {
+      this.logger.warn(
+        `未读数查询失败，降级为 0：${err instanceof Error ? err.message : String(err)}`,
+      );
+      return { unreadCount: 0 };
+    }
   }
 
   @UseGuards(JwtAuthGuard)

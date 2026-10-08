@@ -35,6 +35,27 @@
       console.error('Failed to parse __platform__', e);
     }
   </script>
+  <script>
+    // 首帧就把主题类挂上，否则会先闪一下"黑底黑字"再变成正常配色
+    (function () {
+      try {
+        var saved = localStorage.getItem('app-theme-preference');
+        var mode = saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'dark';
+        var resolved = mode;
+        if (mode === 'system') {
+          resolved = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        }
+        var root = document.documentElement;
+        if (resolved === 'light') {
+          root.classList.add('light-mode');
+          root.classList.remove('dark-mode', 'dark');
+        } else {
+          root.classList.add('dark-mode', 'dark');
+          root.classList.remove('light-mode');
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 
 <body>

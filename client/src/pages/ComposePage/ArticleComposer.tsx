@@ -9,14 +9,15 @@ import {
   Paperclip,
   Trash2,
   Upload,
+  BarChart3,
 } from 'lucide-react';
 import { resolveAppUrl } from '@lark-apaas/client-toolkit/utils/resolveAppUrl';
-import { getDataloom } from '@lark-apaas/client-toolkit/dataloom';
-import { getDefaultBucketId } from '@lark-apaas/client-toolkit/tools/storage';
 import { logger } from '@lark-apaas/client-toolkit/logger';
 import { articlesApi } from '@client/src/api';
+import { uploadFile as uploadToServer } from '@client/src/api/upload';
 import { Image } from '@client/src/components/ui/image';
 import PublishShareCard from './PublishShareCard';
+import ChartInsertDialog from './ChartInsertDialog';
 
 const MAX_IMAGES = 9;
 const MAX_ATTACHMENTS = 5;
@@ -101,6 +102,8 @@ const ArticleComposer = ({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
   const attInputRef = useRef<HTMLInputElement>(null);
+  const contentRef = useRef<HTMLTextAreaElement>(null);
+  const [showChartDialog, setShowChartDialog] = useState(false);
 
   const canPublish = title.trim().length > 0 && content.trim().length > 0 && !isPublishing;
   const canSaveDraft = title.trim().length > 0 && !isSavingDraft;
@@ -111,14 +114,8 @@ const ArticleComposer = ({
   const showShareCard = !!publishedId && currentStatus === 'published';
 
   const uploadFile = async (file: File): Promise<string> => {
-    const dataloom = await getDataloom();
-    const bucketId = getDefaultBucketId();
-    const { data, error } = await dataloom.storage.from(bucketId).uploadFile(file);
-    if (error || !data) {
-      const msg = error?.message || (error as { error_msg?: string })?.error_msg || '上传失败';
-      throw new Error(msg);
-    }
-    return data.download_url;
+    const result = await uploadToServer(file);
+    return result.url;
   };
 
   const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -204,6 +201,32 @@ const ArticleComposer = ({
 
   const removeAttachment = (index: number) => {
     setAttachments((prev) => prev.filter((_, i) => i !== index).map((att, i) => ({ ...att, sortOrder: i })));
+  };
+
+  /**
+   * 把图表围栏块写进正文。
+   * 优先插在光标处——作者通常写到某一段想配图，插到文末再拖回去很难受。
+   */
+  const handleInsertChart = (fence: string) => {
+    const textarea = contentRef.current;
+    const leading = content.length > 0 && !content.endsWith('\n') ? '\n\n' : '';
+    const insertion = `${leading}${fence}\n`;
+
+    if (textarea) {
+      const start = textarea.selectionStart ?? content.length;
+      const end = textarea.selectionEnd ?? content.length;
+      setContent(content.slice(0, start) + insertion + content.slice(end));
+      const caret = start + insertion.length;
+      requestAnimationFrame(() => {
+        textarea.focus();
+        textarea.setSelectionRange(caret, caret);
+      });
+    } else {
+      setContent(content + insertion);
+    }
+
+    setShowChartDialog(false);
+    toast.success('图表已插入正文');
   };
 
   const buildPayload = (status: 'published' | 'draft') => ({
@@ -353,13 +376,37 @@ const ArticleComposer = ({
         </div>
       )}
 
+      <div className="border-t border-gray-800 pt-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => setShowChartDialog(true)}
+            className="flex items-center gap-1.5 text-sm text-blue-500 transition-colors hover:text-blue-400"
+            data-ai-section-type="button"
+          >
+            <BarChart3 className="h-4 w-4" />
+            插入图表
+          </button>
+          <span className="text-xs text-gray-600">
+            图表会渲染成卡片，站内阅读和分享出去的公开链接长得一样
+          </span>
+        </div>
+      </div>
+
       <textarea
+        ref={contentRef}
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="写点什么..."
         rows={16}
         className="w-full bg-transparent text-base text-gray-100 placeholder:text-gray-500 resize-none outline-none border-none leading-relaxed"
       />
+
+      {showChartDialog && (
+        <ChartInsertDialog
+          onInsert={handleInsertChart}
+          onCancel={() => setShowChartDialog(false)}
+        />
+      )}
 
       {/* Images */}
       {(images.length > 0 || showPublishUI) && (

@@ -65,3 +65,7 @@ pnpm-lock.yaml
 # Agent files
 .agent/
 .npm_cache
+
+# 用户上传目录（运行时产生的文件，不进仓库）
+# 必须锚定到仓库根，否则会连 server/modules/uploads 一起忽略掉
+/uploads/

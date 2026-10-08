@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FileText, Image as ImageIcon, Paperclip, Download } from 'lucide-react';
 import { Image } from '@client/src/components/ui/image';
-import { Markdown } from '@client/src/components/ui/markdown';
+import ArticleBody from '@client/src/components/ArticleBody';
 import { UniversalLink } from '@lark-apaas/client-toolkit/components/UniversalLink';
 import type { ArticleDetail, ArticleImage, ArticleAttachment } from '@shared/api.interface';
 import ImageLightbox from './ImageLightbox';
@@ -62,9 +62,10 @@ export default function ArticleContent({ article, fontSize }: ArticleContentProp
 
       {/* Article body */}
       <div className={`${textClass} leading-[1.75] md:leading-relaxed text-[#e7e9ea] mb-8`}>
-        <Markdown className="prose-headings:text-[#e7e9ea] prose-p:text-[#e7e9ea] prose-a:text-[#1d9bf0] prose-strong:text-[#e7e9ea] prose-code:bg-[#16181c] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-pre:bg-[#16181c] prose-pre:text-[#e7e9ea] prose-blockquote:border-[#1d9bf0] prose-blockquote:text-[#71767b] prose-ul:text-[#e7e9ea] prose-ol:text-[#e7e9ea] prose-li:text-[#e7e9ea] prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-6 prose-h3:mb-3">
-          {article.content}
-        </Markdown>
+        <ArticleBody
+          content={article.content}
+          markdownClassName="prose-headings:text-[#e7e9ea] prose-p:text-[#e7e9ea] prose-a:text-[#1d9bf0] prose-strong:text-[#e7e9ea] prose-code:bg-[#16181c] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-pre:bg-[#16181c] prose-pre:text-[#e7e9ea] prose-blockquote:border-[#1d9bf0] prose-blockquote:text-[#71767b] prose-ul:text-[#e7e9ea] prose-ol:text-[#e7e9ea] prose-li:text-[#e7e9ea] prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-6 prose-h3:mb-3"
+        />
       </div>
 
       {/* Image gallery */}

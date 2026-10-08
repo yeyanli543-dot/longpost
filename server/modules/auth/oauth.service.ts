@@ -6,9 +6,10 @@ import {
 } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@lark-apaas/fullstack-nestjs-core';
-import { eq, and, count } from 'drizzle-orm';
+import { eq, and, count, ne } from 'drizzle-orm';
 import { appUsers, siteSettings } from '../../database/schema';
 import { authConfig } from '../../config/auth.config';
+import { isOwnerEmail } from '../../config/owner.config';
 import type { AuthUser } from '@shared/api.interface';
 
 @Injectable()
@@ -163,13 +164,14 @@ export class OAuthService {
       let user: AuthUser;
 
       if (existing.length > 0) {
+        const promoted = await this.ensureOwnerRole(existing[0].id, email);
         user = {
           id: existing[0].id,
           email: existing[0].email,
           nickname: existing[0].nickname,
           avatarUrl: existing[0].avatarUrl,
           provider: existing[0].provider,
-          role: existing[0].role as 'admin' | 'user',
+          role: (promoted ? 'admin' : existing[0].role) as 'admin' | 'user',
           bio: existing[0].bio,
           createdAt: existing[0].createdAt.toISOString(),
         };
@@ -200,7 +202,7 @@ export class OAuthService {
             avatarUrl: avatarUrl ?? null,
             provider: 'google',
             providerId,
-            role: isFirstUser ? 'admin' : 'user',
+            role: isFirstUser || isOwnerEmail(email) ? 'admin' : 'user',
           })
           .returning({
             id: appUsers.id,
@@ -259,6 +261,19 @@ export class OAuthService {
     );
   }
 
+  /**
+   * 站长引导：OAuth（Google / 微信等）登录时，如果邮箱命中 OWNER_EMAIL，
+   * 就把该账号提升为 admin。返回是否命中站长邮箱。
+   */
+  private async ensureOwnerRole(userId: string, email: string): Promise<boolean> {
+    if (!isOwnerEmail(email)) return false;
+    await this.db
+      .update(appUsers)
+      .set({ role: 'admin' })
+      .where(and(eq(appUsers.id, userId), ne(appUsers.role, 'admin')));
+    return true;
+  }
+
   async findOrCreateOAuthUser(
     provider: string,
     providerId: string,
@@ -282,13 +297,14 @@ export class OAuthService {
       .limit(1);
 
     if (existing.length > 0) {
+      const promoted = await this.ensureOwnerRole(existing[0].id, email);
       return {
         id: existing[0].id,
         email: existing[0].email,
         nickname: existing[0].nickname,
         avatarUrl: existing[0].avatarUrl,
         provider: existing[0].provider,
-        role: existing[0].role as 'admin' | 'user',
+        role: (promoted ? 'admin' : existing[0].role) as 'admin' | 'user',
         bio: existing[0].bio,
         createdAt: existing[0].createdAt.toISOString(),
       };
@@ -303,6 +319,7 @@ export class OAuthService {
         avatarUrl: avatarUrl ?? null,
         provider,
         providerId,
+        role: isOwnerEmail(email) ? 'admin' : 'user',
       })
       .returning({
         id: appUsers.id,

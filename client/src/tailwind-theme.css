@@ -1,3 +1,11 @@
+/*
+ * 主题是"类"驱动的：根上默认是深色变量，挂 .light-mode 才切成浅色。
+ * 但 Tailwind v4 的 dark: 变体默认只认系统偏好（prefers-color-scheme），
+ * 所以 .dark 类一直没人挂过，dark:prose-invert 这类写法在应用切到深色时并不生效，
+ * 结果就是"黑底黑字"。这里把 dark: 绑到 .dark 类上，由 useTheme 统一控制。
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --button-outline: rgba(255,255,255, .10);
   --badge-outline: rgba(255,255,255, .05);
