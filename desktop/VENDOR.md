@@ -478,3 +478,4 @@ reject（不会悄悄给你一张缺图的图），所以务必 try/catch。
 会被转义（实测如此），但它**不会**拦 `[点我](javascript:alert(1))` 这种链接
 （实测原样输出）。替换渲染器时要沿用现有 `lib/markdown.js` 里那套 URL 白名单，
 `smoke-test.js` 第 [2] 组正是钉这个的。
+
