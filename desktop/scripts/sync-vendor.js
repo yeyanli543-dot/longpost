@@ -8,7 +8,7 @@
  *   2. lib/ 里的共享模块 —— 渲染层直接引用它们，复制一份让 renderer/ 自成一体。
  *
  * 第 2 点是为了手机版：Capacitor 打包时只认一个 web 目录，index.html 里
- * 出现 \u0022../lib/xxx.js\u0022 这种跳出目录的引用是拿不到的。所以统一用 vendor/ 下的拷贝。
+ * 出现 "../lib/xxx.js" 这种跳出目录的引用是拿不到的。所以统一用 vendor/ 下的拷贝。
  *
  * 代价是同一份代码存在两个位置，所以复制完会逐个比对字节，不一致直接报错退出 ——
  * 免得改了 lib/ 忘了同步，桌面能跑手机跑不了。
@@ -55,7 +55,7 @@ const SHARED = ['markdown.js', 'chart.js', 'repo.js', 'page-style.js', 'outline.
  * 源文件放 desktop/ 根下（renderer/vendor/ 整个被 .gitignore 忽略，文档丢在里面不会
  * 被提交，换台机器 clone 下来就没了），同步时复制一份到 renderer/vendor/ ——
  * 手机版 Capacitor 只打 renderer/ 一个目录，放那里才会进 APK；桌面版 build.files 里
- * renderer/**\u005c/* 会把它一起收进 app.asar，另有根目录一份（见 package.json）。
+ * renderer/**\/* 会把它一起收进 app.asar，另有根目录一份（见 package.json）。
  *
  * 改动库版本后要重跑 `node scripts/sync-vendor.js --write-notices` 重新生成全文，
  * 否则下面的版本一致性校验会直接报错。
@@ -86,7 +86,7 @@ const VENDOR_BUDGET = 1.5 * 1024 * 1024;
  * 只挑「浏览器能直接 <script> 加载」的产物：
  *   - UMD/IIFE 单文件（自带全局名）可以；只提供 CJS/ESM 的不行 —— 例如
  *     highlight.js 的 npm 包根本没有浏览器单文件产物（没有 dist/、没有 unpkg 字段），
- *     直接 <script> 引 src 里的 CJS 会当场 \u0022exports is not defined\u0022，所以没选它。
+ *     直接 <script> 引 src 里的 CJS 会当场 "exports is not defined"，所以没选它。
  */
 const VENDOR = [
   {
@@ -300,7 +300,7 @@ function ok(msg) {
 }
 
 function escapeRe(s) {
-  return s.replace(/[.*+?^${}()|[\u005c]\u005c\u005c]/g, '\u005c\u005c$&');
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 /** 展开 `dist/fonts/*.woff2` 这类结尾通配，返回相对包目录的路径数组（排序后，结果稳定）。 */
@@ -348,8 +348,8 @@ function pkgTextInfo(pkgDir, pkg, file) {
     throw new Error('node_modules/' + pkg + '/' + file + ' 不存在，没法生成第三方声明');
   }
   const rawBytes = fs.statSync(abs).size;
-  let text = fs.readFileSync(abs, 'utf8').replace(/\u005cr\u005cn/g, '\u005cn');
-  if (!text.endsWith('\u005cn')) text += '\u005cn';
+  let text = fs.readFileSync(abs, 'utf8').replace(/\r\n/g, '\n');
+  if (!text.endsWith('\n')) text += '\n';
   return { text, rawBytes, bytes: Buffer.byteLength(text, 'utf8') };
 }
 
@@ -359,11 +359,11 @@ function pkgTextInfo(pkgDir, pkg, file) {
  * 由 COPYRIGHT_FALLBACK 兜底 —— 宁可显式兜底，也不要让声明里的版权行空着。
  */
 function firstCopyrightLine(text) {
-  for (const raw of text.split('\u005cn')) {
+  for (const raw of text.split('\n')) {
     const line = raw.trim();
-    if (!/^copyright\u005cb/i.test(line)) continue;
-    if (!/\u005c(c\u005c)|\u005c(C\u005c)|(19|20)\u005cd{2}/.test(line)) continue;
-    if (/\u005cyyyy\u005cb/i.test(line)) continue;
+    if (!/^copyright\b/i.test(line)) continue;
+    if (!/\(c\)|\(C\)|(19|20)\d{2}/.test(line)) continue;
+    if (/\byyyy\b/i.test(line)) continue;
     return line;
   }
   return '';
@@ -508,7 +508,7 @@ function buildNotices(entries) {
     L.push(sourceLine(e.item.pkg, e.licFile, e.lic));
     L.push('');
     L.push('```text');
-    L.push(e.lic.text.replace(/\u005cn$/, ''));
+    L.push(e.lic.text.replace(/\n$/, ''));
     L.push('```');
     L.push('');
     blocks.push(e.lic.text);
@@ -518,7 +518,7 @@ function buildNotices(entries) {
       L.push(sourceLine(e.item.pkg, e.noticeFile, e.notice));
       L.push('');
       L.push('```text');
-      L.push(e.notice.text.replace(/\u005cn$/, ''));
+      L.push(e.notice.text.replace(/\n$/, ''));
       L.push('```');
       L.push('');
       blocks.push(e.notice.text);
@@ -532,7 +532,7 @@ function buildNotices(entries) {
   L.push('');
   L.push('本文件由 `desktop/scripts/sync-vendor.js --write-notices` 生成，请勿手工编辑；升级或更换上面任一组件后重新生成。');
   L.push('');
-  return { text: L.join('\u005cn'), blocks };
+  return { text: L.join('\n'), blocks };
 }
 
 /** 重新生成 desktop/THIRD-PARTY-NOTICES.md，并回读校验每段正文与包内源文件一致。 */
@@ -544,7 +544,7 @@ function writeNotices() {
 
   // 回读：把文件里的 ```text 块按顺序抽出来，和写进去的源正文逐段比对
   const back = fs.readFileSync(abs, 'utf8');
-  const got = [...back.matchAll(/^```text\u005cn([\u005cs\u005cS]*?)^```$/gm)].map((m) => m[1]);
+  const got = [...back.matchAll(/^```text\n([\s\S]*?)^```$/gm)].map((m) => m[1]);
   if (got.length !== blocks.length) {
     fail('回读校验：声明文件里抽到 ' + got.length + ' 段许可证正文，期望 ' + blocks.length + ' 段。');
     return;
@@ -603,7 +603,7 @@ for (const rel of [...scanTargets, ...libFiles]) {
   const abs = path.join(root, rel);
   if (!fs.existsSync(abs)) continue;
   const code = fs.readFileSync(abs, 'utf8');
-  for (const m of code.matchAll(/\u005cbrequire\u005c(\u005cs*['\u0022]([^'\u0022]+)['\u0022]\u005cs*\u005c)/g)) {
+  for (const m of code.matchAll(/\brequire\(\s*['"]([^'"]+)['"]\s*\)/g)) {
     const spec = m[1];
     if (spec.startsWith('.')) continue;
     if (builtins.has(spec) || spec === 'electron') continue;
@@ -842,12 +842,12 @@ console.log(
 
 if (budgetedBytes > VENDOR_BUDGET) {
   console.warn(
-    '\u005cn[sync-vendor] ⚠ 新增 vendor 体积 ' +
+    '\n[sync-vendor] ⚠ 新增 vendor 体积 ' +
       budgetedBytes +
       ' 字节，超过红线 ' +
       VENDOR_BUDGET +
       ' 字节（手机 APK 现在只有 7.6 MB）。' +
-      '\u005cn             要塞进去就先在 VENDOR.md 里写清「值不值得」，别默默塞。\u005cn',
+      '\n             要塞进去就先在 VENDOR.md 里写清「值不值得」，别默默塞。\n',
   );
 }
 
