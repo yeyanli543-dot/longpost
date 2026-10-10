@@ -1,0 +1,847 @@
+    node.textContent = bits.join(' · ');
+    node.title = '渲染与检索走的哪条路：' + LIB_SUMMARY;
+  }
+
+  function resizeCharts() {
+    state.chartInstances.forEach((inst) => {
+      try {
+        inst.resize();
+      } catch (err) {
+        /* 忽略 */
+      }
+    });
+  }
+
+  function updateStats() {
+    const content = $('editor').value || '';
+    const chars = content.length;
+    const paragraphs = countParagraphs(content);
+    const charts = CH.chartCount(content);
+    const files = attachmentRefs(content).length;
+    const minutes = readingMinutes(content);
+    const bits = [chars + ' 字', paragraphs + ' 段', '约 ' + minutes + ' 分钟'];
+    if (charts) bits.push(charts + ' 图表');
+    if (files) bits.push(files + ' 附件');
+    $('stats').textContent = bits.join(' · ');
+    return { chars: chars, paragraphs: paragraphs, charts: charts, files: files, minutes: minutes };
+  }
+
+  // ==========================================================================
+  // 9. 大纲
+  // ==========================================================================
+
+  function renderOutline() {
+    const content = $('editor').value || '';
+    const built = OUTLINE.buildToc(content);
+    const host = $('outlineList');
+    if (!built.items || !built.items.length) {
+      host.innerHTML = '<div class="list-empty small">' + icon('align-left') + '<p>正文还没有标题。<br />用 <code>##</code> 开头就能生成大纲。</p></div>';
+      return;
+    }
+    host.innerHTML = built.items
+      .map(
+        (item, i) =>
+          '<button class="outline-item lv' +
+          item.level +
+          '" data-line="' +
+          item.line +
+          '" data-index="' +
+          i +
+          '" title="' +
+          esc(item.text) +
+          '">' +
+          esc(item.text) +
+          '</button>',
+      )
+      .join('');
+  }
+
+  function scheduleOutline() {
+    clearTimeout(state.outlineTimer);
+    state.outlineTimer = setTimeout(() => {
+      if (!$('outlinePanel').hidden) renderOutline();
+    }, OUTLINE_DELAY);
+  }
+
+  /**
+   * 跳到正文的某一行：编辑区把光标放过去，预览区把对应的标题滚进视野。
+   * 只滚编辑区的话，在沉浸阅读（只看预览）里点大纲会毫无反应。
+   */
+  function gotoLine(line, headingIndex) {
+    const editor = $('editor');
+    const lines = editor.value.split('\n');
+    let offset = 0;
+    for (let i = 0; i < line && i < lines.length; i += 1) offset += lines[i].length + 1;
+    editor.focus();
+    editor.setSelectionRange(offset, offset + (lines[line] ? lines[line].length : 0));
+    const lineHeight = lineHeightOf(editor);
+    const top = line * lineHeight;
+    if (top < editor.scrollTop || top > editor.scrollTop + editor.clientHeight - lineHeight * 2) {
+      editor.scrollTop = Math.max(0, top - editor.clientHeight / 3);
+    }
+
+    if (typeof headingIndex === 'number' && headingIndex >= 0) {
+      const heads = $('preview').querySelectorAll('h1, h2, h3, h4');
+      const el = heads[headingIndex];
+      if (el && typeof el.scrollIntoView === 'function') {
+        try {
+          el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        } catch (err) {
+          el.scrollIntoView();
+        }
+      }
+    }
+
+    if (!$('outlinePanel').hidden && isNarrow()) {
+      applyOutlineState(false);
+      persistSetting('showOutline', false);
+    }
+  }
+
+  // ==========================================================================
+  // 10. 格式工具栏与文本编辑增强
+  // ==========================================================================
+
+  const FMT_ACTIONS = [
+    { act: 'bold', icon: 'bold', label: '加粗', key: 'Ctrl+B' },
+    { act: 'italic', icon: 'italic', label: '斜体', key: 'Ctrl+I' },
+    { act: 'h1', icon: 'type', label: '一级标题' },
+    { act: 'h2', icon: 'hash', label: '二级标题' },
+    { act: 'ul', icon: 'list', label: '无序列表' },
+    { act: 'task', icon: 'check-square', label: '任务清单' },
+    { act: 'quote', icon: 'quote', label: '引用' },
+    { act: 'code', icon: 'code', label: '行内代码 / 代码块' },
+    { act: 'link', icon: 'link', label: '链接', key: 'Ctrl+K' },
+    { sep: true },
+    { act: 'table', icon: 'grid', label: '表格' },
+    { act: 'math', icon: 'sigma', label: '数学公式' },
+    { act: 'hr', icon: 'minus', label: '分隔线' },
+    { sep: true },
+    { act: 'image', icon: 'image', label: '插入图片' },
+    { act: 'chart', icon: 'chart', label: '插入图表' },
+    { act: 'file', icon: 'paperclip', label: '插入附件' },
+  ];
+
+  function buildFmtbar() {
+    const bar = $('fmtbar');
+    let html = '';
+    FMT_ACTIONS.forEach((item) => {
+      if (item.sep) {
+        html += '<span class="fmt-sep" aria-hidden="true"></span>';
+        return;
+      }
+      html +=
+        '<button type="button" class="fmt" data-act="' +
+        item.act +
+        '" title="' +
+        esc(item.label) +
+        (item.key ? '（' + item.key + '）' : '') +
+        '" aria-label="' +
+        esc(item.label) +
+        '">' +
+        icon(item.icon) +
+        '</button>';
+    });
+    bar.innerHTML = html;
+  }
+
+  /** 在光标处插入文本，并把光标放到 afterCaretOffset 处（默认插到末尾）。 */
+  function insertAtCursor(text, afterCaretOffset) {
+    const editor = $('editor');
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    const value = editor.value;
+    editor.value = value.slice(0, start) + text + value.slice(end);
+    const caret = start + (typeof afterCaretOffset === 'number' ? afterCaretOffset : text.length);
+    editor.setSelectionRange(caret, caret);
+    editor.focus();
+    afterEdit();
+  }
+
+  function afterEdit() {
+    updateStats();
+    scheduleOutline();
+    markDirty();
+    refreshFmtState();
+  }
+
+  function wrapSelection(marker, placeholder) {
+    const editor = $('editor');
+    const text = editor.value;
+    const s = editor.selectionStart;
+    const e = editor.selectionEnd;
+    const selected = text.slice(s, e);
+    const len = marker.length;
+
+    // 已经包着同样的记号 -> 脱掉
+    if (
+      s >= len &&
+      text.slice(s - len, s) === marker &&
+      text.slice(e, e + len) === marker
+    ) {
+      editor.value = text.slice(0, s - len) + selected + text.slice(e + len);
+      editor.setSelectionRange(s - len, e - len);
+      editor.focus();
+      afterEdit();
+      return;
+    }
+    if (selected.length > 2 * len && selected.slice(0, len) === marker && selected.slice(-len) === marker) {
+      const inner = selected.slice(len, -len);
+      editor.value = text.slice(0, s) + inner + text.slice(e);
+      editor.setSelectionRange(s, s + inner.length);
+      editor.focus();
+      afterEdit();
+      return;
+    }
+
+    const body = selected || placeholder || '文字';
+    editor.value = text.slice(0, s) + marker + body + marker + text.slice(e);
+    editor.setSelectionRange(s + len, s + len + body.length);
+    editor.focus();
+    afterEdit();
+  }
+
+  /** 对选中的每一行做前缀开关（标题、列表、引用都靠它）。 */
+  function toggleLinePrefix(prefix, opts) {
+    const editor = $('editor');
+    const text = editor.value;
+    const options = opts || {};
+    const s = editor.selectionStart;
+    const e = editor.selectionEnd;
+    const lineStart = text.lastIndexOf('\n', s - 1) + 1;
+    let lineEnd = text.indexOf('\n', e);
+    if (lineEnd === -1) lineEnd = text.length;
+    const block = text.slice(lineStart, lineEnd);
+    const lines = block.split('\n');
+    const pattern = options.pattern || new RegExp('^\\s*' + prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    const allHave = lines.every((line) => (line.trim() ? pattern.test(line) : true));
+    const stripped = lines.map((line) => line.replace(options.strip || pattern, ''));
+    const out = allHave
+      ? stripped
+      : stripped.map((line, i) => {
+          if (!line.trim()) return line;
+          if (options.each) return options.each(line, i);
+          return (options.indent || '') + prefix + line.replace(/^\s+/, '');
+        });
+    const next = out.join('\n');
+    editor.value = text.slice(0, lineStart) + next + text.slice(lineEnd);
+    editor.setSelectionRange(lineStart, lineStart + next.length);
+    editor.focus();
+    afterEdit();
+  }
+
+  function setHeading(level) {
+    const editor = $('editor');
+    const text = editor.value;
+    const s = editor.selectionStart;
+    const lineStart = text.lastIndexOf('\n', s - 1) + 1;
+    let lineEnd = text.indexOf('\n', s);
+    if (lineEnd === -1) lineEnd = text.length;
+    const line = text.slice(lineStart, lineEnd);
+    const bare = line.replace(/^\s*#{1,6}\s+/, '');
+    const has = new RegExp('^\\s*#{' + level + '}\\s+').test(line);
+    const next = has ? bare : '#'.repeat(level) + ' ' + bare;
+    editor.value = text.slice(0, lineStart) + next + text.slice(lineEnd);
+    const caret = lineStart + next.length;
+    editor.setSelectionRange(caret, caret);
+    editor.focus();
+    afterEdit();
+  }
+
+  function insertTable() {
+    insertAtCursor(
+      '\n| 列 1 | 列 2 | 列 3 |\n| --- | --- | --- |\n| 内容 | 内容 | 内容 |\n',
+      0,
+    );
+  }
+
+  /** 工具栏「公式」：选中了就把选中内容包成 $$…$$，没选就给一段行间公式模板。 */
+  function insertMath() {
+    const editor = $('editor');
+    const selected = editor.value.slice(editor.selectionStart, editor.selectionEnd);
+    if (selected.trim()) {
+      insertAtCursor('$$\n' + selected.trim() + '\n$$\n');
+    } else {
+      insertAtCursor('\n$$\nE = mc^2\n$$\n', 8);
+    }
+    setStatus('公式用 $…$ 写行内、$$…$$ 写行间，预览里直接出结果');
+  }
+
+  function insertLink() {
+    const editor = $('editor');
+    const selected = editor.value.slice(editor.selectionStart, editor.selectionEnd);
+    if (/^https?:\/\/\S+$/.test(selected.trim())) {
+      insertAtCursor('[' + selected.trim() + '](' + selected.trim() + ')');
+      return;
+    }
+    wrapSelection('[](', '');
+    const text = editor.value;
+    const at = editor.selectionStart;
+    // 把光标放回方括号中间，让用户先写文字
+    const bracket = text.lastIndexOf('[', at);
+    const closeBracket = text.indexOf(']', bracket);
+    if (bracket !== -1 && closeBracket !== -1) {
+      editor.setSelectionRange(bracket + 1, closeBracket);
+    }
+  }
+
+  function insertCode() {
+    const editor = $('editor');
+    const selected = editor.value.slice(editor.selectionStart, editor.selectionEnd);
+    if (selected.indexOf('\n') !== -1) {
+      const lineStart = editor.value.lastIndexOf('\n', editor.selectionStart - 1) + 1;
+      const text = editor.value;
+      editor.value = text.slice(0, lineStart) + '```\n' + selected + '\n```' + text.slice(editor.selectionEnd);
+      const caret = lineStart + 4 + selected.length;
+      editor.setSelectionRange(caret, caret);
+      editor.focus();
+      afterEdit();
+      return;
+    }
+    wrapSelection('`', 'code');
+  }
+
+  function applyFormat(act) {
+    switch (act) {
+      case 'bold':
+        wrapSelection('**', '加粗文字');
+        break;
+      case 'italic':
+        wrapSelection('*', '斜体文字');
+        break;
+      case 'h1':
+        setHeading(1);
+        break;
+      case 'h2':
+        setHeading(2);
+        break;
+      case 'ul':
+        toggleLinePrefix('- ', { pattern: /^\s*[-*+]\s+/, strip: /^\s*[-*+]\s+/ });
+        break;
+      case 'task':
+        toggleLinePrefix('- [ ] ', {
+          pattern: /^\s*[-*+]\s+\[[ xX]\]\s+/,
+          strip: /^\s*[-*+]\s+\[[ xX]\]\s+/,
+        });
+        break;
+      case 'quote':
+        toggleLinePrefix('> ', { pattern: /^\s*>\s?/, strip: /^\s*>\s?/ });
+        break;
+      case 'code':
+        insertCode();
+        break;
+      case 'link':
+        insertLink();
+        break;
+      case 'table':
+        insertTable();
+        break;
+      case 'math':
+        insertMath();
+        break;
+      case 'hr':
+        insertAtCursor('\n---\n');
+        break;
+      case 'image':
+        insertImages();
+        break;
+      case 'chart':
+        openChartDialog();
+        break;
+      case 'file':
+        insertFiles();
+        break;
+      default:
+        break;
+    }
+  }
+
+  /** 光标落在加粗 / 斜体里时，把工具栏按钮点亮。 */
+  function refreshFmtState() {
+    const editor = $('editor');
+    if (!editor) return;
+    const s = editor.selectionStart;
+    const e = editor.selectionEnd;
+    const text = editor.value;
+    const sel = text.slice(s, e);
+    const before = text.slice(Math.max(0, s - 2), s);
+    const after = text.slice(e, e + 2);
+    const bold = (sel.length > 3 && sel.slice(0, 2) === '**' && sel.slice(-2) === '**') || (before === '**' && after === '**');
+    const italic = !bold && ((sel.length > 2 && sel[0] === '*' && sel[sel.length - 1] === '*') || (before.slice(-1) === '*' && after.slice(0, 1) === '*'));
+    const bar = $('fmtbar');
+    const boldBtn = bar.querySelector('.fmt[data-act="bold"]');
+    const italicBtn = bar.querySelector('.fmt[data-act="italic"]');
+    if (boldBtn) boldBtn.classList.toggle('on', bold);
+    if (italicBtn) italicBtn.classList.toggle('on', italic);
+  }
+
+  /** Enter：自动接着上一行的列表记号；空条目再按一次就退出列表。 */
+  function continueList(event) {
+    const editor = $('editor');
+    if (editor.selectionStart !== editor.selectionEnd) return;
+    const pos = editor.selectionStart;
+    const before = editor.value.slice(0, pos);
+    const lineStart = before.lastIndexOf('\n') + 1;
+    const line = before.slice(lineStart);
+
+    const quote = /^(\s*)>\s?(.*)$/.exec(line);
+    if (quote && !quote[2].trim() && !/^\s*$/.test(line)) {
+      event.preventDefault();
+      editor.value = editor.value.slice(0, lineStart) + '' + editor.value.slice(pos);
+      editor.setSelectionRange(lineStart, lineStart);
+      editor.focus();
+      afterEdit();
+      return;
+    }
+
+    const m = /^(\s*)(?:([-*+])|(\d+)([.)]))\s+(\[[ xX]\]\s+)?(.*)$/.exec(line);
+    if (!m) return;
+    event.preventDefault();
+
+    const indent = m[1] || '';
+    const bullet = m[2];
+    const num = m[3];
+    const delim = m[4];
+    const task = m[5];
+    const rest = m[6] || '';
+
+    if (!rest.trim()) {
+      // 空条目：把记号擦掉，等于「退出列表」
+      editor.value = editor.value.slice(0, lineStart) + indent + editor.value.slice(pos);
+      const caret = lineStart + indent.length;
+      editor.setSelectionRange(caret, caret);
+      editor.focus();
+      afterEdit();
+      return;
+    }
+
+    let marker;
+    if (bullet) marker = indent + bullet + ' ';
+    else marker = indent + (parseInt(num, 10) + 1) + (delim || '.') + ' ';
+    if (task) marker += '[ ] ';
+
+    const insert = '\n' + marker;
+    editor.value = before + insert + editor.value.slice(pos);
+    const caret = pos + insert.length;
+    editor.setSelectionRange(caret, caret);
+    editor.focus();
+    afterEdit();
+  }
+
+  /** Tab / Shift+Tab：缩进或反缩进（多行选中时整块处理）。 */
+  function handleIndent(event) {
+    const editor = $('editor');
+    const text = editor.value;
+    const s = editor.selectionStart;
+    const e = editor.selectionEnd;
+    const lineStart = text.lastIndexOf('\n', s - 1) + 1;
+    let lineEnd = text.indexOf('\n', e);
+    if (lineEnd === -1) lineEnd = text.length;
+
+    if (s === e && !event.shiftKey) {
+      // 单点光标：插入两个空格，保持光标在后面
+      editor.value = text.slice(0, s) + '  ' + text.slice(e);
+      editor.setSelectionRange(s + 2, s + 2);
+      editor.focus();
+      afterEdit();
+      return;
+    }
+
+    const block = text.slice(lineStart, lineEnd);
+    const lines = block.split('\n');
+    const out = lines.map((line) => {
+      if (!line.length && lines.length === 1) return line;
+      if (event.shiftKey) return line.replace(/^(\t| {1,2})/, '');
+      return '  ' + line;
+    });
+    const next = out.join('\n');
+    editor.value = text.slice(0, lineStart) + next + text.slice(lineEnd);
+    editor.setSelectionRange(lineStart, lineStart + next.length);
+    editor.focus();
+    afterEdit();
+  }
+
+  function lineHeightOf(el) {
+    const lh = parseFloat(window.getComputedStyle(el).lineHeight);
+    if (!isNaN(lh)) return lh;
+    return (parseFloat(window.getComputedStyle(el).fontSize) || 16) * 1.85;
+  }
+
+  // ------------------------------------------------------------ 插入附件
+
+  function isImageFile(file) {
+    if (!file) return false;
+    if (file.type && file.type.indexOf('image/') === 0) return true;
+    return /\.(png|jpe?g|gif|webp|bmp|svg|avif)$/i.test(file.name || '');
+  }
+
+  /** 把 importFile 的结果（或 {error}）拼进正文。 */
+  function insertPicked(results, wantImage) {
+    if (!results || !results.length) return;
+    let inserted = 0;
+    const failed = [];
+    results.forEach((res) => {
+      if (!res) return;
+      if (res.error) {
+        failed.push((res.name || '文件') + '：' + res.error);
+        return;
+      }
+      const name = res.name || res.stored || '附件';
+      if (wantImage || res.isImage) {
+        insertAtCursor('\n![' + name + '](' + res.url + ')\n');
+      } else {
+        insertAtCursor('\n' + iconText(name) + '[' + name + '](' + res.url + ')\n');
+      }
+      inserted += 1;
+    });
+    if (inserted) toast('已插入 ' + inserted + ' 个' + (wantImage ? '图片' : '文件'), 'ok');
+    if (failed.length) toast('有 ' + failed.length + ' 个文件没插进去：' + failed[0], 'err');
+  }
+
+  function iconText(name) {
+    return /\.(png|jpe?g|gif|webp|bmp|svg|avif)$/i.test(name) ? '' : '📎 ';
+  }
+
+  async function insertImages() {
+    setBusyLabel();
+    try {
+      const files = await LP.pickImages();
+      insertPicked(files, true);
+    } catch (err) {
+      toast('选图片失败：' + String((err && err.message) || err), 'err');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function insertFiles() {
+    setBusyLabel();
+    try {
+      const files = await LP.pickFiles();
+      insertPicked(files, false);
+    } catch (err) {
+      toast('选文件失败：' + String((err && err.message) || err), 'err');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** 粘贴 / 拖进来的文件：能直接收就收，收不了就提示走按钮。 */
+  async function receiveFiles(fileList) {
+    const files = Array.prototype.slice.call(fileList || []);
+    if (!files.length) return;
+    const images = files.filter(isImageFile);
+    if (importDropped) {
+      setBusyLabel();
+      try {
+        const results = await importDropped(files);
+        insertPicked(results, images.length === files.length);
+      } catch (err) {
+        toast('导入失败：' + String((err && err.message) || err), 'err');
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+    // 桌面版：没有「外部文件直接落盘」的通道，退化成即时提示 + 一键继续
+    toast(
+      '桌面版请用工具栏的「图片 / 附件」按钮选择文件（拖入需要主进程新增一个导入通道）',
+      'err',
+    );
+    if (images.length === files.length) insertImages();
+    else insertFiles();
+  }
+
+  // ==========================================================================
+  // 11. 查找与替换
+  // ==========================================================================
+
+  function openFind() {
+    const bar = $('findBar');
+    const editor = $('editor');
+    const selected = editor.value.slice(editor.selectionStart, editor.selectionEnd);
+    if (selected && selected.indexOf('\n') === -1) $('findInput').value = selected;
+    bar.hidden = false;
+    state.find.open = true;
+    runFind(0);
+    $('findInput').focus();
+    $('findInput').select();
+  }
+
+  function closeFind() {
+    if ($('findBar').hidden) return;
+    $('findBar').hidden = true;
+    state.find.open = false;
+    state.find.hits = [];
+    applyFindToPreview();
+    $('editor').focus();
+  }
+
+  function computeHits(query, caseSensitive) {
+    const text = $('editor').value;
+    const hits = [];
+    if (!query) return hits;
+    const hay = caseSensitive ? text : text.toLowerCase();
+    const needle = caseSensitive ? query : query.toLowerCase();
+    let i = hay.indexOf(needle);
+    while (i !== -1) {
+      hits.push(i);
+      i = hay.indexOf(needle, i + needle.length);
+    }
+    return hits;
+  }
+
+  function runFind(startIndex) {
+    const query = $('findInput').value;
+    state.find.caseSensitive = $('findCase').getAttribute('aria-pressed') === 'true';
+    state.find.hits = computeHits(query, state.find.caseSensitive);
+    const total = state.find.hits.length;
+    state.find.index = total ? ((typeof startIndex === 'number' ? startIndex : state.find.index) + total) % total : 0;
+    $('findCount').textContent = total ? state.find.index + 1 + '/' + total : '0/0';
+    highlightCurrentHit();
+    applyFindToPreview();
+  }
+
+  function highlightCurrentHit() {
+    const hits = state.find.hits;
+    if (!hits.length) return;
+    const editor = $('editor');
+    const at = hits[state.find.index];
+    const len = $('findInput').value.length;
+    editor.focus();
+    editor.setSelectionRange(at, at + len);
+    const line = editor.value.slice(0, at).split('\n').length - 1;
+    const lineHeight = lineHeightOf(editor);
+    const top = line * lineHeight;
+    if (top < editor.scrollTop || top > editor.scrollTop + editor.clientHeight - lineHeight * 2) {
+      editor.scrollTop = Math.max(0, top - editor.clientHeight / 3);
+    }
+  }
+
+  function stepHit(delta) {
+    if (!state.find.hits.length) return;
+    state.find.index = (state.find.index + delta + state.find.hits.length) % state.find.hits.length;
+    $('findCount').textContent = state.find.index + 1 + '/' + state.find.hits.length;
+    highlightCurrentHit();
+    applyFindToPreview();
+  }
+
+  function replaceCurrent() {
+    const query = $('findInput').value;
+    if (!query || !state.find.hits.length) return;
+    const editor = $('editor');
+    const at = state.find.hits[state.find.index];
+    const value = editor.value;
+    editor.value =
+      value.slice(0, at) + $('replaceInput').value + value.slice(at + query.length);
+    afterEdit();
+    state.find.index = Math.max(0, state.find.index);
+    runFind(0);
+  }
+
+  function replaceAll() {
+    const query = $('findInput').value;
+    if (!query) return;
+    const editor = $('editor');
+    const value = editor.value;
+    const needle = state.find.caseSensitive ? query : query.toLowerCase();
+    const replacement = $('replaceInput').value;
+    let out = '';
+    let i = 0;
+    let count = 0;
+    for (;;) {
+      const hay = state.find.caseSensitive ? value : value.toLowerCase();
+      const at = hay.indexOf(needle, i);
+      if (at === -1) {
+        out += value.slice(i);
+        break;
+      }
+      out += value.slice(i, at) + replacement;
+      i = at + query.length;
+      count += 1;
+    }
+    if (!count) {
+      toast('没有命中，没做替换');
+      return;
+    }
+    editor.value = out;
+    afterEdit();
+    runFind(0);
+    toast('替换了 ' + count + ' 处', 'ok');
+  }
+
+  /** 预览里的命中高亮：遍历文本节点，把命中的字包进 <mark>。 */
+  function applyFindToPreview() {
+    const host = $('preview');
+    if (!host) return;
+    // 先把上一次的 mark 还原成纯文本
+    Array.prototype.slice.call(host.querySelectorAll('mark.find-hit')).forEach((mark) => {
+      const parent = mark.parentNode;
+      if (!parent) return;
+      parent.replaceChild(document.createTextNode(mark.textContent), mark);
+      parent.normalize();
+    });
+
+    const query = state.find.open ? $('findInput').value : '';
+    if (!query) return;
+
+    const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, null);
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    const caseSensitive = state.find.caseSensitive;
+
+    nodes.forEach((node) => {
+      const raw = node.nodeValue;
+      if (!raw) return;
+      const hay = caseSensitive ? raw : raw.toLowerCase();
+      const needle = caseSensitive ? query : query.toLowerCase();
+      if (hay.indexOf(needle) === -1) return;
+      const frag = document.createDocumentFragment();
+      let i = 0;
+      for (;;) {
+        const at = hay.indexOf(needle, i);
+        if (at === -1) {
+          frag.appendChild(document.createTextNode(raw.slice(i)));
+          break;
+        }
+        if (at > i) frag.appendChild(document.createTextNode(raw.slice(i, at)));
+        const mark = document.createElement('mark');
+        mark.className = 'find-hit';
+        mark.textContent = raw.slice(at, at + query.length);
+        frag.appendChild(mark);
+        i = at + query.length;
+      }
+      if (node.parentNode) node.parentNode.replaceChild(frag, node);
+    });
+
+    const marks = host.querySelectorAll('mark.find-hit');
+    if (marks.length) {
+      const current = marks[Math.min(state.find.index, marks.length - 1)];
+      if (current) current.classList.add('current');
+    }
+  }
+
+  // ==========================================================================
+  // 12. 分享与统计
+  // ==========================================================================
+
+  function articleMarkdown() {
+    const title = $('title').value.trim() || '未命名';
+    return '# ' + title + '\n\n' + ($('editor').value || '') + '\n';
+  }
+
+  function toPlainText(markdown) {
+    return String(markdown || '')
+      .replace(/```chart[\s\S]*?```/g, '\n［图表］\n')
+      .replace(/```[^\n]*\n([\s\S]*?)```/g, '$1')
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, '［图片］')
+      .replace(/\[([^\]]*)\]\(([^)]+)\)/g, '$1')
+      .replace(/^#{1,6}\s+/gm, '')
+      .replace(/^\s*[-*+]\s+\[[ xX]\]\s+/gm, '☐ ')
+      .replace(/^\s*[-*+]\s+/gm, '· ')
+      .replace(/^\s*>\s?/gm, '')
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+  }
+
+  async function sharePayload(text, what) {
+    const title = $('title').value.trim() || '未命名';
+    const res = await LP.shareText({ title: title, text: text, dialogTitle: title });
+    if (res && res.ok) {
+      toast(res.mode === 'share' ? what + '已交给系统分享' : what + '已复制到剪贴板', 'ok');
+    } else if (res && res.canceled) {
+      setStatus('已取消分享');
+    } else {
+      toast('分享失败：' + ((res && res.error) || '未知原因'), 'err');
+    }
+  }
+
+  async function shareMarkdown() {
+    await sharePayload(articleMarkdown(), 'Markdown');
+  }
+
+  async function sharePlain() {
+    await sharePayload(toPlainText(articleMarkdown()), '纯文本');
+  }
+
+  /**
+   * 「网页 HTML」在两端不是同一件事：
+   *   手机 —— 单文件往往接近 1 MB，塞进系统分享的文本字段很容易被截断，
+   *           所以直接生成文件、交给系统分享面板；
+   *   桌面 —— 没有分享面板，复制 HTML 源码到剪贴板最顺手。
+   */
+  async function shareHtml() {
+    if (CAPS.share && typeof LP.exportHtml === 'function') {
+      await exportArticle('html');
+      return;
+    }
+    if (!WEBEXPORT || typeof WEBEXPORT.buildSelfContained !== 'function') {
+      toast('当前环境不支持生成单文件 HTML', 'err');
+      return;
+    }
+    const article = { title: $('title').value.trim() || '未命名', content: $('editor').value || '' };
+    const canRead = LP && typeof LP.readFileBlob === 'function' ? LP.readFileBlob.bind(LP) : null;
+    try {
+      const built = await WEBEXPORT.buildSelfContained(article, {
+        readFileBlob: canRead || (() => Promise.resolve(null)),
+        listFiles: LP && typeof LP.listFiles === 'function' ? () => LP.listFiles() : null,
+        echartsUrl: 'vendor/echarts.min.js',
+      });
+      if (!built || !built.ok) {
+        toast('生成 HTML 失败：' + ((built && built.error) || '未知原因'), 'err');
+        return;
+      }
+      await sharePayload(built.html, '单文件 HTML');
+    } catch (err) {
+      toast('生成 HTML 失败：' + String((err && err.message) || err), 'err');
+    }
+  }
+
+  function shareHintText() {
+    const title = $('title').value.trim() || '未命名';
+    if (CAPS.share) {
+      return '「' + title + '」——点下面任意一项，系统会弹出分享面板，可以直接发到微信、备忘录或存成文件。';
+    }
+    return '「' + title + '」——点下面任意一项，内容会复制到剪贴板，粘到聊天窗口或别的编辑器都行。';
+  }
+
+  function openShare() {
+    if (!state.current) {
+      toast('先选一篇文章再分享');
+      return;
+    }
+    $('shareHint').textContent = shareHintText();
+    openSheet('shareModal');
+  }
+
+  async function exportArticle(kind) {
+    if (!state.current) return;
+    setBusyLabel();
+    try {
+      const res = kind === 'html' ? await LP.exportHtml(state.current.id) : await LP.exportMarkdown(state.current.id);
+      if (res && res.ok) {
+        toast((kind === 'html' ? '网页' : 'Markdown') + '已导出：' + (res.path || ''), 'ok');
+        setStatus('已导出 · ' + (res.path || ''));
+      } else if (res && res.canceled) {
+        setStatus('已取消导出');
+      } else {
+        toast('导出失败：' + ((res && res.error) || '未知原因'), 'err');
+      }
+    } catch (err) {
+      toast('导出失败：' + String((err && err.message) || err), 'err');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function exportById(kind, id) {
+    setBusyLabel();
+    try {
+      const res = kind === 'html' ? await LP.exportHtml(id) : await LP.exportMarkdown(id);
+      if (res && res.ok) toast('已导出：' + (res.path || ''), 'ok');
+      else if (res && !res.canceled) toast('导出失败：' + ((res && res.error) || '未知原因'), 'err');
+    } catch (err) {
+      toast('导出失败：' + String((err && err.message) || err), 'err');
