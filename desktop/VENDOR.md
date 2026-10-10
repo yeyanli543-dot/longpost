@@ -120,14 +120,14 @@ MIT / ISC / Apache-2.0，与仓库自身的 MIT 兼容。许可证记录分两�
 ### 1. KaTeX 0.19.0 — LaTeX 数学公式
 
 - 仓库：https://github.com/KaTeX/KaTeX ｜ License：MIT ｜ 体积：**560,939 字节**（547.8 KB）
-- 解决什么：把 `$E=mc^2$` / `$$\int_0\infty e^{-x^2}dx$$` 渲染成印刷级公式，离线可用、无网络请求
+- 解决什么：把 `$E=mc^2$` / `$$\int_0^\infty e^{-x^2}dx$$` 渲染成印刷级公式，离线可用、无网络请求
 - 对标谁：Obsidian / Notion / 语雀 的公式块（它们内部也是 KaTeX）
 - 全局名：`katex`（小写）、`renderMathInElement`（contrib/auto-render）
 - 最小调用：
 
 ```js
 // 单条，返回 HTML 字符串（同步、不需要等）
-const html = katex.renderToString('\\int_0\\infty e^{-x^2}\\,dx = \\frac{\\sqrt{\\pi}}{2}', {
+const html = katex.renderToString('\\int_0^\\infty e^{-x^2}\\,dx = \\frac{\\sqrt{\\pi}}{2}', {
   displayMode: false,
   throwOnError: false,   // 写错了显示红色原文，而不是抛异常打断渲染
 });
@@ -478,4 +478,3 @@ reject（不会悄悄给你一张缺图的图），所以务必 try/catch。
 会被转义（实测如此），但它**不会**拦 `[点我](javascript:alert(1))` 这种链接
 （实测原样输出）。替换渲染器时要沿用现有 `lib/markdown.js` 里那套 URL 白名单，
 `smoke-test.js` 第 [2] 组正是钉这个的。
-
