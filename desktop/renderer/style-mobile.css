@@ -1,136 +1,37 @@
-/*
- * LongPost —— 这一轮新增的组件样式 + 窄屏适配。
- *
- * 单独一个文件，接在 style.css 后面加载，靠层叠顺序覆盖：
- *   - 前一半：回收站 / 标签 / 历史版本这几个新面板，以及列表里的标签条
- *   - 后一半：@media 窄屏规则
- *
- * 桌面端的版式一个字都没动，媒体查询之外不会影响它。
- */
+/* ============================================================================
+   LongPost —— 窄屏（≤820px）与移动端交互
 
-/* ================================================================ 新组件 */
+   这里只写「手机上不一样的地方」，桌面端一个字都不改：
+     1. 互斥视图 + 底部导航 + 顶部上下文操作条
+     2. 安全区、触摸目标、软键盘
+     3. 弹窗 → 贴底抽屉（带把手、可下滑关闭）
+     4. 大纲抽屉、上下文菜单抽屉、toast 抬高
+     5. 编辑 / 对照 / 预览 三态切换
+   ========================================================================= */
 
-/* 只在手机上出现的控件（比如编辑器里的「← 列表」） */
+/* 桌面端不显示的东西，默认藏起来 */
 .only-mobile {
   display: none;
 }
 
-.btn-row {
-  display: flex;
-  gap: 6px;
-}
-.btn-row .btn {
-  flex: 1;
-  min-width: 0;
-}
-
-/* 列表项：标题与置顶星一行，标签单独一行 */
-.item-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.item-head .item-title {
-  flex: 1;
-  min-width: 0;
-}
-.item-pin {
-  flex: none;
-  color: #f5b301;
-  font-size: 12px;
-  line-height: 1;
-}
-.item-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 6px;
-}
-
-.chip {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 11px;
-  line-height: 1.75;
-  border: 1px solid transparent;
-  white-space: nowrap;
-}
-button.chip {
-  font-family: inherit;
-  cursor: pointer;
-}
-.chip-btn.on {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-
-.tag-cloud {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* 回收站 / 历史版本共用的行式面板 */
-.panel-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 10px;
-}
-.panel-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-.panel-main {
-  flex: 1;
-  min-width: 0;
-}
-.panel-title {
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.panel-meta {
-  color: var(--muted);
-  font-size: 12px;
-  margin-top: 2px;
-}
-.panel-sum {
-  color: var(--muted);
-  font-size: 12px;
-  margin-top: 4px;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-.panel-acts {
-  display: flex;
-  gap: 6px;
-  flex: none;
-}
-.panel-empty {
-  color: var(--muted);
-  font-size: 13px;
-  padding: 14px 2px;
-}
-
-/* ================================================================ 窄屏适配 */
-
 @media (max-width: 820px) {
+  /* 底部导航的实测高度：56px 的 .tab + 1px 上边框。
+     底栏是 position:fixed 且 z-index 比弹窗高（--z-sheet 70 > --z-modal 60），
+     所以**所有**贴底抽屉都要把这段高度让出来，否则 footer 会被盖住 ——
+     实测「完成」按钮中心点会被 #tabOutline 接走（P1）。 */
+  :root {
+    --tabbar-h: 57px;
+  }
+
   .only-mobile {
     display: inline-flex;
   }
+
+  .only-desktop {
+    display: none !important;
+  }
+
+  /* ------------------------------------------------------------ 骨架 */
 
   .app {
     flex-direction: column;
@@ -163,165 +64,672 @@ button.chip {
     flex-direction: column;
   }
 
-  /* 刘海屏 / 手势条避让 */
   .side-head {
-    padding-top: calc(12px + env(safe-area-inset-top));
-  }
-  .side-foot,
-  .statusbar {
-    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+    padding-top: calc(var(--sp-3) + env(safe-area-inset-top));
+    gap: var(--sp-2);
   }
 
-  /* 手指比鼠标粗，触控目标放大 */
+  /* ------------------------------------------------------------ 触摸目标 */
+
+  /* 手指比鼠标粗：所有可点的东西都撑到 44×44 */
   .btn {
-    min-height: 40px;
-    padding-left: 12px;
-    padding-right: 12px;
+    min-height: 44px;
+    padding-left: 14px;
+    padding-right: 14px;
+    font-size: var(--fs-md);
   }
   .btn.sm {
-    min-height: 34px;
+    min-height: 44px;
   }
-  .item {
-    padding: 12px;
+  .icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .seg {
+    min-height: 44px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .select {
+    min-height: 44px;
+    font-size: var(--fs-md);
+  }
+  .search {
+    min-height: 44px;
+    font-size: var(--fs-md);
+  }
+  .find-input {
+    min-height: 44px;
   }
 
-  /* 工具条改成两行：第一行返回 + 标题，第二行按钮 */
-  .editor-wrap {
+  /*
+   * 列表卡片里的标签片视觉上只有 ~26px 高，但命中区必须 ≥44px。
+   *
+   * 这里踩过一个坑：最早用 ::after 把命中区撑出去，实测**没用**——`.chip` 自己
+   * 有 `overflow: hidden`（长标签要出省略号），它会把 ::after 一起裁掉，命中区
+   * 量出来还是 25.5px。改成给元素加一圈**透明 border**：border box 直接变成
+   * 44px（手指点得中），再配 `background-clip: padding-box` 把底色收回 padding
+   * box（视觉还是那个小胶囊），负 margin 抵消多出来的高度，列表密度不变。
+   * 横向也一样：两个字的标签只有 41px 宽，靠 5px 的透明左右边框补到 49px。
+   * 可见的那条 1px 描边改用 inset 阴影画（inset 阴影按 padding box 裁）。
+   */
+  .chip:not(.chip-btn) {
+    border-width: 11px 5px;
+    border-color: transparent;
+    background-clip: padding-box;
+    box-shadow: inset 0 0 0 1px var(--accent-line);
+    margin-top: -11px;
+    margin-bottom: -11px;
+  }
+
+  /*
+   * 开关本身是 52×32 的胶囊（再高就不像开关了），但整行都能点：
+   * app.js 把 .switch-field 整行的点击转发给里面的开关，命中区比 44px 还大。
+   */
+  .switch {
+    width: 52px;
+    height: 44px;
+  }
+  .switch::before {
+    top: 6px;
+    height: 32px;
+  }
+  .switch::after {
+    top: 9px;
+    width: 26px;
+    height: 26px;
+  }
+  .switch[aria-checked='true']::after {
+    transform: translateX(20px);
+  }
+  .switch-field {
+    cursor: pointer;
+    min-height: 56px;
+    align-items: center;
+  }
+
+  /* 列表项：整块可点，另外始终露出「更多」 */
+  .item {
+    padding: var(--sp-3) var(--sp-3) calc(var(--sp-3) + 2px);
+    border-radius: var(--r-md);
+  }
+  .item + .item {
+    border-top: 1px solid var(--border);
+  }
+  .item-title {
+    font-size: var(--fs-lg);
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .item-more {
+    opacity: 1;
+  }
+  .item-sum {
+    -webkit-line-clamp: 3;
+  }
+
+  /* 侧栏底部：抬到安全区之上，并且给底部导航让出位置 */
+  .side-foot {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+  /* 底部导航已经有一个「设置」了，侧栏脚部不再重复放一个
+     （原来两个设置按钮上下相隔 60px，是真机上很容易点错的地方）。
+     设置入口 = #tabSettings，仍然一点就到。 */
+  .side-foot #btnSettings {
+    display: none;
+  }
+  .list {
+    padding-bottom: var(--sp-3);
+  }
+
+  /* ------------------------------------------------------------ 底部导航 */
+
+  .tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-sheet);
+    display: flex;
+    align-items: stretch;
+    padding-bottom: env(safe-area-inset-bottom);
+    /* 必须**不透明**：原来用 92% 的 color-mix + 模糊，标签文字实际压在 --bg 上，
+       亮色下选中态只有 4.44:1、未选中 4.20:1（验证方按真实像素量的，AA 要 4.5）。
+       改成实心 --surface 后：亮色 5.23 / 5.55，暗色 5.36 / 4.97。 */
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+  }
+
+  .tab {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    flex: 1 1 auto;
-    min-height: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    min-height: 56px;
+    padding: 6px 2px;
+    border: none;
+    background: none;
+    color: var(--text-3);
+    font-size: 11px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: color var(--dur-1) var(--ease);
   }
+
+  .tab .icon {
+    font-size: 20px;
+  }
+
+  .tab.on {
+    color: var(--accent);
+  }
+
+  .tab.on .icon {
+    filter: drop-shadow(0 0 6px var(--accent-soft));
+  }
+
+  /* 专注输入时把底部导航收起来，别跟软键盘抢地方 */
+  html.kb-open .tabbar {
+    display: none;
+  }
+
+  /* ------------------------------------------------------------ 操作条 */
+
+  /*
+   * 手机上顶部操作条压成**一行**：返回 + 标题 + 3 个高频图标 + 溢出菜单。
+   * 改造前这里是 13 个按钮挤 3 行、195px（占 360×640 屏幕的 23.1%）；
+   * 现在一行 ~52px，其余动作全部收进「更多」抽屉（app.js 的 openMoreMenu）。
+   */
   .toolbar {
-    flex-wrap: wrap;
-    gap: 6px;
-    padding: 8px;
+    flex-wrap: nowrap;
+    gap: var(--sp-1);
+    padding: calc(var(--sp-1) + env(safe-area-inset-top)) calc(var(--sp-2) + env(safe-area-inset-right))
+      var(--sp-1) calc(var(--sp-2) + env(safe-area-inset-left));
+    align-items: center;
   }
+
+  #btnBack {
+    order: 0;
+  }
+
   .title-input {
+    order: 1;
     flex: 1 1 auto;
     min-width: 0;
+    min-height: 44px;
+    font-size: var(--fs-lg);
   }
+
   .tools {
-    width: 100%;
-    flex-wrap: wrap;
-    gap: 6px;
+    order: 2;
+    width: auto;
+    margin-left: auto;
+    flex-wrap: nowrap;
+    overflow: visible;
+    gap: 2px;
+    padding-bottom: 0;
   }
+
+  /* 只留 3 个高频动作；其余（标签/分享/图表/图片/附件/大纲/沉浸/预览/导出/历史/长图/表格）
+     都在「更多」菜单里，一个都没少。 */
+  .tools .btn {
+    display: none;
+    padding: 0;
+    min-width: 44px;
+    justify-content: center;
+  }
+
+  .tools #btnPin,
+  .tools #btnFind,
+  .tools #btnMore {
+    display: inline-flex;
+  }
+
+  .tools .btn .btn-label {
+    display: none;
+  }
+
   .tools .sep {
     display: none;
   }
 
-  /* 不再左右分栏：编辑器在上、预览在下，整块自己滚 */
+  /* ------------------------------------------------------------ 格式栏 */
+
+  .fmtbar {
+    padding: var(--sp-1) var(--sp-2);
+  }
+
+  .fmt {
+    width: 44px;
+    height: 44px;
+    font-size: 17px;
+  }
+
+  .fmt-sep {
+    height: 24px;
+  }
+
+  /* ------------------------------------------------------------ 编辑 / 对照 / 预览 */
+
+  .paneswitch {
+    display: flex;
+    gap: var(--sp-1);
+    padding: var(--sp-1) var(--sp-3);
+    background: var(--bg-2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pswitch {
+    flex: 1;
+    min-height: 44px;
+    border: 1px solid transparent;
+    border-radius: var(--r-sm);
+    background: none;
+    color: var(--text-2);
+    font-family: inherit;
+    font-size: var(--fs-sm);
+    cursor: pointer;
+  }
+
+  .pswitch.on {
+    background: var(--surface-2);
+    border-color: var(--border-strong);
+    color: var(--text);
+    font-weight: 600;
+  }
+
   .panes {
     display: block;
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
+    /* 软键盘弹起时留出空间，避免光标被键盘盖住 */
+    padding-bottom: var(--kb-inset, 0px);
   }
+
+  .editor,
+  .preview {
+    animation: fade-in var(--dur-2) var(--ease);
+  }
+
+  .editor {
+    width: 100% !important;
+    height: auto;
+    min-height: 46vh;
+    padding: var(--sp-4) var(--sp-3) 60vh;
+    scroll-margin-bottom: 45vh;
+  }
+
   .splitter {
     display: none !important;
   }
-  .editor {
-    width: 100% !important;
-    height: 42vh;
-    min-height: 200px;
-  }
+
   .preview {
     width: 100% !important;
-    border-left: 0;
     border-top: 1px solid var(--border);
+    padding: var(--sp-4) var(--sp-3) calc(90px + env(safe-area-inset-bottom));
   }
 
-  /* 弹窗占满整屏，不然手机上很难操作 */
-  .modal {
-    display: flex;
-    align-items: stretch;
-    justify-content: center;
-    padding: 0;
+  /* 三态：写作 / 对照 / 预览 */
+  .panes[data-mode='write'] .preview {
+    display: none;
   }
-  .dialog {
+  .panes[data-mode='preview'] .editor {
+    display: none;
+  }
+  .panes[data-mode='preview'] .preview {
+    min-height: 66vh;
+    border-top: 0;
+  }
+
+  /* 手机上一行别太长：行宽设置只影响桌面 */
+  .preview > * {
+    max-width: none;
+  }
+
+  /* ------------------------------------------------------------ 状态栏 */
+
+  .statusbar {
+    padding: var(--sp-1) var(--sp-3) calc(var(--sp-1) + env(safe-area-inset-bottom));
+    padding-right: var(--sp-3);
+    /* 底部导航是 fixed 的，状态栏让开它的高度 */
+    margin-bottom: 56px;
+    flex-wrap: nowrap;
+  }
+
+  .status-stats {
+    display: none;
+  }
+
+  /* ------------------------------------------------------------ 查找条 */
+
+  .findbar {
+    padding: var(--sp-2);
+  }
+
+  .find-row {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  /* ------------------------------------------------------------ 弹窗 → 贴底抽屉 */
+
+  .modal {
+    align-items: flex-end;
+    justify-content: center;
+    /* 抽屉整体上移到导航上沿（含安全区），footer 不再被底栏压住 */
+    padding: 0 0 calc(var(--tabbar-h, 57px) + env(safe-area-inset-bottom));
+  }
+
+  .dialog,
+  .dialog.narrow,
+  .dialog.wide {
     width: 100%;
     max-width: none;
-    height: 100%;
-    max-height: none;
-    border-radius: 0;
-  }
-  .dialog.wide .dialog-body.split {
-    display: block;
-  }
-  .dialog-body {
-    overflow-y: auto;
-  }
-  .dialog-foot {
-    padding-bottom: calc(10px + env(safe-area-inset-bottom));
-  }
-  .chart-preview-box {
-    min-height: 240px;
+    max-height: 88vh;
+    max-height: min(88dvh, calc(100dvh - var(--tabbar-h, 57px) - env(safe-area-inset-bottom) - 12px));
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    border-bottom: none;
+    animation: sheet-in var(--dur-3) var(--ease);
   }
 
-  /* 单行放不下就把按钮换到下一行，别挤成一团 */
-  .panel-row {
-    flex-wrap: wrap;
+  .dialog.dragging {
+    animation: none;
+    transition: none;
   }
-  .panel-acts {
-    width: 100%;
+
+  @keyframes sheet-in {
+    from {
+      transform: translateY(100%);
+    }
   }
-  .panel-acts .btn {
+
+  /* 抽屉把手：按住往下拖可以关掉 */
+  .sheet-grip {
+    display: block;
+    width: 40px;
+    height: 4px;
+    flex: none;
+    border-radius: var(--r-pill);
+    background: var(--border-strong);
+    margin: 8px auto 0;
+    touch-action: none;
+    cursor: grab;
+  }
+
+  .dialog-head {
+    /* 抽屉头本身在屏幕中间，不需要上/下安全区；横屏时刘海在左右，
+       所以左右用 max() 把内容顶进来。 */
+    padding: var(--sp-3) max(var(--sp-4), env(safe-area-inset-right)) var(--sp-2)
+      max(var(--sp-4), env(safe-area-inset-left));
+  }
+
+  .dialog-body {
+    padding: var(--sp-3) var(--sp-4);
+  }
+
+  .dialog-body.split {
+    display: block;
+  }
+
+  .dialog-foot {
+    /* 安全区由 .modal 的 padding-bottom 统一让过，这里不重复加 */
+    padding: var(--sp-2) var(--sp-4) var(--sp-3);
+    gap: var(--sp-2);
+  }
+
+  .dialog-foot .btn {
     flex: 1;
   }
 
-  /* 手机上这两个是死的：没有可打开的文件夹 */
-  #btnDataDir,
-  #openDataDir {
+  .field input[type='text'],
+  .field input[type='search'],
+  .field textarea {
+    min-height: 44px;
+    font-size: var(--fs-lg);
+  }
+
+  .chart-preview-box {
+    min-height: 220px;
+  }
+
+  /* 分享面板在手机上排一列，每个都够大 */
+  .share-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .share-item {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--sp-3);
+    min-height: 64px;
+  }
+
+  .share-item > .icon {
+    margin-bottom: 0;
+    font-size: 22px;
+  }
+
+  .share-item .share-desc {
+    display: block;
+    width: 100%;
+  }
+
+  .share-item > .share-name {
+    flex: none;
+  }
+
+  .stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--sp-1);
+  }
+
+  .stat-cell {
+    padding: var(--sp-2);
+  }
+
+  .stat-value {
+    font-size: var(--fs-xl);
+  }
+
+  /* 行式面板：按钮换行铺满 */
+  .panel-row {
+    flex-wrap: wrap;
+  }
+
+  .panel-acts {
+    width: 100%;
+  }
+
+  .panel-acts .btn {
+    flex: 1;
+    min-height: 44px;
+  }
+
+  /* ------------------------------------------------------------ 上下文菜单 → 抽屉 */
+
+  .menu {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+    min-width: 0;
+    max-width: none;
+    max-height: 70vh;
+    max-height: 70dvh;
+    overflow-y: auto;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    border-bottom: none;
+    padding: var(--sp-2) var(--sp-2) calc(var(--sp-3) + env(safe-area-inset-bottom));
+    animation: sheet-in var(--dur-3) var(--ease);
+    z-index: var(--z-sheet);
+  }
+
+  .menu-item {
+    min-height: 50px;
+    padding: 13px 12px;
+    font-size: var(--fs-lg);
+    border-radius: var(--r-md);
+  }
+
+  .menu-item .icon {
+    font-size: 18px;
+  }
+
+  .menu-item .menu-key {
     display: none;
   }
-}
 
-/* ================================================================ 大纲（窄屏） */
+  .menu-head {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-1) 0 var(--sp-2);
+    color: var(--text-3);
+    font-size: var(--fs-sm);
+  }
 
-@media (max-width: 820px) {
-  /*
-    手机上是编辑器在上、预览在下（.panes 变成 block），没有并排的余地，
-    所以大纲不做浮层，直接当成整屏抽屉弹出来，也就不需要给分栏让宽度。
-  */
+  /* ------------------------------------------------------------ 大纲 → 抽屉 */
+
   .panes.outline-on .preview {
     margin-right: 0;
   }
 
+  .panes.outline-on.preview-off .editor {
+    width: 100%;
+  }
+
   .outline-panel {
     position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
+    top: auto;
     left: 0;
+    right: 0;
+    /* 和贴底抽屉同理：上移到导航上沿，最后一条大纲不会被底栏压住 */
+    bottom: calc(var(--tabbar-h, 57px) + env(safe-area-inset-bottom));
     width: auto;
-    border: 0;
-    border-radius: 0;
-    z-index: 90;
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
+    max-height: 78vh;
+    max-height: 78dvh;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    border-bottom: none;
+    z-index: var(--z-sheet);
+    padding-bottom: 0;
+    animation: sheet-in var(--dur-3) var(--ease);
   }
 
   .outline-head {
-    padding: 8px 12px;
-    font-size: 13px;
+    padding: var(--sp-3) var(--sp-3) var(--sp-2);
+    font-size: var(--fs-md);
   }
 
   .outline-list {
-    padding: 10px;
+    padding: var(--sp-2) var(--sp-3) var(--sp-4);
   }
 
-  /* 手指点，行高和信息层级都要放大一点 */
   .outline-item {
-    font-size: 14px;
-    padding: 9px 8px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    font-size: var(--fs-lg);
+    padding: 8px 10px;
   }
 
   .outline-item.lv3,
   .outline-item.lv4 {
-    font-size: 13px;
+    font-size: var(--fs-md);
   }
 
-  .outline-empty {
-    font-size: 13px;
+  /* ------------------------------------------------------------ 提示条 */
+
+  .toast {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    max-width: 92vw;
+  }
+
+  html.kb-open .toast {
+    bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+
+  /* 手机上侧栏里的标签云按钮要大些 */
+  .tag-cloud {
+    gap: var(--sp-2);
+  }
+
+  button.chip {
+    min-height: 44px;
+    padding: 0 14px;
+    font-size: var(--fs-md);
+  }
+
+  /* ------------------------------------------------------------ 触摸目标补漏 */
+
+  /* 文本输入、滑块、标签云、抽屉里的按钮：44×44 一条都不漏 */
+  .field input[type='range'] {
+    min-height: 44px;
+  }
+
+  .chip-btn {
+    min-height: 44px;
+    padding: 0 14px;
+    font-size: var(--fs-md);
+  }
+
+  .field input[type='text'],
+  .field input[type='search'],
+  .field textarea,
+  .find-input,
+  .replace-input {
+    min-height: 44px;
+  }
+
+  /* 状态栏那行小标在 390px 宽上太挤；同样的信息在设置面板「渲染增强」里 */
+  .render-note {
+    display: none;
+  }
+
+  /* ------------------------------------------------------------ 渲染增强 / 长图 */
+
+  .long-image-box {
+    max-height: 42vh;
+    max-height: 42dvh;
+  }
+
+  #longImageModal .dialog-foot .btn,
+  #settingsModal .dialog-foot .btn,
+  #statsModal .dialog-foot .btn {
+    min-height: 44px;
+  }
+
+  /* ------------------------------------------------------------ 安全区：横屏刘海 */
+
+  /*
+   * 竖屏有 env(safe-area-inset-top / bottom) 的地方都补过了；横屏时
+   * 刘海会切到左右两边，所以整屏宽的横条都得让开左右安全区。
+   */
+  .fmtbar,
+  .paneswitch,
+  .statusbar,
+  .list,
+  .tabbar,
+  .dialog-head,
+  .dialog-body,
+  .dialog-foot {
+    padding-left: max(var(--sp-3), env(safe-area-inset-left));
+    padding-right: max(var(--sp-3), env(safe-area-inset-right));
+  }
+}
+
+/* 极窄屏（折叠屏外屏 / 老机型）进一步压缩，只留图标 */
+@media (max-width: 360px) {
+  .tools .btn-label {
+    display: none;
+  }
+  .tools .btn {
+    padding: 0 10px;
   }
 }
