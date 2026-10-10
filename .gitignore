@@ -43,7 +43,7 @@ coverage/
 ._*
 .Spotlight-V100
 .Trashes
-ethumbs.db
+ehthumbs.db
 Thumbs.db
 
 # Temporary folders
@@ -83,3 +83,4 @@ desktop/.verify/
 desktop/renderer/vendor/
 desktop/resources/icon.png
 desktop/package-lock.json
+
