@@ -1,0 +1,854 @@
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function openStats() {
+    if (!state.current) return;
+    const content = $('editor').value || '';
+    const chars = content.length;
+    const paragraphs = countParagraphs(content);
+    const minutes = readingMinutes(content);
+    const charts = CH.chartCount(content);
+    const files = attachmentRefs(content).length;
+    const tags = state.current.tags || [];
+    const cells = [
+      ['字数', chars, '字'],
+      ['段落', paragraphs, '段'],
+      ['阅读时长', minutes, '分钟'],
+      ['图表', charts, '个'],
+      ['附件', files, '个'],
+      ['历史版本', (state.current.history || []).length, '版'],
+    ];
+    $('statGrid').innerHTML = cells
+      .map(
+        (cell) =>
+          '<div class="stat-cell"><span class="stat-label">' +
+          cell[0] +
+          '</span><span class="stat-value">' +
+          cell[1] +
+          '<span class="stat-unit">' +
+          cell[2] +
+          '</span></span></div>',
+      )
+      .join('');
+    $('statsNote').textContent =
+      '标题「' +
+      (state.current.title || '未命名') +
+      '」· 标签 ' +
+      (tags.length ? tags.join('、') : '（无）') +
+      ' · 创建于 ' +
+      (formatTime(state.current.createdAt) || '—') +
+      ' · 最后修改 ' +
+      (formatTime(state.current.updatedAt) || '—') +
+      '。字数按 Markdown 原文计（含记号）。';
+    openSheet('statsModal');
+  }
+
+  // ==========================================================================
+  // 13. 各个对话框
+  // ==========================================================================
+
+  function askConfirm(opts) {
+    const options = opts || {};
+    $('confirmTitle').textContent = options.title || '确认';
+    $('confirmText').textContent = options.text || '';
+    $('confirmOk').textContent = options.okLabel || '确定';
+    $('confirmOk').className = 'btn ' + (options.danger ? 'danger' : 'primary');
+    state.confirmAction = options.onOk || null;
+    openSheet('confirmModal');
+  }
+
+  async function runConfirm() {
+    const action = state.confirmAction;
+    state.confirmAction = null;
+    closeSheet('confirmModal');
+    if (action) await action();
+  }
+
+  // ------------------------------------------------------------ 设置
+
+  /** 只改一个设置项：把当前设置整体回写，避免别处的改动被覆盖。 */
+  async function persistSetting(key, value) {
+    const patch = Object.assign({}, state.settings);
+    patch[key] = value;
+    state.settings = await LP.setSettings(patch);
+    return state.settings;
+  }
+
+  function resolvedTheme() {
+    const theme = state.settings.theme;
+    if (theme === 'light' || theme === 'dark') return theme;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    return mq.matches ? 'dark' : 'light';
+  }
+
+  function applyTheme() {
+    const theme = resolvedTheme();
+    document.documentElement.dataset.theme = theme;
+    document.body.classList.toggle('light', theme === 'light');
+    document.body.classList.toggle('dark', theme === 'dark');
+  }
+
+  function applyFontSize() {
+    const size = Number(state.settings.fontSize) || 16;
+    document.documentElement.style.setProperty('--editor-font-size', size + 'px');
+    $('fontSizeHint').textContent = size + ' px';
+    $('setFontSize').value = String(size);
+  }
+
+  function applyPaneState() {
+    const panes = $('panes');
+    panes.classList.toggle('preview-off', !state.settings.showPreview);
+    panes.classList.toggle('outline-on', !$('outlinePanel').hidden);
+    $('btnPreview').classList.toggle('on', Boolean(state.settings.showPreview));
+    $('btnOutline').classList.toggle('on', !$('outlinePanel').hidden);
+    $('btnReading').classList.toggle('on', Boolean(state.settings.readingMode));
+    document.body.classList.toggle('reading-mode', Boolean(state.settings.readingMode));
+    $('app').dataset.reading = state.settings.readingMode ? 'on' : 'off';
+  }
+
+  function applyOutlineState(on) {
+    const panel = $('outlinePanel');
+    panel.hidden = !on;
+    $('outlineScrim').hidden = !on || !isNarrow();
+    if (on) renderOutline();
+    $('outlineSwitch') && syncSegmentedActive('outlineSwitch', on ? 'on' : 'off');
+    applyPaneState();
+    syncTabs();
+  }
+
+  function applySettingsUi() {
+    applyTheme();
+    applyFontSize();
+    applyPaneState();
+    applyOutlineState(Boolean(state.settings.showOutline));
+
+    const lineWidth = state.settings.lineWidth || 'normal';
+    document.documentElement.dataset.lineWidth = lineWidth;
+    document.documentElement.dataset.motion = state.settings.motion === 'reduce' ? 'reduce' : 'full';
+    syncSwitch('autoSaveSwitch', state.settings.autoSave !== false);
+    syncSwitch('motionSwitch', state.settings.motion === 'reduce');
+    syncSwitch('hlSwitch', state.settings.highlight !== false);
+    syncSwitch('mathSwitch', state.settings.math !== false);
+
+    buildSegmented(
+      'engineSwitch',
+      [
+        { key: 'auto', label: '自动' },
+        { key: 'enhanced', label: '增强' },
+        { key: 'light', label: '轻量' },
+      ],
+      state.settings.mdEngine || 'auto',
+      async (key) => {
+        state.settings = await LP.setSettings({ mdEngine: key });
+        $('engineHint').textContent =
+          key === 'auto' ? '自动' : key === 'enhanced' ? '增强 Markdown' : '轻量（内置）';
+        renderPreview();
+        toast('Markdown 引擎：' + (key === 'auto' ? '自动' : key === 'enhanced' ? '增强' : '轻量'), 'ok');
+      },
+    );
+    $('engineHint').textContent =
+      (state.settings.mdEngine || 'auto') === 'auto'
+        ? '自动'
+        : state.settings.mdEngine === 'enhanced'
+          ? '增强 Markdown'
+          : '轻量（内置）';
+    $('engineNote').textContent =
+      '自动 = 平时用内置渲染器（排版和导出跟以前完全一致），写到脚注、定义列表、:emoji: 这类' +
+      '内置渲染器做不到的语法时自动切增强引擎。增强引擎带四个插件：任务清单 / 脚注 / 定义列表 / emoji。' +
+      '当前装上的增强能力：' +
+      LIB_SUMMARY +
+      '。';
+
+    buildSegmented(
+      'themeSwitch',
+      [
+        { key: 'system', label: '跟随系统' },
+        { key: 'light', label: '浅色' },
+        { key: 'dark', label: '深色' },
+      ],
+      state.settings.theme || 'dark',
+      async (key) => {
+        state.settings = await LP.setSettings({ theme: key });
+        applyTheme();
+        renderPreview();
+      },
+    );
+
+    buildSegmented(
+      'sortSwitch',
+      [
+        { key: 'updated', label: '最近修改' },
+        { key: 'created', label: '创建时间' },
+        { key: 'title', label: '标题' },
+      ],
+      state.settings.sort || 'updated',
+      async (key) => {
+        state.settings = await LP.setSettings({ sort: key });
+        await reloadList();
+        renderList();
+        toast('列表已按「' + (key === 'updated' ? '最近修改' : key === 'created' ? '创建时间' : '标题') + '」排序', 'ok');
+      },
+    );
+
+    buildSegmented(
+      'lineWidthSwitch',
+      [
+        { key: 'narrow', label: '窄' },
+        { key: 'normal', label: '标准' },
+        { key: 'wide', label: '宽' },
+      ],
+      lineWidth,
+      async (key) => {
+        state.settings = await LP.setSettings({ lineWidth: key });
+        document.documentElement.dataset.lineWidth = key;
+        resizeCharts();
+      },
+    );
+
+    buildSegmented(
+      'readingModeSwitch',
+      [
+        { key: 'off', label: '关闭' },
+        { key: 'on', label: '开启' },
+      ],
+      state.settings.readingMode ? 'on' : 'off',
+      async (key) => {
+        state.settings = await LP.setSettings({ readingMode: key === 'on' });
+        applyPaneState();
+        setTimeout(resizeCharts, 240);
+      },
+    );
+
+    buildSegmented(
+      'outlineSwitch',
+      [
+        { key: 'off', label: '关闭' },
+        { key: 'on', label: '开启' },
+      ],
+      state.settings.showOutline ? 'on' : 'off',
+      async (key) => {
+        state.settings = await LP.setSettings({ showOutline: key === 'on' });
+        applyOutlineState(key === 'on');
+      },
+    );
+  }
+
+  function buildSegmented(id, options, activeKey, onPick) {
+    const host = $(id);
+    if (!host) return;
+    host.innerHTML = options
+      .map(
+        (opt) =>
+          '<button type="button" class="seg' +
+          (opt.key === activeKey ? ' on' : '') +
+          '" data-key="' +
+          esc(opt.key) +
+          '" aria-pressed="' +
+          (opt.key === activeKey ? 'true' : 'false') +
+          '">' +
+          esc(opt.label) +
+          '</button>',
+      )
+      .join('');
+    host.onclick = (event) => {
+      const btn = event.target.closest('.seg');
+      if (!btn) return;
+      const key = btn.getAttribute('data-key');
+      Array.prototype.slice.call(host.querySelectorAll('.seg')).forEach((seg) => {
+        const on = seg === btn;
+        seg.classList.toggle('on', on);
+        seg.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      if (onPick) onPick(key);
+    };
+  }
+
+  function syncSegmentedActive(id, key) {
+    const host = $(id);
+    if (!host) return;
+    Array.prototype.slice.call(host.querySelectorAll('.seg')).forEach((seg) => {
+      const on = seg.getAttribute('data-key') === key;
+      seg.classList.toggle('on', on);
+      seg.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+
+  function syncSwitch(id, on) {
+    const el = $(id);
+    if (!el) return;
+    el.setAttribute('aria-checked', on ? 'true' : 'false');
+  }
+
+  async function openSettings() {
+    buildSegmented(
+      'themeSwitch',
+      [
+        { key: 'system', label: '跟随系统' },
+        { key: 'light', label: '浅色' },
+        { key: 'dark', label: '深色' },
+      ],
+      state.settings.theme || 'dark',
+      async (key) => {
+        state.settings = await LP.setSettings({ theme: key });
+        applyTheme();
+        renderPreview();
+      },
+    );
+    if (!state.appInfo) {
+      try {
+        state.appInfo = await LP.appInfo();
+      } catch (err) {
+        state.appInfo = null;
+      }
+    }
+    const dir = (state.appInfo && state.appInfo.dataDir) || '本机';
+    $('dataDirText').textContent = dir;
+    $('aboutText').textContent =
+      'LongPost ' +
+      ((state.appInfo && state.appInfo.version) || '') +
+      ' · ' +
+      ((state.appInfo && state.appInfo.platform) || 'web') +
+      ' · 当前环境：' +
+      (LP && LP.platformLabel ? LP.platformLabel : '未知') +
+      '。正文、图片、附件全部保存在你自己的设备上，不联网、不上传。';
+    $('openDataDir').hidden = !CAPS.openDataDir;
+    openSheet('settingsModal');
+  }
+
+  // ------------------------------------------------------------ 回收站
+
+  async function openTrash() {
+    const rows = await LP.listTrash();
+    const host = $('trashList');
+    if (!rows.length) {
+      host.innerHTML = '<div class="list-empty small">' + icon('trash') + '<p>回收站是空的。</p></div>';
+    } else {
+      host.innerHTML = rows
+        .map(
+          (row) =>
+            '<div class="panel-row" data-id="' +
+            esc(row.id) +
+            '"><div class="panel-main"><div class="panel-title">' +
+            esc(row.title || '未命名') +
+            '</div><div class="panel-sub">' +
+            (row.chars || 0) +
+            ' 字 · 删除于 ' +
+            (formatTime(row.deletedAt) || '—') +
+            '</div></div><div class="panel-acts"><button class="btn ghost sm" data-restore="' +
+            esc(row.id) +
+            '">恢复</button><button class="btn ghost sm danger" data-purge="' +
+            esc(row.id) +
+            '">彻底删除</button></div></div>',
+        )
+        .join('');
+    }
+    openSheet('trashModal');
+  }
+
+  // ------------------------------------------------------------ 标签
+
+  function openTags(editable) {
+    const canEdit = Boolean(editable && state.current);
+    $('tagsEditField').hidden = !canEdit;
+    $('tagsCancel').hidden = !canEdit;
+    $('tagsSave').hidden = !canEdit;
+    $('tagsInput').value = canEdit ? (state.current.tags || []).join(', ') : '';
+    renderTagCloud(canEdit);
+    openSheet('tagsModal');
+  }
+
+  async function renderTagCloud(editable) {
+    const tags = await LP.listTags();
+    const host = $('tagCloud');
+    if (!tags.length) {
+      host.innerHTML = '<div class="list-empty small">' + icon('tag') + '<p>还没有标签。在编辑器里点「标签」给文章加一个。</p></div>';
+      return;
+    }
+    host.innerHTML = tags
+      .map(
+        (tag) =>
+          '<button type="button" class="chip' +
+          (state.tagFilter === tag.name ? ' on' : '') +
+          '" data-tag="' +
+          esc(tag.name) +
+          '">' +
+          esc(tag.name) +
+          '<span class="chip-count">' +
+          tag.count +
+          '</span></button>',
+      )
+      .join('');
+    host.dataset.editable = editable ? '1' : '';
+  }
+
+  async function saveTags() {
+    if (!state.current) return;
+    // 必须切成数组：repo.normalizeTags 只认数组，传字符串会被当成 [] 静默丢掉
+    const tags = $('tagsInput')
+      .value.split(/[,，\s]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    // setTags 返回 { ok, tags }，不是文章——别覆盖 state.current，否则下次自动保存会新建一篇
+    const res = await LP.setTags(state.current.id, tags);
+    if (res && res.ok === false) {
+      toast('保存标签失败：' + (res.error || '未知错误'), 'err');
+      return;
+    }
+    state.current.tags = (res && res.tags) || tags;
+    await refreshAll();
+    refreshPinButton();
+    closeSheet('tagsModal');
+    toast('标签已保存', 'ok');
+  }
+
+  // ------------------------------------------------------------ 历史版本
+
+  async function openHistory() {
+    if (!state.current) return;
+    const rows = await LP.listRevisions(state.current.id);
+    const host = $('historyList');
+    if (!rows.length) {
+      host.innerHTML = '<div class="list-empty small">' + icon('clock') + '<p>还没有历史版本。改一改、保存一次就会出现。</p></div>';
+    } else {
+      host.innerHTML = rows
+        .map(
+          (row) =>
+            '<div class="panel-row" data-index="' +
+            row.index +
+            '"><div class="panel-main"><div class="panel-title">' +
+            esc(row.title || '未命名') +
+            ' <span class="panel-tag">' +
+            (row.chars || 0) +
+            ' 字</span></div><div class="panel-sub">' +
+            (formatTime(row.at) || '—') +
+            ' · ' +
+            esc(row.summary || '') +
+            '</div></div><div class="panel-acts"><button class="btn ghost sm" data-rollback="' +
+            row.index +
+            '">回滚</button></div></div>',
+        )
+        .join('');
+    }
+    openSheet('historyModal');
+  }
+
+  // ------------------------------------------------------------ 图表对话框
+
+  function buildTypeButtons() {
+    const host = $('chartTypes');
+    host.innerHTML = CH.CHART_TYPES.map(
+      (type) =>
+        '<button type="button" class="seg' +
+        (type === state.dialogType ? ' on' : '') +
+        '" data-key="' +
+        type +
+        '" aria-pressed="' +
+        (type === state.dialogType ? 'true' : 'false') +
+        '">' +
+        CH.TYPE_LABELS[type] +
+        '</button>',
+    ).join('');
+  }
+
+  function seriesRowHtml(index, name, data) {
+    return (
+      '<div class="series-row" data-index="' +
+      index +
+      '"><input class="series-name" type="text" value="' +
+      esc(name || '') +
+      '" placeholder="系列名" aria-label="系列名" /><input class="series-data" type="text" value="' +
+      esc(data || '') +
+      '" placeholder="1, 2, 3" aria-label="系列数据" /><button type="button" class="icon-btn series-del" aria-label="删掉这条">' +
+      icon('x') +
+      '</button></div>'
+    );
+  }
+
+  function addSeriesRow(name, data) {
+    const list = $('seriesList');
+    const index = list.children.length;
+    const holder = document.createElement('div');
+    holder.innerHTML = seriesRowHtml(index, name, data);
+    const row = holder.firstChild;
+    row.querySelector('.series-del').addEventListener('click', () => {
+      row.remove();
+      renumberSeries();
+    });
+    list.appendChild(row);
+    renumberSeries();
+  }
+
+  function renumberSeries() {
+    Array.prototype.slice.call($('seriesList').children).forEach((row, i) => {
+      row.dataset.index = String(i);
+    });
+  }
+
+  function applyDialogType() {
+    const pie = state.dialogType === 'pie';
+    $('cartesianFields').hidden = pie;
+    $('pieFields').hidden = !pie;
+    $('chartHeight').value = String(
+      pie ? (state.pendingChart && state.pendingChart.height) || 320 : CH.DEFAULT_CHART_HEIGHT,
+    );
+    $('heightHint').textContent = $('chartHeight').value + ' px';
+    buildTypeButtons();
+    previewChart();
+  }
+
+  /** 只填表单，不画图（画图交给 previewChart，等抽屉可见了再调用）。 */
+  function resetChartForm() {
+    state.dialogType = 'bar';
+    $('chartTitle').value = '';
+    $('chartX').value = '1月, 2月, 3月, 4月';
+    $('seriesList').innerHTML = '';
+    addSeriesRow('系列 1', '12, 19, 8, 15');
+    $('chartPie').value = '技术, 42\n随笔, 28\n读书, 18\n其他, 12';
+    $('chartError').textContent = '';
+    $('chartHeight').value = String(CH.DEFAULT_CHART_HEIGHT);
+    $('heightHint').textContent = $('chartHeight').value + ' px';
+    $('cartesianFields').hidden = false;
+    $('pieFields').hidden = true;
+    buildTypeButtons();
+  }
+
+  function currentChartCard() {
+    const type = state.dialogType;
+    const title = $('chartTitle').value.trim();
+    const height = Number($('chartHeight').value) || CH.DEFAULT_CHART_HEIGHT;
+    if (type === 'pie') {
+      const data = $('chartPie')
+        .value.split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const parts = line.split(/[,，]/);
+          const name = (parts[0] || '').trim();
+          const value = Number((parts[1] || '').trim());
+          return { name: name || '未命名', value: isNaN(value) ? 0 : value };
+        });
+      return { type: type, title: title, data: data, height: height };
+    }
+    const xAxis = $('chartX')
+      .value.split(/[,，]/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    const series = Array.prototype.slice.call($('seriesList').children).map((row, i) => {
+      const name = row.querySelector('.series-name').value.trim() || '系列 ' + (i + 1);
+      const data = row
+        .querySelector('.series-data')
+        .value.split(/[,，]/)
+        .map((s) => Number(s.trim()))
+        .map((n) => (isNaN(n) ? 0 : n));
+      return { name: name, data: data };
+    });
+    return { type: type, title: title, xAxis: xAxis, series: series, height: height };
+  }
+
+  /** 表单 -> 卡片，再过一遍 CH.parseChartCard 校验，跟写进正文的完全一致。 */
+  function normalizedCard() {
+    let parsed = null;
+    try {
+      parsed = CH.parseChartCard(JSON.stringify(currentChartCard()));
+    } catch (err) {
+      parsed = null;
+    }
+    return parsed;
+  }
+
+  function chartTheme() {
+    return resolvedTheme();
+  }
+
+  function previewChart() {
+    const box = $('chartPreviewBox');
+    const errBox = $('chartError');
+    errBox.textContent = '';
+
+    if (!window.echarts) {
+      box.innerHTML = '<div class="chart-bad">图表运行库没加载</div>';
+      return;
+    }
+
+    const card = normalizedCard();
+    if (!card) {
+      errBox.textContent = '图表数据不完整：检查一下 x 轴分类数、每个系列的数值个数是否对得上。';
+      box.innerHTML = '';
+      if (state.pendingChart) {
+        try {
+          state.pendingChart.dispose();
+        } catch (err) {
+          /* 忽略 */
+        }
+        state.pendingChart = null;
+      }
+      return;
+    }
+
+    try {
+      if (!state.pendingChart) {
+        box.innerHTML = '';
+        state.pendingChart = window.echarts.init(box, null, { renderer: 'canvas' });
+      }
+      state.pendingChart.setOption(CH.chartCardToEchartsOption(card, chartTheme()), true);
+      state.pendingChart.resize();
+    } catch (err) {
+      errBox.textContent = '预览失败：' + String((err && err.message) || err);
+    }
+  }
+
+  function openChartDialog() {
+    if (!state.current) {
+      toast('先打开一篇文章');
+      return;
+    }
+    disposePendingChart();
+    $('chartPreviewBox').innerHTML = '';
+    resetChartForm();
+    openSheet('chartModal');
+    // 等抽屉真正显示出来（有宽高）再画，否则 ECharts 会画成 0×0
+    setTimeout(() => {
+      previewChart();
+      if (state.pendingChart) state.pendingChart.resize();
+    }, 40);
+  }
+
+  function closeChartDialog() {
+    closeSheet('chartModal');
+  }
+
+  function confirmChartInsert() {
+    const card = normalizedCard();
+    if (!card) {
+      $('chartError').textContent = '图表数据不完整，先补全再插入。';
+      return;
+    }
+    const code = CH.encodeChartCard(card);
+    const editor = $('editor');
+    const pos = editor.selectionStart;
+    const before = editor.value.slice(0, pos);
+    const prefix = before.length && !/\n\s*$/.test(before) ? '\n\n' : '';
+    insertAtCursor(prefix + code + '\n\n');
+    closeChartDialog();
+    toast('图表已插入正文', 'ok');
+  }
+
+  // ==========================================================================
+  // 14. 视图 / 窄屏
+  // ==========================================================================
+
+  function setPaneMode(mode) {
+    const ok = ['write', 'split', 'preview'].indexOf(mode) === -1 ? 'write' : mode;
+    state.paneMode = ok;
+    $('panes').dataset.mode = ok;
+    $('paneWrite').classList.toggle('on', ok === 'write');
+    $('paneSplit').classList.toggle('on', ok === 'split');
+    $('panePreview').classList.toggle('on', ok === 'preview');
+    // 从「写作」切回对照/预览时预览容器才有宽度，得重画一次图表
+    if (ok !== 'write') renderPreview();
+    setTimeout(resizeCharts, 60);
+  }
+
+  /**
+   * 切页（列表 / 写作）之前先收掉浮在最上面的抽屉。
+   * 验证方点出的问题：从「大纲」点底部导航的「列表」返回后，大纲抽屉没关、
+   * 底栏高亮还停在「大纲」（因为 outlineOn 仍然为真），看起来像点了没反应。
+   * 只收「纯查看」的浮层：大纲抽屉与设置抽屉（设置里的改动都是即时生效的，没有未保存内容）。
+   */
+  function dismissOverlays() {
+    const panel = $('outlinePanel');
+    const sheet = $('settingsModal');
+    if (panel && !panel.hidden) {
+      applyOutlineState(false);
+      syncSegmentedActive('outlineSwitch', 'off');
+      LP.setSettings({ showOutline: false })
+        .then((next) => { state.settings = next; })
+        .catch(() => {});
+    }
+    if (sheet && !sheet.hidden) closeSheet('settingsModal');
+  }
+
+  /** 放不下时按这个顺序逐个收进「更多」—— 每一项在「更多」菜单里都有等价入口 */
+  const TOOLBAR_FOLD_ORDER = [
+    'btnTagsEdit', 'btnPin', 'btnShare', 'btnPreview',
+    'btnReading', 'btnOutline', 'btnFind', 'btnChart', 'btnImage', 'btnFile',
+  ];
+
+  /**
+   * 工具条别让按钮跑到视口外面去（验证方 D3：1320 宽时「更多」溢出 236px，
+   * 而且没有任何横滑提示）。做法不是猜媒体查询断点，而是**按实测溢出**折叠：
+   * 先把上一次的折叠清掉，再一个个收，直到不再溢出；真还有溢出就补右缘渐隐提示。
+   */
+  function syncToolsOverflow() {
+    const bar = document.querySelector('.toolbar');
+    if (!bar) return;
+    const tools = bar.querySelector('.tools');
+    if (!tools) return;
+    TOOLBAR_FOLD_ORDER.forEach((id) => {
+      const el = $(id);
+      if (el) el.classList.remove('folded');
+    });
+    if (isNarrow()) {
+      // 窄屏用自己那套（只留 3 个高频键 + 更多），别在这里折叠
+      bar.classList.remove('overflowing');
+      return;
+    }
+    // 两种溢出都要算：宽度 >1240 时 .tools 有自己的 max-width，溢出发生在**内部**
+    // （scrollWidth > clientWidth）；<=1240 放开 max-width 后溢出跑到**容器外**
+    // （tools 右缘越过工具条右缘）。只量一种会把后者漏掉。
+    const overNow = () => {
+      const row = bar.getBoundingClientRect();
+      const box = tools.getBoundingClientRect();
+      return tools.scrollWidth - tools.clientWidth > 4 || box.right - row.right > 0.5;
+    };
+    let guard = 0;
+    while (overNow() && guard < TOOLBAR_FOLD_ORDER.length) {
+      const el = $(TOOLBAR_FOLD_ORDER[guard]);
+      if (el) el.classList.add('folded');
+      guard += 1;
+    }
+    bar.classList.toggle('overflowing', overNow());
+  }
+
+  function syncTabs() {
+    const view = $('app').dataset.view;
+    const outlineOn = !$('outlinePanel').hidden;
+    const settingsOn = !$('settingsModal').hidden;
+    $('tabList').classList.toggle('on', view === 'list' && !outlineOn && !settingsOn);
+    $('tabEdit').classList.toggle('on', view === 'editor' && !outlineOn && !settingsOn);
+    $('tabOutline').classList.toggle('on', outlineOn);
+    $('tabSettings').classList.toggle('on', settingsOn);
+  }
+
+  function showList() {
+    void flushBeforeSwitch();
+    dismissOverlays();
+    $('app').dataset.view = 'list';
+    if (hasLayer('view:editor')) closeLayerByName('view:editor', false);
+    syncTabs();
+    renderList();
+  }
+
+  /**
+   * 软键盘：手机上键盘弹起来会盖住底部，这里把「键盘占掉的高度」算成
+   * --kb-inset 变量，编辑区自己让开；顺带在输入框获得焦点后把它滚进视野。
+   */
+  function setupKeyboard() {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const apply = () => {
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      document.documentElement.style.setProperty('--kb-inset', inset > 80 ? inset + 'px' : '0px');
+      document.documentElement.classList.toggle('kb-open', inset > 120);
+    };
+    vv.addEventListener('resize', apply);
+    vv.addEventListener('scroll', apply);
+    document.addEventListener('focusin', (event) => {
+      const el = event.target;
+      if (!el || !/^(INPUT|TEXTAREA)$/.test(el.tagName)) return;
+      setTimeout(() => {
+        try {
+          el.scrollIntoView({ block: 'center' });
+        } catch (err) {
+          /* 忽略 */
+        }
+      }, 260);
+    });
+  }
+
+  function setupSplitter() {
+    const splitter = $('splitter');
+    const panes = $('panes');
+    let dragging = false;
+    splitter.addEventListener('pointerdown', (event) => {
+      dragging = true;
+      splitter.classList.add('dragging');
+      try {
+        splitter.setPointerCapture(event.pointerId);
+      } catch (err) {
+        /* 忽略 */
+      }
+    });
+    splitter.addEventListener('pointermove', (event) => {
+      if (!dragging || isNarrow()) return;
+      const rect = panes.getBoundingClientRect();
+      const ratio = Math.min(0.8, Math.max(0.2, (event.clientX - rect.left) / rect.width));
+      panes.style.setProperty('--split', ratio.toFixed(4));
+      $('editor').style.flex = '0 0 auto';
+      $('editor').style.width = ratio * 100 + '%';
+      $('preview').style.width = (1 - ratio) * 100 + '%';
+      resizeCharts();
+    });
+    const stop = () => {
+      dragging = false;
+      splitter.classList.remove('dragging');
+    };
+    splitter.addEventListener('pointerup', stop);
+    splitter.addEventListener('pointercancel', stop);
+  }
+
+  // ==========================================================================
+  // 15. 事件绑定
+  // ==========================================================================
+
+  function bind() {
+    // ---------------------------------------------------------- 侧栏
+    $('search').addEventListener('input', (event) => {
+      state.query = event.target.value;
+      $('btnSearchClear').hidden = !state.query;
+      renderList();
+    });
+    $('btnSearchClear').addEventListener('click', () => {
+      state.query = '';
+      $('search').value = '';
+      $('btnSearchClear').hidden = true;
+      renderList();
+      $('search').focus();
+    });
+    $('tagFilterSelect').addEventListener('change', (event) => {
+      state.tagFilter = event.target.value;
+      renderList();
+    });
+    $('btnNew').addEventListener('click', () => {
+      newArticle();
+    });
+    $('btnNew2').addEventListener('click', () => {
+      newArticle();
+    });
+    $('btnImport').addEventListener('click', importArticleFromFile);
+    $('btnTags').addEventListener('click', () => openTags(false));
+    $('btnTrash').addEventListener('click', openTrash);
+    $('btnDataDir').addEventListener('click', openDataDir);
+    $('btnSettings').addEventListener('click', openSettings);
+
+    // 列表：点开、点标签筛选、更多、长按
+    $('list').addEventListener('click', (event) => {
+      if (swallowedByLongPress) {
+        swallowedByLongPress = false;
+        event.preventDefault();
+        return;
+      }
+      const clear = event.target.closest('[data-act="clear-filter"]');
+      if (clear) {
+        clearFilters();
+        return;
+      }
+      const create = event.target.closest('[data-act="new-article"]');
+      if (create) {
+        newArticle();
+        return;
+      }
+      const chip = event.target.closest('.chip');
+      if (chip) {
+        const tag = chip.getAttribute('data-tag');
+        state.tagFilter = state.tagFilter === tag ? '' : tag;
+        $('tagFilterSelect').value = state.tagFilter;
+        renderList();
+        return;
+      }
+      const more = event.target.closest('[data-more]');
+      if (more) {
+        event.stopPropagation();
+        openItemMenu(more.getAttribute('data-more'), more);
