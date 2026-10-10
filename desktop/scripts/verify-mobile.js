@@ -37,7 +37,7 @@ function check(label, condition, detail) {
 
 // ---------------------------------------------------------------- 1. index.html 的脚本
 
-console.log('\u005cn[1] index.html 引用的脚本');
+console.log('\n[1] index.html 引用的脚本');
 
 const htmlPath = path.join(rendererDir, 'index.html');
 if (!fs.existsSync(htmlPath)) {
@@ -47,7 +47,7 @@ if (!fs.existsSync(htmlPath)) {
 const html = fs.readFileSync(htmlPath, 'utf8');
 
 const scriptSrcs = [];
-const re = /<script\u005cs+src=\u0022([^\u0022]+)\u0022/g;
+const re = /<script\s+src="([^"]+)"/g;
 let m;
 while ((m = re.exec(html)) !== null) scriptSrcs.push(m[1]);
 
@@ -70,10 +70,10 @@ console.log('    加载顺序：' + scriptSrcs.join(' → '));
 
 // ---------------------------------------------------------------- 2. 全局变量先后顺序
 
-console.log('\u005cn[2] 全局变量的产生与使用顺序');
+console.log('\n[2] 全局变量的产生与使用顺序');
 
 // 压缩过的第三方库（echarts 有 1.1MB，且整份挤在一行里）不参与接线检查。
-// 原因：在单行超长代码上跑 /[A-Za-z0-9]*\u005cs*=/ 这种\u0022贪婪量词 + 失败回退\u0022的正则，
+// 原因：在单行超长代码上跑 /[A-Za-z0-9]*\s*=/ 这种"贪婪量词 + 失败回退"的正则，
 // 每遇到一个 window. 就要把字母数字段从长到短试一遍，整体退化到 O(n²)，
 // 直接把这个进程挂死（实测能卡住整条本地执行通道半小时以上）。
 // echarts 也不提供任何 LP 开头的全局量，跳过它不影响检查的完整性。
@@ -92,9 +92,9 @@ const producers = new Map(); // 全局名 -> 第几个脚本开始提供
 scriptSrcs.forEach((src, index) => {
   const code = readWiringSource(path.join(rendererDir, src));
   if (code == null) return;
-  const assigned = code.match(/window\u005c.([A-Z][A-Za-z0-9]*)\u005cs*=/g) || [];
+  const assigned = code.match(/window\.([A-Z][A-Za-z0-9]*)\s*=/g) || [];
   for (const a of assigned) {
-    const name = /window\u005c.([A-Z][A-Za-z0-9]*)/.exec(a)[1];
+    const name = /window\.([A-Z][A-Za-z0-9]*)/.exec(a)[1];
     if (!producers.has(name)) producers.set(name, index);
   }
 });
@@ -103,10 +103,10 @@ let orderProblem = null;
 scriptSrcs.forEach((src, index) => {
   const code = readWiringSource(path.join(rendererDir, src));
   if (code == null) return;
-  const mentioned = code.match(/window\u005c.([A-Z][A-Za-z0-9]*)/g) || [];
-  const own = new Set((code.match(/window\u005c.([A-Z][A-Za-z0-9]*)\u005cs*=/g) || []).map((a) => /window\u005c.([A-Z][A-Za-z0-9]*)/.exec(a)[1]));
+  const mentioned = code.match(/window\.([A-Z][A-Za-z0-9]*)/g) || [];
+  const own = new Set((code.match(/window\.([A-Z][A-Za-z0-9]*)\s*=/g) || []).map((a) => /window\.([A-Z][A-Za-z0-9]*)/.exec(a)[1]));
   for (const g of mentioned) {
-    const name = /window\u005c.([A-Z][A-Za-z0-9]*)/.exec(g)[1];
+    const name = /window\.([A-Z][A-Za-z0-9]*)/.exec(g)[1];
     if (own.has(name)) continue;
     if (!producers.has(name)) continue; // 由外部环境提供（比如 Capacitor）
     if (producers.get(name) > index) {
@@ -122,7 +122,7 @@ for (const name of ['LPMarkdown', 'LPChart', 'LPPageStyle', 'LPOutline', 'LPRepo
 
 // ---------------------------------------------------------------- 3. vendor 拷贝一致性
 
-console.log('\u005cn[3] vendor 拷贝与 lib/ 是否一致');
+console.log('\n[3] vendor 拷贝与 lib/ 是否一致');
 
 const SHARED = ['markdown.js', 'chart.js', 'repo.js', 'page-style.js', 'outline.js'];
 for (const name of SHARED) {
@@ -146,22 +146,22 @@ check(
 
 // ---------------------------------------------------------------- 4. CSP
 
-console.log('\u005cn[4] 内容安全策略');
+console.log('\n[4] 内容安全策略');
 
-const csp = /content=\u0022([^\u0022]*default-src[^\u0022]*)\u0022/.exec(html);
+const csp = /content="([^"]*default-src[^"]*)"/.exec(html);
 check('页面里有 CSP', !!csp, '没找到 Content-Security-Policy');
 if (csp) {
   const value = csp[1];
   // 网页版导出要 fetch('vendor/echarts.min.js')，connect-src 若是 none 会被直接拦掉
-  check(\u0022connect-src 允许 'self'\u0022, /connect-src\u005cs+[^;]*'self'/.test(value), '当前是：' + value);
-  check('img-src 允许 blob:', /img-src\u005cs+[^;]*blob:/.test(value), '当前是：' + value);
-  check('img-src 允许 lp:', /img-src\u005cs+[^;]*lp:/.test(value), '当前是：' + value);
+  check("connect-src 允许 'self'", /connect-src\s+[^;]*'self'/.test(value), '当前是：' + value);
+  check('img-src 允许 blob:', /img-src\s+[^;]*blob:/.test(value), '当前是：' + value);
+  check('img-src 允许 lp:', /img-src\s+[^;]*lp:/.test(value), '当前是：' + value);
 }
-check('有 viewport 声明', /name=\u0022viewport\u0022/.test(html), '手机上是按 980px 虚拟宽度渲染的');
+check('有 viewport 声明', /name="viewport"/.test(html), '手机上是按 980px 虚拟宽度渲染的');
 
 // ---------------------------------------------------------------- 5. 共享模块在 Node 里可用
 
-console.log('\u005cn[5] 共享模块的功能');
+console.log('\n[5] 共享模块的功能');
 
 const OUTLINE = require(path.join(libDir, 'outline.js'));
 const REPO = require(path.join(libDir, 'repo.js'));
@@ -178,14 +178,14 @@ const sample = [
   '',
   '## 二级标题',
   '### **加粗的**三级标题',
-].join('\u005cn');
+].join('\n');
 const headings = OUTLINE.extractHeadings(sample);
 check('目录抓到 3 个标题', headings.length === 3, '抓到 ' + headings.length);
 check('跳过代码块里的 #', headings.every((h) => h.text.indexOf('不该被当成标题') === -1));
 check('标题里的 Markdown 记号被清掉', headings[2] && headings[2].text === '加粗的三级标题', JSON.stringify(headings[2]));
 check('层级正确', headings.map((h) => h.level).join(',') === '1,2,3', headings.map((h) => h.level).join(','));
 
-check('摘要会去掉图表围栏', REPO.makeSummary('```chart\u005cn{}\u005cn```\u005cn真正的正文') === '真正的正文');
+check('摘要会去掉图表围栏', REPO.makeSummary('```chart\n{}\n```\n真正的正文') === '真正的正文');
 check('校验标签去重与去井号', REPO.normalizeTags(['#甲', '甲', ' 乙 ', '']).join(',') === '甲,乙');
 check('图片后缀识别', REPO.isImageName('a.PNG') === true && REPO.isImageName('a.pdf') === false);
 check('阅读时长至少 1 分钟', REPO.readingMinutes('短') === 1);
@@ -194,7 +194,7 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
 
 // repo 在内存后端上跑一遍，确认手机端那套规则真的成立
 (async () => {
-  console.log('\u005cn[6] 仓库层在「内存后端」上的行为（等价于手机端的 IndexedDB 后端）');
+  console.log('\n[6] 仓库层在「内存后端」上的行为（等价于手机端的 IndexedDB 后端）');
 
   const mem = { articles: [], settings: {}, files: new Map() };
   const backend = {
@@ -221,7 +221,7 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
   };
   const repo = REPO.createRepo(backend);
 
-  const a1 = await repo.saveArticle({ title: '甲', content: '# 甲\u005cn正文' });
+  const a1 = await repo.saveArticle({ title: '甲', content: '# 甲\n正文' });
   check('新建拿到 id', typeof a1.id === 'string' && a1.id.length > 3);
   check('新建后列表有 1 篇', (await repo.listArticles()).length === 1);
 
@@ -250,7 +250,7 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
   mem.articles = mem.articles.map((x) =>
     x.id === a1.id ? { ...x, updatedAt: Date.now() - 10 * 60 * 1000 } : x,
   );
-  await repo.saveArticle({ id: a1.id, title: cur.title, content: cur.content + '\u005cn又写了一段' });
+  await repo.saveArticle({ id: a1.id, title: cur.title, content: cur.content + '\n又写了一段' });
   const revs = await repo.listRevisions(a1.id);
   check('产生了历史版本', revs.length >= 1, '实际 ' + revs.length);
   if (revs.length) {
@@ -268,7 +268,7 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
 
   // ------------------------------------------------------------ 7. Capacitor 工程
 
-  console.log('\u005cn[7] Capacitor 工程配置');
+  console.log('\n[7] Capacitor 工程配置');
 
   const capPath = path.join(mobileDir, 'capacitor.config.json');
   check('capacitor.config.json 存在', fs.existsSync(capPath));
@@ -295,11 +295,11 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
 
   // ------------------------------------------------------------ 8. 版本号
 
-  console.log('\u005cn[8] 版本号一致性');
+  console.log('\n[8] 版本号一致性');
 
   const desktopPkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
   const platformCode = fs.readFileSync(path.join(rendererDir, 'platform.js'), 'utf8');
-  const appVersion = (/APP_VERSION\u005cs*=\u005cs*'([^']+)'/.exec(platformCode) || [])[1];
+  const appVersion = (/APP_VERSION\s*=\s*'([^']+)'/.exec(platformCode) || [])[1];
   check(
     'platform.js 的 APP_VERSION 与 package.json 一致',
     appVersion === desktopPkg.version,
@@ -312,7 +312,7 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
   // 或者界面调了某个 LP.xxx 但底层根本没实现，都是静默失败，
   // 光看代码看不出来，跑起来才知道。
 
-  console.log('\u005cn[9] 界面接线');
+  console.log('\n[9] 界面接线');
 
   const appSrc = fs.readFileSync(path.join(rendererDir, 'app.js'), 'utf8');
   const preloadSrc = fs.readFileSync(path.join(root, 'preload.js'), 'utf8');
@@ -321,18 +321,18 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
   const repoCode = fs.readFileSync(path.join(rendererDir, 'vendor', 'repo.js'), 'utf8');
 
   const idList = [];
-  for (const found of html.matchAll(/\u005cbid=\u0022([^\u0022]+)\u0022/g)) idList.push(found[1]);
+  for (const found of html.matchAll(/\bid="([^"]+)"/g)) idList.push(found[1]);
   const htmlIds = new Set(idList);
 
   // 取用点扫描：从只认 $('id') 扩到所有「把元素 id 当字符串传进去」的辅助函数。
   // 只认 $('id') 是历史盲区：主题 / 排序 / 阅读行宽 / 阅读模式 / 正文大纲 / 引擎
   // 这 6 个开关是 buildSegmented('themeSwitch', …) 这样构建的，id 打错一个字母
   // 只会表现为「点了没反应」，老正则却全绿；openSheet / closeSheet（9 个弹窗）同理。
-  // 注意 '\u005c\u005c$' 要写成双反斜杠：单个 $ 在正则里是行尾锚点，不是字面量。
-  const ID_HELPERS = ['\u005c\u005c$', 'buildSegmented', 'syncSegmentedActive', 'syncSwitch', 'openSheet', 'closeSheet'];
+  // 注意 '\\$' 要写成双反斜杠：单个 $ 在正则里是行尾锚点，不是字面量。
+  const ID_HELPERS = ['\\$', 'buildSegmented', 'syncSegmentedActive', 'syncSwitch', 'openSheet', 'closeSheet'];
   const usedIds = new Map(); // id -> 第一次见到它的取用点，报错时能指到人
   for (const helper of ID_HELPERS) {
-    const reUsed = new RegExp(helper + '\u005c\u005c(\u005c\u005cs*[\u005c'\u0022]([^\u005c'\u0022]+)[\u005c'\u0022]', 'g');
+    const reUsed = new RegExp(helper + '\\(\\s*[\'"]([^\'"]+)[\'"]', 'g');
     for (const found of appSrc.matchAll(reUsed)) {
       if (!usedIds.has(found[1])) usedIds.set(found[1], helper);
     }
@@ -359,7 +359,7 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
   check(
     '6 个字符串传参的开关 id 已纳入扫描（防盲区回归）',
     blindIds.length === 0,
-    '没扫到：' + blindIds.join(', ') + \u0022 —— 扫描正则又被写回只认 $('id') 了？\u0022,
+    '没扫到：' + blindIds.join(', ') + " —— 扫描正则又被写回只认 $('id') 了？",
   );
 
   const dupIds = [...new Set(idList.filter((id, i) => idList.indexOf(id) !== i))];
@@ -367,9 +367,9 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
 
   // 界面上用到却没绑事件、也没进逻辑的按钮，属于「摆了但没用」
   const wiredIds = new Set();
-  for (const found of appSrc.matchAll(/\u005c$\u005c(\u005cs*'([^']+)'\u005cs*\u005c)\u005cs*\u005c.addEventListener/g)) wiredIds.add(found[1]);
+  for (const found of appSrc.matchAll(/\$\(\s*'([^']+)'\s*\)\s*\.addEventListener/g)) wiredIds.add(found[1]);
   const buttonIds = [];
-  for (const found of html.matchAll(/<button[^>]*\u005cbid=\u0022([^\u0022]+)\u0022/g)) buttonIds.push(found[1]);
+  for (const found of html.matchAll(/<button[^>]*\bid="([^"]+)"/g)) buttonIds.push(found[1]);
   const deadButtons = buttonIds.filter((id) => !wiredIds.has(id));
   check(
     '每个按钮都绑了事件（或明确是静态控件）',
@@ -378,13 +378,13 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
   );
 
   const lpUsed = new Set();
-  for (const found of appSrc.matchAll(/\u005cbLP\u005c.([A-Za-z0-9_]+)\u005cs*\u005c(/g)) lpUsed.add(found[1]);
+  for (const found of appSrc.matchAll(/\bLP\.([A-Za-z0-9_]+)\s*\(/g)) lpUsed.add(found[1]);
 
   const sources = [preloadSrc, platformSrc, repoCode];
   const hasMember = (name) =>
     sources.some(
       (src) =>
-        new RegExp('\u005c\u005cb' + name + '\u005c\u005cs*[:(]').test(src) || new RegExp('\u005c\u005cb' + name + '\u005c\u005cs*,').test(src),
+        new RegExp('\\b' + name + '\\s*[:(]').test(src) || new RegExp('\\b' + name + '\\s*,').test(src),
     );
   const lpMissing = [...lpUsed].filter((name) => !hasMember(name));
   check(
@@ -394,9 +394,9 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
   );
 
   const invokes = new Set();
-  for (const found of preloadSrc.matchAll(/ipcRenderer\u005c.invoke\u005c(\u005cs*'([^']+)'/g)) invokes.add(found[1]);
+  for (const found of preloadSrc.matchAll(/ipcRenderer\.invoke\(\s*'([^']+)'/g)) invokes.add(found[1]);
   const handles = new Set();
-  for (const found of mainSrc.matchAll(/ipcMain\u005c.handle\u005c(\u005cs*'([^']+)'/g)) handles.add(found[1]);
+  for (const found of mainSrc.matchAll(/ipcMain\.handle\(\s*'([^']+)'/g)) handles.add(found[1]);
 
   const noHandler = [...invokes].filter((c) => !handles.has(c));
   check('preload 的通道主进程都处理了', noHandler.length === 0, '没人接：' + noHandler.join(', '));
@@ -417,8 +417,8 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
     'importArticle',
   ];
   const unreachable = repoCapabilities.filter((name) => {
-    const onDesktop = new RegExp('\u005c\u005cb' + name + '\u005c\u005cs*:').test(preloadSrc);
-    const inUi = new RegExp('\u005c\u005cbLP\u005c\u005c.' + name + '\u005c\u005cs*\u005c\u005c(').test(appSrc);
+    const onDesktop = new RegExp('\\b' + name + '\\s*:').test(preloadSrc);
+    const inUi = new RegExp('\\bLP\\.' + name + '\\s*\\(').test(appSrc);
     return !onDesktop && !inUi;
   });
   check(
@@ -430,16 +430,16 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
   // 引入了却没人调用的模块，等于没接 —— vendor/outline.js 就这么躺了很久
   check(
     '大纲模块被界面真正调用',
-    /OUTLINE\u005c.buildToc\u005cs*\u005c(/.test(appSrc),
+    /OUTLINE\.buildToc\s*\(/.test(appSrc),
     'vendor/outline.js 引了但没有一处调用',
   );
 
   // 设置里存着、界面却不给改的项，用户永远碰不到它
   const settingsSurfaced = [
-    ['编辑区字号', /LP\u005c.setSettings\u005c(\u005c{\u005cs*fontSize:/.test(appSrc)],
-    ['列表排序', /LP\u005c.setSettings\u005c(\u005c{\u005cs*sort:/.test(appSrc)],
-    ['沉浸阅读', /LP\u005c.setSettings\u005c(\u005c{\u005cs*readingMode:/.test(appSrc)],
-    ['正文大纲', /LP\u005c.setSettings\u005c(\u005c{\u005cs*showOutline:/.test(appSrc)],
+    ['编辑区字号', /LP\.setSettings\(\{\s*fontSize:/.test(appSrc)],
+    ['列表排序', /LP\.setSettings\(\{\s*sort:/.test(appSrc)],
+    ['沉浸阅读', /LP\.setSettings\(\{\s*readingMode:/.test(appSrc)],
+    ['正文大纲', /LP\.setSettings\(\{\s*showOutline:/.test(appSrc)],
   ];
   const deadSettings = settingsSurfaced.filter((x) => !x[1]).map((x) => x[0]);
   check(
@@ -450,19 +450,19 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
 
   check(
     '阅读时长在界面上露出来了',
-    /readingMinutes/.test(appSrc) || /a\u005c.minutes/.test(appSrc),
+    /readingMinutes/.test(appSrc) || /a\.minutes/.test(appSrc),
     '仓库层算了 minutes，界面一处都没用',
   );
 
   check(
     '导入在桌面和手机两边都实现了',
-    /importArticle\u005cs*:/.test(preloadSrc) && /importArticle\u005cs*\u005c(/.test(platformSrc),
+    /importArticle\s*:/.test(preloadSrc) && /importArticle\s*\(/.test(platformSrc),
     'preload.js 或 renderer/platform.js 里缺 importArticle',
   );
 
   check(
     '主进程确实处理了导入通道',
-    /ipcMain\u005c.handle\u005c(\u005cs*'article:import'/.test(mainSrc),
+    /ipcMain\.handle\(\s*'article:import'/.test(mainSrc),
     'article:import 没有处理函数',
   );
 
@@ -476,7 +476,7 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
   //   - 设置里存着的项在界面上是不是都能改
   //   - 随包分发的第三方许可证是不是齐全、两份一致
 
-  console.log('\u005cn[10] 本轮新增能力的接线');
+  console.log('\n[10] 本轮新增能力的接线');
 
   // 10.1 「摆了但没接线」：html 里除图标 sprite 以外的 id 都应该有人取用。
   //      下面这几个是纯样式锚点，自己不接事件，列进豁免名单。
@@ -496,10 +496,10 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
     branchStart >= 0 && branchSplit > branchStart ? platformSrc.slice(branchStart, branchSplit) : '';
   const mobileBranch = branchSplit > 0 ? platformSrc.slice(branchSplit) : '';
   const capsKeys = (src) => {
-    const m = /capabilities:\u005cs*\u005c{([\u005cs\u005cS]*?)\u005c}/.exec(src);
+    const m = /capabilities:\s*\{([\s\S]*?)\}/.exec(src);
     if (!m) return null;
     return m[1]
-      .replace(/\u005c/\u005c/[^\u005cn]*/g, '')
+      .replace(/\/\/[^\n]*/g, '')
       .split(',')
       .map((unit) => unit.split(':')[0].trim())
       .filter(Boolean)
@@ -531,7 +531,7 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
     'exportHtml',
     'exportMarkdown',
   ];
-  const hasMemberIn = (src, name) => new RegExp('\u005c\u005cb' + name + '\u005c\u005cs*[:(]').test(src);
+  const hasMemberIn = (src, name) => new RegExp('\\b' + name + '\\s*[:(]').test(src);
   const oneSided = DUAL_METHODS.filter((name) => {
     const onDesktop = hasMemberIn(preloadSrc, name) || hasMemberIn(desktopBranch, name);
     const onMobile = hasMemberIn(mobileBranch, name);
@@ -574,10 +574,10 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
     }
     if (html.indexOf(rel) === -1) libNotLoaded.push(label);
     if (globalName) {
-      if (!new RegExp('\u005c\u005cb' + globalName + '\u005c\u005cb').test(fs.readFileSync(abs, 'utf8'))) {
+      if (!new RegExp('\\b' + globalName + '\\b').test(fs.readFileSync(abs, 'utf8'))) {
         libNoGlobal.push(label + '→' + globalName);
       }
-      if (!new RegExp('\u005c\u005cb' + globalName + '\u005c\u005cb').test(appSrc)) libNotUsed.push(label);
+      if (!new RegExp('\\b' + globalName + '\\b').test(appSrc)) libNotUsed.push(label);
     }
   }
   check(
@@ -594,16 +594,16 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
   check('app.js 里都有这些库的使用迹象', libNotUsed.length === 0, '只有声明没有调用：' + libNotUsed.join(', '));
   check(
     'swiped-events 的滑动事件被监听',
-    /addEventListener\u005c(\u005cs*'swiped-/.test(appSrc),
+    /addEventListener\(\s*'swiped-/.test(appSrc),
     'swiped-events 加载了但没有一处监听 swiped-left / swiped-right',
   );
 
   const LIB_KEYS = ['katex', 'renderMath', 'prism', 'mdIt', 'mdTask', 'mdFoot', 'mdDef', 'mdEmoji', 'flex', 'papa', 'htmlToImage', 'pull', 'hammer'];
-  const libBlock = /const LIB = \u005c{([\u005cs\u005cS]*?)\u005cn  \u005c};/.exec(appSrc);
+  const libBlock = /const LIB = \{([\s\S]*?)\n  \};/.exec(appSrc);
   const libBody = libBlock ? libBlock[1] : '';
-  const noHandle = LIB_KEYS.filter((key) => !new RegExp('\u005c\u005cb' + key + ':').test(libBody));
+  const noHandle = LIB_KEYS.filter((key) => !new RegExp('\\b' + key + ':').test(libBody));
   check('LIB 句柄表 13 个键齐全', noHandle.length === 0, '缺句柄：' + noHandle.join(', '));
-  const handleUnused = LIB_KEYS.filter((key) => !new RegExp('LIB\u005c\u005c.' + key + '\u005c\u005cb').test(appSrc));
+  const handleUnused = LIB_KEYS.filter((key) => !new RegExp('LIB\\.' + key + '\\b').test(appSrc));
   check('LIB 句柄都被真正调用过', handleUnused.length === 0, '声明了但一处没用：' + handleUnused.join(', '));
 
   // 10.4 手机端交互控件的点击高度（这一轮定的下限是 44px）
@@ -618,10 +618,10 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
   ];
   const lowTargets = [];
   for (const [sel, label] of TAP_TARGETS) {
-    const blocks = [...mobileCss.matchAll(new RegExp(sel.replace('.', '\u005c\u005c.') + '[^{,]*\u005c\u005c{([^}]*)\u005c\u005c}', 'g'))].map((m) => m[1]);
+    const blocks = [...mobileCss.matchAll(new RegExp(sel.replace('.', '\\.') + '[^{,]*\\{([^}]*)\\}', 'g'))].map((m) => m[1]);
     const heights = [];
     for (const block of blocks) {
-      for (const m of block.matchAll(/(min-height|height)\u005cs*:\u005cs*(\u005cd+(?:\u005c.\u005cd+)?)px/g)) heights.push(Number(m[2]));
+      for (const m of block.matchAll(/(min-height|height)\s*:\s*(\d+(?:\.\d+)?)px/g)) heights.push(Number(m[2]));
     }
     if (!heights.length) lowTargets.push(label + '(' + sel + ' 没写高度)');
     else if (Math.max(...heights) < 44) lowTargets.push(label + '(' + sel + ' 只有 ' + Math.max(...heights) + 'px)');
@@ -644,7 +644,7 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
     ['编辑区字号', 'fontSize', 'setFontSize'],
   ];
   const deadSettingKeys = SETTING_ENTRIES.filter(([, key, entry]) => {
-    const canWrite = new RegExp('setSettings\u005c\u005c(\u005c\u005c{\u005c\u005cs*' + key + ':').test(appSrc);
+    const canWrite = new RegExp('setSettings\\(\\{\\s*' + key + ':').test(appSrc);
     return !canWrite || !htmlIds.has(entry);
   }).map(([label]) => label);
   check(
@@ -680,7 +680,7 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
   ];
   // 只查「名字出现过」太弱：正文里提一句也算。这里直接解析版本表的「组件」列，
   // 要求它跟随包组件清单一一对上（多一行少一行都算不完整）。
-  const noticeRows = [...noticesText.matchAll(/^\u005c|\u005cs*\u005cd+\u005cs*\u005c|\u005cs*([^|]+?)\u005cs*\u005c|/gm)].map((m) => m[1].trim());
+  const noticeRows = [...noticesText.matchAll(/^\|\s*\d+\s*\|\s*([^|]+?)\s*\|/gm)].map((m) => m[1].trim());
   const noticeMissing = NOTICE_COMPONENTS.filter((name) => noticeRows.indexOf(name) === -1);
   const noticeExtra = noticeRows.filter((name) => NOTICE_COMPONENTS.indexOf(name) === -1);
   check(
@@ -696,7 +696,7 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
 
   // ------------------------------------------------------------ 11. 长图导出（D1 回归）
 
-  console.log('\u005cn[11] 长图导出必须按正文全高出图（D1 回归）');
+  console.log('\n[11] 长图导出必须按正文全高出图（D1 回归）');
 
   // 实现放在 scripts/longimage-guard.js 里，smoke-test.js 也调用同一份，
   // 免得两条流水线（桌面只跑 npm test，安卓跑 verify-mobile）各写一套慢慢走样。
@@ -706,7 +706,7 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
 
   // ------------------------------------------------------------ 12. 版面（P1 / P2 回归）
 
-  console.log('\u005cn[12] 贴底抽屉不被底栏遮挡 / 标题不被挤扁（P1、P2 回归）');
+  console.log('\n[12] 贴底抽屉不被底栏遮挡 / 标题不被挤扁（P1、P2 回归）');
 
   // 与 smoke-test.js 共用 scripts/layout-guard.js（一份实现两个调用点）。
   for (const c of require('./layout-guard').checkLayout(rendererDir)) {
@@ -715,7 +715,7 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
 
   // ------------------------------------------------------------ 结果
 
-  console.log('\u005cn' + '—'.repeat(54));
+  console.log('\n' + '—'.repeat(54));
   console.log('通过 ' + pass + ' 项，失败 ' + fail + ' 项');
   if (fail) {
     console.log('有失败项，先修好再推。');
