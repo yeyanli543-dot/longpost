@@ -30,6 +30,8 @@ permissions:
 jobs:
   android:
     runs-on: ubuntu-latest
+    # 安卓构建慢，但也不能让它无限挂着。上一次就是某个 action 卡住把整条流水线拖死。
+    timeout-minutes: 40
 
     steps:
       - uses: actions/checkout@v4
@@ -43,15 +45,30 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - uses: android-actions/setup-android@v3
-
-      - name: 预装 Android SDK 组件
-        # 版本对不上也不要紧：AGP 会在构建时自己补下缺的东西
+      - name: 检查并准备 Android SDK
+        # 这里刻意不用 android-actions/setup-android。第一次跑 Android 打包时，
+        # 就是它自己失败，把整个 job 带崩了（后面所有步骤全被 skipped）。
+        # 而它要做的事只是"下载 Android SDK"——ubuntu-latest 的镜像里本来就装好了，
+        # 没必要再去下一次。少一个外部 action，少一个能崩的地方。
         run: |
-          yes | sdkmanager --licenses > /dev/null 2>&1 || true
-          sdkmanager "platform-tools" > /dev/null 2>&1 || true
-          sdkmanager "platforms;android-36" > /dev/null 2>&1 || true
-          sdkmanager "build-tools;36.0.0" > /dev/null 2>&1 || true
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          echo "实际使用的 SDK 目录：$SDK"
+          echo "--- platforms ---"
+          ls "$SDK/platforms" 2>/dev/null || echo "(无)"
+          echo "--- build-tools ---"
+          ls "$SDK/build-tools" 2>/dev/null || echo "(无)"
+          echo "--- 接受许可 ---"
+          if [ -x "$SDK/cmdline-tools/latest/bin/sdkmanager" ]; then
+            yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
+          elif [ -x "$SDK/cmdline-tools/bin/sdkmanager" ]; then
+            yes | "$SDK/cmdline-tools/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
+          else
+            echo "(没有 sdkmanager，跳过；直接用镜像里已有的 SDK)"
+          fi
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
 
       - name: 装桌面端依赖（只为拿 echarts，跳过 electron 下载）
         working-directory: desktop
