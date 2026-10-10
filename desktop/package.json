@@ -1,0 +1,70 @@
+{
+  "name": "longpost-desktop",
+  "version": "1.0.0",
+  "description": "LongPost 桌面版 —— 本地写作与内容工作台，全部数据保存在你自己的电脑上",
+  "main": "main.js",
+  "author": "yeyanli543-dot",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "prepare": "node scripts/sync-vendor.js && node scripts/make-icon.js",
+    "vendor": "node scripts/sync-vendor.js",
+    "test": "node scripts/smoke-test.js",
+    "icon": "node scripts/make-icon.js",
+    "verify:ui": "electron . --smoke=./.verify/ui.png --smoke-script=scripts/ui-scenario.js --no-sandbox",
+    "verify:export": "electron scripts/verify-export.js --out=./.verify/export.png --no-sandbox",
+    "verify": "npm run test && npm run verify:export",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win --x64",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux"
+  },
+  "dependencies": {
+    "echarts": "6.1.0"
+  },
+  "devDependencies": {
+    "electron": "44.7.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "com.yeyanli543.longpost",
+    "productName": "LongPost",
+    "files": [
+      "main.js",
+      "preload.js",
+      "lib/**/*",
+      "renderer/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release",
+      "buildResources": "resources"
+    },
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "resources/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "LongPost"
+    },
+    "mac": {
+      "target": ["dmg"],
+      "category": "public.app-category.productivity",
+      "icon": "resources/icon.png"
+    },
+    "linux": {
+      "target": ["AppImage"],
+      "category": "Office",
+      "icon": "resources/icon.png"
+    }
+  }
+}

@@ -43,7 +43,7 @@ coverage/
 ._*
 .Spotlight-V100
 .Trashes
-ehthumbs.db
+ethumbs.db
 Thumbs.db
 
 # Temporary folders
@@ -69,3 +69,17 @@ pnpm-lock.yaml
 # 用户上传目录（运行时产生的文件，不进仓库）
 # 必须锚定到仓库根，否则会连 server/modules/uploads 一起忽略掉
 /uploads/
+
+# ---------------------------------------------------------------- 桌面版 desktop/
+# 打包产物
+desktop/release/
+# 自检截图
+desktop/.verify/
+
+# 下面这三个都是「装依赖时现生成」的，不进仓库：
+#   renderer/vendor/  —— 1.1 MB 的 echarts 打包文件，由 scripts/sync-vendor.js 从 node_modules 复制
+#   resources/icon.png —— 由 scripts/make-icon.js 用纯 Node 画出来
+#   package-lock.json —— 桌面版是独立子应用，锁文件随平台生成，不进仓库（依赖版本已在 package.json 里钉死）
+desktop/renderer/vendor/
+desktop/resources/icon.png
+desktop/package-lock.json

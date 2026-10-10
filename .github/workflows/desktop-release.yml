@@ -1,0 +1,121 @@
+name: Build Desktop Installers
+
+# 触发方式：
+#   1. 推 v* 标签 —— 出安装包并挂到 Release 上，得到一个可以长期直接下载的链接（推荐）
+#   2. 手动点 Run workflow —— 立刻出一轮，产物在本次运行的 Artifacts 里
+#   3. 往 main 推改动 —— 自动出一轮
+#
+# 这里故意不加 paths 过滤：加了之后标签推送会因为「这次 diff 里没有 desktop/**」
+# 而被静默跳过，Release 就出不来。桌面版构建很便宜，宁可靠一点。
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.label }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            label: Windows
+            script: dist:win
+            artifact: windows
+          - os: macos-latest
+            label: macOS
+            script: dist:mac
+            artifact: macos
+          - os: ubuntu-latest
+            label: Linux
+            script: dist:linux
+            artifact: linux
+
+    defaults:
+      run:
+        working-directory: desktop
+
+    steps:
+      - name: 取代码
+        uses: actions/checkout@v4
+
+      - name: 装 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # desktop/package-lock.json 不进仓库（见 .gitignore），所以这里用 npm install；
+      # 可复现性由 desktop/package.json 里钉死的精确版本保证。
+      # 这一步会顺带跑 prepare，自动生成 renderer/vendor/echarts.min.js 和 resources/icon.png ——
+      # 那两个文件同样不在仓库里，但打包时必须有。
+      - name: 装依赖
+        run: npm install
+
+      - name: 跑逻辑自检
+        run: npm test
+
+      - name: 打包
+        run: npm run ${{ matrix.script }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # electron-builder 在没有代码签名证书时会跳过签名，这里显式关掉以免 Linux/mac 上误判
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: 收集产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: LongPost-${{ matrix.artifact }}
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            desktop/release/*.exe
+            desktop/release/*.dmg
+            desktop/release/*.zip
+            desktop/release/*.AppImage
+            desktop/release/*.blockmap
+            desktop/release/*.yml
+
+  release:
+    name: 发布到 Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: 下载所有产物
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      # 推 v* 标签 -> 正式版本号 Release
+      # 推 main    -> 更新到长期存在的 desktop-latest 标签上，给一个固定的下载地址，
+      #               不需要登录 GitHub 就能下载安装包
+      - name: 创建 / 更新 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'desktop-latest' }}
+          name: ${{ startsWith(github.ref, 'refs/tags/v') && format('LongPost {0}', github.ref_name) || 'LongPost 桌面版（最新构建）' }}
+          body: |
+            本地写作台：Markdown + 图表 + 附件，一键导出成可以随手转发的网页。
+            数据全部保存在自己电脑上，不联网、不上传。
+
+            **Windows**：下载 `LongPost Setup x.y.z.exe` 安装；
+            也可以下 `LongPost x.y.z.exe`（免安装版，双击即用）。
+
+            **macOS**：下载 `.dmg`。没有代码签名证书，首次打开需要右键 →「打开」放行。
+
+            **Linux**：下载 `.AppImage`，`chmod +x` 后直接运行。
+
+            首次在 Windows 运行如果被 SmartScreen 拦下，点「更多信息 → 仍要运行」。
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+          files: |
+            dist/**/*.exe
+            dist/**/*.dmg
+            dist/**/*.zip
+            dist/**/*.AppImage
