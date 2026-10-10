@@ -1,0 +1,887 @@
+/**
+ * LongPost 渲染层主逻辑（无框架、无打包器的原生 JS）。
+ *
+ * 这个文件是桌面版（Electron）和手机版（Capacitor WebView）共用的，所以：
+ *   - 数据一律走 window.LPPlatform，不直接碰文件系统 / IndexedDB；
+ *   - 平台差异只通过 LP.capabilities 判断，不写 if (是不是安卓)；
+ *   - 一行 ES2020 的语法都没有（可选链、空值合并），因为自检会用 new Function 编译它。
+ *
+ * 结构（从上往下读即可）：
+ *   1. 引用与状态         2. 小工具       3. 提示 / 状态 / 忙碌条
+ *   4. 历史栈与「返回」   5. 浮层 / 菜单   6. 列表与搜索
+ *   7. 文章的读写        8. 预览渲染      9. 大纲
+ *  10. 格式工具栏       11. 查找替换     12. 分享与统计
+ *  13. 各个对话框       14. 视图 / 窄屏   15. 事件绑定与启动
+ */
+(function () {
+  'use strict';
+
+  const MD = window.LPMarkdown;
+  const CH = window.LPChart;
+  const OUTLINE = window.LPOutline;
+  const PS = window.LPPageStyle;
+  const WEBEXPORT = window.LPExportWeb;
+  const LP = window.LPPlatform;
+  const CAPS = (LP && LP.capabilities) || {};
+
+  const $ = (id) => document.getElementById(id);
+  /** 窄屏断点，跟 style-mobile.css 的 @media 保持一致。 */
+  const NARROW = 820;
+  const AUTOSAVE_DELAY = 900;
+  const PREVIEW_DELAY = 180;
+  const OUTLINE_DELAY = 420;
+  /** 附件 / 图片在正文里的引用格式，跟 lib/repo.js 的 lp:// 约定一致。 */
+  const ASSET_RE = /lp:\/\/files\/([A-Za-z0-9._-]+)/g;
+
+  // 手机上把文件收进 IndexedDB 的能力；桌面上没有（要走主进程，不在本轮范围）。
+  const importDropped =
+    LP && typeof LP.importDropped === 'function' ? LP.importDropped.bind(LP) : null;
+
+  // ==========================================================================
+  // 0. 第三方库句柄
+  // --------------------------------------------------------------------------
+  // 全部来自 renderer/vendor/ 下的本地文件（无 CDN、无内联脚本），清单与许可证见
+  // 随包分发的许可证全文在 desktop/THIRD-PARTY-NOTICES.md（开发用明细在 VENDOR.md）。
+  // 每个都用 typeof 探一下：任何一个库没加载进来，对应的增强就安静降级，
+  // 不能让「少了个增强」变成「整个预览打不开」。
+  // ==========================================================================
+
+  const LIB = {
+    katex: typeof katex !== 'undefined' ? katex : null,
+    renderMath: typeof renderMathInElement === 'function' ? renderMathInElement : null,
+    prism: typeof Prism !== 'undefined' ? Prism : null,
+    mdIt: typeof markdownit === 'function' ? markdownit : null,
+    mdTask: typeof markdownitTaskLists === 'function' ? markdownitTaskLists : null,
+    mdFoot: typeof markdownitFootnote === 'function' ? markdownitFootnote : null,
+    mdDef: typeof markdownitDeflist === 'function' ? markdownitDeflist : null,
+    mdEmoji: typeof markdownitEmoji === 'function' ? markdownitEmoji : null,
+    flex: typeof FlexSearch !== 'undefined' ? FlexSearch : null,
+    papa: typeof Papa !== 'undefined' ? Papa : null,
+    htmlToImage: typeof htmlToImage !== 'undefined' ? htmlToImage : null,
+    pull: typeof PullToRefresh !== 'undefined' ? PullToRefresh : null,
+    hammer: typeof Hammer !== 'undefined' ? Hammer : null,
+  };
+
+  /** 界面上那一行「增强能力」的小字，用户在设置里能看见到底装上了什么。 */
+  const LIB_SUMMARY = (function () {
+    const bits = [];
+    if (LIB.prism) bits.push('代码高亮');
+    if (LIB.katex) bits.push('公式');
+    if (LIB.mdIt) bits.push('增强 Markdown');
+    if (LIB.flex) bits.push('全文检索');
+    if (LIB.papa) bits.push('表格解析');
+    if (LIB.htmlToImage) bits.push('长图');
+    return bits.length ? bits.join(' · ') : '（无增强库，功能按内置实现走）';
+  })();
+
+  // ==========================================================================
+  // 1. 状态
+  // ==========================================================================
+
+  const state = {
+    articles: [],
+    current: null,
+    dirty: false,
+    query: '',
+    tagFilter: '',
+    /** 排序 / 主题等，来自 LP.getSettings()，写回时用 LP.setSettings()。 */
+    settings: {
+      theme: 'dark',
+      showPreview: true,
+      sort: 'updated',
+      readingMode: false,
+      showOutline: false,
+      fontSize: 16,
+      /** 新增：Markdown 引擎 auto | enhanced | light，以及两个渲染增强开关。 */
+      mdEngine: 'auto',
+      highlight: true,
+      math: true,
+    },
+    /** 每篇文章的滚动位置，切来切去不用重新找地方。 */
+    scrollMem: new Map(),
+    chartInstances: [],
+    pendingChart: null,
+    dialogType: 'bar',
+    saveTimer: 0,
+    previewTimer: 0,
+    outlineTimer: 0,
+    paneMode: 'write',
+    find: { open: false, hits: [], index: 0, caseSensitive: false },
+    confirmAction: null,
+    menuItems: [],
+    appInfo: null,
+    /** 上次预览实际用的引擎，给状态栏和自检看。 */
+    lastEngine: 'light',
+    /** 上次预览的增强结果：{engine, highlighted, math}。 */
+    enhance: null,
+    /** 搜索命中来自哪条路（本地索引 / 子串），状态栏显示用。 */
+    searchSource: '',
+    /** 长图导出的数据，保存 / 分享时要用。 */
+    longImage: null,
+  };
+
+  /** 打开中的浮层（对话框 / 大纲 / 编辑器视图），用来实现「返回」语义。 */
+  const layers = [];
+  let pendingPops = 0;
+  /** 兜底定时器：见 programmaticBack()。 */
+  let popGuardTimer = 0;
+
+  // ==========================================================================
+  // 2. 小工具
+  // ==========================================================================
+
+  function icon(name, cls) {
+    return (
+      '<svg class="icon' +
+      (cls ? ' ' + cls : '') +
+      '" aria-hidden="true"><use href="#i-' +
+      name +
+      '"></use></svg>'
+    );
+  }
+
+  function esc(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => {
+      if (c === '&') return '&amp;';
+      if (c === '<') return '&lt;';
+      if (c === '>') return '&gt;';
+      if (c === '"') return '&quot;';
+      return '&#39;';
+    });
+  }
+
+  /** 把命中片段包成 <mark>，用于搜索高亮。query 已经是小写。 */
+  function markHits(text, query) {
+    const raw = String(text == null ? '' : text);
+    if (!query) return esc(raw);
+    const hay = raw.toLowerCase();
+    let out = '';
+    let i = 0;
+    for (;;) {
+      const at = hay.indexOf(query, i);
+      if (at === -1) {
+        out += esc(raw.slice(i));
+        break;
+      }
+      out += esc(raw.slice(i, at));
+      out += '<mark class="hit">' + esc(raw.slice(at, at + query.length)) + '</mark>';
+      i = at + query.length;
+      if (query.length === 0) break;
+    }
+    return out;
+  }
+
+  function isNarrow() {
+    return window.matchMedia('(max-width: ' + NARROW + 'px)').matches;
+  }
+
+  function formatTime(ts) {
+    if (!ts) return '';
+    const d = new Date(ts);
+    const pad = (n) => (n < 10 ? '0' + n : String(n));
+    const now = new Date();
+    const sameDay =
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth() &&
+      d.getDate() === now.getDate();
+    if (sameDay) return pad(d.getHours()) + ':' + pad(d.getMinutes());
+    if (d.getFullYear() === now.getFullYear())
+      return d.getMonth() + 1 + '月' + d.getDate() + '日';
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+
+  function formatSize(bytes) {
+    const n = Number(bytes) || 0;
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1024 / 1024).toFixed(1) + ' MB';
+  }
+
+  function readingMinutes(text) {
+    // 阅读时长以 lib/repo.js 的口径为准，列表卡片上的「约 N 分钟」跟这里同源。
+    if (window.LPRepo && typeof window.LPRepo.readingMinutes === 'function') {
+      return window.LPRepo.readingMinutes(String(text || ''));
+    }
+    return Math.max(1, Math.round(String(text || '').length / 400));
+  }
+
+  function countParagraphs(text) {
+    return String(text || '')
+      .split(/\n{2,}/)
+      .filter((block) => block.replace(/```[\s\S]*?```/g, '').trim().length > 0).length;
+  }
+
+  /** 正文里引用到的附件（去重）。 */
+  function attachmentRefs(text) {
+    const out = [];
+    const re = new RegExp(ASSET_RE.source, 'g');
+    let m = re.exec(String(text || ''));
+    while (m !== null) {
+      if (out.indexOf(m[1]) === -1) out.push(m[1]);
+      m = re.exec(String(text || ''));
+    }
+    return out;
+  }
+
+  // ==========================================================================
+  // 3. 提示 / 状态 / 忙碌条
+  // ==========================================================================
+
+  let toastTimer = 0;
+
+  function toast(message, kind) {
+    const el = $('toast');
+    el.textContent = String(message == null ? '' : message);
+    el.className = 'toast show ' + (kind || 'info');
+    el.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+      el.className = 'toast ' + (kind || 'info');
+      el.hidden = true;
+    }, kind === 'err' ? 4200 : 2400);
+  }
+
+  function setStatus(text) {
+    $('status').textContent = String(text == null ? '' : text);
+  }
+
+  function setBusy(on) {
+    $('busyBar').hidden = !on;
+  }
+
+  // ==========================================================================
+  // 4. 历史栈与「返回」
+  // ==========================================================================
+
+  /**
+   * 打开一个可以「返回」掉的浮层。
+   *
+   * 每次打开都往浏览器历史上压一条记录，这样 Android 的返回键 / 鼠标侧键
+   * 天然就是「关掉当前这一层」。如果日后装上 @capacitor/app，可以直接拿到
+   * backButton 事件，这个栈就是它的实现（见 setupHardwareBack）。
+   */
+  function openLayer(name, onClose) {
+    let pushed = false;
+    try {
+      history.pushState({ lpLayer: name }, '');
+      pushed = true;
+    } catch (err) {
+      pushed = false;
+    }
+    layers.push({ name: name, onClose: onClose, pushed: pushed });
+  }
+
+  function closeLayerAt(index, fromHistory) {
+    if (index < 0 || index >= layers.length) return false;
+    const layer = layers.splice(index, 1)[0];
+    if (layer.onClose) {
+      try {
+        layer.onClose();
+      } catch (err) {
+        /* 关不掉也不能连累后面的逻辑 */
+      }
+    }
+    if (!fromHistory && layer.pushed && history.state && history.state.lpLayer) {
+      programmaticBack();
+    }
+    return true;
+  }
+
+  /**
+   * 我方主动 history.back()：给水位 +1，等对应的 popstate 把它消掉。
+   *
+   * history.back() 是异步的，极少数情况下（连续两次 back 被合并、已经在栈底）这一次
+   * 不会换来 popstate。如果水位就这么挂着，之后用户按返回键会被当成「自己人」吞掉——
+   * 「返回键用一次就失灵」这种 bug 用户说不清但一定会骂，所以这里放个兜底把水位还回来。
+   */
+  function programmaticBack() {
+    pendingPops += 1;
+    try {
+      history.back();
+    } catch (err) {
+      pendingPops -= 1;
+      return;
+    }
+    clearTimeout(popGuardTimer);
+    popGuardTimer = setTimeout(function () {
+      if (pendingPops > 0) pendingPops -= 1;
+    }, 700);
+  }
+
+  function closeLayerByName(name, fromHistory) {
+    for (let i = layers.length - 1; i >= 0; i -= 1) {
+      if (layers[i].name === name) return closeLayerAt(i, fromHistory);
+    }
+    return false;
+  }
+
+  function closeTopLayer(fromHistory) {
+    return closeLayerAt(layers.length - 1, fromHistory);
+  }
+
+  /**
+   * 「返回」的完整语义：先关身上最上面那层浮层，再退编辑器，最后才轮到系统。
+   * 返回 true 表示这一下被 App 吃掉了，不该退出应用。
+   */
+  function goBack() {
+    if (!$('ctxMenu').hidden) {
+      closeMenu();
+      return true;
+    }
+    if (layers.length) {
+      closeTopLayer(true);
+      return true;
+    }
+    if (!$('outlinePanel').hidden) {
+      applyOutlineState(false);
+      persistSetting('showOutline', false);
+      return true;
+    }
+    if ($('app').dataset.view === 'editor') {
+      $('app').dataset.view = 'list';
+      syncTabs();
+      saveScroll();
+      return true;
+    }
+    return false;
+  }
+
+  window.addEventListener('popstate', () => {
+    if (pendingPops > 0) {
+      pendingPops -= 1;
+      return;
+    }
+    goBack();
+  });
+
+  /**
+   * Android 硬件返回键。
+   *
+   * Capacitor 默认会把返回键交给 WebView 的历史栈，所以 popstate 那条路已经能用；
+   * 如果装了 @capacitor/app，这里会接管，语义更干净（不会误退出应用）。
+   */
+  function setupHardwareBack() {
+    const plugins = window.Capacitor && window.Capacitor.Plugins;
+    if (!plugins || !plugins.App || typeof plugins.App.addListener !== 'function') return;
+    plugins.App.addListener('backButton', () => {
+      if (!goBack()) {
+        try {
+          plugins.App.exitApp();
+        } catch (err) {
+          /* 忽略 */
+        }
+      }
+    });
+  }
+
+  // ==========================================================================
+  // 5. 浮层 / 菜单
+  // ==========================================================================
+
+  const MODAL_IDS = [
+    'chartModal',
+    'settingsModal',
+    'shareModal',
+    'statsModal',
+    'trashModal',
+    'tagsModal',
+    'historyModal',
+    'confirmModal',
+    'longImageModal',
+  ];
+
+  function openSheet(id) {
+    const modal = $(id);
+    if (!modal || !modal.hidden) return;
+    modal.hidden = false;
+    openLayer(id, () => {
+      modal.hidden = true;
+      // 图表对话框自带一个预览实例，关掉它别拖累正文里那些图表
+      if (id === 'chartModal') disposePendingChart();
+      if (id === 'confirmModal') state.confirmAction = null;
+      syncTabs();
+    });
+    syncTabs();
+  }
+
+  function closeSheet(id) {
+    closeLayerByName(id, false);
+  }
+
+  /** 遮罩点击关闭 + 抽屉把手下拉关闭。 */
+  function setupModals() {
+    MODAL_IDS.forEach((id) => {
+      const modal = $(id);
+      if (!modal) return;
+      modal.addEventListener('click', (event) => {
+        if (event.target === modal) closeSheet(id);
+      });
+      const dialog = modal.querySelector('.dialog');
+      if (dialog) setupSheetDrag(dialog, id);
+    });
+  }
+
+  function setupSheetDrag(dialog, modalId) {
+    const handles = [dialog.querySelector('.sheet-grip'), dialog.querySelector('.dialog-head')];
+    let startY = 0;
+    let dy = 0;
+    let dragging = false;
+
+    const finish = () => {
+      if (!dragging) return;
+      dragging = false;
+      dialog.classList.remove('dragging');
+      dialog.style.transform = '';
+      if (dy > 90) closeSheet(modalId);
+      dy = 0;
+    };
+
+    handles.forEach((handle) => {
+      if (!handle) return;
+      handle.addEventListener('pointerdown', (event) => {
+        if (event.target.closest('button')) return; // 头部的关闭按钮还得能点
+        dragging = true;
+        startY = event.clientY;
+        dy = 0;
+        dialog.classList.add('dragging');
+        try {
+          handle.setPointerCapture(event.pointerId);
+        } catch (err) {
+          /* 忽略 */
+        }
+      });
+      handle.addEventListener('pointermove', (event) => {
+        if (!dragging) return;
+        dy = Math.max(0, event.clientY - startY);
+        dialog.style.transform = 'translateY(' + dy + 'px)';
+      });
+      handle.addEventListener('pointerup', finish);
+      handle.addEventListener('pointercancel', finish);
+    });
+  }
+
+  // ------------------------------------------------------------ 上下文菜单
+
+  let menuScrim = null;
+  let menuAnchor = null;
+
+  function ensureMenuScrim() {
+    if (!isNarrow()) return null;
+    if (!menuScrim) {
+      menuScrim = document.createElement('div');
+      menuScrim.className = 'scrim';
+      menuScrim.id = 'menuScrim';
+      menuScrim.addEventListener('click', closeMenu);
+      document.body.appendChild(menuScrim);
+    }
+    menuScrim.hidden = false;
+    return menuScrim;
+  }
+
+  function positionMenu(menu, anchor) {
+    const rect = anchor.getBoundingClientRect();
+    const width = 230;
+    const height = menu.offsetHeight || 240;
+    let left = rect.right - width;
+    let top = rect.bottom + 6;
+    if (top + height > window.innerHeight - 8) top = Math.max(8, rect.top - height - 6);
+    left = Math.min(Math.max(8, left), window.innerWidth - width - 8);
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+  }
+
+  function openMenu(items, opts) {
+    const menu = $('ctxMenu');
+    const options = opts || {};
+    menuAnchor = options.anchor || null;
+    state.menuItems = items;
+    let html = options.title ? '<div class="menu-head">' + esc(options.title) + '</div>' : '';
+    items.forEach((item, i) => {
+      if (item.sep) {
+        html += '<div class="menu-sep"></div>';
+        return;
+      }
+      html +=
+        '<button class="menu-item' +
+        (item.danger ? ' danger' : '') +
+        '" data-mi="' +
+        i +
+        '">' +
+        icon(item.icon || 'chevron-down') +
+        '<span>' +
+        esc(item.label) +
+        '</span>' +
+        (item.key ? '<span class="menu-key">' + esc(item.key) + '</span>' : '') +
+        '</button>';
+    });
+    menu.innerHTML = html;
+    menu.hidden = false;
+    if (!isNarrow()) {
+      menu.style.left = '';
+      menu.style.top = '';
+      if (menuAnchor) positionMenu(menu, menuAnchor);
+    }
+    ensureMenuScrim();
+  }
+
+  function closeMenu() {
+    const menu = $('ctxMenu');
+    if (!menu.hidden) {
+      menu.hidden = true;
+      if (menuScrim && menuScrim.parentNode) menuScrim.parentNode.removeChild(menuScrim);
+      menuScrim = null;
+    }
+    state.menuItems = [];
+    menuAnchor = null;
+  }
+
+  // ==========================================================================
+  // 6. 列表与搜索
+  // ==========================================================================
+
+  async function reloadList() {
+    state.articles = await LP.listArticles();
+  }
+
+  /**
+   * 搜索是「标题 + 正文 + 标签」三处一起搜。
+   * 标题和正文由 repo 预先算好的 searchText 负责（小写，省得每次重新拼），
+   * 标签它没算，所以在这里补一次。
+   */
+  function articleMatches(article, query) {
+    if (!query) return true;
+    if (article.searchText && article.searchText.indexOf(query) !== -1) return true;
+    const tags = article.tags || [];
+    for (let i = 0; i < tags.length; i += 1) {
+      if (String(tags[i]).toLowerCase().indexOf(query) !== -1) return true;
+    }
+    return false;
+  }
+
+  function visibleArticles() {
+    const query = state.query.trim().toLowerCase();
+    if (!query) {
+      state.searchSource = '';
+      return state.articles.filter((article) => {
+        if (state.tagFilter && (article.tags || []).indexOf(state.tagFilter) === -1) return false;
+        return true;
+      });
+    }
+    // 本地索引（中文按 CJK 组合切）与子串匹配取**并集**：
+    // 索引负责「源码保护」这种跨标点的中文串，子串匹配兜住索引抖动的边角，
+    // 两边都不命中才算没找到 —— 检索升级不该让原来搜得到的东西搜不到。
+    const ids = searchIds(query);
+    const byIndex = {};
+    if (ids) ids.forEach((id) => { byIndex[id] = true; });
+    state.searchSource = ids ? '本地检索' + (ids.length ? ' ' + ids.length : '') : '';
+    return state.articles.filter((article) => {
+      if (state.tagFilter && (article.tags || []).indexOf(state.tagFilter) === -1) return false;
+      return byIndex[article.id] === true || articleMatches(article, query);
+    });
+  }
+
+  function metaHtml(article) {
+    const parts = [];
+    parts.push('<span class="meta-chunk">' + article.chars + ' 字</span>');
+    parts.push('<span class="dot"></span>');
+    parts.push('<span class="meta-chunk">约 ' + (article.minutes || 1) + ' 分钟</span>');
+    if (article.charts) {
+      parts.push('<span class="dot"></span>');
+      parts.push('<span class="meta-chunk">' + icon('chart') + article.charts + '</span>');
+    }
+    if (article.revisionCount) {
+      parts.push('<span class="dot"></span>');
+      parts.push('<span class="meta-chunk">' + icon('clock') + article.revisionCount + '</span>');
+    }
+    parts.push('<span class="dot"></span>');
+    parts.push('<span class="meta-chunk">' + formatTime(article.updatedAt) + '</span>');
+    return parts.join('');
+  }
+
+  function renderList() {
+    const list = $('list');
+    const items = visibleArticles();
+    const query = state.query.trim().toLowerCase();
+
+    if (!items.length) {
+      const searching = query || state.tagFilter;
+      list.innerHTML =
+        '<div class="list-empty">' +
+        icon('feather') +
+        '<p>' +
+        (searching
+          ? '没有找到符合条件的文章。<br />换个词，或者清掉标签筛选试试。'
+          : '还没有文章。<br />点下面的按钮，写下第一篇。') +
+        '</p>' +
+        (searching
+          ? '<button class="btn ghost sm" data-act="clear-filter">清空筛选</button>'
+          : '<button class="btn primary sm" data-act="new-article">' +
+            icon('plus') +
+            '<span class="btn-label">新建文章</span></button>') +
+        '</div>';
+    } else {
+      list.innerHTML = items
+        .map((article) => {
+          const active = state.current && state.current.id === article.id;
+          const tags = article.tags || [];
+          const tagHtml = tags.length
+            ? '<div class="item-tags">' +
+              tags
+                .map(
+                  (t) =>
+                    '<span class="chip" data-tag="' +
+                    esc(t) +
+                    '">' +
+                    (query ? markHits(t, query) : esc(t)) +
+                    '</span>',
+                )
+                .join('') +
+              '</div>'
+            : '';
+          return (
+            '<div class="item' +
+            (active ? ' active' : '') +
+            (article.pinnedAt ? ' pinned' : '') +
+            '" data-id="' +
+            esc(article.id) +
+            '" role="listitem" tabindex="0">' +
+            '<div class="item-head">' +
+            '<div class="item-title">' +
+            markHits(article.title || '未命名', query) +
+            '</div>' +
+            (article.pinnedAt ? '<span class="item-pin" title="已置顶">' + icon('star') + '</span>' : '') +
+            '<button class="icon-btn item-more" data-more="' +
+            esc(article.id) +
+            '" aria-label="更多操作" title="更多操作">' +
+            icon('more') +
+            '</button>' +
+            '</div>' +
+            '<div class="item-sum">' +
+            (query ? markHits(article.summary || '（还没有正文）', query) : esc(article.summary || '（还没有正文）')) +
+            '</div>' +
+            tagHtml +
+            '<div class="item-meta">' +
+            metaHtml(article) +
+            '</div>' +
+            '</div>'
+          );
+        })
+        .join('');
+    }
+
+    const total = state.articles.length;
+    const filtering = Boolean(query || state.tagFilter);
+    let label = filtering ? items.length + ' / ' + total + ' 篇' : total + ' 篇';
+    if (state.tagFilter) label += ' · 标签「' + state.tagFilter + '」';
+    if (query && searchIndexReady()) label += ' · 全文';
+    $('count').textContent = label;
+    syncRenderNote();
+  }
+
+  async function refreshTagSelect() {
+    const tags = await LP.listTags();
+    const select = $('tagFilterSelect');
+    let html = '<option value="">全部标签</option>';
+    tags.forEach((tag) => {
+      html +=
+        '<option value="' + esc(tag.name) + '">' + esc(tag.name) + ' · ' + tag.count + '</option>';
+    });
+    select.innerHTML = html;
+    select.value = state.tagFilter;
+    if (select.value !== (state.tagFilter || '')) {
+      // 当前筛选的标签已经不存在了（最后一篇带它的文章被删了）
+      state.tagFilter = '';
+      select.value = '';
+    }
+  }
+
+  function clearFilters() {
+    state.query = '';
+    state.tagFilter = '';
+    $('search').value = '';
+    $('btnSearchClear').hidden = true;
+    $('tagFilterSelect').value = '';
+    renderList();
+  }
+
+  // ==========================================================================
+  // 7. 文章的读写
+  // ==========================================================================
+
+  function setBusyLabel() {
+    setBusy(true);
+  }
+
+  async function refreshAll() {
+    await reloadList();
+    renderList();
+    await refreshTagSelect();
+  }
+
+  function saveScroll() {
+    if (!state.current) return;
+    state.scrollMem.set(state.current.id, {
+      editor: $('editor').scrollTop,
+      preview: $('preview').scrollTop,
+      panes: $('panes').scrollTop,
+    });
+  }
+
+  function restoreScroll() {
+    if (!state.current) return;
+    const mem = state.scrollMem.get(state.current.id);
+    if (!mem) {
+      $('panes').scrollTop = 0;
+      $('preview').scrollTop = 0;
+      return;
+    }
+    $('editor').scrollTop = mem.editor || 0;
+    $('preview').scrollTop = mem.preview || 0;
+    $('panes').scrollTop = mem.panes || 0;
+  }
+
+  async function openArticle(id) {
+    saveScroll();
+    const article = await LP.getArticle(id);
+    if (!article) {
+      toast('文章不存在了，可能已经被删除', 'err');
+      await refreshAll();
+      return;
+    }
+    state.current = article;
+    state.dirty = false;
+    $('title').value = article.title || '';
+    $('editor').value = article.content || '';
+    $('empty').hidden = true;
+    $('editorWrap').hidden = false;
+    $('app').dataset.view = 'editor';
+    if (isNarrow() && !hasLayer('view:editor')) {
+      openLayer('view:editor', () => {
+        $('app').dataset.view = 'list';
+        syncTabs();
+      });
+    }
+    refreshPinButton();
+    renderPreview();
+    scheduleOutline();
+    updateStats();
+    refreshFmtState();
+    renderList();
+    syncTabs();
+    restoreScroll();
+    closeMenu();
+    // 列表态下 .tools 没有布局宽度，量不出溢出；进入编辑器后必须重算一次，
+    // 否则 1320/1280 宽下「更多」还是会跑到视口外（截图里抓到的就是这个）。
+    syncToolsOverflow();
+  }
+
+  function hasLayer(name) {
+    for (let i = 0; i < layers.length; i += 1) if (layers[i].name === name) return true;
+    return false;
+  }
+
+  async function newArticle() {
+    // saveArticle 收的是「一个 payload 对象」，id 缺省就是新建（preload 与 repo 同一套签名）
+    const article = await LP.saveArticle({
+      title: '未命名文章',
+      content: '',
+      tags: [],
+    });
+    await refreshAll();
+    await openArticle(article.id);
+    $('title').focus();
+    $('title').select();
+  }
+
+  function clearCurrent() {
+    state.current = null;
+    state.dirty = false;
+    $('title').value = '';
+    $('editor').value = '';
+    $('editorWrap').hidden = true;
+    $('empty').hidden = false;
+    $('stats').textContent = '';
+    $('app').dataset.view = 'list';
+    closeFind();
+    renderPreview();
+    renderList();
+    syncTabs();
+  }
+
+  function markDirty() {
+    state.dirty = true;
+    clearTimeout(state.saveTimer);
+    clearTimeout(state.previewTimer);
+    state.previewTimer = setTimeout(renderPreview, PREVIEW_DELAY);
+    if (state.settings.autoSave === false) {
+      setStatus('有改动未保存 · Ctrl/Cmd + S 保存');
+      return;
+    }
+    setStatus('编辑中…');
+    state.saveTimer = setTimeout(saveNow, AUTOSAVE_DELAY);
+  }
+
+  async function saveNow(silent) {
+    clearTimeout(state.saveTimer);
+    if (!state.current) return;
+    if (!state.dirty) {
+      if (!silent) setStatus('已经是最新的了');
+      return;
+    }
+    if (!silent) setStatus('保存中…');
+    const payload = {
+      id: state.current.id,
+      title: $('title').value.trim() || '未命名文章',
+      content: $('editor').value,
+      tags: state.current.tags || [],
+    };
+    try {
+      const saved = await LP.saveArticle(payload);
+      state.current = saved;
+      state.dirty = false;
+      await reloadList();
+      renderList();
+      setStatus('已保存 · ' + new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+      refreshPinButton();
+    } catch (err) {
+      setStatus('保存失败');
+      toast('保存失败：' + String((err && err.message) || err), 'err');
+    }
+  }
+
+  async function flushBeforeSwitch() {
+    if (state.dirty) await saveNow(true);
+  }
+
+  function refreshPinButton() {
+    const pinned = Boolean(state.current && state.current.pinnedAt);
+    const btn = $('btnPin');
+    btn.classList.toggle('on', pinned);
+    btn.title = pinned ? '取消置顶' : '把这篇文章顶到列表最前';
+    const label = btn.querySelector('.btn-label');
+    if (label) label.textContent = pinned ? '已置顶' : '置顶';
+  }
+
+  async function togglePin() {
+    if (!state.current) return;
+    // togglePin 返回的是 { ok, pinned } 状态，不是文章本身——别拿它覆盖 state.current
+    const res = await LP.togglePin(state.current.id);
+    if (res && res.ok === false) {
+      toast('操作失败：' + (res.error || '未知错误'), 'err');
+      return;
+    }
+    state.current.pinnedAt = res && res.pinned ? Date.now() : 0;
+    refreshPinButton();
+    await reloadList();
+    renderList();
+    toast(state.current.pinnedAt ? '已置顶' : '已取消置顶', 'ok');
+  }
+
+  async function togglePinById(id) {
+    const res = await LP.togglePin(id);
+    if (res && res.ok === false) {
+      toast('操作失败：' + (res.error || '未知错误'), 'err');
+      return;
+    }
+    await reloadList();
+    renderList();
