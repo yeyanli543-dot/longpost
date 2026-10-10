@@ -23,6 +23,78 @@
     return;
   }
 
+  // ------------------------------------------------------------ 分享 / 复制
+
+  /** 有没有可用的系统分享面板（手机上才有）。 */
+  function nativeShare() {
+    const plugins = window.Capacitor && window.Capacitor.Plugins;
+    return plugins && plugins.Share ? plugins.Share : null;
+  }
+
+  /**
+   * 复制到剪贴板。
+   *
+   * navigator.clipboard 在 Electron 的 file:// 页面里可用（file: 属于可信来源），
+   * 但某些 WebView / 非聚焦窗口会被拒绝，所以留一条 textarea + execCommand 的老路。
+   */
+  function copyToClipboard(text) {
+    const value = String(text == null ? '' : text);
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+      return navigator.clipboard.writeText(value).then(
+        () => ({ ok: true, mode: 'clipboard' }),
+        () => legacyCopy(value),
+      );
+    }
+    return Promise.resolve(legacyCopy(value));
+  }
+
+  function legacyCopy(value) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = value;
+      ta.setAttribute('readonly', 'readonly');
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, value.length);
+      const done = document.execCommand('copy');
+      ta.remove();
+      return done ? { ok: true, mode: 'clipboard' } : { ok: false, error: '剪贴板不可用' };
+    } catch (err) {
+      return { ok: false, error: String((err && err.message) || err) };
+    }
+  }
+
+  /**
+   * 分享一段文字。
+   *   - 手机（有 Capacitor Share 插件）：唤起系统分享面板，能直接发到微信 / 备忘录等
+   *   - 桌面 / 网页：写进剪贴板
+   * 两边返回同一种结构，界面代码不用分平台写两套。
+   *
+   * @param {{title?:string, text:string, dialogTitle?:string}} payload
+   * @returns {Promise<{ok:boolean, mode?:'share'|'clipboard', canceled?:boolean, error?:string}>}
+   */
+  async function shareText(payload) {
+    const title = (payload && payload.title) || 'LongPost';
+    const text = String((payload && payload.text) || '');
+    const dialogTitle = (payload && payload.dialogTitle) || title;
+
+    const Share = nativeShare();
+    if (Share) {
+      try {
+        await Share.share({ title: title, text: text, dialogTitle: dialogTitle });
+        return { ok: true, mode: 'share' };
+      } catch (err) {
+        const msg = String((err && err.message) || err);
+        if (msg.toLowerCase().indexOf('cancel') !== -1) return { ok: false, canceled: true };
+        // 分享失败（比如插件在当前环境不可用）就退回剪贴板，不要让功能彻底断掉
+      }
+    }
+    return copyToClipboard(text);
+  }
+
   // ------------------------------------------------------------ 桌面
   if (window.lp && typeof window.lp.listArticles === 'function') {
     const desktop = window.lp;
@@ -34,11 +106,16 @@
         openDataDir: true,
         nativeSaveDialog: true,
         folderExport: true,
+        share: false,
+        clipboard: true,
       },
       // lp:// 已经由主进程注册的私有协议接管，渲染层不用管
       assetUrl: (url) => Promise.resolve(url),
       releaseAsset: () => {},
       releaseAllAssets: () => {},
+      // 桌面版没有系统分享面板，但也没这个必要：剪贴板是更快的路径
+      shareText: shareText,
+      copyText: (text) => copyToClipboard(text),
     });
     return;
   }
@@ -176,7 +253,13 @@
       openDataDir: false,
       nativeSaveDialog: false,
       folderExport: false,
+      // 装没装 @capacitor/share 决定了「分享」是唤起系统面板还是复制到剪贴板
+      share: !!nativeShare(),
+      clipboard: true,
     },
+
+    shareText: shareText,
+    copyText: (text) => copyToClipboard(text),
 
     async pickFiles() {
       const files = await pickWithInput('', true);
