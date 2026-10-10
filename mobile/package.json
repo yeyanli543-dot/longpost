@@ -1,0 +1,22 @@
+{
+  "name": "longpost-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LongPost 手机版外壳：前端复用 desktop/renderer，数据落在设备本地（IndexedDB）",
+  "license": "MIT",
+  "scripts": {
+    "web": "node ../desktop/scripts/sync-vendor.js",
+    "add:android": "cap add android",
+    "sync:android": "cap sync android",
+    "apk": "cd android && gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/core": "8.5.3",
+    "@capacitor/filesystem": "8.1.4",
+    "@capacitor/share": "8.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.3"
+  }
+}

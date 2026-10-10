@@ -4,7 +4,10 @@
 
   const MD = window.LPMarkdown;
   const CH = window.LPChart;
-  const LP = window.lp;
+  const OUTLINE = window.LPOutline;
+  // 平台门面：桌面是 IPC，手机/网页是 IndexedDB，见 renderer/platform.js
+  const LP = window.LPPlatform;
+  const CAPS = (LP && LP.capabilities) || { openDataDir: false, folderExport: false };
 
   const $ = (id) => document.getElementById(id);
 
@@ -207,6 +210,30 @@
     state.chartInstances = [];
   }
 
+  /**
+   * 正文里的图片和附件统一写成 lp://files/xxx。
+   * 桌面版由主进程注册的私有协议直接接管；网页/手机版没有这个协议，
+   * 必须在这里换成 blob: 地址，否则 <img> 会去请求一个不存在的东西，图全是碎的。
+   */
+  function resolveAssets(root) {
+    if (!LP || LP.isDesktop || typeof LP.assetUrl !== 'function') return;
+    const nodes = root.querySelectorAll('img[src^="lp://"], a[href^="lp://"]');
+    for (const el of nodes) {
+      const raw = el.getAttribute('src') || el.getAttribute('href');
+      if (!raw) continue;
+      Promise.resolve(LP.assetUrl(raw)).then((url) => {
+        if (!url) {
+          if (el.tagName === 'IMG') {
+            el.replaceWith(document.createTextNode('［图片在你导入它的那台设备上］'));
+          }
+          return;
+        }
+        if (el.tagName === 'IMG') el.setAttribute('src', url);
+        else el.setAttribute('href', url);
+      });
+    }
+  }
+
   function renderPreview() {
     const preview = $('preview');
     const panes = $('panes');
@@ -261,6 +288,8 @@
         p.el.style.color = 'var(--danger)';
       }
     }
+
+    resolveAssets(preview);
   }
 
   function resizeCharts() {

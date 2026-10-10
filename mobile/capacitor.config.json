@@ -1,0 +1,13 @@
+{
+  "appId": "com.yeyanli543.longpost",
+  "appName": "LongPost",
+  "webDir": "../desktop/renderer",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

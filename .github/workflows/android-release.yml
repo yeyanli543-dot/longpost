@@ -1,0 +1,124 @@
+name: Build Android APK
+
+# 说明几件刻意的选择：
+#
+# 1. 为什么用 paths 过滤：安卓构建比桌面打包慢得多，没必要每次提交都跑一遍。
+#    只在手机壳、渲染层、共享模块变动时才触发。桌面那条流水线不加过滤是因为
+#    它还要响应打标签，这里不涉及打标签，过滤是安全的。
+#
+# 2. 为什么出的是 debug 包：公开仓库里不方便放签名证书，而 release 包不签名装不上。
+#    debug 包用 Android 标准调试证书签过名，任何手机都能直接装。
+#    代价是每次构建的证书可能不同，换新版本时要先卸载旧的。
+#
+# 3. 本机没有 Java，出不了 APK，所以这一步只能放在 GitHub 的构建机上做。
+#    （Windows 开发机上 java 不在 PATH 里，见 README 的说明。）
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - 'desktop/renderer/**'
+      - 'desktop/lib/**'
+      - 'desktop/scripts/**'
+      - '.github/workflows/android-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: 预装 Android SDK 组件
+        # 版本对不上也不要紧：AGP 会在构建时自己补下缺的东西
+        run: |
+          yes | sdkmanager --licenses > /dev/null 2>&1 || true
+          sdkmanager "platform-tools" > /dev/null 2>&1 || true
+          sdkmanager "platforms;android-36" > /dev/null 2>&1 || true
+          sdkmanager "build-tools;36.0.0" > /dev/null 2>&1 || true
+
+      - name: 装桌面端依赖（只为拿 echarts，跳过 electron 下载）
+        working-directory: desktop
+        run: npm install --omit=dev --ignore-scripts --no-audit --no-fund
+
+      - name: 同步 vendor 与共享模块到渲染层
+        working-directory: desktop
+        run: node scripts/sync-vendor.js
+
+      - name: 渲染层自检（本地已全绿，这里是最后一道闸）
+        working-directory: desktop
+        run: node scripts/smoke-test.js
+
+      - name: 装手机壳依赖
+        working-directory: mobile
+        run: npm install --no-audit --no-fund
+
+      - name: 生成 Android 工程
+        working-directory: mobile
+        run: npx cap add android
+
+      - name: 换应用图标
+        run: node mobile/scripts/apply-icon.js || true
+
+      - name: 把 Web 资源同步进 Android 工程
+        working-directory: mobile
+        run: npx cap sync android
+
+      - name: 确认 Web 资源真的进去了
+        # Cap 出问题最常见的表现是 assets/public 是空的，最后装出来一个白屏 App。
+        # 这一步就是为了让那种情况在构建期就红掉。
+        run: |
+          test -f mobile/android/app/src/main/assets/public/index.html
+          ls mobile/android/app/src/main/assets/public/ | head -30
+          echo "echarts: $(stat -c%s mobile/android/app/src/main/assets/public/vendor/echarts.min.js) 字节"
+
+      - name: 打包 APK
+        working-directory: mobile/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon -x lint
+
+      - name: 整理产物
+        run: |
+          mkdir -p out
+          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk out/LongPost-android.apk
+          ls -lh out/
+          echo "--- 文件头（确认是真正的 APK：PK 开头）---"
+          head -c 4 out/LongPost-android.apk | xxd
+          echo "sha256: $(sha256sum out/LongPost-android.apk | cut -d' ' -f1)"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: longpost-android-apk
+          path: out/LongPost-android.apk
+
+      - name: 发布到 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: LongPost 手机版（Android）
+          body: |
+            LongPost 手机版的安装包。
+
+            下载下面的 `LongPost-android.apk`，在手机上打开安装即可。
+            首次安装需要在系统里允许「安装未知来源的应用」。
+
+            数据全部存在手机本地（IndexedDB），不联网、不上传。
+            换新版本时如果提示签名冲突，先卸载旧版再装。
+          files: out/LongPost-android.apk

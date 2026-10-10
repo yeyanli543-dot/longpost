@@ -4,8 +4,10 @@
     <meta charset="utf-8" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'none'; script-src 'self' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' file: lp: data: blob: https: http:; font-src 'self' file: data:; connect-src 'none';"
+      content="default-src 'none'; script-src 'self' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' file: lp: data: blob: https: http:; font-src 'self' file: data:; connect-src 'self';"
     />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="color-scheme" content="dark light" />
     <title>LongPost</title>
     <link rel="stylesheet" href="style.css" />
   </head>
@@ -166,9 +168,21 @@
 
     <div class="toast" id="toast" hidden></div>
 
+    <!--
+      vendor/ 下的文件都不是手写的，来自 npm run vendor（scripts/sync-vendor.js）：
+      echarts 从 node_modules 复制，其余是 lib/ 的共享模块的拷贝。
+      这么安排是为了手机版 —— Capacitor 只打包 renderer/ 这一个目录，
+      这里不能出现 "../lib/xxx.js" 这种跳出目录的引用。
+    -->
     <script src="vendor/echarts.min.js"></script>
-    <script src="../lib/markdown.js"></script>
-    <script src="../lib/chart.js"></script>
+    <script src="vendor/markdown.js"></script>
+    <script src="vendor/chart.js"></script>
+    <script src="vendor/page-style.js"></script>
+    <script src="vendor/outline.js"></script>
+    <script src="vendor/repo.js"></script>
+    <script src="backend-idb.js"></script>
+    <script src="export-web.js"></script>
+    <script src="platform.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
