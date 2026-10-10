@@ -120,7 +120,7 @@ MIT / ISC / Apache-2.0，与仓库自身的 MIT 兼容。许可证记录分两�
 ### 1. KaTeX 0.19.0 — LaTeX 数学公式
 
 - 仓库：https://github.com/KaTeX/KaTeX ｜ License：MIT ｜ 体积：**560,939 字节**（547.8 KB）
-- 解决什么：把 `$E=mc^2$` / `$$\int_0^\infty e^{-x^2}dx$$` 渲染成印刷级公式，离线可用、无网络请求
+- 解决什么：把 `$E=mc^2$` / `$$\int_0\infty e^{-x^2}dx$$` 渲染成印刷级公式，离线可用、无网络请求
 - 对标谁：Obsidian / Notion / 语雀 的公式块（它们内部也是 KaTeX）
 - 全局名：`katex`（小写）、`renderMathInElement`（contrib/auto-render）
 - 最小调用：
