@@ -190,7 +190,23 @@ console.log('\n[4] 导出');
 console.log('\n[5] 图标');
 {
   const iconPath = path.join(__dirname, '..', 'resources', 'icon.png');
-  check('图标存在', fs.existsSync(iconPath));
+
+  // icon.png 不进仓库（见 .gitignore），正常情况下由 npm install 的 prepare 脚本生成。
+  // 但 Android 流水线为了不下载上百兆的 Electron，用的是 --ignore-scripts，
+  // prepare 不会跑，全新检出时这个文件根本不存在——整条 Android 流水线之前就是
+  // 死在这里，连 Android 构建的边都没摸到。
+  // 所以自检自己负责把它补出来：缺了就现场生成，而不是直接报错。
+  if (!fs.existsSync(iconPath)) {
+    try {
+      require('node:child_process').execFileSync(process.execPath, [path.join(__dirname, 'make-icon.js')], {
+        stdio: 'inherit',
+      });
+    } catch (err) {
+      // 生成不了就让它落到下面的断言里，报错信息比在这里吞掉更直接
+    }
+  }
+
+  check('图标存在（缺了会现场生成）', fs.existsSync(iconPath), 'resources/icon.png 没能生成出来');
   if (fs.existsSync(iconPath)) {
     const b = fs.readFileSync(iconPath);
     check('PNG 头正确', b.slice(0, 8).toString('hex') === '89504e470d0a1a0a');

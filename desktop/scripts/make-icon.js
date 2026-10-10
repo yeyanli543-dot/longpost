@@ -168,6 +168,17 @@ rr(96, 168, 116, 186, 3, () => [59, 130, 246, 255]);
 rr(124, 160, 144, 186, 3, () => [34, 197, 94, 255]);
 
 const outPath = path.join(__dirname, '..', 'resources', 'icon.png');
+const force = process.argv.includes('--force');
+
+// 仓库里放着的已经是正式设计稿，这个脚本退化成「图标万一丢了」的兜底。
+// 所以默认不覆盖已有文件 —— 否则 npm install 的 prepare 会在每次构建时
+// 把设计稿悄悄换回下面这个占位图，而构建日志一切正常，很难发现。
+// 想重新生成占位图，显式加 --force。
+if (fs.existsSync(outPath) && !force) {
+  console.log('icon kept:', outPath, fs.statSync(outPath).size, 'bytes（已存在，跳过；要覆盖请加 --force）');
+  process.exit(0);
+}
+
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, encodePng(SIZE, SIZE, buf));
 console.log('icon written:', outPath, fs.statSync(outPath).size, 'bytes', SIZE + 'x' + SIZE);
