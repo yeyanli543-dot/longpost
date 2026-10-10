@@ -6,6 +6,11 @@
   "author": "yeyanli543-dot",
   "license": "MIT",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yeyanli543-dot/longpost.git",
+    "directory": "desktop"
+  },
   "scripts": {
     "start": "electron .",
     "prepare": "node scripts/sync-vendor.js && node scripts/make-icon.js",
@@ -15,10 +20,10 @@
     "verify:ui": "electron . --smoke=./.verify/ui.png --smoke-script=scripts/ui-scenario.js --no-sandbox",
     "verify:export": "electron scripts/verify-export.js --out=./.verify/export.png --no-sandbox",
     "verify": "npm run test && npm run verify:export",
-    "dist": "electron-builder",
-    "dist:win": "electron-builder --win --x64",
-    "dist:mac": "electron-builder --mac",
-    "dist:linux": "electron-builder --linux"
+    "dist": "electron-builder --publish never",
+    "dist:win": "electron-builder --win --x64 --publish never",
+    "dist:mac": "electron-builder --mac --publish never",
+    "dist:linux": "electron-builder --linux --publish never"
   },
   "dependencies": {
     "echarts": "6.1.0"

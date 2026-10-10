@@ -1,5 +1,9 @@
 /**
- * 生成应用图标 desktop/resources/icon.png（256×256）。
+ * 生成应用图标 desktop/resources/icon.png。
+ *
+ * 输出 1024×1024：macOS 打包要求图标不小于 512×512，Windows 也用它降采样出多档尺寸。
+ * 绘制坐标依旧按 256 的网格来写（下面所有数字都是 256 空间里的），输出时统一放大 4 倍，
+ * 这样图形比例和以前完全一致，只是分辨率更高。
  *
  * 不依赖任何图形库，直接按像素画好再用 zlib 压成 PNG，
  * 这样换电脑 / 换 CI 都能一条命令重新生成，不会出现「图标丢了」。
@@ -13,7 +17,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 const zlib = require('node:zlib');
 
-const SIZE = 256;
+const SIZE = 1024; // 输出边长
+const GRID = 256; // 绘制坐标网格
+const S = SIZE / GRID; // 4
 
 // ---------------------------------------------------------------- PNG 写入
 
@@ -126,9 +132,14 @@ function roundedDistance(px, py, x0, y0, x1, y1, radius) {
 
 const lerp = (a, b, t) => a + (b - a) * t;
 
+/** 按 256 网格下笔，自动放大到输出分辨率。 */
+function rr(x0, y0, x1, y1, radius, colourAt) {
+  roundRect(x0 * S, y0 * S, x1 * S, y1 * S, radius * S, (px, py) => colourAt(px / S, py / S));
+}
+
 // 1. 背景：蓝 -> 绿 的对角渐变圆角方块
-roundRect(8, 8, 248, 248, 56, (x, y) => {
-  const t = Math.min(1, Math.max(0, (x + y) / (SIZE * 1.6)));
+rr(8, 8, 248, 248, 56, (x, y) => {
+  const t = Math.min(1, Math.max(0, (x + y) / (GRID * 1.6)));
   return [
     Math.round(lerp(59, 34, t)),
     Math.round(lerp(130, 197, t)),
@@ -138,7 +149,7 @@ roundRect(8, 8, 248, 248, 56, (x, y) => {
 });
 
 // 2. 白色纸张
-roundRect(76, 54, 180, 202, 14, () => [255, 255, 255, 255]);
+rr(76, 54, 180, 202, 14, () => [255, 255, 255, 255]);
 
 // 3. 纸上的文字线
 const LINE_COLOR = [120, 138, 160, 255];
@@ -149,14 +160,14 @@ const lines = [
   [96, 142, 152],
 ];
 for (const [lx0, lx1, ly] of lines) {
-  roundRect(lx0, ly, lx1, ly + 7, 3.5, () => LINE_COLOR);
+  rr(lx0, ly, lx1, ly + 7, 3.5, () => LINE_COLOR);
 }
 
-// 4. 纸张右下角补一条绿色小柱，暗示「图表」
-roundRect(96, 168, 116, 186, 3, () => [59, 130, 246, 255]);
-roundRect(124, 160, 144, 186, 3, () => [34, 197, 94, 255]);
+// 4. 纸张右下角补两根小柱，暗示「图表」
+rr(96, 168, 116, 186, 3, () => [59, 130, 246, 255]);
+rr(124, 160, 144, 186, 3, () => [34, 197, 94, 255]);
 
 const outPath = path.join(__dirname, '..', 'resources', 'icon.png');
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, encodePng(SIZE, SIZE, buf));
-console.log('icon written:', outPath, fs.statSync(outPath).size, 'bytes');
+console.log('icon written:', outPath, fs.statSync(outPath).size, 'bytes', SIZE + 'x' + SIZE);
