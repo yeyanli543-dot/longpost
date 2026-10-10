@@ -91,8 +91,7 @@ async function main() {
     const vis=(el)=>{ if(!el) return false; const b=el.getBoundingClientRect(); return b.width>1&&b.height>1&&!el.hidden; };
     const isNarrowNow=()=>{ try{ return document.getElementById('app').dataset.view!==undefined && window.matchMedia('(max-width: 760px)').matches; }catch(e){ return window.matchMedia('(max-width: 760px)').matches; } };
     const closeAnyModal=()=>{ ['settingsModal','chartModal','longImageModal','tagsModal','trashModal','historyModal','shareModal','statsModal'].forEach(id=>{ const m=document.getElementById(id); if(m&&!m.hidden){ const b=m.querySelector('.icon-btn[aria-label=\"关闭\"]'); if(b) b.click(); } }); };
-    const clickIf=(id)=>{ const b=$(id); if(b&&vis(b)){ b.click(); return true; } return false; };
-`;
+    const clickIf=(id)=>{ const b=$(id); if(b&&vis(b)){ b.click(); return true; } return false; };`;
   const ev = (c) => win.webContents.executeJavaScript('(async()=>{' + PRE + c + '})()', true);
 
   const shots = [];
