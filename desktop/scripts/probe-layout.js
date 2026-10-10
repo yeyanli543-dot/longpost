@@ -135,7 +135,7 @@ const evOf = (win) => (code) => win.webContents.executeJavaScript('(async()=>{' 
 const DRAWERS = [
   ['settingsModal', 'tabSettings', /设置/],
   ['tagsModal', 'btnTags', /给文章打标签|标签/],
-  ['trashModal', 'btnTrash', /^\u005cs*回收站\u005cs*$/],
+  ['trashModal', 'btnTrash', /^\s*回收站\s*$/],
   ['chartModal', null, /插入图表/],
   ['historyModal', null, /历史版本/],
   ['shareModal', null, /分享这一篇/],
@@ -149,7 +149,7 @@ async function runP1(rendererDir, shotDir) {
   await ev(`
     $('btnNew').click(); await sleep(1000);
     if($('title')){ $('title').value='收口复核样张'; $('title').dispatchEvent(new Event('input',{bubbles:true})); }
-    if($('editor')){ $('editor').value='# 一\u005c\u005cn\u005c\u005cn'+'正文段落。'.repeat(40)+'\u005c\u005cn\u005c\u005cn## 二\u005c\u005cn\u005c\u005cn'+'更多内容。'.repeat(40)+'\u005c\u005cn\u005c\u005cn## 三\u005c\u005cn\u005c\u005cn结尾一段。'; $('editor').dispatchEvent(new Event('input',{bubbles:true})); }
+    if($('editor')){ $('editor').value='# 一\\n\\n'+'正文段落。'.repeat(40)+'\\n\\n## 二\\n\\n'+'更多内容。'.repeat(40)+'\\n\\n## 三\\n\\n结尾一段。'; $('editor').dispatchEvent(new Event('input',{bubbles:true})); }
     await sleep(1700); return true;`);
 
   const tabbar = await ev(`finishAnims(); const nav=$('tabbar'); const r=rectOf(nav);
@@ -185,7 +185,7 @@ async function runP1(rendererDir, shotDir) {
       const dlg = m.querySelector('.dialog') || m;
       const foot = m.querySelector('.dialog-foot');
       const btns = [].slice.call(m.querySelectorAll('button')).filter(isVisible).map(el=>({
-        id: el.id || String(el.className).split(' ')[0], txt: (el.textContent||'').replace(/\u005c\u005cs+/g,' ').trim().slice(0,14), ...hitOf(el) }));
+        id: el.id || String(el.className).split(' ')[0], txt: (el.textContent||'').replace(/\\s+/g,' ').trim().slice(0,14), ...hitOf(el) }));
       const dr = rectOf(dlg); const tb = rectOf($('tabbar'));
       const footBtn = foot ? [].slice.call(foot.querySelectorAll('button')).filter(isVisible).map(el=>({id:el.id, ...hitOf(el)})) : [];
       const tabs = ['tabList','tabEdit','tabOutline','tabSettings'].filter(t=>$(t)).map(t=>({ id:t, ...hitOf($(t)) }));
@@ -229,7 +229,7 @@ async function runP1(rendererDir, shotDir) {
   }
 
   // 后果级测试：在设置抽屉「完成」按钮中心真打一次鼠标点击
-  await ev('const te=$(\u0022tabEdit\u0022); if(te){te.click(); await sleep(600);} await closeAll(); return true;');
+  await ev('const te=$("tabEdit"); if(te){te.click(); await sleep(600);} await closeAll(); return true;');
   const cons = await ev(`
     await openByBtn('tabSettings'); await sleep(650); finishAnims(); await sleep(120);
     const m=$('settingsModal'); if(m.hidden) return { error:'设置抽屉没打开' };
@@ -243,7 +243,7 @@ async function runP1(rendererDir, shotDir) {
     await win.webContents.sendInputEvent({ type: 'mouseDown', x: cons.cx, y: cons.cy, button: 'left', clickCount: 1 });
     await win.webContents.sendInputEvent({ type: 'mouseUp', x: cons.cx, y: cons.cy, button: 'left', clickCount: 1 });
     await new Promise((r) => setTimeout(r, 1000));
-    cons.after = await ev('return { view:$(\u0022app\u0022).dataset.view, open:openModals(), tabListOn:$(\u0022tabList\u0022).classList.contains(\u0022on\u0022), tabOutlineOn:$(\u0022tabOutline\u0022).classList.contains(\u0022on\u0022) };');
+    cons.after = await ev('return { view:$("app").dataset.view, open:openModals(), tabListOn:$("tabList").classList.contains("on"), tabOutlineOn:$("tabOutline").classList.contains("on") };');
     out.drawers.settingsClickConsequence = cons;
   } else {
     out.drawers.settingsClickConsequence = cons;
@@ -285,14 +285,14 @@ const MEASURE = `
 async function runP2(rendererDir, width, height, shotDir) {
   const { win, srv } = await makeWindow(width, height, rendererDir);
   const ev = evOf(win);
-  const empty = await ev(MEASURE + 'return {phase:\u0022empty\u0022, ...__m};');
+  const empty = await ev(MEASURE + 'return {phase:"empty", ...__m};');
   await ev(`
     $('btnNew').click(); await sleep(950);
     if($('title')){ $('title').value=${JSON.stringify(TITLE_TEXT)}; $('title').dispatchEvent(new Event('input',{bubbles:true})); }
-    if($('editor')){ $('editor').value='# 回归核对\u005c\u005cn\u005c\u005cn'+'这是一段用来核对版面的正文。'.repeat(24); $('editor').dispatchEvent(new Event('input',{bubbles:true})); }
+    if($('editor')){ $('editor').value='# 回归核对\\n\\n'+'这是一段用来核对版面的正文。'.repeat(24); $('editor').dispatchEvent(new Event('input',{bubbles:true})); }
     await sleep(1500); return true;`);
-  const editor = await ev(MEASURE + 'return {phase:\u0022editor\u0022, ...__m};');
-  const outline = await ev('const b=$(\u0022btnOutline\u0022); if(b) b.click(); await sleep(900);' + MEASURE + 'return {phase:\u0022outline\u0022, ...__m};');
+  const editor = await ev(MEASURE + 'return {phase:"editor", ...__m};');
+  const outline = await ev('const b=$("btnOutline"); if(b) b.click(); await sleep(900);' + MEASURE + 'return {phase:"outline", ...__m};');
   if (SHOT) {
     await win.webContents.capturePage();
     for (const [ph, name] of [['empty', 'empty'], ['editor', 'editor'], ['outline', 'outline']]) {
@@ -396,7 +396,7 @@ app.whenReady().then(async () => {
         }
       }
     }
-    console.log('\u005cn===== --assert 判定 =====');
+    console.log('\n===== --assert 判定 =====');
     if (fails.length) {
       console.log('PROBE_ASSERT_FAIL ' + fails.length + ' 项：');
       for (const f of fails) console.log('  ✗ ' + f);
