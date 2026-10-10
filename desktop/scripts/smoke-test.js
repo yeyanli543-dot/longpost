@@ -236,6 +236,24 @@ console.log('\n[6] 主进程文件可被解析');
     })(),
   );
 }
+console.log('\n[7] 长图导出必须按正文全高出图（D1 回归）');
+{
+  // 桌面流水线（desktop-release.yml）只跑 npm test，安卓那条跑 verify-mobile.js，
+  // 所以两边都挂同一份护栏；实现见 scripts/longimage-guard.js。
+  const guard = require('./longimage-guard');
+  for (const c of guard.checkLongImage(path.join(__dirname, '..', 'renderer'))) {
+    check(c.label, c.ok, c.detail);
+  }
+}
+console.log('\n[8] 贴底抽屉不被底栏遮挡 / 标题不被挤扁（P1、P2 回归）');
+{
+  // 同样一份实现两个调用点，见 scripts/layout-guard.js。
+  // 像素级结论由 scripts/probe-layout.js（需 xvfb）负责，这里守的是让修复成立的不变量。
+  const guard = require('./layout-guard');
+  for (const c of guard.checkLayout(path.join(__dirname, '..', 'renderer'))) {
+    check(c.label, c.ok, c.detail);
+  }
+}
 console.log('\n———————————————————————————————');
 console.log(`通过 ${passed} 项，失败 ${failures.length} 项`);
 if (failures.length) {
