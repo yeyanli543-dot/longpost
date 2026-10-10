@@ -190,6 +190,25 @@
       return importPicked(files);
     },
 
+    /**
+     * 导入正文：手机 / 网页上没有系统「打开文件」对话框，用 <input type="file">
+     * 选一个 Markdown / 文本文件，把文字读出来当新文章的正文。
+     * 返回结构和桌面版保持一致，界面代码就不用分平台写两套。
+     */
+    async importArticle() {
+      const files = await pickWithInput('.md,.markdown,.txt,text/markdown,text/plain', false);
+      if (!files.length) return { canceled: true };
+      const f = files[0];
+      if (f.size > 20 * 1024 * 1024) return { error: '文件超过 20 MB，先精简一下再导入' };
+      try {
+        const text = await f.text();
+        const base = String(f.name || '').replace(/\.[^.]+$/, '');
+        return { title: base || '导入的文章', content: String(text).replace(/^\uFEFF/, '') };
+      } catch (err) {
+        return { error: String((err && err.message) || err) };
+      }
+    },
+
     /** 拖放进来的文件直接收下，跟点按钮选文件等价。 */
     importDropped(files) {
       return importPicked(Array.prototype.slice.call(files || []));

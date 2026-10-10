@@ -378,6 +378,8 @@ body {
   flex: 1;
   display: flex;
   overflow: hidden;
+  /* 大纲浮层按这个盒子定位，见文件末尾 */
+  position: relative;
 }
 
 .editor {
@@ -388,7 +390,9 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Noto Sans Mono CJK SC', monospace;
-  font-size: 14px;
+  /* 字号跟着设置里的「编辑区字号」走；预览保持自己的排版，
+     因为导出网页用的是同一套排版，改了预览就不再所见即所得 */
+  font-size: var(--editor-font-size, 14px);
   line-height: 1.8;
   padding: 20px 22px;
   tab-size: 2;
@@ -820,4 +824,109 @@ body.light .preview pre.code-block {
 
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* ---------------------------------------------------------------- 正文大纲 */
+
+.outline-panel {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  bottom: 8px;
+  width: 192px;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  z-index: 6;
+}
+
+.outline-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.outline-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.outline-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font-size: 12.5px;
+  line-height: 1.6;
+  font-family: inherit;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.outline-item:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.outline-item.lv2 {
+  padding-left: 15px;
+}
+
+.outline-item.lv3,
+.outline-item.lv4 {
+  padding-left: 26px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.outline-empty {
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--muted);
+}
+
+/*
+  浮层压在编辑区右侧，所以打开大纲时让右边那一栏腾出同样的宽度：
+  预览开着就预览让，预览关着就编辑区让。两种情况下正文都不会被盖住。
+*/
+.panes.outline-on .preview {
+  margin-right: 200px;
+}
+
+.panes.outline-on.preview-off .editor {
+  width: calc(100% - 200px);
+}
+
+/* ---------------------------------------------------------------- 沉浸阅读 */
+
+body.reading-mode .sidebar {
+  display: none;
+}
+
+/* 只留还能用的那几个开关，其余工具栏按钮收起来 */
+body.reading-mode .toolbar .btn:not(.keep-in-reading),
+body.reading-mode .toolbar .sep {
+  display: none;
+}
+
+body.reading-mode .title-input {
+  font-size: 15px;
 }

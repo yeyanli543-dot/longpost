@@ -9,7 +9,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('lp', {
   // 文章
-  listArticles: () => ipcRenderer.invoke('articles:list'),
+  listArticles: (opts) => ipcRenderer.invoke('articles:list', opts),
   getArticle: (id) => ipcRenderer.invoke('articles:get', id),
   saveArticle: (payload) => ipcRenderer.invoke('articles:save', payload),
   deleteArticle: (id) => ipcRenderer.invoke('articles:delete', id),
@@ -32,6 +32,9 @@ contextBridge.exposeInMainWorld('lp', {
   pickFiles: () => ipcRenderer.invoke('files:pick'),
   pickImages: () => ipcRenderer.invoke('files:pickImage'),
   listFiles: () => ipcRenderer.invoke('files:list'),
+
+  // 导入：选一个 Markdown / 文本文件，把正文读进来变成一篇新文章
+  importArticle: () => ipcRenderer.invoke('article:import'),
 
   // 导出
   exportHtml: (id) => ipcRenderer.invoke('export:html', id),

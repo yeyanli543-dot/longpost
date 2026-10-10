@@ -68,7 +68,8 @@
   // ---------------------------------------------------------------- 列表
 
   async function reloadList(keepCurrent) {
-    state.articles = (await LP.listArticles()) || [];
+    // 排序规则在仓库层（lib/repo.js 的 sortList），界面只负责说「按什么排」
+    state.articles = (await LP.listArticles({ sort: state.settings.sort || 'updated' })) || [];
     renderList();
     if (!keepCurrent && !state.current && state.articles.length) {
       // 不做自动打开，保留「新建」空态；由调用方决定
@@ -130,7 +131,10 @@
 
         const meta = document.createElement('div');
         meta.className = 'item-meta';
-        meta.textContent = `${a.chars} 字${a.charts ? ' · ' + a.charts + ' 图表' : ''} · ${formatTime(a.updatedAt)}`;
+        // minutes 是仓库层一直算好、但从来没露过面的阅读时长
+        meta.textContent =
+          `${a.chars} 字 · 约 ${a.minutes || 1} 分钟` +
+          `${a.charts ? ' · ' + a.charts + ' 图表' : ''} · ${formatTime(a.updatedAt)}`;
 
         el.appendChild(head);
         el.appendChild(sum);
@@ -176,6 +180,7 @@
     $('editor').value = article.content || '';
     updateStats();
     renderPreview();
+    renderOutline();
     renderList();
     refreshPinButton();
     setView('editor');
@@ -193,6 +198,7 @@
     $('editor').value = '';
     updateStats();
     renderPreview();
+    renderOutline();
     await reloadList(true);
     renderList();
     refreshPinButton();
@@ -202,10 +208,20 @@
     setStatus('新文章');
   }
 
+  /** 阅读时长用仓库层那一份算法，保证列表和状态栏说的是同一个数。 */
+  function readingMinutes(content) {
+    if (window.LPRepo && typeof window.LPRepo.readingMinutes === 'function') {
+      return window.LPRepo.readingMinutes(content);
+    }
+    return Math.max(1, Math.round(String(content || '').replace(/\s/g, '').length / 400));
+  }
+
   function updateStats() {
     const content = $('editor').value || '';
     const charts = CH.chartCount(content);
-    $('stats').textContent = `${content.length} 字${charts ? ' · ' + charts + ' 个图表' : ''}`;
+    $('stats').textContent =
+      `${content.length} 字 · 约 ${readingMinutes(content)} 分钟` +
+      `${charts ? ' · ' + charts + ' 个图表' : ''}`;
   }
 
   // ---------------------------------------------------------------- 保存
@@ -847,24 +863,24 @@
   // ---------------------------------------------------------------- 设置
 
   function applyTheme() {
-    document.body.className = state.settings.theme === 'light' ? 'light' : '';
-    const box = $('themeSwitch');
-    box.innerHTML = '';
-    for (const t of [
-      { key: 'dark', label: '深色' },
-      { key: 'light', label: '浅色' },
-    ]) {
-      const b = document.createElement('button');
-      b.className = 'seg' + (state.settings.theme === t.key ? ' on' : '');
-      b.textContent = t.label;
-      b.addEventListener('click', async () => {
-        state.settings = await LP.setSettings({ theme: t.key });
+    // 用 classList 而不是直接写 className：沉浸阅读也是挂在 body 上的 class，
+    // 直接覆盖会把 reading-mode 一起抹掉，切一次主题就悄悄退出沉浸模式了
+    document.body.classList.toggle('light', state.settings.theme === 'light');
+
+    buildSegmented(
+      'themeSwitch',
+      [
+        { key: 'dark', label: '深色' },
+        { key: 'light', label: '浅色' },
+      ],
+      state.settings.theme === 'light' ? 'light' : 'dark',
+      async (key) => {
+        state.settings = await LP.setSettings({ theme: key });
         applyTheme();
         renderPreview();
         if (!$('chartModal').hidden) previewChart();
-      });
-      box.appendChild(b);
-    }
+      },
+    );
   }
 
   async function openSettings() {
@@ -875,7 +891,7 @@
       '离线可用。文章、图片、附件全部存放在上面这个目录里，不会上传到任何服务器。' +
       '卸载应用不会删除这个目录，需要的话可以手动备份。';
     $('aboutText').style.whiteSpace = 'pre-line';
-    applyTheme();
+    applySettingsUi();
     $('settingsModal').hidden = false;
   }
 
@@ -909,6 +925,228 @@
     });
   }
 
+  // ---------------------------------------------------------------- 正文大纲
+
+  /**
+   * 正文大纲。
+   *
+   * lib/outline.js 一直在页面上（index.html 引了 vendor/outline.js），
+   * 但界面从来没调用过它 —— 长文写作最需要的「跳到第几节」就这么一直缺着。
+   *
+   * 定位用的是它给的 line（标题在正文里的行号），不用预览区的 DOM id：
+   * 预览是按图表卡片分段重新渲染的，id 每次都会变，靠不住。
+   */
+  let outlineTimer = 0;
+
+  function outlineItems() {
+    if (!OUTLINE || typeof OUTLINE.buildToc !== 'function') return [];
+    return OUTLINE.buildToc($('editor').value || '').items || [];
+  }
+
+  function renderOutline() {
+    const panel = $('outlinePanel');
+    if (!panel || panel.hidden) return;
+    const box = $('outlineList');
+    const items = outlineItems();
+    box.innerHTML = '';
+
+    if (!items.length) {
+      const hint = document.createElement('div');
+      hint.className = 'outline-empty';
+      hint.textContent = '正文里还没有标题。用「# 标题」写小标题，这里就会列出来，点一下直接跳到那一段。';
+      box.appendChild(hint);
+      return;
+    }
+
+    items.forEach((h, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'outline-item lv' + h.level;
+      b.textContent = h.text;
+      b.title = h.text;
+      b.dataset.line = String(h.line);
+      b.dataset.idx = String(i);
+      box.appendChild(b);
+    });
+  }
+
+  /** 打字时不要每敲一下就重算，停下来再刷新。 */
+  function scheduleOutline() {
+    if ($('outlinePanel').hidden) return;
+    clearTimeout(outlineTimer);
+    outlineTimer = setTimeout(renderOutline, 400);
+  }
+
+  function jumpToHeading(line, idx) {
+    const ed = $('editor');
+    const lines = (ed.value || '').split('\n');
+    const target = Math.max(0, Math.min(Number(line) || 0, lines.length - 1));
+
+    let offset = 0;
+    for (let i = 0; i < target; i += 1) offset += lines[i].length + 1;
+
+    // 先聚焦再设选区：浏览器会把光标所在那一行滚进可视区
+    ed.focus();
+    ed.setSelectionRange(offset, offset + (lines[target] || '').length);
+
+    // 预览也跟着滚到同一个标题（预览里只有标题元素，顺序和正文一致）
+    const heads = $('preview').querySelectorAll('h1, h2, h3, h4');
+    const el = heads[idx];
+    if (el && typeof el.scrollIntoView === 'function') {
+      try {
+        el.scrollIntoView({ block: 'start' });
+      } catch {
+        el.scrollIntoView();
+      }
+    }
+  }
+
+  function applyOutlineState() {
+    const on = !!state.settings.showOutline;
+    $('outlinePanel').hidden = !on;
+    $('panes').classList.toggle('outline-on', on);
+    $('btnOutline').classList.toggle('on', on);
+    if (on) renderOutline();
+  }
+
+  // ---------------------------------------------------------------- 导入
+
+  /**
+   * 把已有的 Markdown / 文本文件读成一篇文章。
+   * 桌面版走系统「打开文件」对话框，手机版走 <input type="file">，
+   * 两边返回同一种结构，所以这里只写一套。
+   */
+  async function importArticle() {
+    if (typeof LP.importArticle !== 'function') {
+      toast('这个平台还不支持导入', 'err');
+      return;
+    }
+    await flushSave();
+    setStatus('正在导入…');
+
+    let res = null;
+    try {
+      res = await LP.importArticle();
+    } catch (err) {
+      res = { error: String((err && err.message) || err) };
+    }
+
+    if (!res || res.canceled) {
+      setStatus('已取消');
+      return;
+    }
+    if (res.error) {
+      toast('导入失败：' + res.error, 'err');
+      setStatus('导入失败');
+      return;
+    }
+
+    const created = await LP.saveArticle({
+      title: res.title || '导入的文章',
+      content: res.content || '',
+    });
+    await reloadList(true);
+    renderList();
+    await openArticle(created.id);
+    toast('已导入「' + (created.title || '未命名') + '」', 'ok');
+  }
+
+  // ---------------------------------------------------------------- 外观
+
+  const FONT_MIN = 13;
+  const FONT_MAX = 24;
+
+  /** 字号：写到 CSS 变量上，编辑区和预览一起变。 */
+  function applyFontSize() {
+    let size = Number(state.settings.fontSize);
+    if (!Number.isFinite(size)) size = 16;
+    size = Math.min(FONT_MAX, Math.max(FONT_MIN, Math.round(size)));
+    document.documentElement.style.setProperty('--editor-font-size', size + 'px');
+    const range = $('setFontSize');
+    if (range) range.value = String(size);
+    const hint = $('fontSizeHint');
+    if (hint) hint.textContent = size + ' px';
+  }
+
+  /** 沉浸阅读：收起侧栏，工具栏只留几个还能用的开关。 */
+  function applyReadingMode() {
+    const on = !!state.settings.readingMode;
+    document.body.classList.toggle('reading-mode', on);
+    $('btnReading').classList.toggle('on', on);
+    setTimeout(resizeCharts, 30);
+  }
+
+  /** 设置里的分段控件，主题 / 排序 / 沉浸 / 大纲共用这一套。 */
+  function buildSegmented(boxId, options, current, onPick) {
+    const box = $(boxId);
+    if (!box) return;
+    box.innerHTML = '';
+    for (const opt of options) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'seg' + (current === opt.key ? ' on' : '');
+      b.textContent = opt.label;
+      b.addEventListener('click', () => onPick(opt.key));
+      box.appendChild(b);
+    }
+  }
+
+  /**
+   * 把设置里已经存着的值全部铺到界面上。
+   * 之前 fontSize / sort / readingMode 三样在仓库层都有、界面却一次都没用过，
+   * 这里一次性接上，启动和打开设置面板都走同一个入口。
+   */
+  function applySettingsUi() {
+    applyTheme();
+
+    buildSegmented(
+      'sortSwitch',
+      [
+        { key: 'updated', label: '最近修改' },
+        { key: 'created', label: '创建时间' },
+        { key: 'title', label: '标题' },
+        { key: 'chars', label: '字数' },
+      ],
+      state.settings.sort || 'updated',
+      async (key) => {
+        state.settings = await LP.setSettings({ sort: key });
+        applySettingsUi();
+        await reloadList(true);
+        renderList();
+      },
+    );
+
+    buildSegmented(
+      'readingModeSwitch',
+      [
+        { key: 'off', label: '普通' },
+        { key: 'on', label: '沉浸' },
+      ],
+      state.settings.readingMode ? 'on' : 'off',
+      async (key) => {
+        state.settings = await LP.setSettings({ readingMode: key === 'on' });
+        applySettingsUi();
+        applyReadingMode();
+      },
+    );
+
+    buildSegmented(
+      'outlineSwitch',
+      [
+        { key: 'off', label: '收起' },
+        { key: 'on', label: '展开' },
+      ],
+      state.settings.showOutline ? 'on' : 'off',
+      async (key) => {
+        state.settings = await LP.setSettings({ showOutline: key === 'on' });
+        applyOutlineState();
+        applySettingsUi();
+      },
+    );
+
+    applyFontSize();
+  }
+
   // ---------------------------------------------------------------- 事件绑定
 
   function bind() {
@@ -936,6 +1174,7 @@
     $('title').addEventListener('input', markDirty);
     $('editor').addEventListener('input', () => {
       updateStats();
+      scheduleOutline();
       markDirty();
     });
 
@@ -996,6 +1235,40 @@
     $('btnPreview').addEventListener('click', async () => {
       state.settings = await LP.setSettings({ showPreview: !state.settings.showPreview });
       applyPreviewState();
+    });
+
+    $('btnOutline').addEventListener('click', async () => {
+      state.settings = await LP.setSettings({ showOutline: !state.settings.showOutline });
+      applyOutlineState();
+    });
+
+    $('outlineClose').addEventListener('click', async () => {
+      state.settings = await LP.setSettings({ showOutline: false });
+      applyOutlineState();
+    });
+
+    // 大纲项是动态生成的，用事件委托，省得每次重算都重新绑一轮
+    $('outlineList').addEventListener('click', (e) => {
+      const item = e.target.closest('.outline-item');
+      if (!item) return;
+      jumpToHeading(item.dataset.line, Number(item.dataset.idx));
+    });
+
+    $('btnReading').addEventListener('click', async () => {
+      state.settings = await LP.setSettings({ readingMode: !state.settings.readingMode });
+      applyReadingMode();
+    });
+
+    $('btnImport').addEventListener('click', importArticle);
+
+    // 拖的时候只改显示，松手才落盘，免得拖动过程里反复写设置
+    $('setFontSize').addEventListener('input', (e) => {
+      $('fontSizeHint').textContent = e.target.value + ' px';
+      document.documentElement.style.setProperty('--editor-font-size', e.target.value + 'px');
+    });
+    $('setFontSize').addEventListener('change', async (e) => {
+      state.settings = await LP.setSettings({ fontSize: Number(e.target.value) });
+      applyFontSize();
     });
 
     $('btnExportHtml').addEventListener('click', async () => {
@@ -1118,7 +1391,7 @@
     }
 
     state.settings = await LP.getSettings();
-    applyTheme();
+    applySettingsUi();
     applyPreviewState();
     setupSplitter();
     bind();

@@ -210,7 +210,9 @@ function buildMenu() {
 // ---------------------------------------------------------------------------
 
 function registerIpc() {
-  ipcMain.handle('articles:list', () => store.listArticles());
+  // 排序方式由界面传进来（最近修改 / 创建时间 / 标题 / 字数），
+  // 排序规则本身在 lib/repo.js 的 sortList 里，只有一个来源
+  ipcMain.handle('articles:list', (_e, opts) => store.listArticles(opts));
   ipcMain.handle('articles:get', (_e, id) => store.getArticle(id));
   ipcMain.handle('articles:save', (_e, payload) => store.saveArticle(payload));
   ipcMain.handle('articles:delete', (_e, id) => store.deleteArticle(id));
@@ -250,6 +252,36 @@ function registerIpc() {
   });
 
   ipcMain.handle('files:list', () => store.listFiles());
+
+  /**
+   * 导入正文：把用户已有的 .md / .txt 读成一篇新文章。
+   *
+   * 只读用户在系统对话框里亲手选中的那一个文件，不做目录扫描，
+   * 也不把文件路径交给渲染层 —— 渲染层拿到的只有标题和正文文字。
+   */
+  ipcMain.handle('article:import', async () => {
+    const res = await dialog.showOpenDialog(mainWindow, {
+      title: '导入 Markdown / 文本文件',
+      properties: ['openFile'],
+      filters: [
+        { name: 'Markdown / 文本', extensions: ['md', 'markdown', 'txt'] },
+        { name: '全部文件', extensions: ['*'] },
+      ],
+    });
+    if (res.canceled || !res.filePaths.length) return { canceled: true };
+
+    const filePath = res.filePaths[0];
+    try {
+      const stat = fs.statSync(filePath);
+      if (!stat.isFile()) return { error: '选中的不是一个文件' };
+      if (stat.size > 20 * 1024 * 1024) return { error: '文件超过 20 MB，先精简一下再导入' };
+      const content = fs.readFileSync(filePath, 'utf8').replace(/^\uFEFF/, '');
+      const base = path.basename(filePath).replace(/\.[^.]+$/, '');
+      return { title: base || '导入的文章', content: content };
+    } catch (err) {
+      return { error: String(err && err.message ? err.message : err) };
+    }
+  });
 
   ipcMain.handle('export:html', async (_e, id) => {
     const article = store.getArticle(id);

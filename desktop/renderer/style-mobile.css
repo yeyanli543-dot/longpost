@@ -275,3 +275,53 @@ button.chip {
     display: none;
   }
 }
+
+/* ================================================================ 大纲（窄屏） */
+
+@media (max-width: 820px) {
+  /*
+    手机上是编辑器在上、预览在下（.panes 变成 block），没有并排的余地，
+    所以大纲不做浮层，直接当成整屏抽屉弹出来，也就不需要给分栏让宽度。
+  */
+  .panes.outline-on .preview {
+    margin-right: 0;
+  }
+
+  .outline-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    border: 0;
+    border-radius: 0;
+    z-index: 90;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .outline-head {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .outline-list {
+    padding: 10px;
+  }
+
+  /* 手指点，行高和信息层级都要放大一点 */
+  .outline-item {
+    font-size: 14px;
+    padding: 9px 8px;
+  }
+
+  .outline-item.lv3,
+  .outline-item.lv4 {
+    font-size: 13px;
+  }
+
+  .outline-empty {
+    font-size: 13px;
+  }
+}

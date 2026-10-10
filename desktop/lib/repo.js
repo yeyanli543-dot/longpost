@@ -57,6 +57,7 @@
       sidebarWidth: 280,
       sort: 'updated',
       readingMode: false,
+      showOutline: false,
       fontSize: 16,
     };
   }

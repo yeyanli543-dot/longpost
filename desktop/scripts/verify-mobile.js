@@ -386,6 +386,7 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
     'listTags',
     'listRevisions',
     'restoreRevision',
+    'importArticle',
   ];
   const unreachable = repoCapabilities.filter((name) => {
     const onDesktop = new RegExp('\\b' + name + '\\s*:').test(preloadSrc);
@@ -396,6 +397,45 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
     '仓库能力在桌面上都够得着',
     unreachable.length === 0,
     '接不到：' + unreachable.join(', '),
+  );
+
+  // 引入了却没人调用的模块，等于没接 —— vendor/outline.js 就这么躺了很久
+  check(
+    '大纲模块被界面真正调用',
+    /OUTLINE\.buildToc\s*\(/.test(appSrc),
+    'vendor/outline.js 引了但没有一处调用',
+  );
+
+  // 设置里存着、界面却不给改的项，用户永远碰不到它
+  const settingsSurfaced = [
+    ['编辑区字号', /LP\.setSettings\(\{\s*fontSize:/.test(appSrc)],
+    ['列表排序', /LP\.setSettings\(\{\s*sort:/.test(appSrc)],
+    ['沉浸阅读', /LP\.setSettings\(\{\s*readingMode:/.test(appSrc)],
+    ['正文大纲', /LP\.setSettings\(\{\s*showOutline:/.test(appSrc)],
+  ];
+  const deadSettings = settingsSurfaced.filter((x) => !x[1]).map((x) => x[0]);
+  check(
+    '设置里的项在界面上都能改',
+    deadSettings.length === 0,
+    '只能存不能改：' + deadSettings.join(', '),
+  );
+
+  check(
+    '阅读时长在界面上露出来了',
+    /readingMinutes/.test(appSrc) || /a\.minutes/.test(appSrc),
+    '仓库层算了 minutes，界面一处都没用',
+  );
+
+  check(
+    '导入在桌面和手机两边都实现了',
+    /importArticle\s*:/.test(preloadSrc) && /importArticle\s*\(/.test(platformSrc),
+    'preload.js 或 renderer/platform.js 里缺 importArticle',
+  );
+
+  check(
+    '主进程确实处理了导入通道',
+    /ipcMain\.handle\(\s*'article:import'/.test(mainSrc),
+    'article:import 没有处理函数',
   );
 
   // ------------------------------------------------------------ 结果

@@ -33,6 +33,7 @@
           <div class="btn-row">
             <button class="btn ghost sm" id="btnTrash">回收站</button>
             <button class="btn ghost sm" id="btnTags">标签</button>
+            <button class="btn ghost sm" id="btnImport" title="把已有的 Markdown / 文本文件读成一篇文章">导入</button>
           </div>
           <input class="search" id="search" type="search" placeholder="搜索标题或正文…" />
         </div>
@@ -72,7 +73,9 @@
               <button class="btn" id="btnImage" title="插入图片">图片</button>
               <button class="btn" id="btnFile" title="插入任意文件">附件</button>
               <span class="sep"></span>
-              <button class="btn" id="btnPreview" title="显示 / 隐藏预览">预览</button>
+              <button class="btn keep-in-reading" id="btnOutline" title="显示 / 隐藏正文大纲，长文里点标题直接跳">大纲</button>
+              <button class="btn keep-in-reading" id="btnReading" title="沉浸阅读：收起侧栏，只看正文">沉浸</button>
+              <button class="btn keep-in-reading" id="btnPreview" title="显示 / 隐藏预览">预览</button>
               <button class="btn" id="btnExportHtml" title="导出为可独立打开的网页">导出网页</button>
               <button class="btn" id="btnExportMd">导出 MD</button>
               <button class="btn" id="btnHistory" title="查看并回滚历史版本">历史</button>
@@ -88,6 +91,19 @@
               placeholder="用 Markdown 写正文…&#10;&#10;支持 # 标题、**加粗**、- 列表、> 引用、| 表格 |、``` 代码块。&#10;&#10;图表用「插入图表」按钮生成，会在正文里写成一个 ```chart 代码块。"
             ></textarea>
             <div class="preview" id="preview"></div>
+            <!--
+              大纲浮层：绝对定位在编辑区的右侧，不参与 .panes 的 flex 分栏
+              （分栏宽度是拖出来的百分比，塞进第三个分栏会把两边的宽度算歪）。
+              打开大纲时，右侧那一栏会空出 .outline-gutter 的内边距，
+              所以正文不会被盖住，见 style.css 的 .panes.outline-on 规则。
+            -->
+            <div class="outline-panel" id="outlinePanel" hidden>
+              <div class="outline-head">
+                <span>大纲</span>
+                <button class="icon-btn" id="outlineClose" title="收起大纲">✕</button>
+              </div>
+              <div class="outline-list" id="outlineList"></div>
+            </div>
           </div>
           <div class="statusbar">
             <span id="status">就绪</span>
@@ -163,6 +179,22 @@
           <div class="field">
             <label>主题</label>
             <div class="segmented" id="themeSwitch"></div>
+          </div>
+          <div class="field">
+            <label>编辑区字号 <span class="hint" id="fontSizeHint">16 px</span></label>
+            <input id="setFontSize" type="range" min="13" max="24" step="1" value="16" />
+          </div>
+          <div class="field">
+            <label>列表排序</label>
+            <div class="segmented" id="sortSwitch"></div>
+          </div>
+          <div class="field">
+            <label>沉浸阅读</label>
+            <div class="segmented" id="readingModeSwitch"></div>
+          </div>
+          <div class="field">
+            <label>正文大纲</label>
+            <div class="segmented" id="outlineSwitch"></div>
           </div>
           <div class="field">
             <label>数据保存在</label>
