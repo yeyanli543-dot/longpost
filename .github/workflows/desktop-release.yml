@@ -48,20 +48,62 @@ jobs:
       - name: 装 Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       # desktop/package-lock.json 不进仓库（见 .gitignore），所以这里用 npm install；
       # 可复现性由 desktop/package.json 里钉死的精确版本保证。
       # 这一步会顺带跑 prepare，自动生成 renderer/vendor/echarts.min.js 和 resources/icon.png ——
       # 那两个文件同样不在仓库里，但打包时必须有。
       - name: 装依赖
-        run: npm install
+        shell: bash
+        run: |
+          set +e
+          npm install --no-audit --no-fund 2>&1 | tee ci-install.log
+          code=${PIPESTATUS[0]}
+          if [ "$code" -ne 0 ]; then
+            {
+              echo "## 装依赖失败（exit $code）"
+              echo '```'
+              tail -c 4000 ci-install.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error title=装依赖失败::$code"
+          fi
+          exit $code
 
       - name: 跑逻辑自检
-        run: npm test
+        shell: bash
+        run: |
+          set +e
+          npm test 2>&1 | tee ci-test.log
+          code=${PIPESTATUS[0]}
+          if [ "$code" -ne 0 ]; then
+            {
+              echo "## 逻辑自检失败（exit $code）"
+              echo '```'
+              tail -c 4000 ci-test.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error title=逻辑自检失败::$code"
+          fi
+          exit $code
 
       - name: 打包
-        run: npm run ${{ matrix.script }}
+        shell: bash
+        run: |
+          set +e
+          npm run ${{ matrix.script }} 2>&1 | tee ci-build.log
+          code=${PIPESTATUS[0]}
+          if [ "$code" -ne 0 ]; then
+            {
+              echo "## 打包失败（exit $code）"
+              echo '```'
+              tail -c 6000 ci-build.log
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error title=打包失败::$code"
+          fi
+          exit $code
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # electron-builder 在没有代码签名证书时会跳过签名，这里显式关掉以免 Linux/mac 上误判
