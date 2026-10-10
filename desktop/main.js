@@ -133,12 +133,17 @@ function attachSmokeHooks() {
   wc.once('did-finish-load', async () => {
     await new Promise((r) => setTimeout(r, 2500));
 
+    // 自检失败必须体现在退出码上：以前这里吞掉异常照常 quit()，
+    // CI 里截图失败也会被当成「通过」。
+    let failed = false;
+
     if (SMOKE_SCRIPT) {
       try {
         const code = fs.readFileSync(SMOKE_SCRIPT, 'utf8');
         const result = await wc.executeJavaScript(code, true);
         console.log('SMOKE_SCRIPT_RESULT ' + JSON.stringify(result));
       } catch (err) {
+        failed = true;
         console.log('SMOKE_SCRIPT_ERROR ' + String(err && err.message ? err.message : err));
       }
       await new Promise((r) => setTimeout(r, 1800));
@@ -146,10 +151,22 @@ function attachSmokeHooks() {
 
     try {
       const image = await wc.capturePage();
+      // 截图目录常常还不存在（例如默认的 .verify/）：
+      // writeFileSync 不会建父目录，先补一刀，否则开箱就是 ENOENT。
+      fs.mkdirSync(path.dirname(SMOKE_OUT), { recursive: true });
       fs.writeFileSync(SMOKE_OUT, image.toPNG());
       console.log('SMOKE_OK ' + SMOKE_OUT + ' (' + image.getSize().width + 'x' + image.getSize().height + ')');
     } catch (err) {
+      failed = true;
       console.log('SMOKE_FAIL ' + String(err && err.message ? err.message : err));
+    }
+    if (failed) {
+      console.log('SMOKE_EXIT 1');
+      // 注意：Electron 里 `process.exitCode = 1` **管不了**最终退出码 —— app.quit()
+      // 之后进程仍然是 0（实测：打印了 SMOKE_EXIT 1，`echo $?` 还是 0）。
+      // 必须 app.exit(1) 才能让 CI 看到失败；同仓库 scripts/verify-export.js 就是这个写法。
+      app.exit(1);
+      return;
     }
     app.quit();
   });
