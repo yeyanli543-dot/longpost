@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' file: lp: data: blob: https: http:; font-src 'self' file: data:; connect-src 'none';"
+    />
+    <title>LongPost</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- 左：文章列表 -->
+      <aside class="sidebar">
+        <div class="side-head">
+          <div class="brand">
+            <span class="logo">L</span>
+            <div class="brand-text">
+              <div class="brand-name">LongPost</div>
+              <div class="brand-sub">本地写作台</div>
+            </div>
+          </div>
+          <button class="btn primary block" id="btnNew">新建文章</button>
+          <input class="search" id="search" type="search" placeholder="搜索标题或正文…" />
+        </div>
+        <div class="list" id="list"></div>
+        <div class="side-foot">
+          <span class="count" id="count">0 篇</span>
+          <div class="foot-btns">
+            <button class="btn ghost sm" id="btnDataDir">数据目录</button>
+            <button class="btn ghost sm" id="btnSettings">设置</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- 右：编辑器 -->
+      <main class="main">
+        <section class="empty" id="empty">
+          <div class="empty-inner">
+            <div class="empty-mark">L</div>
+            <h2>开始写点什么</h2>
+            <p>
+              左边新建一篇文章，正文用 Markdown 写。<br />
+              需要图表就点「插入图表」，需要放文件就点「插入附件」。<br />
+              所有内容都保存在你自己电脑上，不联网、不上传。
+            </p>
+            <button class="btn primary" id="btnNew2">新建文章</button>
+          </div>
+        </section>
+
+        <section class="editor-wrap" id="editorWrap" hidden>
+          <div class="toolbar">
+            <input class="title-input" id="title" placeholder="无标题" />
+            <div class="tools">
+              <button class="btn" id="btnChart" title="插入柱状图 / 折线图 / 面积图 / 饼图">图表</button>
+              <button class="btn" id="btnImage" title="插入图片">图片</button>
+              <button class="btn" id="btnFile" title="插入任意文件">附件</button>
+              <span class="sep"></span>
+              <button class="btn" id="btnPreview" title="显示 / 隐藏预览">预览</button>
+              <button class="btn" id="btnExportHtml" title="导出为可独立打开的网页">导出网页</button>
+              <button class="btn" id="btnExportMd">导出 MD</button>
+              <span class="sep"></span>
+              <button class="btn danger" id="btnDelete">删除</button>
+            </div>
+          </div>
+          <div class="panes" id="panes">
+            <textarea
+              class="editor"
+              id="editor"
+              spellcheck="false"
+              placeholder="用 Markdown 写正文…&#10;&#10;支持 # 标题、**加粗**、- 列表、> 引用、| 表格 |、``` 代码块。&#10;&#10;图表用「插入图表」按钮生成，会在正文里写成一个 ```chart 代码块。"
+            ></textarea>
+            <div class="preview" id="preview"></div>
+          </div>
+          <div class="statusbar">
+            <span id="status">就绪</span>
+            <span id="stats"></span>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- 图表对话框 -->
+    <div class="modal" id="chartModal" hidden>
+      <div class="dialog wide">
+        <div class="dialog-head">
+          <h3>插入图表</h3>
+          <button class="icon-btn" id="chartClose">✕</button>
+        </div>
+        <div class="dialog-body split">
+          <div class="form">
+            <div class="field">
+              <label>图表类型</label>
+              <div class="segmented" id="chartTypes"></div>
+            </div>
+            <div class="field">
+              <label>标题（可留空）</label>
+              <input id="chartTitle" type="text" placeholder="例如：月度阅读量" />
+            </div>
+
+            <div id="cartesianFields">
+              <div class="field">
+                <label>x 轴分类（逗号分隔）</label>
+                <input id="chartX" type="text" placeholder="1月, 2月, 3月" />
+              </div>
+              <div class="field">
+                <label>系列</label>
+                <div id="seriesList" class="series-list"></div>
+                <button class="btn ghost sm" id="addSeries">+ 再加一条数据线</button>
+              </div>
+            </div>
+
+            <div id="pieFields" hidden>
+              <div class="field">
+                <label>数据（每行一项，写法：名称, 数值）</label>
+                <textarea id="chartPie" rows="6" spellcheck="false" placeholder="技术, 42&#10;随笔, 28"></textarea>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>高度 <span class="hint" id="heightHint">360 px</span></label>
+              <input id="chartHeight" type="range" min="200" max="800" step="20" value="360" />
+            </div>
+          </div>
+
+          <div class="chart-preview">
+            <div class="chart-preview-box" id="chartPreviewBox"></div>
+            <div class="chart-error" id="chartError"></div>
+          </div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn ghost" id="chartCancel">取消</button>
+          <button class="btn primary" id="chartInsert">插入正文</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 设置 -->
+    <div class="modal" id="settingsModal" hidden>
+      <div class="dialog">
+        <div class="dialog-head">
+          <h3>设置</h3>
+          <button class="icon-btn" id="settingsClose">✕</button>
+        </div>
+        <div class="dialog-body">
+          <div class="field">
+            <label>主题</label>
+            <div class="segmented" id="themeSwitch"></div>
+          </div>
+          <div class="field">
+            <label>数据保存在</label>
+            <div class="path-box" id="dataDirText"></div>
+          </div>
+          <div class="field">
+            <label>关于</label>
+            <p class="about" id="aboutText"></p>
+          </div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn ghost" id="openDataDir">打开数据目录</button>
+          <button class="btn primary" id="settingsOk">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" hidden></div>
+
+    <script src="vendor/echarts.min.js"></script>
+    <script src="../lib/markdown.js"></script>
+    <script src="../lib/chart.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
