@@ -10,9 +10,15 @@
     <meta name="color-scheme" content="dark light" />
     <title>LongPost</title>
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style-mobile.css" />
   </head>
   <body>
-    <div class="app">
+    <!--
+      data-view 是给手机用的：窄屏下侧栏和编辑区不可能并排，
+      所以切成「列表」和「阅读」两个互斥视图，由 app.js 切换。
+      桌面端不看这个属性。
+    -->
+    <div class="app" id="app" data-view="list">
       <!-- 左：文章列表 -->
       <aside class="sidebar">
         <div class="side-head">
@@ -24,6 +30,10 @@
             </div>
           </div>
           <button class="btn primary block" id="btnNew">新建文章</button>
+          <div class="btn-row">
+            <button class="btn ghost sm" id="btnTrash">回收站</button>
+            <button class="btn ghost sm" id="btnTags">标签</button>
+          </div>
           <input class="search" id="search" type="search" placeholder="搜索标题或正文…" />
         </div>
         <div class="list" id="list"></div>
@@ -53,8 +63,11 @@
 
         <section class="editor-wrap" id="editorWrap" hidden>
           <div class="toolbar">
+            <button class="btn ghost only-mobile" id="btnBack" title="回到文章列表">← 列表</button>
             <input class="title-input" id="title" placeholder="无标题" />
             <div class="tools">
+              <button class="btn" id="btnPin" title="把这篇文章顶到列表最前">置顶</button>
+              <button class="btn" id="btnTagsEdit" title="给这篇文章打标签">标签</button>
               <button class="btn" id="btnChart" title="插入柱状图 / 折线图 / 面积图 / 饼图">图表</button>
               <button class="btn" id="btnImage" title="插入图片">图片</button>
               <button class="btn" id="btnFile" title="插入任意文件">附件</button>
@@ -62,6 +75,7 @@
               <button class="btn" id="btnPreview" title="显示 / 隐藏预览">预览</button>
               <button class="btn" id="btnExportHtml" title="导出为可独立打开的网页">导出网页</button>
               <button class="btn" id="btnExportMd">导出 MD</button>
+              <button class="btn" id="btnHistory" title="查看并回滚历史版本">历史</button>
               <span class="sep"></span>
               <button class="btn danger" id="btnDelete">删除</button>
             </div>
@@ -162,6 +176,65 @@
         <div class="dialog-foot">
           <button class="btn ghost" id="openDataDir">打开数据目录</button>
           <button class="btn primary" id="settingsOk">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 回收站 -->
+    <div class="modal" id="trashModal" hidden>
+      <div class="dialog">
+        <div class="dialog-head">
+          <h3>回收站</h3>
+          <button class="icon-btn" id="trashClose">✕</button>
+        </div>
+        <div class="dialog-body">
+          <p class="about">删掉的文章会先放到这里，可以恢复，也可以彻底删除。彻底删除之后就找不回来了。</p>
+          <div class="panel-list" id="trashList"></div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn ghost" id="trashClear">清空回收站</button>
+          <button class="btn primary" id="trashOk">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 标签：两个入口共用，「标签」按钮进来能改当前这篇，侧栏进来是看全部 -->
+    <div class="modal" id="tagsModal" hidden>
+      <div class="dialog">
+        <div class="dialog-head">
+          <h3>标签</h3>
+          <button class="icon-btn" id="tagsClose">✕</button>
+        </div>
+        <div class="dialog-body">
+          <div class="field" id="tagsEditField">
+            <label>给这一篇打标签（逗号或空格分隔）</label>
+            <input id="tagsInput" type="text" placeholder="例如：技术, 随笔" />
+          </div>
+          <div class="field">
+            <label>全部标签（点一下筛选，再点取消）</label>
+            <div class="tag-cloud" id="tagCloud"></div>
+          </div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn ghost" id="tagsCancel">取消</button>
+          <button class="btn primary" id="tagsSave">保存标签</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 历史版本 -->
+    <div class="modal" id="historyModal" hidden>
+      <div class="dialog">
+        <div class="dialog-head">
+          <h3>历史版本</h3>
+          <button class="icon-btn" id="historyClose">✕</button>
+        </div>
+        <div class="dialog-body">
+          <p class="about">每次保存都会留一个版本，同一分钟内只保留最近一次。点「回滚」会把正文换成那一版，回滚本身也会先存一份当前的。</p>
+          <div class="panel-list" id="historyList"></div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn primary" id="historyOk">关闭</button>
         </div>
       </div>
     </div>

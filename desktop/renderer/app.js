@@ -17,10 +17,13 @@
     dirty: false,
     settings: { theme: 'dark', showPreview: true },
     query: '',
+    tagFilter: '',
     chartInstances: [],
     dialogType: 'bar',
     saveTimer: null,
     previewTimer: null,
+    // 标签弹窗有两个入口：从侧栏进来是「看全部」，从编辑器进来是「改这一篇」
+    tagsEditable: false,
   };
 
   // ---------------------------------------------------------------- 工具
@@ -73,9 +76,13 @@
   }
 
   function visibleArticles() {
+    let items = state.articles;
+    if (state.tagFilter) {
+      items = items.filter((a) => (a.tags || []).indexOf(state.tagFilter) !== -1);
+    }
     const q = state.query.trim().toLowerCase();
-    if (!q) return state.articles;
-    return state.articles.filter((a) => (a.searchText || '').indexOf(q) !== -1);
+    if (!q) return items;
+    return items.filter((a) => (a.searchText || '').indexOf(q) !== -1);
   }
 
   function renderList() {
@@ -86,17 +93,36 @@
     if (!items.length) {
       const div = document.createElement('div');
       div.className = 'list-empty';
-      div.textContent = state.articles.length ? '没有匹配的文章' : '还没有文章，点上面「新建文章」开始';
+      if (state.articles.length && state.tagFilter) {
+        div.textContent = '没有「' + state.tagFilter + '」标签的文章';
+      } else if (state.articles.length) {
+        div.textContent = '没有匹配的文章';
+      } else {
+        div.textContent = '还没有文章，点上面「新建文章」开始';
+      }
       list.appendChild(div);
     } else {
       for (const a of items) {
         const el = document.createElement('div');
         el.className = 'item' + (state.current && state.current.id === a.id ? ' active' : '');
         el.dataset.id = a.id;
+        if (a.pinnedAt) el.classList.add('pinned');
+
+        const head = document.createElement('div');
+        head.className = 'item-head';
 
         const title = document.createElement('div');
         title.className = 'item-title';
         title.textContent = a.title || '未命名';
+        head.appendChild(title);
+
+        if (a.pinnedAt) {
+          const pin = document.createElement('span');
+          pin.className = 'item-pin';
+          pin.textContent = '★';
+          pin.title = '已置顶';
+          head.appendChild(pin);
+        }
 
         const sum = document.createElement('div');
         sum.className = 'item-sum';
@@ -106,14 +132,29 @@
         meta.className = 'item-meta';
         meta.textContent = `${a.chars} 字${a.charts ? ' · ' + a.charts + ' 图表' : ''} · ${formatTime(a.updatedAt)}`;
 
-        el.appendChild(title);
+        el.appendChild(head);
         el.appendChild(sum);
+
+        if (a.tags && a.tags.length) {
+          const tagRow = document.createElement('div');
+          tagRow.className = 'item-tags';
+          for (const t of a.tags) {
+            const chip = document.createElement('span');
+            chip.className = 'chip';
+            chip.textContent = t;
+            chip.dataset.tag = t;
+            tagRow.appendChild(chip);
+          }
+          el.appendChild(tagRow);
+        }
+
         el.appendChild(meta);
         list.appendChild(el);
       }
     }
 
-    $('count').textContent = `${state.articles.length} 篇`;
+    const label = state.tagFilter ? ` · 标签「${state.tagFilter}」` : '';
+    $('count').textContent = `${state.articles.length} 篇${label}`;
   }
 
   // ---------------------------------------------------------------- 打开 / 新建
@@ -136,6 +177,8 @@
     updateStats();
     renderPreview();
     renderList();
+    refreshPinButton();
+    setView('editor');
     setStatus('已打开');
   }
 
@@ -152,6 +195,8 @@
     renderPreview();
     await reloadList(true);
     renderList();
+    refreshPinButton();
+    setView('editor');
     $('title').focus();
     $('title').select();
     setStatus('新文章');
@@ -549,6 +594,256 @@
     toast('图表已插入正文', 'ok');
   }
 
+  // ---------------------------------------------------------------- 手机端两视图切换
+
+  /**
+   * 窄屏下侧栏和编辑区不可能并排，切成互斥的两个视图。
+   * 桌面端不看这个属性，CSS 里只在 @media (max-width: 820px) 里才生效。
+   */
+  function setView(view) {
+    const app = $('app');
+    if (app) app.dataset.view = view === 'editor' ? 'editor' : 'list';
+    if (view === 'editor') setTimeout(resizeCharts, 30);
+  }
+
+  // ---------------------------------------------------------------- 置顶
+
+  function refreshPinButton() {
+    const btn = $('btnPin');
+    if (!btn) return;
+    const on = !!(state.current && state.current.pinnedAt);
+    btn.classList.toggle('on', on);
+    btn.textContent = on ? '已置顶' : '置顶';
+  }
+
+  async function togglePinCurrent() {
+    if (!state.current) return;
+    const res = await LP.togglePin(state.current.id);
+    if (!res || !res.ok) {
+      toast('置顶失败：' + ((res && res.error) || '未知错误'), 'err');
+      return;
+    }
+    // 单独取一次，拿到刷新后的 pinnedAt，别自己猜
+    state.current = (await LP.getArticle(state.current.id)) || state.current;
+    refreshPinButton();
+    await reloadList(true);
+    renderList();
+    toast(res.pinned ? '已置顶' : '已取消置顶', 'ok');
+  }
+
+  // ---------------------------------------------------------------- 回收站
+
+  async function renderTrash() {
+    const box = $('trashList');
+    box.innerHTML = '';
+    const items = (await LP.listTrash()) || [];
+
+    if (!items.length) {
+      const empty = document.createElement('div');
+      empty.className = 'panel-empty';
+      empty.textContent = '回收站是空的';
+      box.appendChild(empty);
+      return;
+    }
+
+    for (const a of items) {
+      const row = document.createElement('div');
+      row.className = 'panel-row';
+
+      const main = document.createElement('div');
+      main.className = 'panel-main';
+      const t = document.createElement('div');
+      t.className = 'panel-title';
+      t.textContent = a.title || '未命名';
+      const m = document.createElement('div');
+      m.className = 'panel-meta';
+      m.textContent = `${a.chars} 字 · 删除于 ${formatTime(a.deletedAt)}`;
+      main.appendChild(t);
+      main.appendChild(m);
+
+      const acts = document.createElement('div');
+      acts.className = 'panel-acts';
+
+      const restore = document.createElement('button');
+      restore.className = 'btn ghost sm';
+      restore.textContent = '恢复';
+      restore.addEventListener('click', async () => {
+        const res = await LP.restoreArticle(a.id);
+        if (!res || !res.ok) {
+          toast('恢复失败', 'err');
+          return;
+        }
+        await reloadList(true);
+        renderList();
+        await renderTrash();
+        toast('已恢复', 'ok');
+      });
+
+      const purge = document.createElement('button');
+      purge.className = 'btn danger sm';
+      purge.textContent = '彻底删除';
+      purge.addEventListener('click', async () => {
+        const ok = window.confirm(`彻底删除《${a.title || '未命名'}》？\n\n这一步之后就真的找不回来了。`);
+        if (!ok) return;
+        const res = await LP.purgeArticle(a.id);
+        if (!res || !res.ok) {
+          toast('删除失败', 'err');
+          return;
+        }
+        await renderTrash();
+        toast('已彻底删除', 'ok');
+      });
+
+      acts.appendChild(restore);
+      acts.appendChild(purge);
+      row.appendChild(main);
+      row.appendChild(acts);
+      box.appendChild(row);
+    }
+  }
+
+  async function openTrash() {
+    $('trashModal').hidden = false;
+    await renderTrash();
+  }
+
+  // ---------------------------------------------------------------- 标签
+
+  async function renderTagCloud() {
+    const box = $('tagCloud');
+    box.innerHTML = '';
+    const tags = (await LP.listTags()) || [];
+
+    if (!tags.length) {
+      const empty = document.createElement('span');
+      empty.className = 'panel-empty';
+      empty.textContent = '还没有用过任何标签';
+      box.appendChild(empty);
+      return;
+    }
+
+    for (const t of tags) {
+      const chip = document.createElement('button');
+      chip.className = 'chip chip-btn' + (state.tagFilter === t.name ? ' on' : '');
+      chip.textContent = t.name + ' · ' + t.count;
+      chip.addEventListener('click', async () => {
+        state.tagFilter = state.tagFilter === t.name ? '' : t.name;
+        renderList();
+        if (!$('tagsModal').hidden) await renderTagCloud();
+        toast(state.tagFilter ? '只看「' + state.tagFilter + '」' : '已取消标签筛选', 'ok');
+      });
+      box.appendChild(chip);
+    }
+  }
+
+  async function openTags(editable) {
+    // 从编辑器进来才允许改这一篇；从侧栏进来是「看全部 + 筛选」
+    state.tagsEditable = !!editable && !!state.current;
+    $('tagsEditField').hidden = !state.tagsEditable;
+    $('tagsSave').hidden = !state.tagsEditable;
+    $('tagsInput').value = state.tagsEditable ? (state.current.tags || []).join(', ') : '';
+    $('tagsModal').hidden = false;
+    await renderTagCloud();
+    if (state.tagsEditable) $('tagsInput').focus();
+  }
+
+  async function saveTagsFromDialog() {
+    if (!state.current) {
+      $('tagsModal').hidden = true;
+      return;
+    }
+    const raw = $('tagsInput').value;
+    const tags = raw
+      .split(/[,，\s]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const res = await LP.setTags(state.current.id, tags);
+    if (!res || !res.ok) {
+      toast('保存标签失败：' + ((res && res.error) || '未知错误'), 'err');
+      return;
+    }
+    state.current = (await LP.getArticle(state.current.id)) || state.current;
+    await reloadList(true);
+    renderList();
+    $('tagsModal').hidden = true;
+    toast(tags.length ? '标签已保存' : '标签已清空', 'ok');
+  }
+
+  // ---------------------------------------------------------------- 历史版本
+
+  async function renderHistory() {
+    const box = $('historyList');
+    box.innerHTML = '';
+    if (!state.current) return;
+    const revs = (await LP.listRevisions(state.current.id)) || [];
+
+    if (!revs.length) {
+      const empty = document.createElement('div');
+      empty.className = 'panel-empty';
+      empty.textContent = '还没有历史版本。改动正文并保存后，这里会开始记录。';
+      box.appendChild(empty);
+      return;
+    }
+
+    for (const r of revs) {
+      const row = document.createElement('div');
+      row.className = 'panel-row';
+
+      const main = document.createElement('div');
+      main.className = 'panel-main';
+      const t = document.createElement('div');
+      t.className = 'panel-title';
+      t.textContent = r.title || '未命名';
+      const m = document.createElement('div');
+      m.className = 'panel-meta';
+      m.textContent = `${formatTime(r.at)} · ${r.chars} 字`;
+      const s = document.createElement('div');
+      s.className = 'panel-sum';
+      s.textContent = r.summary || '（空）';
+      main.appendChild(t);
+      main.appendChild(m);
+      main.appendChild(s);
+
+      const acts = document.createElement('div');
+      acts.className = 'panel-acts';
+      const back = document.createElement('button');
+      back.className = 'btn ghost sm';
+      back.textContent = '回滚';
+      back.addEventListener('click', async () => {
+        await flushSave();
+        const ok = window.confirm(`把正文换成 ${formatTime(r.at)} 的那一版？\n\n现在的内容会先存成一个新版本，不会丢。`);
+        if (!ok) return;
+        const res = await LP.restoreRevision(state.current.id, r.index);
+        if (!res || !res.ok) {
+          toast('回滚失败：' + ((res && res.error) || '未知错误'), 'err');
+          return;
+        }
+        state.current = (await LP.getArticle(state.current.id)) || state.current;
+        state.dirty = false;
+        $('title').value = state.current.title || '';
+        $('editor').value = state.current.content || '';
+        updateStats();
+        renderPreview();
+        await reloadList(true);
+        renderList();
+        await renderHistory();
+        toast('已回滚', 'ok');
+      });
+
+      acts.appendChild(back);
+      row.appendChild(main);
+      row.appendChild(acts);
+      box.appendChild(row);
+    }
+  }
+
+  async function openHistory() {
+    if (!state.current) return;
+    await flushSave();
+    $('historyModal').hidden = false;
+    await renderHistory();
+  }
+
   // ---------------------------------------------------------------- 设置
 
   function applyTheme() {
@@ -621,6 +916,14 @@
     $('btnNew2').addEventListener('click', newArticle);
 
     $('list').addEventListener('click', (e) => {
+      // 点标签是「筛选」，点卡片其它地方才是「打开」
+      const chip = e.target.closest('.chip');
+      if (chip && chip.dataset.tag) {
+        e.stopPropagation();
+        state.tagFilter = state.tagFilter === chip.dataset.tag ? '' : chip.dataset.tag;
+        renderList();
+        return;
+      }
       const item = e.target.closest('.item');
       if (item) openArticle(item.dataset.id);
     });
@@ -640,6 +943,55 @@
     $('btnImage').addEventListener('click', insertImages);
     $('btnFile').addEventListener('click', insertFiles);
     $('btnDelete').addEventListener('click', deleteCurrent);
+
+    // 下面这些能力仓库层一直都有，之前只是没接到界面上
+    $('btnBack').addEventListener('click', () => setView('list'));
+    $('btnPin').addEventListener('click', togglePinCurrent);
+    $('btnTagsEdit').addEventListener('click', () => openTags(true));
+    $('btnHistory').addEventListener('click', openHistory);
+    $('btnTrash').addEventListener('click', openTrash);
+    $('btnTags').addEventListener('click', () => openTags(false));
+
+    $('trashClose').addEventListener('click', () => {
+      $('trashModal').hidden = true;
+    });
+    $('trashOk').addEventListener('click', () => {
+      $('trashModal').hidden = true;
+    });
+    $('trashClear').addEventListener('click', async () => {
+      const items = (await LP.listTrash()) || [];
+      if (!items.length) {
+        toast('回收站本来就是空的', 'ok');
+        return;
+      }
+      const ok = window.confirm(`彻底删除回收站里的 ${items.length} 篇文章？\n\n这一步之后就真的找不回来了。`);
+      if (!ok) return;
+      let done = 0;
+      for (const it of items) {
+        // 逐篇删，不依赖仓库层有没有批量清空的接口
+        const res = await LP.purgeArticle(it.id);
+        if (res && res.ok) done += 1;
+      }
+      await reloadList(true);
+      renderList();
+      await renderTrash();
+      toast(`已彻底删除 ${done} 篇`, 'ok');
+    });
+
+    $('tagsClose').addEventListener('click', () => {
+      $('tagsModal').hidden = true;
+    });
+    $('tagsCancel').addEventListener('click', () => {
+      $('tagsModal').hidden = true;
+    });
+    $('tagsSave').addEventListener('click', saveTagsFromDialog);
+
+    $('historyClose').addEventListener('click', () => {
+      $('historyModal').hidden = true;
+    });
+    $('historyOk').addEventListener('click', () => {
+      $('historyModal').hidden = true;
+    });
 
     $('btnPreview').addEventListener('click', async () => {
       state.settings = await LP.setSettings({ showPreview: !state.settings.showPreview });
@@ -710,6 +1062,9 @@
       if (e.key === 'Escape') {
         if (!$('chartModal').hidden) closeChartDialog();
         if (!$('settingsModal').hidden) $('settingsModal').hidden = true;
+        if (!$('trashModal').hidden) $('trashModal').hidden = true;
+        if (!$('tagsModal').hidden) $('tagsModal').hidden = true;
+        if (!$('historyModal').hidden) $('historyModal').hidden = true;
       }
     });
 
@@ -731,11 +1086,13 @@
   async function deleteCurrent() {
     if (!state.current) return;
     const title = $('title').value.trim() || '未命名';
-    const ok = window.confirm(`确定删除《${title}》吗？\n\n删除后无法撤销。已插入正文的图片和附件文件不会被删掉。`);
+    const ok = window.confirm(
+      `把《${title}》放进回收站？\n\n文章会留在回收站里，之后还能恢复。\n正文里引用过的图片和附件文件不会被删掉。`,
+    );
     if (!ok) return;
     const res = await LP.deleteArticle(state.current.id);
     if (!res || !res.ok) {
-      toast('删除失败', 'err');
+      toast('删除失败：' + ((res && res.error) || '未知错误'), 'err');
       return;
     }
     state.current = null;
@@ -745,7 +1102,8 @@
     disposeCharts();
     await reloadList();
     renderList();
-    toast('已删除', 'ok');
+    setView('list');
+    toast('已放进回收站', 'ok');
   }
 
   // ---------------------------------------------------------------- 启动

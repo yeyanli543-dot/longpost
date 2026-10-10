@@ -14,6 +14,20 @@ contextBridge.exposeInMainWorld('lp', {
   saveArticle: (payload) => ipcRenderer.invoke('articles:save', payload),
   deleteArticle: (id) => ipcRenderer.invoke('articles:delete', id),
 
+  // 回收站
+  listTrash: () => ipcRenderer.invoke('articles:trash'),
+  restoreArticle: (id) => ipcRenderer.invoke('articles:restore', id),
+  purgeArticle: (id) => ipcRenderer.invoke('articles:purge', id),
+
+  // 置顶与标签
+  togglePin: (id) => ipcRenderer.invoke('articles:pin', id),
+  setTags: (id, tags) => ipcRenderer.invoke('articles:setTags', id, tags),
+  listTags: () => ipcRenderer.invoke('tags:list'),
+
+  // 历史版本
+  listRevisions: (id) => ipcRenderer.invoke('articles:revisions', id),
+  restoreRevision: (id, index) => ipcRenderer.invoke('articles:restoreRevision', id, index),
+
   // 附件
   pickFiles: () => ipcRenderer.invoke('files:pick'),
   pickImages: () => ipcRenderer.invoke('files:pickImage'),

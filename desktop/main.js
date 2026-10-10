@@ -215,6 +215,21 @@ function registerIpc() {
   ipcMain.handle('articles:save', (_e, payload) => store.saveArticle(payload));
   ipcMain.handle('articles:delete', (_e, id) => store.deleteArticle(id));
 
+  // 回收站。仓库层一直有这几个能力，但主进程之前没开通道，
+  // 结果界面上「删除」就是永久的，这正是「装了跟没装差不多」的原因之一。
+  ipcMain.handle('articles:trash', () => store.listTrash());
+  ipcMain.handle('articles:restore', (_e, id) => store.restoreArticle(id));
+  ipcMain.handle('articles:purge', (_e, id) => store.purgeArticle(id));
+
+  // 置顶与标签
+  ipcMain.handle('articles:pin', (_e, id) => store.togglePin(id));
+  ipcMain.handle('articles:setTags', (_e, id, tags) => store.setTags(id, tags));
+  ipcMain.handle('tags:list', () => store.listTags());
+
+  // 历史版本
+  ipcMain.handle('articles:revisions', (_e, id) => store.listRevisions(id));
+  ipcMain.handle('articles:restoreRevision', (_e, id, index) => store.restoreRevision(id, index));
+
   ipcMain.handle('files:pick', async () => {
     const res = await dialog.showOpenDialog(mainWindow, {
       title: '选择要附加的文件',

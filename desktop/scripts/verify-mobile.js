@@ -306,6 +306,98 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
     'platform.js 是 ' + appVersion + '，package.json 是 ' + desktopPkg.version,
   );
 
+  // ------------------------------------------------------------ 9. 界面接线
+  //
+  // 这一组专治「点下去没反应」：界面里 $('xxx') 拿不到元素、
+  // 或者界面调了某个 LP.xxx 但底层根本没实现，都是静默失败，
+  // 光看代码看不出来，跑起来才知道。
+
+  console.log('\n[9] 界面接线');
+
+  const appSrc = fs.readFileSync(path.join(rendererDir, 'app.js'), 'utf8');
+  const preloadSrc = fs.readFileSync(path.join(root, 'preload.js'), 'utf8');
+  const mainSrc = fs.readFileSync(path.join(root, 'main.js'), 'utf8');
+  const platformSrc = fs.readFileSync(path.join(rendererDir, 'platform.js'), 'utf8');
+  const repoCode = fs.readFileSync(path.join(rendererDir, 'vendor', 'repo.js'), 'utf8');
+
+  const idList = [];
+  for (const found of html.matchAll(/\bid="([^"]+)"/g)) idList.push(found[1]);
+  const htmlIds = new Set(idList);
+
+  const usedIds = new Set();
+  for (const found of appSrc.matchAll(/\$\(\s*'([^']+)'\s*\)/g)) usedIds.add(found[1]);
+
+  const missingIds = [...usedIds].filter((id) => !htmlIds.has(id));
+  check(
+    'app.js 取的元素 id 都在 index.html 里',
+    missingIds.length === 0,
+    '找不到这些 id：' + missingIds.join(', '),
+  );
+
+  const dupIds = [...new Set(idList.filter((id, i) => idList.indexOf(id) !== i))];
+  check('index.html 里没有重复 id', dupIds.length === 0, '重复：' + dupIds.join(', '));
+
+  // 界面上用到却没绑事件、也没进逻辑的按钮，属于「摆了但没用」
+  const wiredIds = new Set();
+  for (const found of appSrc.matchAll(/\$\(\s*'([^']+)'\s*\)\s*\.addEventListener/g)) wiredIds.add(found[1]);
+  const buttonIds = [];
+  for (const found of html.matchAll(/<button[^>]*\bid="([^"]+)"/g)) buttonIds.push(found[1]);
+  const deadButtons = buttonIds.filter((id) => !wiredIds.has(id));
+  check(
+    '每个按钮都绑了事件（或明确是静态控件）',
+    deadButtons.length === 0,
+    '没绑事件：' + deadButtons.join(', '),
+  );
+
+  const lpUsed = new Set();
+  for (const found of appSrc.matchAll(/\bLP\.([A-Za-z0-9_]+)\s*\(/g)) lpUsed.add(found[1]);
+
+  const sources = [preloadSrc, platformSrc, repoCode];
+  const hasMember = (name) =>
+    sources.some(
+      (src) =>
+        new RegExp('\\b' + name + '\\s*[:(]').test(src) || new RegExp('\\b' + name + '\\s*,').test(src),
+    );
+  const lpMissing = [...lpUsed].filter((name) => !hasMember(name));
+  check(
+    'app.js 调的平台方法都有实现',
+    lpMissing.length === 0,
+    '没有实现：' + lpMissing.join(', '),
+  );
+
+  const invokes = new Set();
+  for (const found of preloadSrc.matchAll(/ipcRenderer\.invoke\(\s*'([^']+)'/g)) invokes.add(found[1]);
+  const handles = new Set();
+  for (const found of mainSrc.matchAll(/ipcMain\.handle\(\s*'([^']+)'/g)) handles.add(found[1]);
+
+  const noHandler = [...invokes].filter((c) => !handles.has(c));
+  check('preload 的通道主进程都处理了', noHandler.length === 0, '没人接：' + noHandler.join(', '));
+
+  const notExposed = [...handles].filter((c) => !invokes.has(c));
+  check('主进程的通道 preload 都暴露了', notExposed.length === 0, '没暴露：' + notExposed.join(', '));
+
+  // 仓库层有能力，但界面永远调不到 —— 就是之前「装了跟没装差不多」的根因，钉住它
+  const repoCapabilities = [
+    'listTrash',
+    'restoreArticle',
+    'purgeArticle',
+    'togglePin',
+    'setTags',
+    'listTags',
+    'listRevisions',
+    'restoreRevision',
+  ];
+  const unreachable = repoCapabilities.filter((name) => {
+    const onDesktop = new RegExp('\\b' + name + '\\s*:').test(preloadSrc);
+    const inUi = new RegExp('\\bLP\\.' + name + '\\s*\\(').test(appSrc);
+    return !onDesktop && !inUi;
+  });
+  check(
+    '仓库能力在桌面上都够得着',
+    unreachable.length === 0,
+    '接不到：' + unreachable.join(', '),
+  );
+
   // ------------------------------------------------------------ 结果
 
   console.log('\n' + '—'.repeat(54));
