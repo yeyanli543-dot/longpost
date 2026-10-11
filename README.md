@@ -1,182 +1,190 @@
-# LongPost · 长文发布平台
+<div align="center">
 
-类 X / Twitter 的长文发布与社交平台。短帖受字数限制，短帖可以挂一条指向完整长文的链接；
-长文自带**免登录分享页**——把链接贴到 X 等平台，任何人点开就能直接读完整篇，无需注册登录。
+# 🪶 LongPost
 
-围绕这条链路，平台逐步长出了一整套社交能力：点赞、收藏、转发、评论、关注、通知、
-话题标签、@提及、私信、站内视频会议与站长管理后台。
+**下一代长文创作与社交平台 · 免登录公开阅读 · 交互式图表卡片 · 零服务器离线工作台**
 
-> **这个仓库里其实有两个东西**
->
-> 1. **Web 版**（本文件以下内容）：上面这套平台，要真正对外提供「点开链接就能读」，
->    得有一台服务器（并且平台侧会在请求到达应用前跳登录页，所以必须自行部署）。
-> 2. **[桌面版](desktop/README.md)**：`desktop/` 下的 Electron 应用。思路完全不同——
->    不要服务器，数据全在本机，导出的 HTML 是自包含文件，发出去双击就能看。
->    要的是「零成本、零备案、马上能用」，直接看 [desktop/README.md](desktop/README.md)。
+[![Build Desktop](https://github.com/yeyanli543-dot/longpost/actions/workflows/desktop-release.yml/badge.svg)](https://github.com/yeyanli543-dot/longpost/actions/workflows/desktop-release.yml)
+[![Build Android](https://github.com/yeyanli543-dot/longpost/actions/workflows/android-release.yml/badge.svg)](https://github.com/yeyanli543-dot/longpost/actions/workflows/android-release.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=black)](https://react.dev)
+[![NestJS](https://img.shields.io/badge/NestJS-10-e0234e?logo=nestjs&logoColor=white)](https://nestjs.com)
+[![Electron](https://img.shields.io/badge/Electron-44-47848F?logo=electron&logoColor=white)](https://www.electronjs.org)
+[![Capacitor](https://img.shields.io/badge/Capacitor-8-119EFF?logo=capacitor&logoColor=white)](https://capacitorjs.com)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-38bdf8?logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 
-## 核心特性
+<p align="center">
+  <a href="#-多端下载">📥 立即下载</a> •
+  <a href="#-三端形态架构">🏛️ 三端形态</a> •
+  <a href="#-核心特性">✨ 核心特性</a> •
+  <a href="#-快速开始">🚀 快速开始</a> •
+  <a href="#-系统架构">📐 系统架构</a> •
+  <a href="#-开源协议">📜 开源协议</a>
+</p>
 
-| 能力 | 说明 |
-|---|---|
-| 短帖 | 受字数限制的轻量发布，支持 `#话题` 与 `@提及` 自动解析 |
-| 长文 | 完整文章，支持配图与文件附件 |
-| 免登录分享页 | 每篇长文生成短码链接，未登录访客可直接阅读全文 |
-| 短帖挂长文 | 在短帖中挂载指向长文的链接，形成「短帖引流 + 长文阅读」 |
-| 图表卡片 | 正文里可插入柱状 / 折线 / 面积 / 饼图，站内阅读与公开分享页同款渲染 |
-| 文件附件 | 长文可挂附件，读者在分享页上直接下载 |
-| 自建上传 | 图片、头像、附件走站点自己的上传接口，不依赖第三方存储 |
+---
 
-## 功能清单
+</div>
 
-**内容**
-- 发短帖、发长文、短帖挂长文链接
-- 长文配图、文件附件
-- 长文正文插入图表卡片（柱状 / 折线 / 面积 / 饼图，可视化编辑 + 实时预览）
-- 长文免登录分享页（短码）
-- 话题标签聚合页、热门话题榜
-- 全站搜索（全部 / 帖子 / 用户 / 话题）
+## 💡 为什么选择 LongPost？
 
-**社交互动**
-- 点赞、收藏、转发（含带评论的引用转发）
-- 评论：楼中楼嵌套回复、评论点赞、按最新/最热排序、软删除
-- 关注 / 取消关注、关注列表与粉丝列表
-- 通知中心：点赞、转发、评论、新粉丝、被 @提及 共 5 类，未读红点
+在传统内容平台上，长文阅读通常受限于繁琐的强制登录门槛与单一的图文表现形式；而在去中心化环境中，又常常面临依赖云服务宕机、数据隐私不受控的痛点。
 
-**私信**
-- 一对一私信会话、未读计数
+**LongPost 采用双轨制设计**：
+1. **🌐 Web 社交平台**：类 X / Twitter 平台。发短帖引流挂长文，每篇长文生成极简短码免登录分享页，**链接转发到任意社交媒体，任何人点开就能直接阅读全文**；
+2. **💻 桌面工作台 & 📱 移动端**：**完全不依赖任何外部服务器**，数据 100% 留存在你的本机设备中。支持正文内嵌交互式图表（ECharts），一键导出自包含单文件 HTML，发出去双击就能看。
 
-**会议**
-- 会议预约（标题、时间、时长、参会人、是否公开）、6 位会议码分享
-- 站内视频会议室：音视频、屏幕共享、会中聊天、在线参会人
-- 会议纪要（创建人可编辑、参会人可查看）
+---
 
-**账号与权限**
-- 邮箱 + 密码注册登录，JWT 鉴权
-- Google OAuth 登录（配置凭据后启用）
-- 访问码（团队通行码）登录
-- 站长 / 管理员控制台
+## 📥 多端下载
 
-**其他**
-- 个人主页、设置页
-- 隐私政策 / 服务条款页
-- PWA（可添加到主屏幕）
+所有安装包均通过 GitHub Actions 自动化 CI 构建并带有防篡改校验，即下即用：
 
-## 技术栈
+| 平台 | 安装包格式 | 下载渠道 | 说明 |
+| :--- | :--- | :--- | :--- |
+| **🪟 Windows** | `.exe` 安装版 / 便携版 | [**GitHub Releases**](https://github.com/yeyanli543-dot/longpost/releases/tag/desktop-latest) | 支持 Windows 10/11，免安装版解压双击直接运行 |
+| **🤖 Android** | `.apk` 调试安装包 | [**下载 LongPost-android.apk**](https://github.com/yeyanli543-dot/longpost/releases/tag/android-latest) | 手机离线写作，固定签名密钥支持无缝覆盖升级 |
+| **🍎 macOS** | `.dmg` 镜像 | [**GitHub Releases**](https://github.com/yeyanli543-dot/longpost/releases/tag/desktop-latest) | 支持 Apple Silicon & Intel，首次打开右键放行 |
+| **🐧 Linux** | `.AppImage` | [**GitHub Releases**](https://github.com/yeyanli543-dot/longpost/releases/tag/desktop-latest) | 赋予执行权限 `chmod +x` 后直接运行 |
 
-| 层 | 选型 |
-|---|---|
-| 前端 | React 19 · TypeScript · Vite · Tailwind CSS · shadcn/ui · React Router v6 · Framer Motion |
-| 后端 | NestJS 10 · TypeScript · Drizzle ORM · PostgreSQL · JWT · Socket.IO |
-| 共享层 | `shared/api.interface.ts` 前后端类型契约 |
-| 工程 | ESLint · Stylelint · Prettier · TypeScript 严格模式 |
+---
 
-## 目录结构
+## 🏛️ 三端形态架构
+
+同一个代码仓库，满足从**离线个人工作台**到**高并发云端社交站**的全部场景：
 
 ```
-├── client/          前端 React 应用
-│   └── src/
-│       ├── pages/       页面（时间线 / 长文 / 发布 / 搜索 / 登录 / 个人中心 / 管理后台 / 会议 …）
-│       ├── components/  公共组件
-│       ├── hooks/       自定义 hook
-│       ├── api/         API 调用层
-│       └── utils/       工具函数
-├── server/          后端 NestJS 应用
-│   ├── modules/         业务模块（auth / posts / articles / comments / follows /
-│   │                    notifications / hashtags / admin / meetings / dm / access-codes …）
-│   ├── config/          配置
-│   └── database/        Drizzle schema
-├── shared/          前后端共享类型
-├── scripts/         开发与构建脚本
-└── .githooks/       Git 钩子
+┌────────────────────────────────────────────────────────────────────────┐
+│                              LongPost 仓库                             │
+├─────────────────────┬───────────────────────────┬──────────────────────┤
+│    💻 桌面版 (desktop/)   │      📱 手机版 (mobile/)    │    🌐 Web版 (client+server)  │
+├─────────────────────┼───────────────────────────┼──────────────────────┤
+│ 运行时: Electron 44   │ 运行时: Capacitor 8 Android│ 运行时: Node 22 + React 19 │
+│ 存储: 本地 JSON + 附件  │ 存储: 本地 IndexedDB       │ 存储: PostgreSQL + Drizzle │
+│ 网络: 纯离线零联网    │ 网络: 纯离线零联网        │ 网络: JWT鉴权 + Socket.IO  │
+│ 适用: 个人深度写作/归档 │ 适用: 随身记录/灵感速记    │ 适用: 团队社区/公网长文分发│
+└─────────────────────┴───────────────────────────┴──────────────────────┘
 ```
 
-## 快速开始
+---
 
-**环境要求**：Node.js 18+、PostgreSQL。
+## ✨ 核心特性
+
+### 1. 📊 交互式图表卡片（不仅是图片，而是活数据）
+- 在 Markdown 正文任意位置使用 ````chart``` 围栏，即可内嵌 **柱状图 / 折线图 / 面积图 / 饼图**；
+- 无论是本地预览、导出 HTML 还是公开分享页，图表均由 ECharts 渲染，读者可悬浮交互查看数值；
+- 内置可视化图表编辑器与 7 套自适应深浅配色规范。
+
+### 2. 🔗 短帖引流挂长文 + 免登录阅读链路
+- 短帖受字数限制，支持自动解析 `#话题标签` 与 `@用户提及`；
+- 短帖可一键挂载完整长文短链卡片，形成「短帖引流 + 长文深读」的最佳阅读路径；
+- 每一篇长文均拥有独立的公开分享页（短码如 `/p/abc12345`），外部访客**无需注册、无需登录**即可阅读全文并下载附件。
+
+### 3. 💬 完整社交生态圈
+- **多维度互动**：点赞、收藏、转发、支持带评论的引用转发；
+- **楼中楼评论系统**：无限级回复嵌套、评论独立点赞、最新/最热动态排序；
+- **通知中心**：点赞、评论、新粉丝、提及等 5 大类事件，带实时未读红点感知；
+- **私信系统**：基于会话的一对一站内即时沟通。
+
+### 4. 🎥 站内视频会议室（WebRTC + 信令服务器）
+- 预约会议、生成 6 位房间号极简分享；
+- 站内视频通话、屏幕共享、会中即时文字聊天与实时在线成员状态；
+- 会议创建人支持在线编写和归档会议纪要。
+
+### 5. 🛡️ 严格生产级安全加固
+- **协议级 XSS 防护**：Markdown 渲染管道引入 `safeUrl` 白名单协议过滤，彻底阻断 `javascript:` 伪协议注入；
+- **实时封禁拦截**：JWT 守卫联动数据库，封禁与停用账号实时阻断写操作，避免无状态 Token 失控；
+- **统一权限守卫**：内置 `AdminGuard` 守卫管道，对管理员后台全部接口实施系统级权限隔离。
+
+---
+
+## 🚀 快速开始
+
+### 💻 方案 A：直接运行桌面写作端（零配置）
 
 ```bash
-# 1. 安装依赖
+# 1. 进入桌面目录并安装依赖
+cd desktop
 npm install
 
-# 2. 配置环境变量
-cp .env.example .env
-#    然后填入 JWT_SECRET（必需）等值
+# 2. 启动桌面应用
+npm start
 
-# 3. 启动开发环境（前后端同时）
+# 3. 运行完整功能自检（84项测试用例）
+npm test
+```
+
+---
+
+### 🌐 方案 B：启动 Web 全栈开发服务
+
+#### 运行前置条件
+- **Node.js** >= 18（推荐 22+）
+- **PostgreSQL** 数据库实例
+
+```bash
+# 1. 根目录安装依赖
+npm install --ignore-scripts
+
+# 2. 复制环境变量配置文件
+cp .env.example .env
+# 编辑 .env，填入 DATABASE_URL 与 JWT_SECRET
+
+# 3. 并行启动前端与后端开发服务器
 npm run dev
 ```
 
-> **Windows 用户注意**：项目脚本使用了 POSIX 风格的内联环境变量写法
-> （如 `"build:server": "NODE_ENV=production nest build"`）以及 `.sh` 脚本，
-> 在 Windows 的 cmd / PowerShell 下会报 `'NODE_ENV' is not recognized`，无法直接运行。
->
-> 三种可行的做法：
-> 1. 在 **Git Bash 或 WSL** 中执行；
-> 2. 引入 `cross-env` 改写脚本，使其跨平台；
-> 3.（临时）在 PowerShell 里先设置环境变量再执行底层命令，例如：
->    ```powershell
->    $env:NODE_ENV = 'production'; npx nest build
->    $env:NODE_ENV = 'development'; npx nest start --watch   # 后端
->    $env:NODE_ENV = 'development'; npx vite --config vite.config.ts   # 前端
->    ```
->
-> `npm run type:check` 不依赖这套写法，可在 Windows 下直接运行。
+> **Windows 运行小贴士**：若在 Windows CMD/PowerShell 环境下运行单命令，可通过跨平台变量指定：
+> ```powershell
+> # 编译后端
+> $env:NODE_ENV = 'production'; npx nest build
+> # 编译前端
+> $env:NODE_ENV = 'production'; npx vite build --config vite.config.ts
+> ```
 
-**构建与运行**
+---
 
-```bash
-npm run type:check   # 前后端类型检查
-npm run lint         # 代码规范检查
-npm run build:prod   # 构建前后端产物
-npm run start        # 以生产模式运行
+## 🛠️ 技术栈总览
+
+| 维度 | 技术栈方案 |
+| :--- | :--- |
+| **前端开发** | React 19 · TypeScript 5.9 · Vite 8 · Tailwind CSS 4 · Radix UI · Framer Motion |
+| **后端开发** | NestJS 10 · TypeScript · Drizzle ORM · PostgreSQL · Socket.IO · SWC |
+| **桌面客户端** | Electron 44 · 原生隔离沙箱 · 自定义 `lp://` 本地协议 · electron-builder |
+| **移动客户端** | Capacitor 8 (Android) · 原生 Webview 渲染 · 独立离线密钥签名 |
+| **工程规范** | ESLint 9 · Prettier · 严格类型共享契约 (`shared/api.interface.ts`) |
+
+---
+
+## 📁 目录结构导览
+
+```text
+├── client/              # 前端 React 19 应用
+│   └── src/
+│       ├── pages/       # 时间线、长文阅读、发布器、搜索、会议室等页面
+│       ├── components/  # 公共 UI 组件与图表卡片渲染器
+│       ├── hooks/       # 鉴权状态、交互状态 hooks
+│       └── api/         # Axios 封装与前后端 API 契约层
+├── server/              # 后端 NestJS 10 核心服务
+│   ├── modules/         # 业务模块 (auth / articles / posts / meetings / admin ...)
+│   ├── config/          # 鉴权、文件落盘与安全配置
+│   ├── database/        # Drizzle ORM 数据模型 (schema.ts)
+│   └── common/          # 安全过滤器、Markdown 与 XSS 防护解析器
+├── desktop/             # Electron 桌面应用 (独立无后端写作端)
+│   ├── lib/             # 本地数据仓库、HTML 导出引擎
+│   ├── renderer/        # 离线编辑与图表预览前端
+│   └── scripts/         # 84项基线自检脚本与自动化打包工具
+├── mobile/              # Capacitor 8 移动端安卓外壳
+├── shared/              # 前后端共享类型与图表卡片 DSL 规范
+└── .github/workflows/   # 云端自动化 CI/CD (多端编译与 Release 发布)
 ```
 
-### 环境变量
+---
 
-| 变量 | 必需 | 说明 |
-|---|---|---|
-| `JWT_SECRET` | **是（生产）** | JWT 签名密钥。生产环境缺失会**直接拒绝启动**，避免用公开默认值签发令牌 |
-| `OWNER_EMAIL` | **强烈建议** | 站长邮箱。命中该邮箱的账号（注册 / 登录 / Google 登录）自动成为 `admin`。不配置时系统会创建一个 `admin@longpost.com` 临时账号，密码随机生成、只在启动日志里出现一次 |
-| `SUDA_DATABASE_URL` | 自由部署时必填 | PostgreSQL 连接串（也认标准名 `DATABASE_URL`）；平台部署由平台注入 |
-| `UPLOAD_DIR` | 自由部署时必填 | 用户上传目录。**必须挂持久化卷**，否则重新部署会丢文件 |
-| `CLIENT_BASE_PATH` | 否 | 客户端资源前缀。平台部署为 `/app/<appId>`，独立部署留空字符串 |
-| `POSTGRES_SSL` | 否 | 托管数据库通常要求 SSL，填 `true` 开启 |
-| `GOOGLE_CLIENT_ID` | 否 | Google OAuth 客户端 ID，与 secret 同时配置才启用 Google 登录 |
-| `GOOGLE_CLIENT_SECRET` | 否 | Google OAuth 客户端密钥 |
-| `GOOGLE_CALLBACK_URL` | 否 | Google OAuth 回调地址 |
-| `LOG_DIR` / `LOG_REQUEST_BODY` / `LOG_RESPONSE_BODY` | 否 | 日志相关开关 |
+## 📜 开源协议
 
-完整清单见 [`.env.example`](.env.example)。
+本项目基于 [MIT 许可证](LICENSE) 开源。欢迎 Star、Fork 并提交 Pull Request！
 
-## 数据模型
-
-主要数据表（`server/database/schema.ts`）：
-
-- **用户**：`app_users`、`site_settings`
-- **内容**：`posts`（短帖）、`articles`（长文）、`hashtags`、`content_hashtags`
-- **互动**：`likes`、`bookmarks`、`reposts`、`comments`、`comment_likes`、`follows`、`notifications`
-- **会议**：`meetings`、`meeting_participants`、`meeting_chat_messages`、`meeting_minutes`
-
-## 部署说明
-
-本项目派生自飞书 aPaaS（妙搭）全栈模板，`@lark-apaas/*` 系列包为其运行时依赖，
-数据库连接由平台注入。
-
-**关于"把链接贴到 X 上，别人点开就能读"**：这条链路要求公开分享页对**未登录访客**可访问。
-平台侧会在请求到达应用之前就跳转到登录页（官方文档明确 AI-Coding 页面不支持公开访问），
-因此要真正实现免登录阅读，必须把应用部署到自己的服务器 / 标准 Node 托管上，并自备 PostgreSQL。
-
-已知的搬运工作量（尚未完成，欢迎 PR）：
-
-1. 服务端 `server/` 下有若干文件从 `@lark-apaas/fullstack-nestjs-core` 引入
-   `DRIZZLE_DATABASE` 等运行时对象，需要换成标准的 Drizzle + postgres-js 数据库模块；
-2. 前端 `client/` 下约 70 余个文件使用了 `@lark-apaas/client-toolkit`
-   （`logger` / `axiosForBackend` / `resolveAppUrl` / `UniversalLink` 等），需要替换为等价实现；
-3. 数据库结构可直接由 `server/database/schema.ts` 用 `drizzle-kit` 生成建表 SQL。
-
-数据库连接、上传目录、站长邮箱等外部部署所需的变量都已在
-[`.env.example`](.env.example) 中列出，配置项本身已经就位。
-
-## 许可证
-
-[MIT](LICENSE) © 2026 yeyanli543-dot
+<div align="center">
+  <sub>Built with ❤️ by yeyanli543-dot · 2026</sub>
+</div>
