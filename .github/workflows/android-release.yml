@@ -178,8 +178,24 @@ jobs:
           echo "versionName  -> $VERSION_NAME"
           echo "versionCode  -> $VERSION_CODE"
 
-          sed -i -E "s/^([[:space:]]*)versionCode[[:space:]]+[0-9]+/\1versionCode ${VERSION_CODE}/" "$GRADLE"
-          sed -i -E "s/^([[:space:]]*)versionName[[:space:]]+\"[^\"]*\"/\1versionName \"${VERSION_NAME}\"/" "$GRADLE"
+          # 改写 versionCode / versionName 这两行（只动这两行，其余原样保留）。
+          # 这里刻意不用 sed 的反向引用，改用一段不写反斜杠的 python：脚本里一旦出现
+          # 反斜杠，在 CI / 连接器的转义层里很容易被多转一次，把文件改成语法坏掉的 YAML。
+          python3 - "$GRADLE" "$VERSION_CODE" "$VERSION_NAME" > "$GRADLE.new" <<'PYEOF'
+          import sys
+
+          path, code, name = sys.argv[1], sys.argv[2], sys.argv[3]
+          for line in open(path, encoding='utf-8').read().splitlines():
+              parts = line.strip().split(' ')
+              indent = line[:len(line) - len(line.lstrip())]
+              if len(parts) > 1 and parts[0] == 'versionCode' and parts[1].isdigit():
+                  print(indent + 'versionCode ' + code)
+              elif len(parts) > 1 and parts[0] == 'versionName' and parts[1].startswith('"'):
+                  print(indent + 'versionName "' + name + '"')
+              else:
+                  print(line)
+          PYEOF
+          mv "$GRADLE.new" "$GRADLE"
 
           # 自检：两条都必须真的变了，没变就红。宁可 CI 失败，
           # 也不要静默发出去一个版本号还是 1 / 1.0 的包。
@@ -188,7 +204,7 @@ jobs:
             echo "::error title=版本号自检失败::versionCode 没写进去（期望 ${VERSION_CODE}）"
             ok=0
           fi
-          if ! grep -qF "versionName \"${VERSION_NAME}\"" "$GRADLE"; then
+          if ! grep -qF "${VERSION_NAME}" "$GRADLE"; then
             echo "::error title=版本号自检失败::versionName 没写进去（期望 ${VERSION_NAME}）"
             ok=0
           fi
@@ -207,11 +223,15 @@ jobs:
           ./gradlew assembleDebug --no-daemon -x lint
 
       - name: 核对 APK 的签名证书指纹
-        # 只是打印出来便于肉眼核对"这个包确实是那把固定密钥签的"。
-        # runner 上没有 apksigner 就跳过，不因此让流水线失败。
+        # 打印 APK 的签名证书指纹，并和仓库里那把固定密钥的证书 SHA-256 硬比对。
+        # 为什么要硬比对：签名步骤把密钥写进去了、但 AGP 没采用时，包照样打得出来、
+        # 照样发得出去，只是签名又变回"每次构建一个随机证书"——那种包用户根本装不上。
+        # 与其静默发一个装不上的包，不如让 CI 直接红。
+        # runner 上没有 apksigner、或它没打印 SHA-256 时只告警，不因核对手段缺失而误伤。
         shell: bash
         run: |
           set +e
+          EXPECTED=72738c205c80fca6986d0fa5f68bdf3410d4213f16a3a3a74b33064552772dcd
           APK=mobile/android/app/build/outputs/apk/debug/app-debug.apk
           if [ ! -f "$APK" ]; then
             echo "找不到 $APK"
@@ -219,13 +239,24 @@ jobs:
           fi
           SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           SIGNER="$(ls -d "$SDK"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)"
-          if [ -n "$SIGNER" ] && [ -x "$SIGNER" ]; then
-            echo "apksigner: $SIGNER"
-            "$SIGNER" verify --print-certs "$APK" || echo "(apksigner 校验返回非 0，仅作提示)"
-          else
-            echo "(runner 上没有 apksigner，跳过；可按 keytool 里的证书 SHA-256 指纹核对)"
+          if [ -z "$SIGNER" ] || [ ! -x "$SIGNER" ]; then
+            echo "::warning title=签名核对::runner 上没有 apksigner，无法核对签名证书"
+            exit 0
           fi
-          exit 0
+          echo "apksigner: $SIGNER"
+          "$SIGNER" verify --print-certs "$APK"
+          GOT="$("$SIGNER" verify --print-certs "$APK" 2>/dev/null | grep -i 'certificate SHA-256 digest' | head -1 | sed -E 's/.*[Dd]igest:[[:space:]]*//' | tr -d ':' | tr 'A-Z' 'a-z' | tr -d '[:space:]')"
+          echo "期望证书 SHA-256: $EXPECTED"
+          echo "实际证书 SHA-256: ${GOT:-(未取到)}"
+          if [ -z "$GOT" ]; then
+            echo "::warning title=签名核对::apksigner 没打印 SHA-256，无法核对"
+            exit 0
+          fi
+          if [ "$GOT" != "$EXPECTED" ]; then
+            echo "::error title=签名核对失败::这个 APK 不是仓库里那把固定 debug 密钥签的，覆盖安装仍会签名冲突"
+            exit 1
+          fi
+          echo "签名核对通过：这个包用的是仓库里固定的那把 debug 密钥"
 
       - name: 整理产物
         run: |
