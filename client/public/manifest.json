@@ -1,7 +1,7 @@
 {
-  "name": "长文发布",
-  "short_name": "长文",
-  "description": "发布长文、分享想法的社区平台",
+  "name": "LongPost - 现代化长文与知识分享平台",
+  "short_name": "LongPost",
+  "description": "现代化长文、专栏文章与知识分享社区平台",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
