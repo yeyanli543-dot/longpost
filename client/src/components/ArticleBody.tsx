@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Markdown } from '@client/src/components/ui/markdown';
 import { splitChartCards } from '@shared/chart-card';
 import ChartBlock from './ChartBlock';
+import { MermaidRenderer } from '@client/src/components/editor/MermaidRenderer';
 
 interface ArticleBodyProps {
   content: string;
@@ -39,10 +40,22 @@ export default function ArticleBody({ content, markdownClassName, theme = 'dark'
 
         if (!segment.content.trim()) return null;
 
+        const parts = segment.content.split(/(```mermaid[\s\S]*?```)/g);
         return (
-          <Markdown key={`md-${index}`} className={markdownClassName}>
-            {segment.content}
-          </Markdown>
+          <div key={`md-seg-${index}`}>
+            {parts.map((part, pIdx) => {
+              if (part.startsWith('```mermaid') && part.endsWith('```')) {
+                const code = part.replace(/^```mermaid\s*/, '').replace(/```$/, '').trim();
+                return <MermaidRenderer key={`mermaid-${index}-${pIdx}`} chart={code} />;
+              }
+              if (!part.trim()) return null;
+              return (
+                <Markdown key={`md-${index}-${pIdx}`} className={markdownClassName}>
+                  {part}
+                </Markdown>
+              );
+            })}
+          </div>
         );
       })}
     </>

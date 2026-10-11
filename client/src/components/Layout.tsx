@@ -20,6 +20,7 @@ import { logger } from '@/lib/logger';
 import { Image } from '@client/src/components/ui/image';
 import { notificationsApi, dmApi } from '@client/src/api';
 import TrendingSidebar from '@client/src/components/TrendingSidebar';
+import { CommandPalette } from '@client/src/components/CommandPalette/CommandPalette';
 
 const navItems = [
   { to: '/', label: '首页', icon: Home },
@@ -358,6 +359,9 @@ const Layout = () => {
       >
         <Plus className="w-7 h-7" />
       </button>
+
+      {/* Global Command Palette */}
+      <CommandPalette />
     </div>
   );
 };

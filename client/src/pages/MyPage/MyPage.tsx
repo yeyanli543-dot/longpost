@@ -20,6 +20,7 @@ import type { PostItem, ArticleSummary, ToggleBookmarkRequest } from '@shared/ap
 import { showConfirm } from '@/lib';
 import { Image } from '@client/src/components/ui/image';
 import LoginGate from '@client/src/components/LoginGate';
+import { WritingHeatmap } from '@client/src/components/WritingHeatmap/WritingHeatmap';
 
 type TabType = 'posts' | 'articles' | 'bookmarks';
 
@@ -470,6 +471,15 @@ const MyPage = () => {
             <ChevronRight className="w-4 h-4 text-[#71767b]" />
           </button>
         )}
+      </div>
+
+      {/* Writing Heatmap & Contribution Graph */}
+      <div className="px-4 py-4 border-b border-border/80">
+        <WritingHeatmap
+          dates={articles.map((a) => a.createdAt)}
+          articleCount={articles.length}
+          totalWords={articles.reduce((acc, a) => acc + (a.excerpt?.length || 120), 0) * 8}
+        />
       </div>
 
       {/* Tabs */}

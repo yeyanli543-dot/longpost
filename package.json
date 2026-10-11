@@ -44,6 +44,7 @@
     "dotenv": "^17.2.2",
     "drizzle-orm": "0.44.6",
     "hbs": "^4.2.0",
+    "mermaid": "^12.1.0",
     "postgres": "^3.4.9",
     "reflect-metadata": "^0.1.14",
     "socket.io": "^4.8.3",

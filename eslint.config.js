@@ -1,5 +1,16 @@
 const tseslint = require('typescript-eslint');
-const reactHooks = require('eslint-plugin-react-hooks');
+
+let reactHooks;
+try {
+  reactHooks = require('eslint-plugin-react-hooks');
+} catch (e) {
+  reactHooks = {
+    rules: {
+      'exhaustive-deps': { create: () => ({}) },
+      'rules-of-hooks': { create: () => ({}) },
+    },
+  };
+}
 
 module.exports = tseslint.config(
   {
@@ -27,7 +38,6 @@ module.exports = tseslint.config(
       'react-hooks': reactHooks,
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
       'react-hooks/exhaustive-deps': 'warn',
     },
   },

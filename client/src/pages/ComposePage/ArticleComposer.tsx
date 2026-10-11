@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { getFriendlyErrorMessage } from '@client/src/utils/error-message';
@@ -10,6 +10,7 @@ import {
   Trash2,
   Upload,
   BarChart3,
+  RotateCcw,
 } from 'lucide-react';
 import { resolveAppUrl } from '@/lib/utils';
 import { logger } from '@/lib/logger';
@@ -18,6 +19,8 @@ import { uploadFile as uploadToServer } from '@client/src/api/upload';
 import { Image } from '@client/src/components/ui/image';
 import PublishShareCard from './PublishShareCard';
 import ChartInsertDialog from './ChartInsertDialog';
+import { SmartEditor } from '@client/src/components/editor/SmartEditor';
+import { LocalFirstStore } from '@/lib/local-store';
 
 const MAX_IMAGES = 9;
 const MAX_ATTACHMENTS = 5;
@@ -104,6 +107,41 @@ const ArticleComposer = ({
   const attInputRef = useRef<HTMLInputElement>(null);
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const [showChartDialog, setShowChartDialog] = useState(false);
+  const [hasRecoverableDraft, setHasRecoverableDraft] = useState<{ title: string; content: string; savedAt: string } | null>(null);
+
+  // 初始化检查本地未发布暂存
+  useEffect(() => {
+    if (!editId && !initialTitle && !initialContent) {
+      const saved = LocalFirstStore.getAutoSave();
+      if (saved && (saved.title || saved.content) && saved.content.trim().length > 10) {
+        setHasRecoverableDraft(saved);
+      }
+    }
+  }, [editId, initialTitle, initialContent]);
+
+  // 自动暂存到本地（防丢稿）
+  useEffect(() => {
+    if (title.trim() || content.trim()) {
+      const timer = setTimeout(() => {
+        LocalFirstStore.setAutoSave(title, content);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [title, content]);
+
+  const handleRestoreDraft = () => {
+    if (hasRecoverableDraft) {
+      setTitle(hasRecoverableDraft.title);
+      setContent(hasRecoverableDraft.content);
+      setHasRecoverableDraft(null);
+      toast.success('已恢复上次未保存的本地草稿');
+    }
+  };
+
+  const handleDismissDraft = () => {
+    LocalFirstStore.clearAutoSave();
+    setHasRecoverableDraft(null);
+  };
 
   const canPublish = title.trim().length > 0 && content.trim().length > 0 && !isPublishing;
   const canSaveDraft = title.trim().length > 0 && !isSavingDraft;
@@ -259,6 +297,7 @@ const ArticleComposer = ({
         setPublishedId(res.id);
         setPublishedSlug(res.slug ?? null);
         setCurrentStatus('published');
+        LocalFirstStore.clearAutoSave();
         toast.success('发布成功！复制链接分享到 X 吧');
       }
     } catch {
@@ -312,6 +351,30 @@ const ArticleComposer = ({
 
   return (
     <div className="flex flex-col gap-4">
+      {/* 恢复本地暂存条 */}
+      {hasRecoverableDraft && (
+        <div className="flex items-center justify-between p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs animate-in fade-in-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <RotateCcw className="w-4 h-4 text-amber-500 shrink-0" />
+            <span className="truncate">检测到上次未保存的本地草稿「{hasRecoverableDraft.title || '无标题'}」</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleRestoreDraft}
+              className="px-2.5 py-1 rounded-lg bg-amber-500 text-black font-semibold hover:bg-amber-400 transition-colors"
+            >
+              一键恢复
+            </button>
+            <button
+              onClick={handleDismissDraft}
+              className="px-2 py-1 text-gray-400 hover:text-white transition-colors"
+            >
+              忽略
+            </button>
+          </div>
+        </div>
+      )}
+
       <div>
         <input
           type="text" value={title}
@@ -392,14 +455,15 @@ const ArticleComposer = ({
         </div>
       </div>
 
-      <textarea
-        ref={contentRef}
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="写点什么..."
-        rows={16}
-        className="w-full bg-transparent text-base text-gray-100 placeholder:text-gray-500 resize-none outline-none border-none leading-relaxed"
-      />
+      <div className="pt-2">
+        <SmartEditor
+          value={content}
+          onChange={setContent}
+          title={title}
+          placeholder="开始创作... 输入 '/' 可快速插入标题、代码块、LaTeX公式、Mermaid流程图、图表与提示卡片"
+          onOpenChartDialog={() => setShowChartDialog(true)}
+        />
+      </div>
 
       {showChartDialog && (
         <ChartInsertDialog
