@@ -137,27 +137,19 @@ jobs:
       - name: 准备固定的 debug 签名密钥
         # 这一步之前是缺的：runner 上没有 $HOME/.android/debug.keystore，AGP 就现场
         # 随机生成一把，于是每次构建的签名都不一样，新包覆盖安装被系统按「签名冲突」
-        # 拒掉，用户只能先卸载、本地数据一起丢。这里把仓库里固定的密钥还原出来。
-        #
-        # 两个位置都放一份：老约定是 $HOME/.android，新版 Android 工具链按 XDG 会去看
-        # $HOME/.config/android（AGP 的 prefs 目录是按 TEST_TMPDIR / XDG_CONFIG_HOME /
-        # USER_HOME / HOME 依次找的）。放两份成本几乎为零，省得再猜它读哪个。
-        # 真正保底的是下一步——显式把 storeFile 指过来，不再依赖它的自动发现。
+        # 拒掉，用户只能先卸载、本地数据一起丢。这里把仓库里固定的密钥还原到 AGP
+        # 默认会去找的位置（口令/别名都是安卓公开约定值 android / androiddebugkey），
+        # 签名就稳定了，同一个 applicationId 的新包可以直接覆盖安装。
         shell: bash
         run: |
           set -euo pipefail
-          for d in "$HOME/.android" "$HOME/.config/android"; do
-            mkdir -p "$d"
-            base64 -d mobile/signing/debug.keystore.b64 > "$d/debug.keystore"
-            echo "keystore 已就位：$d/debug.keystore"
-            echo "  sha256: $(sha256sum "$d/debug.keystore" | cut -d' ' -f1)"
-          done
-          cp "$HOME/.android/debug.keystore" "$HOME/.android/longpost-debug.keystore"
-          echo "显式签名用的副本：$HOME/.android/longpost-debug.keystore"
-          echo "ANDROID_USER_HOME=${ANDROID_USER_HOME:-（未设置）}"
-          echo "ANDROID_PREFS_ROOT=${ANDROID_PREFS_ROOT:-（未设置）}"
+          mkdir -p "$HOME/.android"
+          base64 -d mobile/signing/debug.keystore.b64 > "$HOME/.android/debug.keystore"
+          echo "keystore 路径：$HOME/.android/debug.keystore"
+          echo "keystore sha256: $(sha256sum "$HOME/.android/debug.keystore" | cut -d' ' -f1)"
+          ls -l "$HOME/.android/debug.keystore"
           echo "ANDROID_SDK_HOME=${ANDROID_SDK_HOME:-（未设置）}"
-          echo "XDG_CONFIG_HOME=${XDG_CONFIG_HOME:-（未设置）}"
+          echo "ANDROID_USER_HOME=${ANDROID_USER_HOME:-（未设置）}"
 
       - name: 写入随构建递增的版本号
         # 位置很关键：必须在 `npx cap add android` 之后（那个命令才会生成
@@ -223,53 +215,6 @@ jobs:
             exit 1
           fi
           echo "版本号自检通过"
-
-      - name: 显式指定签名配置（不依赖 AGP 自动找 debug keystore）
-        # 实测教训：只把密钥放到「约定位置」是不够的。第一版放 $HOME/.android/debug.keystore，
-        # AGP 8.13 依旧自己现造了一把 30 年有效期的证书（APK 里签名者的 notBefore 正好是
-        # 构建那一刻）；把别名从 androiddebugkey 换成 AGP 内部用的 AndroidDebugKey 没用，
-        # 把有效期从 10000 天（27.4 年）提到 36500 天也没用。
-        # 所以这里不再让它猜：直接往 app/build.gradle 追加一段 signingConfigs，
-        # storeFile 用**绝对路径**指到仓库里那把密钥。绝对路径同时免疫各种
-        # ANDROID_USER_HOME / ANDROID_SDK_HOME / XDG_CONFIG_HOME 的位置差异。
-        working-directory: mobile
-        shell: bash
-        run: |
-          set -euo pipefail
-          GRADLE=android/app/build.gradle
-          KEYSTORE="$HOME/.android/longpost-debug.keystore"
-          test -f "$GRADLE"
-          test -f "$KEYSTORE"
-          if grep -qF "longpostDebug" "$GRADLE"; then
-            echo "已经注入过，跳过"
-          else
-            cat >> "$GRADLE" <<GRADLEEOF
-
-          // ---- 由 CI 注入（见 .github/workflows/android-release.yml）----
-          // 显式使用仓库里那把固定的 debug 密钥，不让 AGP 去自动定位/重建默认 debug keystore。
-          android {
-              signingConfigs {
-                  longpostDebug {
-                      storeFile file('$KEYSTORE')
-                      storePassword 'android'
-                      keyAlias 'androiddebugkey'
-                      keyPassword 'android'
-                  }
-              }
-              buildTypes {
-                  debug {
-                      signingConfig signingConfigs.longpostDebug
-                  }
-              }
-          }
-          GRADLEEOF
-          fi
-          # 自检：注入的内容确实在文件里，不在就红——宁可 CI 失败，
-          # 也不要再静默发一个签名不对、用户装不上的包。
-          grep -qF "signingConfigs" "$GRADLE" || { echo "::error title=签名配置注入失败::signingConfigs 不在 build.gradle 里"; exit 1; }
-          grep -qF "longpostDebug" "$GRADLE" || { echo "::error title=签名配置注入失败::longpostDebug 不在 build.gradle 里"; exit 1; }
-          grep -nF "storeFile" "$GRADLE" || true
-          echo "已注入显式签名配置，keystore=$KEYSTORE"
 
       - name: 打包 APK
         working-directory: mobile/android
