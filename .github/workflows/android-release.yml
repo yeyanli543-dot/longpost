@@ -134,11 +134,98 @@ jobs:
           ls mobile/android/app/src/main/assets/public/ | head -30
           echo "echarts: $(stat -c%s mobile/android/app/src/main/assets/public/vendor/echarts.min.js) 字节"
 
+      - name: 准备固定的 debug 签名密钥
+        # 这一步之前是缺的：runner 上没有 $HOME/.android/debug.keystore，AGP 就现场
+        # 随机生成一把，于是每次构建的签名都不一样，新包覆盖安装被系统按「签名冲突」
+        # 拒掉，用户只能先卸载、本地数据一起丢。这里把仓库里固定的密钥还原到 AGP
+        # 默认会去找的位置（口令/别名都是安卓公开约定值 android / androiddebugkey），
+        # 签名就稳定了，同一个 applicationId 的新包可以直接覆盖安装。
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.android"
+          base64 -d mobile/signing/debug.keystore.b64 > "$HOME/.android/debug.keystore"
+          echo "keystore 路径：$HOME/.android/debug.keystore"
+          echo "keystore sha256: $(sha256sum "$HOME/.android/debug.keystore" | cut -d' ' -f1)"
+          ls -l "$HOME/.android/debug.keystore"
+          echo "ANDROID_SDK_HOME=${ANDROID_SDK_HOME:-（未设置）}"
+          echo "ANDROID_USER_HOME=${ANDROID_USER_HOME:-（未设置）}"
+
+      - name: 写入随构建递增的版本号
+        # 位置很关键：必须在 `npx cap add android` 之后（那个命令才会生成
+        # mobile/android/app/build.gradle），也必须在下一次构建之前。
+        # Cap 模板默认 versionCode 1 / versionName "1.0"，从来不变，所以安卓系统
+        # 层面看不出"这是新版本"，用户也判断不了自己装的是哪一版。
+        working-directory: mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          GRADLE=android/app/build.gradle
+          test -f "$GRADLE"
+
+          # versionName 从 package.json 的真实版本读出来拼构建号，不硬编码。
+          BASE_VERSION="$(node -p "require('./package.json').version")"
+          BUILD_NO="${{ github.run_number }}"
+          VERSION_NAME="${BASE_VERSION}.${BUILD_NO}"
+
+          # versionCode 必须只增不减：run_number 单调递增，所以 1000+run_number 也单调递增。
+          # 留 1000 当缓冲，方便以后想手动往前挪一小段而不撞车。安卓上限是 2,100,000,000，
+          # 现在这个量级离上限还有 9 个数量级，就算每天构建一次也要几百万年才逼近，不会溢出。
+          VERSION_CODE="$(( 1000 + ${BUILD_NO} ))"
+
+          echo "base version : $BASE_VERSION"
+          echo "build number : $BUILD_NO"
+          echo "versionName  -> $VERSION_NAME"
+          echo "versionCode  -> $VERSION_CODE"
+
+          sed -i -E "s/^([[:space:]]*)versionCode[[:space:]]+[0-9]+/\\1versionCode ${VERSION_CODE}/" "$GRADLE"
+          sed -i -E "s/^([[:space:]]*)versionName[[:space:]]+\\"[^\\"]*\\"/\\1versionName \\"${VERSION_NAME}\\"/" "$GRADLE"
+
+          # 自检：两条都必须真的变了，没变就红。宁可 CI 失败，
+          # 也不要静默发出去一个版本号还是 1 / 1.0 的包。
+          ok=1
+          if ! grep -qE "^[[:space:]]*versionCode[[:space:]]+${VERSION_CODE}[[:space:]]*$" "$GRADLE"; then
+            echo "::error title=版本号自检失败::versionCode 没写进去（期望 ${VERSION_CODE}）"
+            ok=0
+          fi
+          if ! grep -qF "versionName \\"${VERSION_NAME}\\"" "$GRADLE"; then
+            echo "::error title=版本号自检失败::versionName 没写进去（期望 ${VERSION_NAME}）"
+            ok=0
+          fi
+          echo "--- 改完之后的版本行 ---"
+          grep -nE 'versionCode|versionName' "$GRADLE" || true
+          if [ "$ok" -ne 1 ]; then
+            echo "::error title=版本号自检失败::build.gradle 里的版本号没有按预期改动"
+            exit 1
+          fi
+          echo "版本号自检通过"
+
       - name: 打包 APK
         working-directory: mobile/android
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon -x lint
+
+      - name: 核对 APK 的签名证书指纹
+        # 只是打印出来便于肉眼核对"这个包确实是那把固定密钥签的"。
+        # runner 上没有 apksigner 就跳过，不因此让流水线失败。
+        shell: bash
+        run: |
+          set +e
+          APK=mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if [ ! -f "$APK" ]; then
+            echo "找不到 $APK"
+            exit 1
+          fi
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          SIGNER="$(ls -d "$SDK"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)"
+          if [ -n "$SIGNER" ] && [ -x "$SIGNER" ]; then
+            echo "apksigner: $SIGNER"
+            "$SIGNER" verify --print-certs "$APK" || echo "(apksigner 校验返回非 0，仅作提示)"
+          else
+            echo "(runner 上没有 apksigner，跳过；可按 keytool 里的证书 SHA-256 指纹核对)"
+          fi
+          exit 0
 
       - name: 整理产物
         run: |
