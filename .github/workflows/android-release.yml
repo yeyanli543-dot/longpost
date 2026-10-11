@@ -178,8 +178,8 @@ jobs:
           echo "versionName  -> $VERSION_NAME"
           echo "versionCode  -> $VERSION_CODE"
 
-          sed -i -E "s/^([[:space:]]*)versionCode[[:space:]]+[0-9]+/\\1versionCode ${VERSION_CODE}/" "$GRADLE"
-          sed -i -E "s/^([[:space:]]*)versionName[[:space:]]+\\"[^\\"]*\\"/\\1versionName \\"${VERSION_NAME}\\"/" "$GRADLE"
+          sed -i -E "s/^([[:space:]]*)versionCode[[:space:]]+[0-9]+/\1versionCode ${VERSION_CODE}/" "$GRADLE"
+          sed -i -E "s/^([[:space:]]*)versionName[[:space:]]+\"[^\"]*\"/\1versionName \"${VERSION_NAME}\"/" "$GRADLE"
 
           # 自检：两条都必须真的变了，没变就红。宁可 CI 失败，
           # 也不要静默发出去一个版本号还是 1 / 1.0 的包。
@@ -188,7 +188,7 @@ jobs:
             echo "::error title=版本号自检失败::versionCode 没写进去（期望 ${VERSION_CODE}）"
             ok=0
           fi
-          if ! grep -qF "versionName \\"${VERSION_NAME}\\"" "$GRADLE"; then
+          if ! grep -qF "versionName \"${VERSION_NAME}\"" "$GRADLE"; then
             echo "::error title=版本号自检失败::versionName 没写进去（期望 ${VERSION_NAME}）"
             ok=0
           fi
