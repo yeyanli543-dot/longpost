@@ -10,6 +10,7 @@ import { AuthService, JWT_SECRET } from './auth.service';
 import { OAuthService } from './oauth.service';
 import { AuthController } from './auth.controller';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { AdminGuard } from './admin.guard';
 import { OWNER_EMAIL } from '../../config/owner.config';
 
 @Module({
@@ -20,8 +21,8 @@ import { OWNER_EMAIL } from '../../config/owner.config';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard, OAuthService],
-  exports: [AuthService, JwtAuthGuard, JwtModule],
+  providers: [AuthService, JwtAuthGuard, AdminGuard, OAuthService],
+  exports: [AuthService, JwtAuthGuard, AdminGuard, JwtModule],
 })
 export class AuthModule implements OnModuleInit {
   private readonly logger = new Logger(AuthModule.name);

@@ -448,7 +448,7 @@ export class AccessCodesService {
       createdAt: userRow.createdAt.toISOString(),
     };
 
-    const token = this.authService.signToken(user.id, user.email);
+    const token = this.authService.signToken(user.id, user.email, user.nickname, user.role);
     await this.db.insert(accessCodeLogs).values({
       accessCodeId: accessCode.id,
       ipAddress: null,

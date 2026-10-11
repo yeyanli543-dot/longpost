@@ -19,7 +19,7 @@ export interface AuthRequest extends Request {
 export class JwtAuthGuard implements CanActivate {
   constructor(private readonly authService: AuthService) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthRequest>();
     const authHeader = request.headers['authorization'];
 
@@ -34,9 +34,18 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('登录已过期，请重新登录');
     }
 
+    const user = await this.authService.validateUserActive(payload.sub);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('账号不存在或已被停用');
+    }
+    if (user.isBanned) {
+      throw new UnauthorizedException('账号已被封禁');
+    }
+
     request.user = {
-      id: payload.sub,
-      email: payload.email,
+      id: user.id,
+      email: user.email,
+      role: user.role,
     };
 
     request.userContext = {
@@ -53,7 +62,7 @@ export class JwtAuthGuard implements CanActivate {
 export class OptionalJwtAuthGuard implements CanActivate {
   constructor(private readonly authService: AuthService) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthRequest>();
     const authHeader = request.headers['authorization'];
 
@@ -65,15 +74,19 @@ export class OptionalJwtAuthGuard implements CanActivate {
     try {
       const payload = this.authService.verifyToken(token);
       if (payload) {
-        request.user = {
-          id: payload.sub,
-          email: payload.email,
-        };
-        request.userContext = {
-          ...(request.userContext ?? {}),
-          userId: payload.sub,
-          userType: '_employee',
-        };
+        const user = await this.authService.validateUserActive(payload.sub);
+        if (user && user.isActive && !user.isBanned) {
+          request.user = {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+          };
+          request.userContext = {
+            ...(request.userContext ?? {}),
+            userId: payload.sub,
+            userType: '_employee',
+          };
+        }
       }
     } catch {
       // 无效token也放行，当作未登录处理

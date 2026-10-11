@@ -14,6 +14,7 @@ import { Type } from 'class-transformer';
 
 import { AdminService } from './admin.service';
 import { JwtAuthGuard, type AuthRequest } from '../auth/jwt-auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
 import type {
   AdminDashboardStats,
   AdminPostListResponse,
@@ -107,7 +108,7 @@ class ReportActionDto {
 }
 
 @Controller('api/admin')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, AdminGuard)
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 

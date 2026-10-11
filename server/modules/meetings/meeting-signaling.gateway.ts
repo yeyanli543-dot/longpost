@@ -12,6 +12,7 @@ import { Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Server, Socket } from 'socket.io';
 import { MeetingsService } from './meetings.service';
+import { AuthService } from '../auth/auth.service';
 
 interface MeetingUser {
   userId: string;
@@ -49,6 +50,7 @@ export class MeetingSignalingGateway
   constructor(
     private readonly jwtService: JwtService,
     private readonly meetingsService: MeetingsService,
+    private readonly authService: AuthService,
   ) {}
 
   afterInit(): void {
@@ -66,7 +68,12 @@ export class MeetingSignalingGateway
 
       const payload = this.jwtService.verify(token);
       client.data.userId = payload.sub;
-      client.data.userName = payload.username || '用户';
+      let userName = payload.username;
+      if (!userName) {
+        const user = await this.authService.validateUserActive(payload.sub);
+        userName = user?.nickname;
+      }
+      client.data.userName = userName || '用户';
     } catch (err) {
       this.logger.warn('连接鉴权失败');
       client.emit('error', { message: '认证失败' });

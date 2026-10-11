@@ -13,6 +13,18 @@ export function escapeHtml(text: string): string {
     .replace(/'/g, '&#39;');
 }
 
+/**
+ * 只放行安全协议（http, https, mailto, 相对路径与锚点）；
+ * 阻断 javascript:、data:、vbscript: 等伪协议注入。
+ */
+export function safeUrl(url: string): string | null {
+  const u = String(url || '').trim();
+  if (!u) return null;
+  if (/^(https?:|mailto:)/i.test(u)) return u;
+  if (/^(#|\.{0,2}\/)/.test(u)) return u;
+  return null;
+}
+
 function inlineFormat(text: string): string {
   let escaped = escapeHtml(text);
   escaped = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -20,7 +32,11 @@ function inlineFormat(text: string): string {
   escaped = escaped.replace(/`(.+?)`/g, '<code>$1</code>');
   escaped = escaped.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" target="_blank" rel="noopener">$1</a>',
+    (_match, label, url) => {
+      const safe = safeUrl(url);
+      if (!safe) return label;
+      return `<a href="${escapeHtml(safe)}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+    },
   );
   return escaped;
 }

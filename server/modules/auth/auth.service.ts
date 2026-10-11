@@ -28,6 +28,8 @@ import { isOwnerEmail } from '../../config/owner.config';
 export interface JwtPayload {
   sub: string;
   email: string;
+  username?: string;
+  role?: string;
 }
 
 const JWT_SECRET = authConfig.jwtSecret;
@@ -115,7 +117,7 @@ export class AuthService {
     }
 
     const user = this.mapUser(inserted);
-    const token = this.signToken(user.id, user.email);
+    const token = this.signToken(user.id, user.email, user.nickname, user.role);
 
     await this.db
       .update(appUsers)
@@ -163,7 +165,7 @@ export class AuthService {
 
     const isOwner = await this.ensureOwnerRole(row.id, row.email);
     const user = this.mapUser(isOwner ? { ...row, role: 'admin' } : row);
-    const token = this.signToken(user.id, user.email);
+    const token = this.signToken(user.id, user.email, user.nickname, user.role);
 
     await this.db
       .update(appUsers)
@@ -173,12 +175,12 @@ export class AuthService {
     return { token, user };
   }
 
-  async oauthLogin(userId: string, email: string): Promise<string> {
+  async oauthLogin(userId: string, email: string, nickname?: string, role?: string): Promise<string> {
     await this.db
       .update(appUsers)
       .set({ lastLoginAt: new Date() })
       .where(eq(appUsers.id, userId));
-    return this.signToken(userId, email);
+    return this.signToken(userId, email, nickname, role);
   }
 
   async getCurrentUser(userId: string): Promise<UserProfile> {
@@ -614,9 +616,36 @@ export class AuthService {
     }
   }
 
-  signToken(userId: string, email: string): string {
+  signToken(userId: string, email: string, nickname?: string, role?: string): string {
     const payload: JwtPayload = { sub: userId, email };
+    if (nickname) payload.username = nickname;
+    if (role) payload.role = role;
     return this.jwtService.sign(payload);
+  }
+
+  async validateUserActive(userId: string): Promise<{
+    id: string;
+    email: string;
+    role: string;
+    nickname: string;
+    isActive: boolean;
+    isBanned: boolean;
+  } | null> {
+    const rows = await this.db
+      .select({
+        id: appUsers.id,
+        email: appUsers.email,
+        role: appUsers.role,
+        nickname: appUsers.nickname,
+        isActive: appUsers.isActive,
+        isBanned: appUsers.isBanned,
+      })
+      .from(appUsers)
+      .where(eq(appUsers.id, userId))
+      .limit(1);
+
+    if (rows.length === 0) return null;
+    return rows[0];
   }
 
   private mapUser(row: {

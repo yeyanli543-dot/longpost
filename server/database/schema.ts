@@ -774,6 +774,7 @@ export const posts = pgTable("posts", {
     WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
 }, (table) => [
   index("idx_posts_created_at").on(table.createdAt),
+  index("idx_posts_moderation_created").on(table.moderationStatus, table.createdAt),
   // Complex index: CREATE INDEX idx_posts_author ON posts USING btree (((author).user_id)),
   index("idx_posts_article_id").on(table.articleId),
   index("idx_posts_app_user_id").on(table.appUserId),
@@ -822,6 +823,7 @@ export const articles = pgTable("articles", {
     WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
 }, (table) => [
   index("idx_articles_created_at").on(table.createdAt),
+  index("idx_articles_status_created").on(table.status, table.moderationStatus, table.createdAt),
   // Complex index: CREATE INDEX idx_articles_author ON articles USING btree (((author).user_id)),
   index("idx_articles_app_user_id").on(table.appUserId),
   uniqueIndex("idx_articles_slug").on(table.slug),
