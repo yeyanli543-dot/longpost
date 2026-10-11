@@ -3,8 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 
-import { AppContainer } from '@lark-apaas/client-toolkit/components/AppContainer';
-import { ErrorRender } from '@lark-apaas/client-toolkit/components/ErrorRender';
+import { AppContainer } from '@/lib/components/AppContainer';
+import { ErrorRender } from '@/lib/components/ErrorRender';
 
 import RoutesComponent from './app.tsx';
 import './index.css';

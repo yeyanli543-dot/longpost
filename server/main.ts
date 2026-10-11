@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
-import { configureApp } from '@lark-apaas/fullstack-nestjs-core';
+import { json, urlencoded } from 'express';
 import { join } from 'path';
 import { __express as hbsExpressEngine } from 'hbs';
 
@@ -14,9 +14,14 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     abortOnError: process.env.NODE_ENV !== 'development',
   });
-  await configureApp(app, { 
-    disableSwagger: true,
+  
+  // 基础中间件与跨域配置
+  app.enableCors({
+    origin: true,
+    credentials: true,
   });
+  app.use(json({ limit: '25mb' }));
+  app.use(urlencoded({ extended: true, limit: '25mb' }));
   // 用户上传的文件落在磁盘上，由本站直接托管
   mkdirSync(uploadConfig.dir, { recursive: true });
   app.useStaticAssets(uploadConfig.dir, { prefix: `${uploadConfig.urlPrefix}/` });

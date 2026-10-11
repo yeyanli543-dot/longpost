@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquarePlus, Trash2, LogIn, Loader2 } from 'lucide-react';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 import { useAuth } from '@client/src/hooks/useAuth';
 import { Image } from '@client/src/components/ui/image';
 import { dmApi } from '@client/src/api';
 import ChatWindow from './ChatWindow';
 import NewMessageModal from './NewMessageModal';
 import type { DMConversation } from '@shared/api.interface';
-import { showConfirm } from '@lark-apaas/client-toolkit';
+import { showConfirm } from '@/lib';
 
 const POLL_INTERVAL = 15000;
 

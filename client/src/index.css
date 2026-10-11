@@ -1,4 +1,4 @@
-@import '@lark-apaas/client-toolkit/lib/index.css';
+@layer theme, base, components, utilities;
 @import "tw-animate-css";
 @import './tailwind-theme.css';
 @import './components/animations.css';

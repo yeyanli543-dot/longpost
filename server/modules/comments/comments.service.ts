@@ -6,7 +6,7 @@ import {
   ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
-import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@lark-apaas/fullstack-nestjs-core';
+import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@server/database/database.module';
 import { comments, posts, articles, appUsers, commentLikes } from '@server/database/schema';
 import { eq, and, asc, desc, sql, count, isNull } from 'drizzle-orm';
 import { AuthService } from '../auth/auth.service';

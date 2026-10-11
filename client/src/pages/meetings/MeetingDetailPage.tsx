@@ -19,7 +19,7 @@ import {
   FileText,
   Loader2,
 } from 'lucide-react';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 import { useAuth } from '@client/src/hooks/useAuth';
 import { Image } from '@client/src/components/ui/image';
 import { Textarea } from '@client/src/components/ui/textarea';
@@ -31,7 +31,7 @@ import type {
   MeetingStatus,
 } from '@shared/api.interface';
 import EditMeetingModal from './EditMeetingModal';
-import { showConfirm } from '@lark-apaas/client-toolkit';
+import { showConfirm } from '@/lib';
 
 const getStatusColor = (status: MeetingStatus) => {
   switch (status) {

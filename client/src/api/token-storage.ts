@@ -1,4 +1,4 @@
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 
 const TOKEN_KEY = 'longpost_auth_token';
 const COOKIE_TOKEN_KEY = 'longpost_token';

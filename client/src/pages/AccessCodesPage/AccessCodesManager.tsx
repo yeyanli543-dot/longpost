@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
-import { logger } from '@lark-apaas/client-toolkit/logger';
-import { showConfirm } from '@lark-apaas/client-toolkit';
+import { logger } from '@/lib/logger';
+import { showConfirm } from '@/lib';
 import { accessCodesApi } from '@client/src/api';
 import { Button } from '@client/src/components/ui/button';
 import { Input } from '@client/src/components/ui/input';

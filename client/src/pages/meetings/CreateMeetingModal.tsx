@@ -11,7 +11,7 @@ import { Textarea } from '@client/src/components/ui/textarea';
 import { Label } from '@client/src/components/ui/label';
 import { Switch } from '@client/src/components/ui/switch';
 import { X, Plus, Loader2, Search, Users } from 'lucide-react';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 import { Image } from '@client/src/components/ui/image';
 import { meetingsApi, dmApi } from '@client/src/api';
 import type { AuthUser } from '@shared/api.interface';

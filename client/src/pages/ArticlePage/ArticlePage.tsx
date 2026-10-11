@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, AlertCircle, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { logger } from '@lark-apaas/client-toolkit/logger';
-import { resolveAppUrl } from '@lark-apaas/client-toolkit/utils/resolveAppUrl';
+import { logger } from '@/lib/logger';
+import { resolveAppUrl } from '@/lib/utils';
 
 import { articlesApi } from '@client/src/api';
 import ActionButtons from '@client/src/components/ActionButtons';

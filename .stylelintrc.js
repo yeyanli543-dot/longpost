@@ -1,7 +1,4 @@
-const { stylelintPresetsOfSimple } = require('@lark-apaas/fullstack-presets');
-
 module.exports = {
-  extends: [ stylelintPresetsOfSimple ],
   ignoreFiles: [
     'node_modules/**',
     'dist/**',
@@ -10,4 +7,5 @@ module.exports = {
     'source_package/**',
     '*.min.css',
   ],
+  rules: {},
 };

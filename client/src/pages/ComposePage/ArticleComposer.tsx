@@ -11,8 +11,8 @@ import {
   Upload,
   BarChart3,
 } from 'lucide-react';
-import { resolveAppUrl } from '@lark-apaas/client-toolkit/utils/resolveAppUrl';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { resolveAppUrl } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import { articlesApi } from '@client/src/api';
 import { uploadFile as uploadToServer } from '@client/src/api/upload';
 import { Image } from '@client/src/components/ui/image';

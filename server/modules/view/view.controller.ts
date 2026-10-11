@@ -11,7 +11,7 @@ import {
 import {
   DRIZZLE_DATABASE,
   type PostgresJsDatabase,
-} from '@lark-apaas/fullstack-nestjs-core';
+} from '@server/database/database.module';
 import type { Request, Response } from 'express';
 import {
   articles,
@@ -134,7 +134,7 @@ export class ViewController {
     req: Request,
     res: Response,
   ): Promise<void> {
-    const platformData = req.__platform_data__ ?? {};
+    const platformData = (req as any).__platform_data__ ?? {};
     const platformJson = JSON.stringify(platformData).replace(/'/g, "\\'");
     const baseUrl = getRequestBaseUrl(req);
     const fullUrl = `${baseUrl}${req.originalUrl}`;
@@ -211,7 +211,7 @@ export class ViewController {
   @Get(['/', '*'])
   @Render('index')
   async render(@Req() req: Request): Promise<OgRenderData> {
-    const platformData = req.__platform_data__ ?? {};
+    const platformData = (req as any).__platform_data__ ?? {};
     const baseData: OgRenderData = {
       __platform__: JSON.stringify(platformData),
       ogTitle: 'LongPost',

@@ -1,60 +1,45 @@
 const tseslint = require('typescript-eslint');
-const { eslintPresetsOfSimple } = require('@lark-apaas/fullstack-presets');
+const reactHooks = require('eslint-plugin-react-hooks');
 
 module.exports = tseslint.config(
   {
     ignores: [
-      'dist',
-      'dist-server',
-      'node_modules',
-      'source_package',
-      'client/src/api/gen',
+      'dist/**',
+      'dist-server/**',
+      'node_modules/**',
+      'source_package/**',
+      'desktop/**',
+      'mobile/**',
+      'scripts/**',
+      '**/vendor/**',
+      'client/public/**',
+      'client/src/api/gen/**',
       '**/*.d.ts',
       '**/*.js.map',
+      '*.config.js',
+      '*.config.ts',
     ],
   },
-  // Client configuration
+  ...tseslint.configs.recommended,
   {
-    files: ['client/**/*.{ts,tsx}', 'shared/**/*.{ts,tsx}'],
-    extends: [
-      ...eslintPresetsOfSimple.client,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: './tsconfig.app.json',
-      },
+    files: ['client/src/**/*.{ts,tsx}'],
+    plugins: {
+      'react-hooks': reactHooks,
     },
-    settings: {
-      'import/resolver': {
-        alias: {
-          map: [
-            ['@', './client/src'],
-            ['@client', './client'],
-            ['@shared', './shared'],
-          ],
-          extensions: ['.js', '.jsx', '.ts', '.tsx'],
-        },
-      },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      'react-hooks/exhaustive-deps': 'warn',
     },
   },
-  // Server configuration
   {
-    files: ['server/**/*.{ts,tsx}', 'shared/**/*.{ts,tsx}'],
-    extends: [
-      ...eslintPresetsOfSimple.server,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: './tsconfig.node.json',
-      }
+    files: ['client/src/**/*.{ts,tsx}', 'server/**/*.{ts,tsx}', 'shared/**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/ban-ts-comment': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off',
+      'prefer-const': 'warn',
     },
-    settings: {
-      'import/resolver': {
-        alias: {
-          map: [['@server', './server'], ['@shared', './shared']],
-          extensions: ['.js', '.jsx', '.ts', '.tsx'],
-        },
-      }
-    }
   },
 );

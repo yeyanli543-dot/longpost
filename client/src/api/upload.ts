@@ -1,5 +1,5 @@
-import { logger } from '@lark-apaas/client-toolkit/logger';
-import { axiosForBackend } from '@lark-apaas/client-toolkit/utils/getAxiosForBackend';
+import { logger } from '@/lib/logger';
+import { axiosForBackend } from '@/lib/axios';
 
 export interface UploadResult {
   /** 可直接放进 <img src> 或附件链接的地址 */

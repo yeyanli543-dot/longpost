@@ -2,7 +2,7 @@ import { Module, OnModuleInit, Logger } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { Inject } from '@nestjs/common';
 import { randomBytes } from 'crypto';
-import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@lark-apaas/fullstack-nestjs-core';
+import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@server/database/database.module';
 import * as bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
 import { appUsers } from '../../database/schema';

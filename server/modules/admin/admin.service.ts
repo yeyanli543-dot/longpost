@@ -19,7 +19,7 @@ import {
 import {
   type PostgresJsDatabase,
   DRIZZLE_DATABASE,
-} from '@lark-apaas/fullstack-nestjs-core';
+} from '@server/database/database.module';
 import { Inject } from '@nestjs/common';
 
 import type {

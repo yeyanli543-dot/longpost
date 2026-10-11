@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { FileText, Image as ImageIcon, Paperclip, Download } from 'lucide-react';
 import { Image } from '@client/src/components/ui/image';
 import ArticleBody from '@client/src/components/ArticleBody';
-import { UniversalLink } from '@lark-apaas/client-toolkit/components/UniversalLink';
+import { UniversalLink } from '@/lib/components/UniversalLink';
 import type { ArticleDetail, ArticleImage, ArticleAttachment } from '@shared/api.interface';
 import ImageLightbox from './ImageLightbox';
 

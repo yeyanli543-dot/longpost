@@ -7,8 +7,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@client/src/components/ui/dropdown-menu';
-import { resolveAppUrl } from '@lark-apaas/client-toolkit/utils/resolveAppUrl';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { resolveAppUrl } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import type { ArticleDetail } from '@shared/api.interface';
 
 interface ShareMenuProps {

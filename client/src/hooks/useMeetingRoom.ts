@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { io, type Socket } from 'socket.io-client';
-import { logger } from '@lark-apaas/client-toolkit/logger';
-import { axiosForBackend } from '@lark-apaas/client-toolkit/utils/getAxiosForBackend';
+import { logger } from '@/lib/logger';
+import { axiosForBackend } from '@/lib/axios';
 import type { RoomParticipant, IceConfigResponse } from '@shared/api.interface';
 
 interface UseMeetingRoomOptions {

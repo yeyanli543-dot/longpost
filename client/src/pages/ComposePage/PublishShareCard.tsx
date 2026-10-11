@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Share2, Link2, Copy, Check, ArrowRight, FileText } from 'lucide-react';
 import { toast } from 'sonner';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 import { Image } from '@client/src/components/ui/image';
 
 interface PublishShareCardProps {

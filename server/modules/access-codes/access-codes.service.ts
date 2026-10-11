@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@lark-apaas/fullstack-nestjs-core';
+import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@server/database/database.module';
 import { eq, desc, count, ilike, or } from 'drizzle-orm';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcryptjs';

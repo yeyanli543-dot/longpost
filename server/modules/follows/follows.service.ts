@@ -8,7 +8,7 @@ import {
 import {
   DRIZZLE_DATABASE,
   type PostgresJsDatabase,
-} from '@lark-apaas/fullstack-nestjs-core';
+} from '@server/database/database.module';
 import { follows, appUsers } from '@server/database/schema';
 import { eq, and, lt, sql, desc, or } from 'drizzle-orm';
 import type {

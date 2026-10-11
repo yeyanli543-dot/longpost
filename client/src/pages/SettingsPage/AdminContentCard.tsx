@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 import { articlesApi, postsApi } from '@client/src/api';
 import {
   Card,
@@ -19,7 +19,7 @@ import {
   SelectItem,
 } from '@client/src/components/ui/select';
 import type { AdminContentListResponse, PostItem, ArticleSummary } from '@shared/api.interface';
-import { showConfirm } from '@lark-apaas/client-toolkit';
+import { showConfirm } from '@/lib';
 
 interface AdminContentCardProps {
   isAdmin: boolean;

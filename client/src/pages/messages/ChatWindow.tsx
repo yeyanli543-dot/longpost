@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Send, Check, CheckCheck, Loader2, MessageSquare } from 'lucide-react';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 import { Image } from '@client/src/components/ui/image';
 import { dmApi } from '@client/src/api';
 import type { DMConversation, DMMessage } from '@shared/api.interface';

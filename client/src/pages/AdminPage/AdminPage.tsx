@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 import { useAuth } from '@client/src/hooks/useAuth';
 import { adminApi, siteSettingsApi } from '@client/src/api';
 import AccessCodesManager from '@client/src/pages/AccessCodesPage/AccessCodesManager';
@@ -60,7 +60,7 @@ import type {
   ReportReason,
   RegistrationMode,
 } from '@shared/api.interface';
-import { showConfirm } from '@lark-apaas/client-toolkit';
+import { showConfirm } from '@/lib';
 import { Image } from '@client/src/components/ui/image';
 
 // ─── Tab definitions ────────────────────────────────────────

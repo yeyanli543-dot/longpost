@@ -15,7 +15,7 @@ function runCommand(command, args) {
     const child = spawn(command, args, {
       cwd,
       stdio: 'inherit',
-      shell: false,
+      shell: process.platform === 'win32',
     });
 
     child.on('close', (code) => resolve(code || 0));

@@ -16,7 +16,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { useAuth } from '@client/src/hooks/useAuth';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 import { Image } from '@client/src/components/ui/image';
 import { notificationsApi, dmApi } from '@client/src/api';
 import TrendingSidebar from '@client/src/components/TrendingSidebar';

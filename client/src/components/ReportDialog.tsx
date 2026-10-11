@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Flag, LogIn } from 'lucide-react';
 import { toast } from 'sonner';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 import { adminApi } from '@client/src/api';
 import { useAuth } from '@client/src/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';

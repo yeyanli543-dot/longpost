@@ -1,4 +1,4 @@
-import { axiosForBackend } from '@lark-apaas/client-toolkit/utils/getAxiosForBackend';
+import { axiosForBackend } from '@/lib/axios';
 import type { SiteSettings, UpdateSiteSettingsRequest } from '@shared/api.interface';
 
 export async function getSiteSettings(): Promise<SiteSettings> {

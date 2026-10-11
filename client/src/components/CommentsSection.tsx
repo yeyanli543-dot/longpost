@@ -15,7 +15,7 @@ import {
   MoreHorizontal,
   Flag,
 } from 'lucide-react';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 import { commentsApi } from '@client/src/api';
 import { useAuth } from '@client/src/hooks/useAuth';
 import type {
@@ -23,7 +23,7 @@ import type {
   CommentContentType,
   CommentSortMode,
 } from '@shared/api.interface';
-import { showConfirm } from '@lark-apaas/client-toolkit';
+import { showConfirm } from '@/lib';
 import { Image } from '@client/src/components/ui/image';
 import RichTextContent from '@client/src/components/RichTextContent';
 import ReportDialog from '@client/src/components/ReportDialog';

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Hash } from 'lucide-react';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 import PostCard from '@client/src/components/PostCard';
 import ArticleCard from '@client/src/components/ArticleCard';
 import { hashtagsApi } from '@client/src/api';

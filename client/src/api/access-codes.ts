@@ -1,5 +1,5 @@
-import { logger } from '@lark-apaas/client-toolkit/logger';
-import { axiosForBackend } from '@lark-apaas/client-toolkit/utils/getAxiosForBackend';
+import { logger } from '@/lib/logger';
+import { axiosForBackend } from '@/lib/axios';
 import type {
   AccessCodeListResponse,
   AccessCodeItem,

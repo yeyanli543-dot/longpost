@@ -16,7 +16,7 @@ import {
   Mail,
   Video,
 } from 'lucide-react';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 import { Image } from '@client/src/components/ui/image';
 import { notificationsApi } from '@client/src/api';
 import { useAuth } from '@client/src/hooks/useAuth';

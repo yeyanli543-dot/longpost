@@ -14,7 +14,7 @@ import {
   Send,
   X,
 } from 'lucide-react';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 import { useAuth } from '@client/src/hooks/useAuth';
 import { useMeetingRoom } from '@client/src/hooks/useMeetingRoom';
 import { Image } from '@client/src/components/ui/image';

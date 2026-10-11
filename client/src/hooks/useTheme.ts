@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 

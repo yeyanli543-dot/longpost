@@ -10,7 +10,7 @@ import {
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 import { useAuth } from '@client/src/hooks/useAuth';
 import {
   toggleLike,

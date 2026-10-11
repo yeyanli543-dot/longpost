@@ -15,8 +15,8 @@ import {
   Settings,
   Mail,
 } from 'lucide-react';
-import { resolveAppUrl } from '@lark-apaas/client-toolkit/utils/resolveAppUrl';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { resolveAppUrl } from '@/lib/utils';
+import { logger } from '@/lib/logger';
 import { Image } from '@client/src/components/ui/image';
 import ActionButtons from '@client/src/components/ActionButtons';
 import FollowButton from '@client/src/components/FollowButton';

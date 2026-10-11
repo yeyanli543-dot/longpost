@@ -9,7 +9,7 @@ import {
 import {
   DRIZZLE_DATABASE,
   type PostgresJsDatabase,
-} from '@lark-apaas/fullstack-nestjs-core';
+} from '@server/database/database.module';
 import { articles, posts, articleImages, articleAttachments, appUsers, contentHashtags, hashtags } from '@server/database/schema';
 import { eq, desc, sql, ilike, and, asc, count, inArray } from 'drizzle-orm';
 import { UpdateArticleDto } from './dto/update-article.dto';

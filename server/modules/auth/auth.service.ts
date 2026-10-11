@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Inject } from '@nestjs/common';
-import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@lark-apaas/fullstack-nestjs-core';
+import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@server/database/database.module';
 import * as bcrypt from 'bcryptjs';
 import { eq, and, desc, count, sum, inArray, ne } from 'drizzle-orm';
 import { appUsers, siteSettings, posts, articles, bookmarks } from '../../database/schema';

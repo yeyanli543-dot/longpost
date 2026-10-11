@@ -17,7 +17,7 @@ import { useAuth } from '@client/src/hooks/useAuth';
 import { postsApi, articlesApi, authApi, interactionsApi } from '@client/src/api';
 import RichTextContent from '@client/src/components/RichTextContent';
 import type { PostItem, ArticleSummary, ToggleBookmarkRequest } from '@shared/api.interface';
-import { showConfirm } from '@lark-apaas/client-toolkit';
+import { showConfirm } from '@/lib';
 import { Image } from '@client/src/components/ui/image';
 import LoginGate from '@client/src/components/LoginGate';
 

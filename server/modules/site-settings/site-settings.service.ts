@@ -1,5 +1,5 @@
 import { Injectable, Inject, Logger, BadRequestException } from '@nestjs/common';
-import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@lark-apaas/fullstack-nestjs-core';
+import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@server/database/database.module';
 import { siteSettings } from '@server/database/schema';
 import { eq } from 'drizzle-orm';
 import { AuthService } from '../auth/auth.service';

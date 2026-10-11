@@ -1,5 +1,5 @@
 import { Injectable, Inject, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@lark-apaas/fullstack-nestjs-core';
+import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@server/database/database.module';
 import { posts, articles, articleImages, articleAttachments, appUsers, follows, contentHashtags, hashtags, siteSettings } from '@server/database/schema';
 import { eq, desc, lt, inArray, sql, count, and } from 'drizzle-orm';
 import { AuthService } from '../auth/auth.service';

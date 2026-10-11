@@ -51,7 +51,7 @@ import {
 } from '@client/src/components/ui/dialog';
 import { Image } from '@client/src/components/ui/image';
 import { uploadFile as uploadToServer } from '@client/src/api/upload';
-import { logger } from '@lark-apaas/client-toolkit/logger';
+import { logger } from '@/lib/logger';
 import type { SiteSettings, ThemeMode, FontSize } from '@shared/api.interface';
 
 // ==================== 个人资料 ====================

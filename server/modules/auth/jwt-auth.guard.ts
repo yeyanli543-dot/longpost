@@ -13,6 +13,11 @@ export interface AuthRequest extends Request {
     email: string;
     role?: string;
   };
+  userContext?: {
+    userId?: string;
+    userType?: string;
+    [key: string]: any;
+  };
 }
 
 @Injectable()
