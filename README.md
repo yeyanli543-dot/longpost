@@ -70,6 +70,16 @@
 
 ## ✨ 核心特性
 
+### 0. ☯️ 双模式工作区：🍎 苹果极简版 ↔ 🎨 谷歌专业版（一键瞬切）
+- **真正的深度场景分工**：非粗暴换肤，直接对标 apple.com 与 Google Material 3 官方原始设计令牌（包含精确字号阶梯、字距 Tracking、圆角规范与阴影层级）；
+- **🍎 苹果极简版（Apple Zen）**：对标 Apple HIG 与 macOS/iOS 备忘录。单列 980px 纯净画卷、大留白、负字距、毛玻璃拟态、iOS 绿开关；彻底屏蔽技术噪音，专注心流写作；
+- **🎨 谷歌专业版（Google Pro Studio）**：对标 Google Workspace 与 M3。提供全功能工具功能带（Formatting Ribbon）、M3 Tonal 表面、大药丸搜索、以及 **4 大本地离线杀手级生产力工具**：
+  1. **🌐 全库知识图谱（Knowledge Graph）**：ECharts 力导向拓扑关系网，点击穿透漫游全库文章；
+  2. **🔬 写作实验室（Writing Lab）**：10 维文本诊断，实时字数/词频透视与 5 项排版规范自检；
+  3. **🔍 Git 级版本差分器（Version Diff）**：逐行比对历史快照，增删高亮，一键无损回滚；
+  4. **🎨 灵感白板草图（Inspiration Board）**：HTML5 Canvas 手绘涂鸦，一键直插正文。
+- 详情请查阅权威文档：👉 **[LongPost 双模式设计分工与能力集成白皮书 (DESIGN-SPEC.md)](DESIGN-SPEC.md)**。
+
 ### 1. 📊 交互式图表卡片（不仅是图片，而是活数据）
 - 在 Markdown 正文任意位置使用 ````chart``` 围栏，即可内嵌 **柱状图 / 折线图 / 面积图 / 饼图**；
 - 无论是本地预览、导出 HTML 还是公开分享页，图表均由 ECharts 渲染，读者可悬浮交互查看数值；
