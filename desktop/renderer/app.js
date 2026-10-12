@@ -2836,10 +2836,49 @@
       : '当前生效：🎨 谷歌专业版（Google Pro · Workspace/M3 深度还原）—— Material 3 工坊、大药丸搜索、Extended FAB、全功能专业工具。');
   }
 
+  function setupMaterialRipple() {
+    document.addEventListener('pointerdown', (e) => {
+      if (state.settings.workspaceMode !== 'pro') return;
+      const target = e.target.closest(
+        'button, .btn, .item, .seg, .chip, .fmt, .tools .btn, .pro-tool-item, .dialog-foot .btn, .mode-pill-btn'
+      );
+      if (!target) return;
+
+      const rect = target.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height) * 2;
+      const x = e.clientX - rect.left - size / 2;
+      const y = e.clientY - rect.top - size / 2;
+
+      target.classList.add('m3-ripple-container');
+      const ink = document.createElement('span');
+      ink.className = 'm3-ripple-ink';
+      ink.style.width = size + 'px';
+      ink.style.height = size + 'px';
+      ink.style.left = x + 'px';
+      ink.style.top = y + 'px';
+      target.appendChild(ink);
+
+      const onPointerEnd = () => {
+        ink.classList.add('fade-out');
+        setTimeout(() => {
+          if (ink.parentNode) ink.parentNode.removeChild(ink);
+        }, 320);
+        window.removeEventListener('pointerup', onPointerEnd);
+        window.removeEventListener('pointercancel', onPointerEnd);
+      };
+      window.addEventListener('pointerup', onPointerEnd);
+      window.addEventListener('pointercancel', onPointerEnd);
+    });
+  }
+
   async function toggleWorkspaceMode() {
+    document.documentElement.classList.add('mode-morphing');
     const next = state.settings.workspaceMode === 'pro' ? 'lite' : 'pro';
     state.settings = await LP.setSettings({ workspaceMode: next });
     applyWorkspaceMode(next);
+    setTimeout(() => {
+      document.documentElement.classList.remove('mode-morphing');
+    }, 400);
     toast(next === 'lite' ? '已切换至 🍎 苹果极简版 (Apple Zen)' : '已切换至 🎨 谷歌专业版 (Google Pro Studio)');
   }
 
@@ -2894,8 +2933,12 @@
       ],
       state.settings.workspaceMode || 'lite',
       async (key) => {
+        document.documentElement.classList.add('mode-morphing');
         state.settings = await LP.setSettings({ workspaceMode: key });
         applyWorkspaceMode(key);
+        setTimeout(() => {
+          document.documentElement.classList.remove('mode-morphing');
+        }, 400);
         toast(key === 'lite' ? '已切换为 🍎 苹果极简版 (Apple Zen)' : '已切换为 🎨 谷歌专业版 (Google Studio)');
       },
     );
@@ -5131,6 +5174,7 @@
     setupHardwareBack();
     setupSwipePanes();
     setupPinchZoom();
+    setupMaterialRipple();
 
     bind();
 
