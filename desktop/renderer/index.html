@@ -101,6 +101,9 @@
               <div class="brand-name">LongPost</div>
               <div class="brand-sub">本地写作台 · 离线</div>
             </div>
+            <button class="btn mode-pill-btn" id="btnModeSwitch" title="一键切换工作区风格（Alt+M）：🍎 苹果极简版 ↔ 🎨 谷歌专业版">
+              <span class="mode-badge" id="modeBadge">🍎</span><span class="mode-label" id="modeLabel">简洁版</span>
+            </button>
           </div>
 
           <div class="search-wrap">
@@ -183,6 +186,9 @@
               <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"></use></svg>
             </button>
             <input class="title-input" id="title" placeholder="无标题" aria-label="文章标题" />
+            <button class="btn mode-pill-btn only-mobile" id="btnModeSwitchMobile" title="一键切换工作区风格 (Alt+M)">
+              <span class="mode-badge" id="modeBadgeMobile">🍎</span><span class="mode-label" id="modeLabelMobile">简洁版</span>
+            </button>
             <div class="tools">
               <button class="btn" id="btnPin" title="把这篇文章顶到列表最前">
                 <svg class="icon" aria-hidden="true"><use href="#i-star"></use></svg><span class="btn-label">置顶</span>
@@ -216,6 +222,19 @@
               <span class="sep keep-in-reading"></span>
               <button class="btn keep-in-reading" id="btnFind" title="查找与替换（Ctrl/Cmd + F）">
                 <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg><span class="btn-label">查找</span>
+              </button>
+              <span class="sep pro-tool-item"></span>
+              <button class="btn pro-tool-item" id="btnProGraph" title="全库知识图谱关系网络">
+                <svg class="icon" aria-hidden="true"><use href="#i-grid"></use></svg><span class="btn-label">图谱</span>
+              </button>
+              <button class="btn pro-tool-item" id="btnProLab" title="写作实验室：字数词频与可读性深度分析">
+                <svg class="icon" aria-hidden="true"><use href="#i-file-text"></use></svg><span class="btn-label">实验室</span>
+              </button>
+              <button class="btn pro-tool-item" id="btnProDiff" title="版本差分比对器：与历史版本逐行差异核对">
+                <svg class="icon" aria-hidden="true"><use href="#i-columns"></use></svg><span class="btn-label">差分</span>
+              </button>
+              <button class="btn pro-tool-item" id="btnProBoard" title="灵感白板：手绘脑图与架构草图，一键插入正文">
+                <svg class="icon" aria-hidden="true"><use href="#i-edit"></use></svg><span class="btn-label">白板</span>
               </button>
               <button class="btn" id="btnMore" title="导出、历史版本、统计、删除" aria-haspopup="menu">
                 <svg class="icon" aria-hidden="true"><use href="#i-more"></use></svg><span class="btn-label">更多</span>
@@ -385,6 +404,11 @@
           <button class="icon-btn" id="settingsClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
         </div>
         <div class="dialog-body">
+          <div class="field">
+            <label>工作区风格模式</label>
+            <div class="segmented" id="modeSwitch"></div>
+            <p class="field-help" id="modeSwitchHelp">🍎 苹果简洁版：极简禅意、毛玻璃留白、沉浸写作；🎨 谷歌专业版：M3 工坊、全功能工具条、图谱与实验室</p>
+          </div>
           <div class="field">
             <label>主题</label>
             <div class="segmented" id="themeSwitch"></div>
@@ -620,6 +644,97 @@
           <button class="btn primary" id="longImageSave">
             <svg class="icon" aria-hidden="true"><use href="#i-download"></use></svg><span class="btn-label">保存 PNG</span>
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 全库知识图谱弹窗 -->
+    <div class="modal" id="graphModal" hidden data-dismiss="1">
+      <div class="dialog wide" role="dialog" aria-label="全库知识图谱">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>📊 全库知识图谱关系网络</h3>
+          <button class="icon-btn" id="graphClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <p class="about" id="graphSummary">基于本地文章双链、标签与引用自动生成的知识力导向关系网络。拖拽节点可缩放交互，点击节点可直达对应文章。</p>
+          <div class="graph-box" id="graphContainer" style="width:100%;height:380px;"></div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn primary" id="graphOk">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 写作实验室弹窗 -->
+    <div class="modal" id="labModal" hidden data-dismiss="1">
+      <div class="dialog" role="dialog" aria-label="写作实验室">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>🧪 写作实验室 · 文本深度洞察</h3>
+          <button class="icon-btn" id="labClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <div class="lab-stats-grid" id="labStatsGrid"></div>
+          <div class="lab-section">
+            <h4>词频排行 Top 10</h4>
+            <div class="lab-tags" id="labWordFreq"></div>
+          </div>
+          <div class="lab-section">
+            <h4>排版与规范自检</h4>
+            <ul class="lab-checklist" id="labChecklist"></ul>
+          </div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn primary" id="labOk">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 历史版本差分比对器弹窗 -->
+    <div class="modal" id="diffModal" hidden data-dismiss="1">
+      <div class="dialog wide" role="dialog" aria-label="版本差分比对器">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>🔍 版本差分比对器 (Diff Inspector)</h3>
+          <button class="icon-btn" id="diffClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <div class="field">
+            <label>对比基准版本</label>
+            <select class="select" id="diffRevSelect"></select>
+          </div>
+          <div class="diff-view" id="diffContainer"></div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn primary" id="diffOk">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 灵感白板弹窗 -->
+    <div class="modal" id="boardModal" hidden data-dismiss="1">
+      <div class="dialog wide" role="dialog" aria-label="灵感白板">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>🎨 灵感白板 (Inspiration Canvas)</h3>
+          <button class="icon-btn" id="boardClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <div class="board-toolbar" id="boardToolbar">
+            <button class="btn sm" id="boardToolPen" data-tool="pen">✏️ 画笔</button>
+            <button class="btn sm" id="boardToolRect" data-tool="rect">⬜ 矩形</button>
+            <button class="btn sm" id="boardToolArrow" data-tool="arrow">➡️ 箭头</button>
+            <button class="btn sm" id="boardToolText" data-tool="text">🔤 文本</button>
+            <button class="btn sm ghost" id="boardClear">清空白板</button>
+          </div>
+          <div class="board-canvas-box" id="boardCanvasBox">
+            <canvas id="boardCanvas" width="680" height="360"></canvas>
+          </div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn" id="boardInsert">插入到文章正文</button>
+          <button class="btn primary" id="boardOk">完成</button>
         </div>
       </div>
     </div>

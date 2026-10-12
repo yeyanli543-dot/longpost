@@ -701,8 +701,17 @@
 
   #longImageModal .dialog-foot .btn,
   #settingsModal .dialog-foot .btn,
-  #statsModal .dialog-foot .btn {
+  #statsModal .dialog-foot .btn,
+  #graphModal .dialog-foot .btn,
+  #labModal .dialog-foot .btn,
+  #diffModal .dialog-foot .btn,
+  #boardModal .dialog-foot .btn {
     min-height: 44px;
+  }
+
+  .mode-pill-btn {
+    min-height: 44px;
+    padding: 0 12px;
   }
 
   /* ------------------------------------------------------------ 安全区：横屏刘海 */

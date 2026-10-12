@@ -2278,3 +2278,230 @@ body.reading-mode .preview {
   display: block;
   margin: 0 auto;
 }
+
+/* ============================================================================
+   8. 双模式工作区系统：🍎 苹果极简版 (Apple Zen) vs 🎨 谷歌专业版 (Google Pro)
+   ========================================================================= */
+
+/* 模式切换药丸按钮 */
+.mode-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  border-radius: 9999px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+.mode-pill-btn:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  transform: translateY(-1px);
+}
+.mode-badge {
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* 🍏 苹果极简模式 (Apple Zen · Lite) */
+.mode-apple {
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif;
+  --r-md: 14px;
+  --r-lg: 18px;
+}
+.mode-apple .pro-tool-item {
+  display: none !important;
+}
+.mode-apple .toolbar {
+  background: rgba(28, 36, 47, 0.65);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+[data-theme='light'] .mode-apple .toolbar {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+.mode-apple .mode-pill-btn {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+}
+[data-theme='light'] .mode-apple .mode-pill-btn {
+  border-color: rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* 🔷 谷歌专业模式 (Google Pro Studio) */
+.mode-google {
+  --font-sans: "Google Sans", "Product Sans", "Roboto", "Segoe UI", sans-serif;
+  --accent: #1a73e8;
+  --accent-hover: #1557b0;
+  --accent-soft: rgba(26, 115, 232, 0.15);
+  --r-md: 12px;
+  --r-lg: 20px;
+}
+[data-theme='dark'] .mode-google {
+  --accent: #8ab4f8;
+  --accent-hover: #aecbfa;
+  --accent-soft: rgba(138, 180, 248, 0.18);
+  --bg: #131314;
+  --surface: #1e1f20;
+  --surface-2: #282a2c;
+  --surface-3: #2f3033;
+}
+.mode-google .pro-tool-item {
+  display: inline-flex !important;
+}
+.mode-google .btn {
+  border-radius: 9999px;
+}
+.mode-google .mode-pill-btn {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* 📊 知识图谱盒子 */
+.graph-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  margin-top: var(--sp-2);
+}
+
+/* 🧪 写作实验室组件 */
+.lab-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+}
+.lab-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: var(--sp-3);
+  text-align: center;
+}
+.lab-card-val {
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 2px;
+}
+.lab-card-lbl {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+}
+.lab-section {
+  margin-top: var(--sp-3);
+}
+.lab-section h4 {
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+  margin: 0 0 var(--sp-2);
+}
+.lab-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+.lab-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+}
+.lab-chip b {
+  color: var(--accent);
+}
+.lab-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.lab-checklist-item {
+  font-size: var(--fs-xs);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-2);
+}
+.lab-checklist-item.ok {
+  color: var(--ok);
+}
+.lab-checklist-item.warn {
+  color: var(--warn);
+}
+
+/* 🔍 版本差分样式 */
+.diff-view {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  max-height: 50vh;
+  overflow: auto;
+  padding: var(--sp-2);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.diff-line {
+  padding: 2px 4px;
+  border-radius: 3px;
+  line-height: 1.5;
+}
+.diff-line.add {
+  background: rgba(48, 164, 108, 0.18);
+  color: #46c483;
+}
+.diff-line.del {
+  background: rgba(229, 72, 77, 0.18);
+  color: #ff686c;
+}
+.diff-line.same {
+  color: var(--text-3);
+}
+
+/* 🎨 灵感白板样式 */
+.board-toolbar {
+  display: flex;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+  flex-wrap: wrap;
+}
+.board-toolbar .btn.active {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+.board-canvas-box {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  text-align: center;
+  touch-action: none;
+}
+.board-canvas-box canvas {
+  display: block;
+  width: 100%;
+  cursor: crosshair;
+}
+

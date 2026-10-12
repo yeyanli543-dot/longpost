@@ -96,6 +96,8 @@
       mdEngine: 'auto',
       highlight: true,
       math: true,
+      /** 工作区模式：lite (苹果极简版) | pro (谷歌专业版) */
+      workspaceMode: 'lite',
     },
     /** 每篇文章的滚动位置，切来切去不用重新找地方。 */
     scrollMem: new Map(),
@@ -388,6 +390,10 @@
     'historyModal',
     'confirmModal',
     'longImageModal',
+    'graphModal',
+    'labModal',
+    'diffModal',
+    'boardModal',
   ];
 
   function openSheet(id) {
@@ -2602,6 +2608,51 @@
     document.body.classList.toggle('dark', theme === 'dark');
   }
 
+  function applyWorkspaceMode(mode) {
+    const isLite = mode !== 'pro';
+    const actual = isLite ? 'lite' : 'pro';
+    state.settings.workspaceMode = actual;
+    document.documentElement.dataset.workspaceMode = actual;
+    document.documentElement.classList.toggle('mode-apple', isLite);
+    document.documentElement.classList.toggle('mode-lite', isLite);
+    document.documentElement.classList.toggle('mode-google', !isLite);
+    document.documentElement.classList.toggle('mode-pro', !isLite);
+    document.body.classList.toggle('mode-apple', isLite);
+    document.body.classList.toggle('mode-lite', isLite);
+    document.body.classList.toggle('mode-google', !isLite);
+    document.body.classList.toggle('mode-pro', !isLite);
+
+    const badge = isLite ? '🍎' : '🎨';
+    const label = isLite ? '简洁版' : '专业版';
+    const title = isLite
+      ? '当前：🍎 苹果极简版（点击切换至 🎨 谷歌专业版，快捷键 Alt+M）'
+      : '当前：🎨 谷歌专业版（点击切换至 🍎 苹果极简版，快捷键 Alt+M）';
+
+    const btn1 = $('btnModeSwitch');
+    if (btn1) {
+      btn1.title = title;
+      $('modeBadge').textContent = badge;
+      $('modeLabel').textContent = label;
+    }
+    const btn2 = $('btnModeSwitchMobile');
+    if (btn2) {
+      btn2.title = title;
+      $('modeBadgeMobile').textContent = badge;
+      $('modeLabelMobile').textContent = label;
+    }
+    $('modeSwitch') && syncSegmentedActive('modeSwitch', actual);
+    $('modeSwitchHelp') && ($('modeSwitchHelp').textContent = isLite
+      ? '当前生效：🍎 苹果极简版（Apple Zen）—— 极简留白、毛玻璃质感、无干扰流式写作体验。'
+      : '当前生效：🎨 谷歌专业版（Google Studio）—— Material 3 工坊、全功能工具条、图谱与实验室。');
+  }
+
+  async function toggleWorkspaceMode() {
+    const next = state.settings.workspaceMode === 'pro' ? 'lite' : 'pro';
+    state.settings = await LP.setSettings({ workspaceMode: next });
+    applyWorkspaceMode(next);
+    toast(next === 'lite' ? '已切换为 🍎 苹果极简版 (Apple Zen)' : '已切换为 🎨 谷歌专业版 (Google Studio)');
+  }
+
   function applyFontSize() {
     const size = Number(state.settings.fontSize) || 16;
     document.documentElement.style.setProperty('--editor-font-size', size + 'px');
@@ -2632,6 +2683,7 @@
 
   function applySettingsUi() {
     applyTheme();
+    applyWorkspaceMode(state.settings.workspaceMode || 'lite');
     applyFontSize();
     applyPaneState();
     applyOutlineState(Boolean(state.settings.showOutline));
@@ -2643,6 +2695,20 @@
     syncSwitch('motionSwitch', state.settings.motion === 'reduce');
     syncSwitch('hlSwitch', state.settings.highlight !== false);
     syncSwitch('mathSwitch', state.settings.math !== false);
+
+    buildSegmented(
+      'modeSwitch',
+      [
+        { key: 'lite', label: '🍎 苹果极简版' },
+        { key: 'pro', label: '🎨 谷歌专业版' },
+      ],
+      state.settings.workspaceMode || 'lite',
+      async (key) => {
+        state.settings = await LP.setSettings({ workspaceMode: key });
+        applyWorkspaceMode(key);
+        toast(key === 'lite' ? '已切换为 🍎 苹果极简版 (Apple Zen)' : '已切换为 🎨 谷歌专业版 (Google Studio)');
+      },
+    );
 
     buildSegmented(
       'engineSwitch',
@@ -3378,41 +3444,376 @@
     });
     setupLongPress();
 
-    // ---------------------------------------------------------- 顶部操作条
-    $('btnBack').addEventListener('click', showList);
-    $('title').addEventListener('input', () => {
-      updateStats();
-      markDirty();
+  // ==========================================================================
+  // 专业版专属四大生产力工具：知识图谱 / 写作实验室 / 版本差分 / 灵感白板
+  // ==========================================================================
+
+  let graphChart = null;
+  async function openGraph() {
+    openSheet('graphModal');
+    $('graphSummary').textContent =
+      '基于本地文章双链、标签与引用自动生成的知识力导向关系网络。拖拽节点可缩放交互，点击节点可直达对应文章。';
+    const container = $('graphContainer');
+    if (!window.echarts || !container) return;
+
+    if (!graphChart) {
+      graphChart = window.echarts.init(container);
+      graphChart.on('click', (params) => {
+        if (params.dataType === 'node' && params.data && params.data.articleId) {
+          closeSheet('graphModal');
+          openArticle(params.data.articleId);
+        }
+      });
+    }
+
+    const articles = await LP.listArticles();
+    const nodes = [];
+    const links = [];
+    const tagSet = new Set();
+
+    articles.forEach((a) => {
+      nodes.push({
+        id: 'art-' + a.id,
+        name: a.title || '无标题',
+        articleId: a.id,
+        symbolSize: Math.min(48, Math.max(22, 16 + (a.content ? a.content.length / 80 : 5))),
+        category: 0,
+        itemStyle: { color: a.pinned ? '#e2b33c' : '#1f9d8b' },
+      });
+      (a.tags || []).forEach((t) => {
+        tagSet.add(t);
+        links.push({ source: 'art-' + a.id, target: 'tag-' + t });
+      });
     });
-    $('btnPin').addEventListener('click', togglePin);
-    $('btnTagsEdit').addEventListener('click', () => openTags(true));
-    $('btnShare').addEventListener('click', openShare);
-    $('btnChart').addEventListener('click', openChartDialog);
-    $('btnImage').addEventListener('click', insertImages);
-    $('btnFile').addEventListener('click', insertFiles);
-    $('btnOutline').addEventListener('click', async () => {
-      const next = $('outlinePanel').hidden;
-      state.settings = await LP.setSettings({ showOutline: next });
-      applyOutlineState(next);
-      syncSegmentedActive('outlineSwitch', next ? 'on' : 'off');
+
+    tagSet.forEach((t) => {
+      nodes.push({
+        id: 'tag-' + t,
+        name: '#' + t,
+        symbolSize: 18,
+        category: 1,
+        itemStyle: { color: '#1a73e8' },
+      });
     });
-    $('btnReading').addEventListener('click', async () => {
-      state.settings = await LP.setSettings({ readingMode: !state.settings.readingMode });
-      applyPaneState();
-      syncSegmentedActive('readingModeSwitch', state.settings.readingMode ? 'on' : 'off');
-      setTimeout(resizeCharts, 240);
+
+    const isDark = document.documentElement.dataset.theme === 'dark';
+    graphChart.setOption({
+      backgroundColor: 'transparent',
+      tooltip: {
+        formatter: (params) =>
+          params.dataType === 'node' ? params.data.name + (params.data.articleId ? ' (点击直达)' : '') : '',
+      },
+      series: [
+        {
+          type: 'graph',
+          layout: 'force',
+          data: nodes,
+          links: links,
+          roam: true,
+          label: {
+            show: true,
+            position: 'right',
+            color: isDark ? '#e9ecf1' : '#1c242f',
+            fontSize: 11,
+          },
+          force: {
+            repulsion: 160,
+            edgeLength: [40, 100],
+            gravity: 0.1,
+          },
+          lineStyle: {
+            color: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.15)',
+            curveness: 0.1,
+          },
+        },
+      ],
     });
-    $('btnPreview').addEventListener('click', async () => {
-      state.settings = await LP.setSettings({ showPreview: !state.settings.showPreview });
-      applyPaneState();
-      if (isNarrow() && !state.settings.showPreview) setPaneMode('write');
-      setTimeout(resizeCharts, 60);
+    setTimeout(() => graphChart.resize(), 60);
+  }
+
+  function openLab() {
+    openSheet('labModal');
+    const text = ($('editor') && $('editor').value) || '';
+    const title = ($('title') && $('title').value) || '';
+    const full = title + '\n' + text;
+
+    const chars = full.length;
+    const words = (full.match(/[\u4e00-\u9fa5]|[a-zA-Z0-9_-]+/g) || []).length;
+    const paras = full.split(/\n\s*\n/).filter((p) => p.trim().length > 0).length || 1;
+    const readMin = Math.max(1, Math.ceil(words / 300));
+
+    $('labStatsGrid').innerHTML = `
+      <div class="lab-card"><div class="lab-card-val">${words}</div><div class="lab-card-lbl">总词数</div></div>
+      <div class="lab-card"><div class="lab-card-val">${chars}</div><div class="lab-card-lbl">总字符数</div></div>
+      <div class="lab-card"><div class="lab-card-val">${paras}</div><div class="lab-card-lbl">有效段落</div></div>
+      <div class="lab-card"><div class="lab-card-val">${readMin} min</div><div class="lab-card-lbl">预计阅读时间</div></div>
+    `;
+
+    const rawTokens = full.match(/[\u4e00-\u9fa5]{2,4}|[a-zA-Z]{3,}/g) || [];
+    const stopWords = new Set(['这个', '那个', '因为', '所以', '如果', '以及', '通过', '进行', '可以', '我们', 'the', 'and', 'for', 'with']);
+    const counts = new Map();
+    rawTokens.forEach((t) => {
+      const lower = t.toLowerCase();
+      if (!stopWords.has(lower)) counts.set(lower, (counts.get(lower) || 0) + 1);
     });
-    $('btnFind').addEventListener('click', openFind);
-    $('btnMore').addEventListener('click', (event) => {
-      openMoreMenu(event.currentTarget);
+    const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+    $('labWordFreq').innerHTML = sorted.length
+      ? sorted.map(([k, v]) => `<span class="lab-chip">${esc(k)} <b>${v}</b></span>`).join('')
+      : '<span class="hint">词量较少，暂无高频词</span>';
+
+    const checklist = [];
+    const openParen = (full.match(/[（(]/g) || []).length;
+    const closeParen = (full.match(/[）)]/g) || []).length;
+    checklist.push({
+      ok: openParen === closeParen,
+      text: openParen === closeParen ? `括号闭合完整 (共 ${openParen} 对)` : `注意：括号未闭合 (左括号 ${openParen} 个，右括号 ${closeParen} 个)`,
     });
-    $('btnStats').addEventListener('click', openStats);
+    const hasHeadings = /^#{1,6}\s+/m.test(full);
+    checklist.push({
+      ok: hasHeadings,
+      text: hasHeadings ? '文章层级结构清晰 (包含 Markdown 标题)' : '建议：添加 Markdown 标题 (# 一级，## 二级) 提高可读性',
+    });
+    const doubleBlanks = /\n{3,}/.test(full);
+    checklist.push({
+      ok: !doubleBlanks,
+      text: !doubleBlanks ? '段落间距规范 (无多余连续空行)' : '提示：检测到连续多行空行，建议精简保持紧凑',
+    });
+
+    $('labChecklist').innerHTML = checklist
+      .map((c) => `<li class="lab-checklist-item ${c.ok ? 'ok' : 'warn'}">${c.ok ? '✓' : '⚠️'} ${esc(c.text)}</li>`)
+      .join('');
+  }
+
+  let diffRevs = [];
+  async function openDiff() {
+    openSheet('diffModal');
+    const select = $('diffRevSelect');
+    select.innerHTML = '';
+    $('diffContainer').innerHTML = '<div class="hint">正在加载历史版本…</div>';
+
+    if (!state.currentId) {
+      $('diffContainer').innerHTML = '<div class="hint">当前无打开的文章</div>';
+      return;
+    }
+    diffRevs = await LP.listRevisions(state.currentId);
+    if (!diffRevs.length) {
+      $('diffContainer').innerHTML = '<div class="hint">本文暂无历史版本记录（每次编辑保存都会自动沉淀历史快照）</div>';
+      return;
+    }
+    diffRevs.forEach((r, idx) => {
+      const opt = document.createElement('option');
+      opt.value = String(idx);
+      opt.textContent = `版本 #${diffRevs.length - idx} - ${r.time ? new Date(r.time).toLocaleString() : ''} (${(r.content || '').length} 字)`;
+      select.appendChild(opt);
+    });
+    updateDiffContent();
+  }
+
+  function updateDiffContent() {
+    const select = $('diffRevSelect');
+    const idx = Number(select ? select.value : 0) || 0;
+    const base = diffRevs[idx] ? diffRevs[idx].content || '' : '';
+    const current = ($('editor') && $('editor').value) || '';
+
+    const baseLines = base.split('\n');
+    const currLines = current.split('\n');
+    const diffHtml = [];
+
+    const max = Math.max(baseLines.length, currLines.length);
+    for (let i = 0; i < max; i++) {
+      const b = baseLines[i];
+      const c = currLines[i];
+      if (b === undefined) {
+        diffHtml.push(`<div class="diff-line add">+ ${esc(c)}</div>`);
+      } else if (c === undefined) {
+        diffHtml.push(`<div class="diff-line del">- ${esc(b)}</div>`);
+      } else if (b !== c) {
+        diffHtml.push(`<div class="diff-line del">- ${esc(b)}</div>`);
+        diffHtml.push(`<div class="diff-line add">+ ${esc(c)}</div>`);
+      } else {
+        diffHtml.push(`<div class="diff-line same">  ${esc(c)}</div>`);
+      }
+    }
+    $('diffContainer').innerHTML = diffHtml.join('') || '<div class="hint">内容完全一致，无改动差异</div>';
+  }
+
+  let boardTool = 'pen';
+  let isBoardDrawing = false;
+  let boardStartPos = { x: 0, y: 0 };
+  let boardSnapshot = null;
+
+  function setBoardTool(tool) {
+    boardTool = tool;
+    ['boardToolPen', 'boardToolRect', 'boardToolArrow', 'boardToolText'].forEach((id) => {
+      const btn = $(id);
+      if (btn) btn.classList.toggle('active', btn.dataset.tool === tool);
+    });
+  }
+
+  function clearBoardCanvas() {
+    const canvas = $('boardCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function openBoard() {
+    openSheet('boardModal');
+    const canvas = $('boardCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!canvas.dataset.inited) {
+      canvas.dataset.inited = '1';
+      clearBoardCanvas();
+
+      const getPos = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+          x: (clientX - rect.left) * (canvas.width / rect.width),
+          y: (clientY - rect.top) * (canvas.height / rect.height),
+        };
+      };
+
+      const start = (e) => {
+        isBoardDrawing = true;
+        boardStartPos = getPos(e);
+        boardSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        if (boardTool === 'pen') {
+          ctx.beginPath();
+          ctx.moveTo(boardStartPos.x, boardStartPos.y);
+        }
+      };
+
+      const move = (e) => {
+        if (!isBoardDrawing) return;
+        const pos = getPos(e);
+        const color = document.documentElement.dataset.theme === 'dark' ? '#1a73e8' : '#2b3441';
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+
+        if (boardTool === 'pen') {
+          ctx.lineTo(pos.x, pos.y);
+          ctx.stroke();
+        } else if (boardTool === 'rect') {
+          ctx.putImageData(boardSnapshot, 0, 0);
+          ctx.strokeRect(boardStartPos.x, boardStartPos.y, pos.x - boardStartPos.x, pos.y - boardStartPos.y);
+        } else if (boardTool === 'arrow') {
+          ctx.putImageData(boardSnapshot, 0, 0);
+          ctx.beginPath();
+          ctx.moveTo(boardStartPos.x, boardStartPos.y);
+          ctx.lineTo(pos.x, pos.y);
+          ctx.stroke();
+        }
+      };
+
+      const end = () => {
+        if (!isBoardDrawing) return;
+        isBoardDrawing = false;
+        if (boardTool === 'text') {
+          const text = prompt('输入要标注在画布上的文字：');
+          if (text) {
+            ctx.font = '16px sans-serif';
+            ctx.fillStyle = '#1a73e8';
+            ctx.fillText(text, boardStartPos.x, boardStartPos.y);
+          }
+        }
+      };
+
+      canvas.addEventListener('mousedown', start);
+      canvas.addEventListener('mousemove', move);
+      window.addEventListener('mouseup', end);
+      canvas.addEventListener('touchstart', start, { passive: false });
+      canvas.addEventListener('touchmove', move, { passive: false });
+      window.addEventListener('touchend', end);
+    }
+    $('boardCanvasBox') && ($('boardCanvasBox').style.background = '#ffffff');
+    $('boardToolbar') && setBoardTool('pen');
+  }
+
+  function insertBoardImage() {
+    const canvas = $('boardCanvas');
+    if (!canvas) return;
+    const dataUrl = canvas.toDataURL('image/png');
+    closeSheet('boardModal');
+    insertAtCursor('\n\n![白板手绘草图](' + dataUrl + ')\n\n');
+    toast('白板手绘草图已插入到文章正文');
+  }
+
+  // ---------------------------------------------------------- 顶部操作条
+  $('btnBack').addEventListener('click', showList);
+  $('title').addEventListener('input', () => {
+    updateStats();
+    markDirty();
+  });
+  $('btnPin').addEventListener('click', togglePin);
+  $('btnTagsEdit').addEventListener('click', () => openTags(true));
+  $('btnShare').addEventListener('click', openShare);
+  $('btnChart').addEventListener('click', openChartDialog);
+  $('btnImage').addEventListener('click', insertImages);
+  $('btnFile').addEventListener('click', insertFiles);
+  $('btnOutline').addEventListener('click', async () => {
+    const next = $('outlinePanel').hidden;
+    state.settings = await LP.setSettings({ showOutline: next });
+    applyOutlineState(next);
+    syncSegmentedActive('outlineSwitch', next ? 'on' : 'off');
+  });
+  $('btnReading').addEventListener('click', async () => {
+    state.settings = await LP.setSettings({ readingMode: !state.settings.readingMode });
+    applyPaneState();
+    syncSegmentedActive('readingModeSwitch', state.settings.readingMode ? 'on' : 'off');
+    setTimeout(resizeCharts, 240);
+  });
+  $('btnPreview').addEventListener('click', async () => {
+    state.settings = await LP.setSettings({ showPreview: !state.settings.showPreview });
+    applyPaneState();
+    if (isNarrow() && !state.settings.showPreview) setPaneMode('write');
+    setTimeout(resizeCharts, 60);
+  });
+  $('btnFind').addEventListener('click', openFind);
+
+  // ---------------------------------------------------------- 双模式切换与专业工具监听
+  $('btnModeSwitch').addEventListener('click', toggleWorkspaceMode);
+  $('btnModeSwitchMobile').addEventListener('click', toggleWorkspaceMode);
+  $('btnProGraph').addEventListener('click', openGraph);
+  $('btnProLab').addEventListener('click', openLab);
+  $('btnProDiff').addEventListener('click', openDiff);
+  $('btnProBoard').addEventListener('click', openBoard);
+
+  $('graphClose').addEventListener('click', () => closeSheet('graphModal'));
+  $('graphOk').addEventListener('click', () => closeSheet('graphModal'));
+
+  $('labClose').addEventListener('click', () => closeSheet('labModal'));
+  $('labOk').addEventListener('click', () => closeSheet('labModal'));
+
+  $('diffClose').addEventListener('click', () => closeSheet('diffModal'));
+  $('diffOk').addEventListener('click', () => closeSheet('diffModal'));
+  $('diffRevSelect').addEventListener('change', updateDiffContent);
+
+  $('boardClose').addEventListener('click', () => closeSheet('boardModal'));
+  $('boardOk').addEventListener('click', () => closeSheet('boardModal'));
+  $('boardClear').addEventListener('click', clearBoardCanvas);
+  $('boardInsert').addEventListener('click', insertBoardImage);
+  $('boardToolPen').addEventListener('click', () => setBoardTool('pen'));
+  $('boardToolRect').addEventListener('click', () => setBoardTool('rect'));
+  $('boardToolArrow').addEventListener('click', () => setBoardTool('arrow'));
+  $('boardToolText').addEventListener('click', () => setBoardTool('text'));
+
+  window.addEventListener('keydown', (e) => {
+    if (e.altKey && (e.key === 'm' || e.key === 'M')) {
+      e.preventDefault();
+      toggleWorkspaceMode();
+    }
+  });
+
+  $('btnMore').addEventListener('click', (event) => {
+    openMoreMenu(event.currentTarget);
+  });
+  $('btnStats').addEventListener('click', openStats);
 
     // ---------------------------------------------------------- 长图弹窗
     $('longImageClose').addEventListener('click', () => closeSheet('longImageModal'));
