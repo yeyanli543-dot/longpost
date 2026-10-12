@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@client/src/hooks/useAuth';
 import { useTheme } from '@client/src/hooks/useTheme';
+import { useWorkspaceMode } from '@client/src/hooks/useWorkspaceMode';
 
 interface ActionItem {
   id: string;
@@ -36,6 +37,7 @@ export const CommandPalette: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const { mode, toggleMode, isLite } = useWorkspaceMode();
 
   // 监听 Ctrl+K / Cmd+K
   useEffect(() => {
@@ -106,6 +108,14 @@ export const CommandPalette: React.FC = () => {
       icon: resolvedTheme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-sky-400" />,
       category: '系统设置',
       perform: () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark'),
+    },
+    {
+      id: 'workspace-mode-toggle',
+      title: `切换工作区风格 (当前: ${isLite ? '🍏 Apple 极简版' : '🔷 Google M3 专业版'})`,
+      subtitle: '一键无缝在苹果极简禅意与谷歌专业生产力之间切换 (Alt+M)',
+      icon: <Sparkles className="w-4 h-4 text-purple-400" />,
+      category: '系统设置',
+      perform: () => toggleMode(),
     },
     {
       id: 'nav-settings',

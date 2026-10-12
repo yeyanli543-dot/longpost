@@ -68,3 +68,69 @@ input, textarea, button, select {
     -webkit-tap-highlight-color: transparent;
   }
 }
+
+/* ==========================================================================
+   苹果风格 (Apple Lite) 与 谷歌风格 (Google Pro) 设计系统注入
+   ========================================================================== */
+
+/* 🍏 苹果极简模式 (Apple HIG / macOS Zen) */
+.mode-apple {
+  --app-radius-lg: 1.5rem;
+  --app-radius-md: 1rem;
+  --app-radius-sm: 0.75rem;
+  --app-glass-bg: rgba(255, 255, 255, 0.75);
+  --app-glass-border: rgba(0, 0, 0, 0.06);
+  --app-font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif;
+}
+
+.mode-apple.dark,
+.mode-apple .dark,
+:root:where(.mode-apple:not(.light-mode)) {
+  --app-glass-bg: rgba(18, 18, 20, 0.75);
+  --app-glass-border: rgba(255, 255, 255, 0.08);
+}
+
+/* 🔷 谷歌专业模式 (Google Material Design 3 / Material You) */
+.mode-google {
+  --m3-primary: #1a73e8;
+  --m3-primary-hover: #1557b0;
+  --m3-surface: #ffffff;
+  --m3-surface-container-low: #f8fafd;
+  --m3-surface-container: #f0f4f9;
+  --m3-surface-container-high: #e9eef6;
+  --m3-surface-container-highest: #dde3ea;
+  --m3-outline-variant: #c4c7c5;
+  --m3-chip-bg: #e8f0fe;
+  --m3-chip-text: #1967d2;
+  --m3-font-family: "Google Sans", "Product Sans", "Roboto", "Segoe UI", sans-serif;
+}
+
+.mode-google.dark,
+.mode-google .dark,
+:root:where(.mode-google:not(.light-mode)) {
+  --m3-primary: #8ab4f8;
+  --m3-primary-hover: #aecbfa;
+  --m3-surface: #131314;
+  --m3-surface-container-low: #1e1f20;
+  --m3-surface-container: #282a2c;
+  --m3-surface-container-high: #2f3033;
+  --m3-surface-container-highest: #37393b;
+  --m3-outline-variant: #444746;
+  --m3-chip-bg: #1e3a5f;
+  --m3-chip-text: #a8c7fa;
+}
+
+/* 苹果质感毛玻璃类 */
+.apple-glass {
+  background: var(--app-glass-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--app-glass-border);
+}
+
+/* 谷歌 M3 容器卡片类 */
+.google-surface {
+  background-color: var(--m3-surface-container-low);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: 1.25rem;
+}

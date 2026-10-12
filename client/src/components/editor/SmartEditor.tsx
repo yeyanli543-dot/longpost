@@ -7,6 +7,11 @@ import { MermaidRenderer } from './MermaidRenderer';
 import { Markdown } from '@client/src/components/ui/markdown';
 import { splitChartCards } from '@shared/chart-card';
 import ChartBlock from '@client/src/components/ChartBlock';
+import { WhiteboardCanvas } from './tools/WhiteboardCanvas';
+import { DiffInspector } from './tools/DiffInspector';
+import { KnowledgeGraphView } from './tools/KnowledgeGraphView';
+import { WritingLab } from './tools/WritingLab';
+import { useWorkspaceMode } from '@client/src/hooks/useWorkspaceMode';
 
 interface SmartEditorProps {
   value: string;
@@ -31,6 +36,16 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
   // 视图模式：'edit' | 'split' | 'preview'
   const [viewMode, setViewMode] = useState<EditorViewMode>('split');
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // 风格模式
+  const { isLite, isPro } = useWorkspaceMode();
+
+  // 专业版工具弹窗状态
+  const [showWhiteboard, setShowWhiteboard] = useState(false);
+  const [showDiff, setShowDiff] = useState(false);
+  const [showGraph, setShowGraph] = useState(false);
+  const [showWritingLab, setShowWritingLab] = useState(false);
+  const [initialSnapshot] = useState<string>(value);
 
   // 斜杠菜单状态
   const [slashMenuOpen, setSlashMenuOpen] = useState(false);
@@ -348,12 +363,18 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
     });
   };
 
+  const handleInsertWhiteboardImage = (dataUrl: string) => {
+    insertText(`\n\n![架构草图](${dataUrl})\n\n`);
+  };
+
   return (
     <div
       ref={containerRef}
-      className={`relative flex flex-col rounded-2xl border border-border/80 bg-card/60 backdrop-blur-xl shadow-lg transition-all ${
-        isFullscreen ? 'fixed inset-0 z-50 rounded-none border-none bg-background' : ''
-      }`}
+      className={`relative flex flex-col transition-all duration-300 ${
+        isLite
+          ? 'rounded-3xl border border-zinc-200/60 dark:border-zinc-800/60 bg-white/75 dark:bg-zinc-950/75 backdrop-blur-2xl shadow-2xl'
+          : 'rounded-2xl border border-[#dadce0] dark:border-[#3c4043] bg-[#f8fafd] dark:bg-[#1e1f20] shadow-md'
+      } ${isFullscreen ? 'fixed inset-0 z-50 rounded-none border-none bg-background' : ''}`}
     >
       {/* 顶部工具条 */}
       <EditorToolbar
@@ -370,13 +391,21 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
         onOpenExportModal={() => setShowExportModal(true)}
         wordCount={wordCount}
         readingTimeMinutes={readingTime}
+        onOpenWhiteboard={() => setShowWhiteboard(true)}
+        onOpenDiff={() => setShowDiff(true)}
+        onOpenGraph={() => setShowGraph(true)}
+        onOpenWritingLab={() => setShowWritingLab(true)}
       />
 
       {/* 编辑与预览工作区 */}
       <div className={`flex flex-1 min-h-[${minHeight}] overflow-hidden`}>
         {/* 编辑区 */}
         {(viewMode === 'edit' || viewMode === 'split') && (
-          <div className={`relative flex-1 p-4 overflow-y-auto ${viewMode === 'split' ? 'border-r border-border/60' : ''}`}>
+          <div
+            className={`relative flex-1 p-5 overflow-y-auto ${
+              viewMode === 'split' ? 'border-r border-border/60' : ''
+            }`}
+          >
             <textarea
               ref={textareaRef}
               value={value}
@@ -385,7 +414,9 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
               onKeyDown={handleKeyDown}
               placeholder={placeholder}
               style={{ minHeight }}
-              className="w-full h-full bg-transparent text-base text-foreground placeholder:text-muted-foreground/60 resize-none outline-none border-none leading-relaxed font-sans"
+              className={`w-full h-full bg-transparent text-base text-foreground placeholder:text-muted-foreground/50 resize-none outline-none border-none leading-relaxed ${
+                isLite ? 'font-sans tracking-tight' : 'font-sans'
+              }`}
             />
           </div>
         )}
@@ -393,12 +424,14 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
         {/* 实时预览区 */}
         {(viewMode === 'preview' || viewMode === 'split') && (
           <div
-            className={`flex-1 p-6 overflow-y-auto bg-muted/10 ${
-              viewMode === 'split' ? 'hidden md:block' : ''
-            }`}
+            className={`flex-1 p-6 overflow-y-auto ${
+              isLite ? 'bg-white/40 dark:bg-zinc-900/40' : 'bg-muted/10'
+            } ${viewMode === 'split' ? 'hidden md:block' : ''}`}
           >
             {value.trim() ? (
-              <div className="article-preview-content max-w-3xl mx-auto">{renderPreviewSegments()}</div>
+              <div className="article-preview-content max-w-3xl mx-auto">
+                {renderPreviewSegments()}
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50 py-16">
                 <p className="text-sm">右侧将实时渲染您的长文与图表排版</p>
@@ -433,6 +466,35 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
         content={value}
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
+      />
+
+      {/* 专业版 4 大本地功能弹窗 */}
+      <WhiteboardCanvas
+        isOpen={showWhiteboard}
+        onClose={() => setShowWhiteboard(false)}
+        onInsertImage={handleInsertWhiteboardImage}
+      />
+
+      <DiffInspector
+        isOpen={showDiff}
+        onClose={() => setShowDiff(false)}
+        originalText={initialSnapshot}
+        currentText={value}
+        onRestoreOriginal={() => updateContent(initialSnapshot)}
+      />
+
+      <KnowledgeGraphView
+        isOpen={showGraph}
+        onClose={() => setShowGraph(false)}
+        content={value}
+        title={title}
+      />
+
+      <WritingLab
+        isOpen={showWritingLab}
+        onClose={() => setShowWritingLab(false)}
+        content={value}
+        onApplyFormattedContent={(formatted) => updateContent(formatted)}
       />
     </div>
   );

@@ -21,6 +21,8 @@ import { Image } from '@client/src/components/ui/image';
 import { notificationsApi, dmApi } from '@client/src/api';
 import TrendingSidebar from '@client/src/components/TrendingSidebar';
 import { CommandPalette } from '@client/src/components/CommandPalette/CommandPalette';
+import { useWorkspaceMode } from '@client/src/hooks/useWorkspaceMode';
+import { WorkspaceModeSwitcher } from '@client/src/components/WorkspaceMode/WorkspaceModeSwitcher';
 
 const navItems = [
   { to: '/', label: '首页', icon: Home },
@@ -45,6 +47,7 @@ const bottomNavItems = [
 const Layout = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, logout } = useAuth();
+  const { isLite, isPro } = useWorkspaceMode();
   const [menuOpen, setMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [dmUnreadCount, setDmUnreadCount] = useState(0);
@@ -200,15 +203,27 @@ const Layout = () => {
   );
 
   return (
-    <div className="min-h-screen bg-black text-gray-100">
+    <div className={`min-h-screen transition-colors duration-300 ${
+      isLite
+        ? 'bg-[#fbfbfd] text-[#1d1d1f] dark:bg-black dark:text-[#f5f5f7]'
+        : 'bg-[#f8fafd] text-[#1f1f1f] dark:bg-[#131314] dark:text-[#e3e3e3]'
+    }`}>
       <div className="max-w-[1290px] mx-auto flex">
-        <aside className="hidden md:flex w-[275px] h-screen sticky top-0 flex-col px-3 py-2 border-r border-gray-800">
-          <div
-            className="flex items-center gap-2 px-4 py-3 cursor-pointer hover:bg-gray-900 rounded-full w-fit transition-colors"
-            onClick={() => navigate('/')}
-          >
-            <Feather className="w-7 h-7 text-blue-500" />
-            <span className="text-xl font-bold">LongPost</span>
+        <aside className={`hidden md:flex w-[275px] h-screen sticky top-0 flex-col px-3 py-2 border-r transition-colors duration-300 ${
+          isLite ? 'border-zinc-200/60 dark:border-zinc-900' : 'border-gray-200 dark:border-gray-800'
+        }`}>
+          <div className="flex items-center justify-between px-2 py-3">
+            <div
+              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => navigate('/')}
+            >
+              <Feather className="w-7 h-7 text-blue-500" />
+              <span className="text-xl font-bold tracking-tight">LongPost</span>
+            </div>
+          </div>
+
+          <div className="px-2 py-1 mb-2">
+            <WorkspaceModeSwitcher compact />
           </div>
 
           {renderSidebarNav()}

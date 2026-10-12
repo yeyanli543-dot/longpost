@@ -21,6 +21,8 @@ import PublishShareCard from './PublishShareCard';
 import ChartInsertDialog from './ChartInsertDialog';
 import { SmartEditor } from '@client/src/components/editor/SmartEditor';
 import { LocalFirstStore } from '@/lib/local-store';
+import { useWorkspaceMode } from '@client/src/hooks/useWorkspaceMode';
+import { WorkspaceModeSwitcher } from '@client/src/components/WorkspaceMode/WorkspaceModeSwitcher';
 
 const MAX_IMAGES = 9;
 const MAX_ATTACHMENTS = 5;
@@ -108,6 +110,8 @@ const ArticleComposer = ({
   const contentRef = useRef<HTMLTextAreaElement>(null);
   const [showChartDialog, setShowChartDialog] = useState(false);
   const [hasRecoverableDraft, setHasRecoverableDraft] = useState<{ title: string; content: string; savedAt: string } | null>(null);
+  const { isLite, isPro } = useWorkspaceMode();
+  const [showMetaSettings, setShowMetaSettings] = useState(false);
 
   // 初始化检查本地未发布暂存
   useEffect(() => {
@@ -350,10 +354,29 @@ const ArticleComposer = ({
   const showPublishUI = !showShareCard;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className={`flex flex-col gap-4 transition-all duration-300 ${isLite ? 'max-w-4xl mx-auto' : ''}`}>
+      {/* 顶部一键切换模式条 */}
+      <div className="flex items-center justify-between pb-1 pt-1">
+        <div className="flex items-center gap-2.5">
+          <WorkspaceModeSwitcher />
+          <span className="text-xs text-muted-foreground hidden sm:inline">
+            {isLite ? '🍏 Apple 极简禅意模式 · 专注核心写作' : '🔷 Google M3 专业工坊 · 全功能生产力'}
+          </span>
+        </div>
+        {isLite && (
+          <button
+            type="button"
+            onClick={() => setShowMetaSettings(!showMetaSettings)}
+            className="text-xs text-blue-500 hover:text-blue-400 font-medium transition-colors"
+          >
+            {showMetaSettings ? '收起封面与摘要' : '+ 封面与摘要设置'}
+          </button>
+        )}
+      </div>
+
       {/* 恢复本地暂存条 */}
       {hasRecoverableDraft && (
-        <div className="flex items-center justify-between p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs animate-in fade-in-0">
+        <div className="flex items-center justify-between p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs animate-in fade-in-0">
           <div className="flex items-center gap-2 min-w-0">
             <RotateCcw className="w-4 h-4 text-amber-500 shrink-0" />
             <span className="truncate">检测到上次未保存的本地草稿「{hasRecoverableDraft.title || '无标题'}」</span>
@@ -361,7 +384,7 @@ const ArticleComposer = ({
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={handleRestoreDraft}
-              className="px-2.5 py-1 rounded-lg bg-amber-500 text-black font-semibold hover:bg-amber-400 transition-colors"
+              className="px-2.5 py-1 rounded-full bg-amber-500 text-black font-semibold hover:bg-amber-400 transition-colors"
             >
               一键恢复
             </button>
@@ -375,67 +398,77 @@ const ArticleComposer = ({
         </div>
       )}
 
-      <div>
+      {/* 标题输入区 */}
+      <div className={isLite ? 'py-2' : ''}>
         <input
-          type="text" value={title}
+          type="text"
+          value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="文章标题"
-          className="w-full bg-transparent text-2xl font-bold text-gray-100 placeholder:text-gray-600 outline-none border-b border-gray-800 pb-3 focus:border-blue-500 transition-colors"
+          placeholder={isLite ? '无标题文章' : '文章标题'}
+          className={`w-full bg-transparent font-bold text-foreground placeholder:text-muted-foreground/40 outline-none transition-all ${
+            isLite
+              ? 'text-3xl sm:text-4xl tracking-tight border-none'
+              : 'text-2xl border-b border-border/80 pb-3 focus:border-blue-500'
+          }`}
           maxLength={100}
         />
         <div className="flex justify-end pt-1">
-          <span className="text-xs text-gray-600">{title.length}/100</span>
+          <span className="text-xs text-muted-foreground/60">{title.length}/100</span>
         </div>
       </div>
 
-      {/* Excerpt */}
-      <div>
-        <p className="text-sm text-gray-500 mb-2">摘要（可选，留空由系统自动截取正文开头）</p>
-        <textarea
-          value={excerpt}
-          onChange={(e) => setExcerpt(e.target.value)}
-          placeholder="用于分享卡片预览..."
-          rows={2}
-          className="w-full bg-transparent text-sm text-gray-300 placeholder:text-gray-600 resize-none outline-none border border-gray-700 focus:border-blue-500 rounded-lg p-3 transition-colors"
-          maxLength={EXCERPT_MAX}
-        />
-        <div className="flex justify-end mt-1">
-          <span className="text-xs text-gray-600">{excerpt.length}/{EXCERPT_MAX}</span>
-        </div>
-      </div>
-
-      {/* Cover image */}
-      {showPublishUI && (
-        <div className="border-t border-gray-800 pt-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-gray-500">封面图</p>
-            {!coverUrl && (
-              <button
-                onClick={() => coverInputRef.current?.click()}
-                disabled={uploadingCover}
-                className="flex items-center gap-1.5 text-sm text-blue-500 hover:text-blue-400 transition-colors disabled:opacity-50"
-                data-ai-section-type="button"
-              >
-                {uploadingCover ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                上传封面
-              </button>
-            )}
+      {/* Excerpt 与 Cover image（极简模式下折叠，专业模式下平铺） */}
+      {(isPro || showMetaSettings) && (
+        <div className="space-y-4 animate-in fade-in-0 duration-200">
+          {/* Excerpt */}
+          <div>
+            <p className="text-xs font-medium text-muted-foreground mb-1.5">
+              摘要（可选，留空由系统自动截取正文开头）
+            </p>
+            <textarea
+              value={excerpt}
+              onChange={(e) => setExcerpt(e.target.value)}
+              placeholder="用于分享卡片预览..."
+              rows={2}
+              className="w-full bg-muted/20 text-sm text-foreground placeholder:text-muted-foreground/50 resize-none outline-none border border-border/80 focus:border-blue-500 rounded-2xl p-3 transition-colors"
+              maxLength={EXCERPT_MAX}
+            />
+            <div className="flex justify-end mt-1">
+              <span className="text-xs text-muted-foreground/60">{excerpt.length}/{EXCERPT_MAX}</span>
+            </div>
           </div>
-          <p className="text-xs text-gray-600 mb-3">封面图将用于分享卡片和文章顶部展示，推荐尺寸 1200x630</p>
-          {coverUrl && (
-            <div className="relative rounded-lg overflow-hidden group">
-              <Image src={coverUrl} alt="封面图" className="w-full h-48 object-cover" />
-              <button
-                onClick={() => setCoverUrl(null)}
-                className="absolute top-2 right-2 p-2 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/80"
-                aria-label="删除封面图"
-                data-ai-section-type="button"
-              >
-                <Trash2 className="w-4 h-4 text-white" />
-              </button>
+
+          {/* Cover image */}
+          {showPublishUI && (
+            <div className="border-t border-border/60 pt-3">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-medium text-muted-foreground">封面图</p>
+                {!coverUrl && (
+                  <button
+                    onClick={() => coverInputRef.current?.click()}
+                    disabled={uploadingCover}
+                    className="flex items-center gap-1.5 text-xs font-medium text-blue-500 hover:text-blue-400 transition-colors disabled:opacity-50"
+                  >
+                    {uploadingCover ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    上传封面
+                  </button>
+                )}
+              </div>
+              {coverUrl && (
+                <div className="relative rounded-2xl overflow-hidden group">
+                  <Image src={coverUrl} alt="封面图" className="w-full h-44 object-cover" />
+                  <button
+                    onClick={() => setCoverUrl(null)}
+                    className="absolute top-2 right-2 p-2 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-500/80"
+                    aria-label="删除封面图"
+                  >
+                    <Trash2 className="w-4 h-4 text-white" />
+                  </button>
+                </div>
+              )}
+              <input ref={coverInputRef} type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" />
             </div>
           )}
-          <input ref={coverInputRef} type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" />
         </div>
       )}
 
@@ -580,27 +613,33 @@ const ArticleComposer = ({
 
       {/* Action buttons */}
       {showPublishUI && (
-        <div className="flex items-center justify-between pt-2 border-t border-gray-800">
-          <span className="text-sm text-gray-500">{content.length} 字</span>
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between pt-4 border-t border-border/60">
+          <span className="text-xs text-muted-foreground font-mono">{content.length} 字</span>
+          <div className="flex items-center gap-2.5">
             <button
               onClick={handleSaveDraft}
               disabled={!canSaveDraft || isSavingDraft}
-              className="bg-[#16181c] hover:bg-[#1c1f23] disabled:opacity-50 disabled:cursor-not-allowed text-gray-300 font-medium py-2.5 px-5 rounded-full transition-colors border border-gray-700 text-sm"
-              data-ai-section-type="button"
+              className={`disabled:opacity-40 disabled:cursor-not-allowed font-medium py-2 px-5 rounded-full transition-all text-xs border ${
+                isLite
+                  ? 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 shadow-2xs'
+                  : 'bg-white hover:bg-gray-100 dark:bg-[#202124] dark:hover:bg-[#2d2e30] text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-700'
+              }`}
             >
               {isSavingDraft
-                ? <Loader2 className="w-4 h-4 animate-spin inline" />
-                : isEditMode ? '保存草稿' : '存为草稿'}
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin inline mr-1" />
+                : isEditMode ? '保存草稿' : '存为本地草稿'}
             </button>
             <button
               onClick={handlePublish}
               disabled={!canPublish || isPublishing}
-              className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 disabled:cursor-not-allowed text-white font-bold py-2.5 px-6 rounded-full transition-colors"
-              data-ai-section-type="button"
+              className={`disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-2 px-6 rounded-full transition-all text-xs shadow-md active:scale-95 ${
+                isLite
+                  ? 'bg-zinc-900 hover:bg-black dark:bg-white dark:hover:bg-zinc-200 dark:text-black shadow-zinc-500/10'
+                  : 'bg-[#1a73e8] hover:bg-[#1557b0] shadow-blue-500/20'
+              }`}
             >
               {isPublishing
-                ? <Loader2 className="w-4 h-4 animate-spin inline" />
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin inline mr-1" />
                 : isEditMode ? '保存修改并发布' : '发布长文'}
             </button>
           </div>
