@@ -139,8 +139,8 @@ jobs:
       - name: 创建 / 更新 Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'desktop-latest' }}
-          name: ${{ startsWith(github.ref, 'refs/tags/v') && format('LongPost {0}', github.ref_name) || 'LongPost 桌面版（最新构建）' }}
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'v2.5.0' }}
+          name: ${{ startsWith(github.ref, 'refs/tags/v') && format('LongPost {0}', github.ref_name) || 'LongPost v2.5.0' }}
           body: |
             本地写作台：Markdown + 图表 + 附件，一键导出成可以随手转发的网页。
             数据全部保存在自己电脑上，不联网、不上传。
