@@ -14,15 +14,10 @@ name: Build Android APK
 #    （Windows 开发机上 java 不在 PATH 里，见 README 的说明。）
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - 'mobile/**'
-      - 'desktop/renderer/**'
-      - 'desktop/lib/**'
-      - 'desktop/scripts/**'
-      - '.github/workflows/android-release.yml'
-  workflow_dispatch:
+    tags: ['v*', 'android-*']
 
 permissions:
   contents: write
