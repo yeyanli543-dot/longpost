@@ -35,7 +35,7 @@ jobs:
         with:
           node-version: '22'
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
@@ -140,17 +140,20 @@ jobs:
           set -euo pipefail
           mkdir -p "$HOME/.android"
           base64 -d mobile/signing/debug.keystore.b64 > "$HOME/.android/debug.keystore"
-          echo "keystore 路径：$HOME/.android/debug.keystore"
-          echo "keystore sha256: $(sha256sum "$HOME/.android/debug.keystore" | cut -d' ' -f1)"
-          ls -l "$HOME/.android/debug.keystore"
+          mkdir -p mobile/android/app
+          cp "$HOME/.android/debug.keystore" mobile/android/app/debug.keystore
+          echo "keystore 路径：$HOME/.android/debug.keystore 与 mobile/android/app/debug.keystore"
+          echo "keystore sha256: $(sha256sum mobile/android/app/debug.keystore | cut -d' ' -f1)"
+          ls -l mobile/android/app/debug.keystore
           echo "ANDROID_SDK_HOME=${ANDROID_SDK_HOME:-（未设置）}"
           echo "ANDROID_USER_HOME=${ANDROID_USER_HOME:-（未设置）}"
 
-      - name: 写入随构建递增的版本号
+      - name: 写入随构建递增的版本号与固定签名配置
         # 位置很关键：必须在 `npx cap add android` 之后（那个命令才会生成
         # mobile/android/app/build.gradle），也必须在下一次构建之前。
         # Cap 模板默认 versionCode 1 / versionName "1.0"，从来不变，所以安卓系统
         # 层面看不出"这是新版本"，用户也判断不了自己装的是哪一版。
+        # 同时显式注入 signingConfigs.debug，锁定仓库固定密钥，杜绝覆盖安装签名冲突。
         working-directory: mobile
         shell: bash
         run: |
@@ -173,9 +176,7 @@ jobs:
           echo "versionName  -> $VERSION_NAME"
           echo "versionCode  -> $VERSION_CODE"
 
-          # 改写 versionCode / versionName 这两行（只动这两行，其余原样保留）。
-          # 这里刻意不用 sed 的反向引用，改用一段不写反斜杠的 python：脚本里一旦出现
-          # 反斜杠，在 CI / 连接器的转义层里很容易被多转一次，把文件改成语法坏掉的 YAML。
+          # 改写 versionCode / versionName 并注入 fixed signingConfig
           python3 - "$GRADLE" "$VERSION_CODE" "$VERSION_NAME" > "$GRADLE.new" <<'PYEOF'
           import sys
 
@@ -187,6 +188,19 @@ jobs:
                   print(indent + 'versionCode ' + code)
               elif len(parts) > 1 and parts[0] == 'versionName' and parts[1].startswith('"'):
                   print(indent + 'versionName "' + name + '"')
+              elif line.strip() == 'buildTypes {':
+                  print('    signingConfigs {')
+                  print('        debug {')
+                  print('            storeFile file("debug.keystore")')
+                  print('            storePassword "android"')
+                  print('            keyAlias "androiddebugkey"')
+                  print('            keyPassword "android"')
+                  print('        }')
+                  print('    }')
+                  print(line)
+                  print('        debug {')
+                  print('            signingConfig signingConfigs.debug')
+                  print('        }')
               else:
                   print(line)
           PYEOF
@@ -203,13 +217,17 @@ jobs:
             echo "::error title=版本号自检失败::versionName 没写进去（期望 ${VERSION_NAME}）"
             ok=0
           fi
-          echo "--- 改完之后的版本行 ---"
-          grep -nE 'versionCode|versionName' "$GRADLE" || true
+          if ! grep -qF "signingConfigs.debug" "$GRADLE"; then
+            echo "::error title=签名配置自检失败::signingConfigs 没写进 build.gradle"
+            ok=0
+          fi
+          echo "--- 改完之后的版本与签名行 ---"
+          grep -nE 'versionCode|versionName|signingConfig' "$GRADLE" || true
           if [ "$ok" -ne 1 ]; then
-            echo "::error title=版本号自检失败::build.gradle 里的版本号没有按预期改动"
+            echo "::error title=自检失败::build.gradle 里的版本号或签名配置没有按预期改动"
             exit 1
           fi
-          echo "版本号自检通过"
+          echo "版本号与签名自检通过"
 
       - name: 打包 APK
         working-directory: mobile/android
