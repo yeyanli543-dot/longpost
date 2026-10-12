@@ -714,6 +714,30 @@
     padding: 0 12px;
   }
 
+  /* ------------------------------------------------------------ 双模式移动端深度适配 */
+  .mode-apple .side-head::before {
+    display: none; /* 移动端 iPhone/iPad 界面不展示 macOS 窗口红绿灯 */
+  }
+  .mode-apple .tabbar {
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    background: var(--surface);
+    border-top: 0.5px solid var(--border);
+  }
+  .mode-apple .tab.active {
+    color: var(--accent);
+  }
+  .mode-google .tabbar {
+    background: var(--surface-2);
+    border-top: 1px solid var(--border);
+  }
+  .mode-google .tab.active .tab-icon {
+    background: var(--accent-soft);
+    border-radius: 16px;
+    padding: 2px 12px;
+    color: var(--accent);
+  }
+
   /* ------------------------------------------------------------ 安全区：横屏刘海 */
 
   /*

@@ -2283,12 +2283,12 @@ body.reading-mode .preview {
    8. 双模式工作区系统：🍎 苹果极简版 (Apple Zen) vs 🎨 谷歌专业版 (Google Pro)
    ========================================================================= */
 
-/* 模式切换药丸按钮 */
+/* 模式切换药丸按钮（Apple 拟物胶囊 vs Google M3 药丸） */
 .mode-pill-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
+  gap: 6px;
+  padding: 4px 12px;
   font-size: var(--fs-xs);
   font-weight: 500;
   border-radius: 9999px;
@@ -2298,6 +2298,7 @@ body.reading-mode .preview {
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
+  user-select: none;
 }
 .mode-pill-btn:hover {
   border-color: var(--accent);
@@ -2309,63 +2310,434 @@ body.reading-mode .preview {
   line-height: 1;
 }
 
-/* 🍏 苹果极简模式 (Apple Zen · Lite) */
+/* ============================================================================
+   🍏 苹果极简模式 (Apple Zen · Lite)
+   深度还原 Apple HIG · macOS Sonoma/Sequoia & iOS 备忘录 (Notes.app) / Pages
+   ========================================================================= */
 .mode-apple {
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif;
-  --r-md: 14px;
-  --r-lg: 18px;
-}
-.mode-apple .pro-tool-item {
-  display: none !important;
-}
-.mode-apple .toolbar {
-  background: rgba(28, 36, 47, 0.65);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-}
-[data-theme='light'] .mode-apple .toolbar {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-}
-.mode-apple .mode-pill-btn {
-  border-color: rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.08);
-}
-[data-theme='light'] .mode-apple .mode-pill-btn {
-  border-color: rgba(0, 0, 0, 0.08);
-  background: rgba(0, 0, 0, 0.04);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Helvetica Neue", sans-serif;
+  letter-spacing: -0.015em;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-xl: 20px;
 }
 
-/* 🔷 谷歌专业模式 (Google Pro Studio) */
+/* 浅色模式：经典 Apple 暖白质感与备忘录琥珀金强调色 */
+[data-theme='light'].mode-apple,
+[data-theme='light'] .mode-apple {
+  --bg: #f5f5f7;
+  --bg-2: #ffffff;
+  --surface: rgba(255, 255, 255, 0.85);
+  --surface-2: rgba(242, 242, 247, 0.8);
+  --surface-3: rgba(230, 230, 235, 0.9);
+  --border: rgba(60, 60, 67, 0.12);
+  --border-strong: rgba(60, 60, 67, 0.2);
+  --text: #1d1d1f;
+  --text-2: #86868b;
+  --text-3: #a1a1a6;
+  --accent: #e69c24;
+  --accent-hover: #cf8817;
+  --accent-soft: rgba(230, 156, 36, 0.12);
+  --accent-line: rgba(230, 156, 36, 0.38);
+  --on-accent: #ffffff;
+  --sh-1: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --sh-2: 0 4px 16px rgba(0, 0, 0, 0.07);
+  --sh-3: 0 16px 36px rgba(0, 0, 0, 0.12);
+}
+
+/* 深色模式：macOS Sonoma 深色系统材质与灵动金 */
+[data-theme='dark'].mode-apple,
+[data-theme='dark'] .mode-apple {
+  --bg: #161618;
+  --bg-2: #1c1c1e;
+  --surface: rgba(28, 28, 30, 0.82);
+  --surface-2: rgba(44, 44, 46, 0.8);
+  --surface-3: rgba(58, 58, 60, 0.88);
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --text: #f5f5f7;
+  --text-2: #a1a1a6;
+  --text-3: #86868b;
+  --accent: #f5a623;
+  --accent-hover: #e69c24;
+  --accent-soft: rgba(245, 166, 35, 0.18);
+  --accent-line: rgba(245, 166, 35, 0.42);
+  --on-accent: #000000;
+  --sh-1: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --sh-2: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --sh-3: 0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+/* 🍎 1. macOS 原生红黄绿交通灯 (Traffic Lights) */
+.mode-apple .side-head::before {
+  content: '';
+  display: block;
+  width: 52px;
+  height: 12px;
+  margin-bottom: 12px;
+  background: radial-gradient(circle 5.5px at 6px 6px, #ff5f56 100%, transparent 0),
+              radial-gradient(circle 5.5px at 26px 6px, #ffbd2e 100%, transparent 0),
+              radial-gradient(circle 5.5px at 46px 6px, #27c93f 100%, transparent 0);
+  filter: drop-shadow(0 0.5px 0.5px rgba(0, 0, 0, 0.15));
+}
+
+/* 🍎 2. 毛玻璃侧栏 (Liquid Glass Vibrancy) */
+.mode-apple .sidebar {
+  background: var(--surface);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border-right: 0.5px solid var(--border);
+}
+
+/* 🍎 3. Spotlight 聚光灯式搜索框 */
+.mode-apple .search-wrap {
+  background: rgba(118, 118, 128, 0.12);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  height: 34px;
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.mode-apple .search-wrap:focus-within {
+  background: var(--bg-2);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* 🍎 4. Apple Inset Segmented 胶囊分段 */
+.mode-apple .mode-pill-btn {
+  border-color: rgba(118, 118, 128, 0.2);
+  background: rgba(118, 118, 128, 0.12);
+  border-radius: 8px;
+}
+[data-theme='light'] .mode-apple .mode-pill-btn {
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 0.5px 1px rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+.mode-apple .segmented {
+  background: rgba(118, 118, 128, 0.12);
+  border-radius: 8px;
+  padding: 2px;
+  border: 0.5px solid var(--border);
+}
+.mode-apple .seg {
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  color: var(--text-2);
+  transition: all 0.18s ease;
+}
+.mode-apple .seg.on {
+  background: #ffffff;
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0.5px 1px rgba(0, 0, 0, 0.06);
+  font-weight: 600;
+}
+[data-theme='dark'] .mode-apple .seg.on {
+  background: #636366;
+  color: #ffffff;
+}
+
+/* 🍎 5. 备忘录式纯净文章列表项 (Apple Notes Row) */
+.mode-apple .list {
+  padding: 6px 8px;
+}
+.mode-apple .item {
+  border: none !important;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 2px;
+  background: transparent;
+  transition: background 0.15s ease;
+  position: relative;
+}
+.mode-apple .item + .item::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 12px;
+  right: 12px;
+  height: 0.5px;
+  background: var(--border);
+  pointer-events: none;
+}
+.mode-apple .item:hover {
+  background: rgba(118, 118, 128, 0.08);
+}
+.mode-apple .item.active {
+  background: var(--accent-soft) !important;
+}
+.mode-apple .item.active::before,
+.mode-apple .item.active + .item::before {
+  display: none;
+}
+.mode-apple .item-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+.mode-apple .item.active .item-title {
+  color: var(--accent);
+}
+.mode-apple .item-sum {
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.45;
+}
+
+/* 🍎 6. 禅意纯净编辑区与半透明浮动工具栏 */
+.mode-apple .pro-tool-item {
+  display: none !important; /* 彻底剔除复杂专业工具，保留纯粹心流 */
+}
+.mode-apple .toolbar {
+  background: var(--surface);
+  backdrop-filter: blur(28px) saturate(190%);
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  border-bottom: 0.5px solid var(--border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+.mode-apple .title-input {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.022em;
+}
+.mode-apple .editor {
+  line-height: 1.75;
+}
+.mode-apple .btn {
+  border-radius: 6px;
+  border-color: transparent;
+  background: rgba(118, 118, 128, 0.08);
+}
+.mode-apple .btn:hover {
+  background: rgba(118, 118, 128, 0.16);
+}
+.mode-apple .btn.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* 🍎 7. iOS / macOS Sheet 拟态弹窗 */
+.mode-apple .dialog {
+  border-radius: 18px;
+  backdrop-filter: blur(32px) saturate(190%);
+  -webkit-backdrop-filter: blur(32px) saturate(190%);
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.18);
+}
+
+
+/* ============================================================================
+   🎨 谷歌专业模式 (Google Pro Studio)
+   深度还原 Google Material Design 3 (M3) · Google Workspace / Docs / Keep
+   ========================================================================= */
 .mode-google {
   --font-sans: "Google Sans", "Product Sans", "Roboto", "Segoe UI", sans-serif;
-  --accent: #1a73e8;
-  --accent-hover: #1557b0;
-  --accent-soft: rgba(26, 115, 232, 0.15);
+  letter-spacing: 0.01em;
+  --r-sm: 8px;
   --r-md: 12px;
-  --r-lg: 20px;
+  --r-lg: 16px;
+  --r-xl: 28px;
 }
+
+/* 浅色模式：Google Workspace M3 经典蓝调与 Tonal 表面系统 */
+[data-theme='light'].mode-google,
+[data-theme='light'] .mode-google {
+  --bg: #f8fafd;
+  --bg-2: #f0f4f9;
+  --surface: #ffffff;
+  --surface-2: #edf2fc;
+  --surface-3: #e1e3e1;
+  --border: #c4c7c5;
+  --border-strong: #74777f;
+  --text: #1f1f1f;
+  --text-2: #444746;
+  --text-3: #74777f;
+  --accent: #0b57d0;
+  --accent-hover: #0842a0;
+  --accent-soft: #d3e3fd;
+  --accent-line: #0b57d0;
+  --on-accent: #ffffff;
+  --sh-1: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+  --sh-2: 0 1px 3px rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15);
+  --sh-3: 0 6px 10px 4px rgba(60, 64, 67, 0.15), 0 2px 3px rgba(60, 64, 67, 0.3);
+}
+
+/* 深色模式：Google Material You 暗夜蓝灰 */
+[data-theme='dark'].mode-google,
 [data-theme='dark'] .mode-google {
-  --accent: #8ab4f8;
-  --accent-hover: #aecbfa;
-  --accent-soft: rgba(138, 180, 248, 0.18);
   --bg: #131314;
+  --bg-2: #1e1f20;
   --surface: #1e1f20;
   --surface-2: #282a2c;
-  --surface-3: #2f3033;
+  --surface-3: #333538;
+  --border: #444746;
+  --border-strong: #8e918f;
+  --text: #e3e3e3;
+  --text-2: #c4c7c5;
+  --text-3: #8e918f;
+  --accent: #a8c7fa;
+  --accent-hover: #c2e7ff;
+  --accent-soft: rgba(168, 199, 250, 0.2);
+  --accent-line: #a8c7fa;
+  --on-accent: #041e49;
+  --sh-1: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --sh-2: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --sh-3: 0 12px 32px rgba(0, 0, 0, 0.65);
 }
+
+/* 🎨 1. Google 标志性四色徽光 (Google 4-Color Accent Strip) */
+.mode-google .side-head::before {
+  content: '';
+  display: block;
+  height: 3.5px;
+  width: 48px;
+  border-radius: 2px;
+  margin-bottom: 12px;
+  background: linear-gradient(90deg, #4285f4 0%, #ea4335 25%, #fbbc05 50%, #34a853 75%, #4285f4 100%);
+  box-shadow: 0 1px 4px rgba(66, 133, 244, 0.35);
+}
+
+/* 🎨 2. Google Workspace 48px 大药丸搜索栏 */
+.mode-google .search-wrap {
+  height: 44px;
+  border-radius: 28px;
+  background: var(--surface-2);
+  border: 1px solid transparent;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+.mode-google .search-wrap:focus-within {
+  background: var(--surface);
+  border-color: transparent;
+  box-shadow: 0 1px 3px 1px rgba(60, 64, 67, 0.2);
+}
+
+/* 🎨 3. Google M3 Extended FAB (浮动操作大按钮) */
+.mode-google #btnNew {
+  height: 48px;
+  border-radius: 16px;
+  background: var(--accent-soft);
+  color: var(--on-accent-container, var(--accent));
+  font-weight: 500;
+  font-size: 14px;
+  font-family: 'Google Sans', Roboto, sans-serif;
+  box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.18), 0 6px 10px 0 rgba(0, 0, 0, 0.12);
+  border: none;
+  letter-spacing: 0.15px;
+}
+.mode-google #btnNew:hover {
+  box-shadow: 0 5px 8px -2px rgba(0, 0, 0, 0.22), 0 8px 14px 1px rgba(0, 0, 0, 0.14);
+  transform: translateY(-1px);
+}
+.mode-google #btnNew:active {
+  transform: translateY(0);
+}
+
+/* 🎨 4. Google Keep M3 Elevated Cards (卡片流) */
+.mode-google .list {
+  padding: 8px 10px;
+}
+.mode-google .item {
+  border-radius: 14px;
+  margin-bottom: 8px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.08);
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+.mode-google .item + .item {
+  border-top: 1px solid var(--border);
+}
+.mode-google .item:hover {
+  box-shadow: 0 2px 6px 2px rgba(60, 64, 67, 0.15);
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+.mode-google .item.active {
+  border: 2px solid var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 2px 8px 2px rgba(60, 64, 67, 0.18);
+}
+.mode-google .item.active .item-title {
+  color: var(--accent);
+  font-weight: 600;
+}
+.mode-google .chip {
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 11px;
+  padding: 2px 8px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  font-family: 'Google Sans', Roboto, sans-serif;
+}
+
+/* 🎨 5. Google Docs 专业排版工具栏 (Workspace Formatting Ribbon) */
 .mode-google .pro-tool-item {
   display: inline-flex !important;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 8px;
+}
+.mode-google .toolbar {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  padding: 6px 14px;
+  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.06);
 }
 .mode-google .btn {
-  border-radius: 9999px;
+  border-radius: 8px;
+  height: 32px;
+  padding: 4px 10px;
+  font-weight: 500;
+  font-size: 13px;
+  font-family: 'Google Sans', Roboto, sans-serif;
+  color: var(--text-2);
+  background: transparent;
+  border: 1px solid transparent;
 }
-.mode-google .mode-pill-btn {
-  border-color: var(--accent);
+.mode-google .btn:hover {
+  background: rgba(0, 29, 53, 0.08);
+  color: var(--text);
+  border-color: transparent;
+}
+.mode-google .btn.active,
+.mode-google .btn.on {
   background: var(--accent-soft);
   color: var(--accent);
   font-weight: 600;
+  border-color: transparent;
+}
+.mode-google .title-input {
+  font-family: 'Google Sans', Roboto, sans-serif;
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* 🎨 6. Google M3 28px 超大圆角对话框 (Material 3 Dialog) */
+.mode-google .dialog {
+  border-radius: 28px;
+  background: var(--surface-2);
+  border: none;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.22);
+  padding: 24px;
+}
+.mode-google .dialog-foot .btn.primary {
+  border-radius: 20px;
+  height: 40px;
+  padding: 0 24px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 500;
+  font-family: 'Google Sans', Roboto;
 }
 
 /* 📊 知识图谱盒子 */

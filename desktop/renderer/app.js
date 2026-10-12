@@ -2623,7 +2623,7 @@
     document.body.classList.toggle('mode-pro', !isLite);
 
     const badge = isLite ? '🍎' : '🎨';
-    const label = isLite ? '简洁版' : '专业版';
+    const label = isLite ? '苹果极简' : '谷歌专业';
     const title = isLite
       ? '当前：🍎 苹果极简版（点击切换至 🎨 谷歌专业版，快捷键 Alt+M）'
       : '当前：🎨 谷歌专业版（点击切换至 🍎 苹果极简版，快捷键 Alt+M）';
@@ -2642,15 +2642,15 @@
     }
     $('modeSwitch') && syncSegmentedActive('modeSwitch', actual);
     $('modeSwitchHelp') && ($('modeSwitchHelp').textContent = isLite
-      ? '当前生效：🍎 苹果极简版（Apple Zen）—— 极简留白、毛玻璃质感、无干扰流式写作体验。'
-      : '当前生效：🎨 谷歌专业版（Google Studio）—— Material 3 工坊、全功能工具条、图谱与实验室。');
+      ? '当前生效：🍎 苹果极简版（Apple Zen · Notes/Pages 深度还原）—— 纯净留白、毛玻璃材质、macOS 红绿灯、沉浸式心流写作。'
+      : '当前生效：🎨 谷歌专业版（Google Pro · Workspace/M3 深度还原）—— Material 3 工坊、大药丸搜索、Extended FAB、全功能专业工具。');
   }
 
   async function toggleWorkspaceMode() {
     const next = state.settings.workspaceMode === 'pro' ? 'lite' : 'pro';
     state.settings = await LP.setSettings({ workspaceMode: next });
     applyWorkspaceMode(next);
-    toast(next === 'lite' ? '已切换为 🍎 苹果极简版 (Apple Zen)' : '已切换为 🎨 谷歌专业版 (Google Studio)');
+    toast(next === 'lite' ? '已切换至 🍎 苹果极简版 (Apple Zen)' : '已切换至 🎨 谷歌专业版 (Google Pro Studio)');
   }
 
   function applyFontSize() {
