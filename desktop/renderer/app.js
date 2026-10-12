@@ -2474,9 +2474,9 @@
   function shareHintText() {
     const title = $('title').value.trim() || '未命名';
     if (CAPS.share) {
-      return '「' + title + '」——点下面任意一项，系统会弹出分享面板，可以直接发到微信、备忘录或存成文件。';
+      return '「' + title + '」——支持直接复制免登录长文链接、生成带社交卡片的单文件网页，或调用系统面板分享到 X/Twitter、微信与文件。';
     }
-    return '「' + title + '」——点下面任意一项，内容会复制到剪贴板，粘到聊天窗口或别的编辑器都行。';
+    return '「' + title + '」——支持一键复制推文格式链接、生成带社交预览卡片的独立单文件网页，贴到 X/Twitter、Discord 或微信即看。';
   }
 
   function openShare() {
@@ -2516,6 +2516,81 @@
       else if (res && !res.canceled) toast('导出失败：' + ((res && res.error) || '未知原因'), 'err');
     } catch (err) {
       toast('导出失败：' + String((err && err.message) || err), 'err');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function shareToTwitter() {
+    if (!state.current) {
+      toast('请先选择一篇文章');
+      return;
+    }
+    const title = $('title').value.trim() || '未命名';
+    const content = $('editor').value || '';
+    const excerpt = (state.current.summary || content)
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/[#*`~\[\]()!<>]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 110);
+    const tweetText = '「' + title + '」\n\n' + excerpt + '\n\n#LongPost';
+    const tweetUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(tweetText);
+    try {
+      if (typeof window !== 'undefined' && window.open) {
+        window.open(tweetUrl, '_blank');
+        toast('已打开 X / Twitter 发推窗口', 'ok');
+      } else {
+        await sharePayload(tweetText, '推文内容');
+      }
+    } catch {
+      await sharePayload(tweetText, '推文内容');
+    }
+  }
+
+  async function exportFullBackup() {
+    setBusyLabel();
+    try {
+      const liveList = (await LP.listArticles()) || [];
+      const trashList = (await LP.listTrash()) || [];
+      const idSet = new Set([...liveList.map((a) => a.id), ...trashList.map((a) => a.id)]);
+      const fullArticles = [];
+      for (const id of idSet) {
+        const art = await LP.getArticle(id);
+        if (art) fullArticles.push(art);
+      }
+      const settings = (await LP.getSettings()) || {};
+      const backupData = {
+        version: '2.6.0',
+        exportedAt: new Date().toISOString(),
+        appName: 'LongPost',
+        stats: {
+          articlesCount: fullArticles.length,
+          liveCount: liveList.length,
+          trashCount: trashList.length,
+        },
+        settings: settings,
+        articles: fullArticles,
+      };
+      const jsonContent = JSON.stringify(backupData, null, 2);
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const fileName = 'LongPost-Backup-' + dateStr + '.json';
+
+      const blob = new Blob([jsonContent], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast('整库备份已导出：' + fileName, 'ok');
+      setStatus('整库备份已完成（共 ' + fullArticles.length + ' 篇文章）');
+    } catch (err) {
+      toast('备份导出失败：' + String((err && err.message) || err), 'err');
     } finally {
       setBusy(false);
     }
@@ -4049,6 +4124,8 @@
     $('sharePlain').addEventListener('click', sharePlain);
     $('shareHtml').addEventListener('click', shareHtml);
     $('shareFile').addEventListener('click', () => exportArticle('html'));
+    $('shareTweet').addEventListener('click', shareToTwitter);
+    $('shareBackup').addEventListener('click', exportFullBackup);
 
     // ---------------------------------------------------------- 统计
     $('statsClose').addEventListener('click', () => closeSheet('statsModal'));
@@ -4321,6 +4398,7 @@
           exportLongImage();
         },
       },
+      { label: '整库备份归档 (JSON)', icon: 'save', onPick: exportFullBackup },
       { label: '粘贴为表格', icon: 'grid', onPick: readClipboardAsTable },
       { label: '历史版本', icon: 'clock', onPick: openHistory },
       { label: '查找与替换', icon: 'search', key: 'Ctrl/⌘ + F', onPick: openFind },

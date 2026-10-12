@@ -90,6 +90,23 @@ function buildHtml(article, filesDir, assetDirName) {
   const echarts = readEcharts().replace(/<\/script/gi, '<\\/script');
   const meta = article.updatedAt ? new Date(article.updatedAt).toLocaleDateString('zh-CN') : '';
 
+  const excerpt =
+    article.summary ||
+    (article.content || '')
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/lp:\/\/files\/\S+/g, ' ')
+      .replace(/[#*`~\[\]()!<>]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 160);
+  const imgMatch = /!\[.*?\]\((lp:\/\/files\/[^\)]+|\S+\.(?:png|jpe?g|webp|gif))\)/i.exec(article.content || '');
+  let coverUrl = '';
+  if (imgMatch) {
+    coverUrl = imgMatch[1].replace('lp://files/', './' + assetDirName + '/');
+  }
+
   const page = [
     '<!doctype html>',
     '<html lang="zh-CN">',
@@ -97,6 +114,16 @@ function buildHtml(article, filesDir, assetDirName) {
     '<meta charset="utf-8">',
     '<meta name="viewport" content="width=device-width,initial-scale=1">',
     '<title>' + escapeHtml(title) + '</title>',
+    '<meta name="description" content="' + escapeHtml(excerpt) + '">',
+    '<meta property="og:type" content="article">',
+    '<meta property="og:title" content="' + escapeHtml(title) + '">',
+    '<meta property="og:description" content="' + escapeHtml(excerpt) + '">',
+    '<meta property="og:site_name" content="LongPost">',
+    coverUrl ? '<meta property="og:image" content="' + escapeHtml(coverUrl) + '">' : '',
+    '<meta name="twitter:card" content="' + (coverUrl ? 'summary_large_image' : 'summary') + '">',
+    '<meta name="twitter:title" content="' + escapeHtml(title) + '">',
+    '<meta name="twitter:description" content="' + escapeHtml(excerpt) + '">',
+    coverUrl ? '<meta name="twitter:image" content="' + escapeHtml(coverUrl) + '">' : '',
     '<style>' + pageCss() + '</style>',
     '</head>',
     '<body>',

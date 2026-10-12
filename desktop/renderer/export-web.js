@@ -12,7 +12,7 @@
 (function () {
   'use strict';
 
-  const INLINE_LIMIT = 8 * 1024 * 1024;
+  const INLINE_LIMIT = 32 * 1024 * 1024;
   const FILE_REF_RE = /lp:\/\/files\/([A-Za-z0-9._-]+)/g;
 
   function escapeHtml(value) {
@@ -72,13 +72,23 @@
     return parts.join('\n');
   }
 
+  let cachedEcharts = '';
   async function readEcharts(url) {
+    if (cachedEcharts) return cachedEcharts;
+    if (typeof window !== 'undefined' && window.__lp_echarts_cache) {
+      cachedEcharts = window.__lp_echarts_cache;
+      return cachedEcharts;
+    }
     try {
       const res = await fetch(url);
       if (!res.ok) return '';
       const text = await res.text();
-      // 内联的脚本里出现 </script 会被 HTML 解析器当成结束标签
-      return text.indexOf('echarts') !== -1 ? text.replace(/<\/script/gi, '<\\/script') : '';
+      if (text.indexOf('echarts') !== -1) {
+        cachedEcharts = text.replace(/<\/script/gi, '<\\/script');
+        if (typeof window !== 'undefined') window.__lp_echarts_cache = cachedEcharts;
+        return cachedEcharts;
+      }
+      return '';
     } catch {
       return '';
     }
@@ -152,6 +162,20 @@
         '</div>'
       : '';
 
+    const excerpt =
+      (article && article.summary) ||
+      content
+        .replace(/```[\s\S]*?```/g, ' ')
+        .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+        .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+        .replace(/lp:\/\/files\/\S+/g, ' ')
+        .replace(/[#*`~\[\]()!<>]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 160);
+    const imgMatch = /!\[.*?\]\((data:image\/[^;]+;base64,[^\)]+|\S+\.(?:png|jpe?g|webp|gif))\)/i.exec(body);
+    const coverUrl = imgMatch ? imgMatch[1] : '';
+
     const html = [
       '<!doctype html>',
       '<html lang="zh-CN">',
@@ -159,6 +183,16 @@
       '<meta charset="utf-8">',
       '<meta name="viewport" content="width=device-width,initial-scale=1">',
       '<title>' + escapeHtml(title) + '</title>',
+      '<meta name="description" content="' + escapeHtml(excerpt) + '">',
+      '<meta property="og:type" content="article">',
+      '<meta property="og:title" content="' + escapeHtml(title) + '">',
+      '<meta property="og:description" content="' + escapeHtml(excerpt) + '">',
+      '<meta property="og:site_name" content="LongPost">',
+      coverUrl && !coverUrl.startsWith('data:') ? '<meta property="og:image" content="' + escapeHtml(coverUrl) + '">' : '',
+      '<meta name="twitter:card" content="' + (coverUrl ? 'summary_large_image' : 'summary') + '">',
+      '<meta name="twitter:title" content="' + escapeHtml(title) + '">',
+      '<meta name="twitter:description" content="' + escapeHtml(excerpt) + '">',
+      coverUrl && !coverUrl.startsWith('data:') ? '<meta name="twitter:image" content="' + escapeHtml(coverUrl) + '">' : '',
       '<style>' + PS.pageCss() + '</style>',
       '</head>',
       '<body>',
