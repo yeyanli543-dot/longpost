@@ -1299,8 +1299,38 @@
       markdown: lines.join('\n'),
       rows: rows.length,
       cols: cols,
+      rawRows: rows,
       errors: (res && res.errors) || [],
     };
+  }
+
+  function detectChartFromTable(t) {
+    if (!t || !t.rawRows || t.rows < 2 || t.cols < 2) return null;
+    const rows = t.rawRows;
+    const header = rows[0];
+    const catCol = rows.slice(1).map((r) => String(r[0] || ''));
+    const numericSeries = [];
+    for (let c = 1; c < t.cols; c++) {
+      const nums = rows.slice(1).map((r) => {
+        const cleaned = String(r[c] == null ? '' : r[c]).replace(/,/g, '').trim();
+        return parseFloat(cleaned);
+      });
+      if (nums.every((n) => !isNaN(n))) {
+        numericSeries.push({
+          name: String(header[c] || ('指标 ' + c)).trim(),
+          data: nums,
+        });
+      }
+    }
+    if (numericSeries.length > 0 && catCol.length > 0) {
+      return {
+        type: 'bar',
+        title: String(header[0] || '数据图表').trim() || '数据图表',
+        xAxis: catCol,
+        series: numericSeries,
+      };
+    }
+    return null;
   }
 
   /**
@@ -1327,7 +1357,21 @@
       return false;
     }
     insertAtCursor(tableInsertText(t.markdown));
-    toast('已转成 Markdown 表格：' + t.rows + ' 行 × ' + t.cols + ' 列', 'ok');
+    const chartCard = detectChartFromTable(t);
+    if (chartCard && CH && typeof CH.encodeChartCard === 'function') {
+      askConfirm({
+        title: '检测到多维数据表',
+        text: '已插入表格（' + t.rows + ' 行 × ' + t.cols + ' 列）。检测到包含数值指标序列，是否在下方自动生成联动图表卡片？',
+        okLabel: '生成图表',
+        onOk: () => {
+          const fence = '\n\n' + CH.encodeChartCard(chartCard) + '\n';
+          insertAtCursor(fence);
+          toast('已生成联动图表卡片', 'ok');
+        },
+      });
+    } else {
+      toast('已转成 Markdown 表格：' + t.rows + ' 行 × ' + t.cols + ' 列', 'ok');
+    }
     return true;
   }
 
@@ -2488,8 +2532,43 @@
     openSheet('shareModal');
   }
 
+  function checkPreflightIssues(content) {
+    const issues = [];
+    const chartFences = (content || '').match(/```chart[\s\S]*?```/g) || [];
+    for (let i = 0; i < chartFences.length; i++) {
+      const inner = chartFences[i].replace(/^```chart\s*/, '').replace(/```$/, '').trim();
+      try {
+        JSON.parse(inner);
+      } catch (e) {
+        issues.push('第 ' + (i + 1) + ' 个图表卡片语法错误 (JSON 解析失败)');
+      }
+    }
+    const fences = (content || '').match(/^```/gm) || [];
+    if (fences.length % 2 !== 0) {
+      issues.push('正文包含未闭合的代码块围栏 (```)');
+    }
+    return issues;
+  }
+
   async function exportArticle(kind) {
     if (!state.current) return;
+    const content = $('editor').value || '';
+    const issues = checkPreflightIssues(content);
+    if (issues.length > 0) {
+      askConfirm({
+        title: '导出前健康自检提醒',
+        text: '检测到以下潜在格式故障：\n· ' + issues.join('\n· ') + '\n\n直接导出可能导致排版异常。是否仍要强制导出？',
+        okLabel: '强制导出',
+        danger: true,
+        onOk: () => doExportArticle(kind),
+      });
+      return;
+    }
+    await doExportArticle(kind);
+  }
+
+  async function doExportArticle(kind) {
+    if (state.dirty) await saveNow(true);
     setBusyLabel();
     try {
       const res = kind === 'html' ? await LP.exportHtml(state.current.id) : await LP.exportMarkdown(state.current.id);
@@ -3633,30 +3712,123 @@
     });
     const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
     $('labWordFreq').innerHTML = sorted.length
-      ? sorted.map(([k, v]) => `<span class="lab-chip">${esc(k)} <b>${v}</b></span>`).join('')
+      ? sorted
+          .map(
+            ([k, v]) =>
+              `<span class="lab-chip lab-keyword-chip" data-kw="${esc(k)}" title="点击添加「${esc(k)}」为文章标签">${esc(k)} <b>${v}</b> ＋</span>`,
+          )
+          .join('')
       : '<span class="hint">词量较少，暂无高频词</span>';
+
+    $('labWordFreq').onclick = (e) => {
+      const chip = e.target.closest('.lab-keyword-chip');
+      if (!chip || !chip.dataset.kw) return;
+      const kw = chip.dataset.kw;
+      if (!state.current) return;
+      const tags = (state.current.tags || []).slice();
+      if (tags.includes(kw)) {
+        toast('标签 #' + kw + ' 已存在');
+        return;
+      }
+      tags.push(kw);
+      state.current.tags = tags;
+      if (LP && typeof LP.setTags === 'function') {
+        LP.setTags(state.current.id, tags).catch(() => {});
+      }
+      markDirty();
+      toast('已将「' + kw + '」添加为文章标签', 'ok');
+    };
 
     const checklist = [];
     const openParen = (full.match(/[（(]/g) || []).length;
     const closeParen = (full.match(/[）)]/g) || []).length;
     checklist.push({
+      id: 'paren',
       ok: openParen === closeParen,
+      canFix: false,
       text: openParen === closeParen ? `括号闭合完整 (共 ${openParen} 对)` : `注意：括号未闭合 (左括号 ${openParen} 个，右括号 ${closeParen} 个)`,
     });
+
     const hasHeadings = /^#{1,6}\s+/m.test(full);
     checklist.push({
+      id: 'headings',
       ok: hasHeadings,
+      canFix: !hasHeadings,
+      fixLabel: '设首行为标题',
       text: hasHeadings ? '文章层级结构清晰 (包含 Markdown 标题)' : '建议：添加 Markdown 标题 (# 一级，## 二级) 提高可读性',
     });
+
     const doubleBlanks = /\n{3,}/.test(full);
     checklist.push({
+      id: 'blanks',
       ok: !doubleBlanks,
+      canFix: doubleBlanks,
+      fixLabel: '一键压缩',
       text: !doubleBlanks ? '段落间距规范 (无多余连续空行)' : '提示：检测到连续多行空行，建议精简保持紧凑',
     });
 
+    const fenceMatches = (text.match(/^```/gm) || []).length;
+    const fencesClosed = fenceMatches % 2 === 0;
+    checklist.push({
+      id: 'fences',
+      ok: fencesClosed,
+      canFix: !fencesClosed,
+      fixLabel: '闭合代码块',
+      text: fencesClosed ? '代码块围栏完整闭合' : '警告：检测到未闭合的代码块围栏 (```)',
+    });
+
+    const emptyAlt = /!\[\s*\]\(/g.test(text);
+    checklist.push({
+      id: 'alt',
+      ok: !emptyAlt,
+      canFix: emptyAlt,
+      fixLabel: '补齐Alt',
+      text: !emptyAlt ? '插图均配有无障碍 Alt 说明' : '建议：部分插图缺失 Alt 说明，建议补齐',
+    });
+
     $('labChecklist').innerHTML = checklist
-      .map((c) => `<li class="lab-checklist-item ${c.ok ? 'ok' : 'warn'}">${c.ok ? '✓' : '⚠️'} ${esc(c.text)}</li>`)
+      .map(
+        (c) =>
+          `<li class="lab-checklist-item ${c.ok ? 'ok' : 'warn'}"><span class="lab-checklist-text">${c.ok ? '✓' : '⚠️'} ${esc(c.text)}</span>${!c.ok && c.canFix ? `<button class="lab-fix-btn" data-fix="${c.id}">${c.fixLabel || '一键修'}</button>` : ''}</li>`,
+      )
       .join('');
+
+    $('labChecklist').onclick = (e) => {
+      const btn = e.target.closest('.lab-fix-btn');
+      if (!btn || !btn.dataset.fix) return;
+      applyLabFix(btn.dataset.fix);
+    };
+  }
+
+  function applyLabFix(fixId) {
+    const editor = $('editor');
+    if (!editor) return;
+    const oldVal = editor.value;
+    let newVal = oldVal;
+    let desc = '';
+
+    if (fixId === 'blanks') {
+      newVal = oldVal.replace(/\n{3,}/g, '\n\n');
+      desc = '已压缩连续多行空行';
+    } else if (fixId === 'fences') {
+      newVal = oldVal + (/\n$/.test(oldVal) ? '' : '\n') + '```\n';
+      desc = '已闭合代码块围栏';
+    } else if (fixId === 'alt') {
+      newVal = oldVal.replace(/!\[\s*\]\(/g, '![插图](');
+      desc = '已补齐插图 Alt 说明占位';
+    } else if (fixId === 'headings') {
+      const curTitle = ($('title') && $('title').value.trim()) || '文章标题';
+      newVal = '# ' + curTitle + '\n\n' + oldVal;
+      desc = '已在首行添加主标题';
+    }
+
+    if (newVal !== oldVal) {
+      editor.value = newVal;
+      markDirty();
+      renderPreview();
+      openLab();
+      toast(desc + '（Ctrl+Z 可撤销）', 'ok');
+    }
   }
 
   let diffRevs = [];
