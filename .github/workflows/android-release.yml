@@ -257,6 +257,7 @@ jobs:
         run: |
           mkdir -p out
           cp mobile/android/app/build/outputs/apk/debug/app-debug.apk out/LongPost-android.apk
+          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk out/LongPost-v2.5.0-android.apk
           ls -lh out/
           echo "--- 文件头（确认是真正的 APK：PK 开头）---"
           head -c 4 out/LongPost-android.apk | xxd
@@ -265,19 +266,17 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: longpost-android-apk
-          path: out/LongPost-android.apk
+          path: out/*.apk
 
       - name: 发布到 Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: android-latest
-          name: LongPost 手机版（Android）
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'v2.5.0' }}
+          name: ${{ startsWith(github.ref, 'refs/tags/v') && format('LongPost {0}', github.ref_name) || 'LongPost v2.5.0' }}
           body: |
-            LongPost 手机版的安装包。
-
-            下载下面的 `LongPost-android.apk`，在手机上打开安装即可。
-            首次安装需要在系统里允许「安装未知来源的应用」。
-
-            数据全部存在手机本地（IndexedDB），不联网、不上传。
-            换新版本时如果提示签名冲突，先卸载旧版再装。
-          files: out/LongPost-android.apk
+            LongPost 全功能本地运行工作台（双模式旗舰版：Apple 极简禅意 / Google M3 专业工坊）。
+            
+            **Android 手机版**：下载 `LongPost-v2.5.0-android.apk`，在安卓手机上打开直接安装体验。
+            
+            数据全部存在设备本地（IndexedDB），不联网、不上传、断网即用。
+          files: out/*.apk

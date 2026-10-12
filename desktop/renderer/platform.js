@@ -16,7 +16,7 @@
   'use strict';
 
   /** 跟 desktop/package.json 的 version 保持一致，自检里有断言盯着。 */
-  const APP_VERSION = '1.2.0';
+  const APP_VERSION = '2.5.0';
 
   if (!window.LPRepo || !window.LPIdbBackend) {
     window.LPPlatform = null;
