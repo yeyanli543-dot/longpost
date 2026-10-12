@@ -7,7 +7,7 @@
  * 这里没有任何网络请求，没有账号体系，所有数据都落在 app.getPath('userData') 下。
  */
 
-const { app, BrowserWindow, ipcMain, dialog, shell, protocol, net, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, protocol, net, Menu, clipboard, nativeImage } = require('electron');
 const path = require('node:path');
 const fs = require('node:fs');
 const { pathToFileURL } = require('node:url');
@@ -253,6 +253,23 @@ function registerIpc() {
   ipcMain.handle('proposals:get', (_e, id) => store.getProposals(id));
   ipcMain.handle('proposals:save', (_e, id, proposals) => store.saveProposals(id, proposals));
   ipcMain.handle('proposals:listUnresolved', () => store.listUnresolvedProposals());
+
+  // 系统剪贴板图片写入
+  ipcMain.handle('clipboard:writeImage', (_e, dataUrl) => {
+    try {
+      if (!dataUrl || typeof dataUrl !== 'string') {
+        return { ok: false, error: '无效的图片数据' };
+      }
+      const image = nativeImage.createFromDataURL(dataUrl);
+      if (image.isEmpty()) {
+        return { ok: false, error: '无法解析图片数据' };
+      }
+      clipboard.writeImage(image);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: String((err && err.message) || err) };
+    }
+  });
 
   ipcMain.handle('files:pick', async () => {
     const res = await dialog.showOpenDialog(mainWindow, {

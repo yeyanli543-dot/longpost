@@ -714,6 +714,12 @@
     padding: 0 12px;
   }
 
+  .chart-copy-btn {
+    opacity: 0.95;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
   /* ------------------------------------------------------------ 双模式移动端深度适配 */
   .mode-apple .side-head::before {
     display: none; /* 移动端 iPhone/iPad 界面不展示 macOS 窗口红绿灯 */

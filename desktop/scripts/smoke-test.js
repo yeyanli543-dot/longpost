@@ -254,6 +254,51 @@ console.log('\n[8] 贴底抽屉不被底栏遮挡 / 标题不被挤扁（P1、P2
     check(c.label, c.ok, c.detail);
   }
 }
+console.log('\n[9] 图表复制为图片回归');
+{
+  const appSrc = fs.readFileSync(path.join(__dirname, '..', 'renderer', 'app.js'), 'utf8');
+  let mockOpts = null;
+  const mockChart = {
+    getDataURL(opts) {
+      mockOpts = opts;
+      return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+    },
+  };
+  const dataUrl = mockChart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#fff' });
+  const hasAppConfig = /getDataURL\(\s*\{[\s\S]*?pixelRatio:\s*2[\s\S]*?backgroundColor:\s*['"]#fff['"]/i.test(appSrc);
+  check(
+    '图表卡产出白底 + 2 倍像素比的非空 PNG',
+    hasAppConfig &&
+      mockOpts &&
+      mockOpts.pixelRatio === 2 &&
+      mockOpts.backgroundColor === '#fff' &&
+      mockOpts.type === 'png' &&
+      typeof dataUrl === 'string' &&
+      dataUrl.startsWith('data:image/png;base64,') &&
+      dataUrl.length > 30,
+  );
+
+  const mainSrc = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
+  check(
+    'desktop/main.js 注册了 clipboard:writeImage',
+    mainSrc.includes("ipcMain.handle('clipboard:writeImage'") ||
+      mainSrc.includes('ipcMain.handle("clipboard:writeImage"'),
+  );
+
+  const preloadSrc = fs.readFileSync(path.join(__dirname, '..', 'preload.js'), 'utf8');
+  const platformSrc = fs.readFileSync(path.join(__dirname, '..', 'renderer', 'platform.js'), 'utf8');
+  const splitMarker = '// ------------------------------------------------------------ 网页 / 手机';
+  const desktopBranch = platformSrc.slice(0, platformSrc.indexOf(splitMarker));
+  const mobileBranch = platformSrc.slice(platformSrc.indexOf(splitMarker));
+  const preloadHasWrite = /\bwriteImage\s*[:(]/.test(preloadSrc);
+  const desktopHasCopy = /\bcopyImage\s*[:(]/.test(desktopBranch);
+  const mobileHasCopy = /\bcopyImage\s*[:(]/.test(mobileBranch);
+  check(
+    'preload 暴露了 writeImage，且 platform.js 两端都实现了 copyImage',
+    preloadHasWrite && desktopHasCopy && mobileHasCopy,
+    'preload: ' + preloadHasWrite + ', desktop: ' + desktopHasCopy + ', mobile: ' + mobileHasCopy,
+  );
+}
 console.log('\n———————————————————————————————');
 console.log(`通过 ${passed} 项，失败 ${failures.length} 项`);
 if (failures.length) {

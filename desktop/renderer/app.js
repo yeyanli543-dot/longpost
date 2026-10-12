@@ -1672,12 +1672,20 @@
           cap.textContent = title;
           figure.appendChild(cap);
         }
+        const copyBtn = document.createElement('button');
+        copyBtn.type = 'button';
+        copyBtn.className = 'chart-copy-btn icon-btn';
+        copyBtn.setAttribute('aria-label', '复制图表为图片');
+        copyBtn.title = '复制图表为图片 (PNG)';
+        copyBtn.innerHTML = icon('copy');
+        figure.appendChild(copyBtn);
+
         const box = document.createElement('div');
         box.className = 'chart-canvas';
         box.style.height = CH.chartHeight(seg.card) + 'px';
         figure.appendChild(box);
         frag.appendChild(figure);
-        pending.push({ el: box, card: seg.card });
+        pending.push({ el: box, card: seg.card, copyBtn: copyBtn });
         return;
       }
       if (!seg.text || !seg.text.trim()) return;
@@ -1707,6 +1715,13 @@
           const chart = window.echarts.init(item.el, null, { renderer: 'canvas' });
           chart.setOption(CH.chartCardToEchartsOption(item.card, theme));
           state.chartInstances.push(chart);
+          item.chart = chart;
+          if (item.copyBtn) {
+            item.copyBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              copyChartAsImage(chart);
+            });
+          }
         } catch (err) {
           item.el.innerHTML =
             '<div class="chart-bad">图表渲染失败：' + esc(String((err && err.message) || err)) + '</div>';
@@ -2663,7 +2678,7 @@
       }
       const settings = (await LP.getSettings()) || {};
       const backupData = {
-        version: '2.6.0',
+        version: '2.7.0',
         exportedAt: new Date().toISOString(),
         appName: 'LongPost',
         stats: {
@@ -4802,6 +4817,7 @@
           exportLongImage();
         },
       },
+      { label: '复制当前图表为图片', icon: 'copy', onPick: copyActiveChartAsImage },
       { label: '整库备份归档 (JSON)', icon: 'save', onPick: exportFullBackup },
       { label: '粘贴为表格', icon: 'grid', onPick: readClipboardAsTable },
       { label: '历史版本', icon: 'clock', onPick: openHistory },
@@ -4826,6 +4842,106 @@
     } catch (err) {
       toast('这台设备不让读剪贴板：直接把表格粘进编辑区也行', 'err');
     }
+  }
+
+  /** 把单张 ECharts 图表卡片复制为 PNG 图片写进系统剪贴板 */
+  async function copyChartAsImage(chart) {
+    if (!chart || typeof chart.getDataURL !== 'function') {
+      toast('无法获取图表对象', 'err');
+      return;
+    }
+    let dataUrl = '';
+    try {
+      dataUrl = chart.getDataURL({
+        type: 'png',
+        pixelRatio: 2,
+        backgroundColor: '#fff',
+      });
+    } catch (err) {
+      toast('生成图表图片失败：' + String((err && err.message) || err), 'err');
+      return;
+    }
+
+    if (!dataUrl) {
+      toast('生成图表图片为空', 'err');
+      return;
+    }
+
+    try {
+      const res = await LP.copyImage(dataUrl);
+      if (res && res.ok) {
+        toast(res.mode === 'share' ? '图表已导出并唤起分享' : '图表已复制为图片，可直接粘贴', 'ok');
+      } else {
+        const errMsg = (res && res.error) || '写入剪贴板失败';
+        toast('复制图片失败：' + errMsg, 'err');
+        askConfirm({
+          title: '复制失败，是否另存为 PNG 文件？',
+          text: '系统剪贴板无法写入该图片（' + errMsg + '）。是否直接保存为本地 PNG 文件？',
+          okLabel: '另存为 PNG',
+          onOk: () => saveChartDataUrlAsFile(dataUrl),
+        });
+      }
+    } catch (err) {
+      const errMsg = String((err && err.message) || err);
+      toast('复制图片失败：' + errMsg, 'err');
+      askConfirm({
+        title: '复制失败，是否另存为 PNG 文件？',
+        text: '系统剪贴板无法写入该图片（' + errMsg + '）。是否直接保存为本地 PNG 文件？',
+        okLabel: '另存为 PNG',
+        onOk: () => saveChartDataUrlAsFile(dataUrl),
+      });
+    }
+  }
+
+  function saveChartDataUrlAsFile(dataUrl) {
+    try {
+      const comma = dataUrl.indexOf(',');
+      const raw = comma === -1 ? dataUrl : dataUrl.slice(comma + 1);
+      const byteChars = atob(raw);
+      const byteArray = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([byteArray], { type: 'image/png' });
+      const filename = 'chart-' + Date.now() + '.png';
+      const a = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        try {
+          a.remove();
+        } catch (e) {
+          /* 忽略 */
+        }
+        URL.revokeObjectURL(url);
+      }, 1000);
+      toast('图表已另存为 ' + filename, 'ok');
+    } catch (err) {
+      toast('保存文件失败：' + String((err && err.message) || err), 'err');
+    }
+  }
+
+  async function copyActiveChartAsImage() {
+    if (!state.chartInstances || !state.chartInstances.length) {
+      toast('当前文章没有可复制的图表', 'err');
+      return;
+    }
+    let target = state.chartInstances[0];
+    const previewEl = $('preview');
+    if (previewEl && state.chartInstances.length > 1) {
+      const top = previewEl.scrollTop;
+      const bottom = top + previewEl.clientHeight;
+      for (const inst of state.chartInstances) {
+        const dom = inst.getDom();
+        if (dom && dom.offsetTop >= top - 50 && dom.offsetTop <= bottom) {
+          target = inst;
+          break;
+        }
+      }
+    }
+    await copyChartAsImage(target);
   }
 
   // ------------------------------------------------------------ 键盘

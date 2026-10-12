@@ -16,7 +16,7 @@
   'use strict';
 
   /** 跟 desktop/package.json 的 version 保持一致，自检里有断言盯着。 */
-  const APP_VERSION = '2.6.0';
+  const APP_VERSION = '2.7.0';
 
   if (!window.LPRepo || !window.LPIdbBackend) {
     window.LPPlatform = null;
@@ -116,6 +116,7 @@
       // 桌面版没有系统分享面板，但也没这个必要：剪贴板是更快的路径
       shareText: shareText,
       copyText: (text) => copyToClipboard(text),
+      copyImage: (dataUrl) => desktop.writeImage(dataUrl),
     });
     return;
   }
@@ -260,6 +261,22 @@
 
     shareText: shareText,
     copyText: (text) => copyToClipboard(text),
+
+    async copyImage(dataUrl) {
+      try {
+        const comma = dataUrl.indexOf(',');
+        const raw = comma === -1 ? dataUrl : dataUrl.slice(comma + 1);
+        const byteChars = atob(raw);
+        const byteArray = new Uint8Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) byteArray[i] = byteChars.charCodeAt(i);
+        const blob = new Blob([byteArray], { type: 'image/png' });
+        const filename = 'chart-' + Date.now() + '.png';
+        const res = await saveFile(filename, blob);
+        return { ok: Boolean(res && res.ok), mode: 'share', path: res && res.path, error: res && res.error };
+      } catch (err) {
+        return { ok: false, error: String((err && err.message) || err) };
+      }
+    },
 
     async pickFiles() {
       const files = await pickWithInput('', true);

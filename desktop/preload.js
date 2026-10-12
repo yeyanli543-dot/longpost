@@ -33,6 +33,9 @@ contextBridge.exposeInMainWorld('lp', {
   saveProposals: (id, proposals) => ipcRenderer.invoke('proposals:save', id, proposals),
   listUnresolvedProposals: () => ipcRenderer.invoke('proposals:listUnresolved'),
 
+  // 剪贴板
+  writeImage: (dataUrl) => ipcRenderer.invoke('clipboard:writeImage', dataUrl),
+
   // 附件
   pickFiles: () => ipcRenderer.invoke('files:pick'),
   pickImages: () => ipcRenderer.invoke('files:pickImage'),

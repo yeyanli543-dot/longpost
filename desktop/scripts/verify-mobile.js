@@ -522,6 +522,7 @@ check('导出启动脚本可关掉图表', STYLE.bootScript(false).indexOf('retu
   const DUAL_METHODS = [
     'shareText',
     'copyText',
+    'copyImage',
     'assetUrl',
     'releaseAsset',
     'appInfo',

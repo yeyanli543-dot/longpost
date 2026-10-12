@@ -2054,6 +2054,7 @@ html[data-theme='light'] .preview pre.code-block {
 }
 
 .preview .chart-block {
+  position: relative;
   margin: 1.8em auto;
   width: 100%;
   max-width: var(--measure);
@@ -2062,6 +2063,68 @@ html[data-theme='light'] .preview pre.code-block {
   background: var(--surface-2);
   padding: 6px;
   overflow: hidden;
+}
+
+.chart-copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity var(--motion-duration-fast, 150ms) ease, background var(--motion-duration-fast, 150ms) ease, color var(--motion-duration-fast, 150ms) ease;
+  background: var(--surface-1);
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm, 6px);
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.preview .chart-block:hover .chart-copy-btn,
+.chart-copy-btn:focus,
+.chart-copy-btn:focus-visible {
+  opacity: 1;
+}
+
+.chart-copy-btn:hover {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+/* 🍎 Apple 极简模式：拟态磨砂质感 */
+.mode-apple .chart-copy-btn {
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 0.5px solid rgba(0, 0, 0, 0.12);
+  color: #1d1d1f;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+[data-theme='dark'] .mode-apple .chart-copy-btn {
+  background: rgba(40, 40, 42, 0.85);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #f5f5f7;
+}
+
+/* 🎨 Google 专业模式：M3 Tonal 风格 */
+.mode-google .chart-copy-btn {
+  border-radius: 8px;
+  background: var(--surface-2, #edf2fc);
+  border: 1px solid var(--border, #c4c7c5);
+  color: var(--text-2, #444746);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+.mode-google .chart-copy-btn:hover {
+  background: var(--surface-3, #e1e3e1);
+  color: var(--accent, #0b57d0);
+  border-color: var(--accent, #0b57d0);
 }
 
 .preview .chart-bad {
