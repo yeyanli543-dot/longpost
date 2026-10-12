@@ -28,6 +28,11 @@ contextBridge.exposeInMainWorld('lp', {
   listRevisions: (id) => ipcRenderer.invoke('articles:revisions', id),
   restoreRevision: (id, index) => ipcRenderer.invoke('articles:restoreRevision', id, index),
 
+  // 诊断与提议通道
+  getProposals: (id) => ipcRenderer.invoke('proposals:get', id),
+  saveProposals: (id, proposals) => ipcRenderer.invoke('proposals:save', id, proposals),
+  listUnresolvedProposals: () => ipcRenderer.invoke('proposals:listUnresolved'),
+
   // 附件
   pickFiles: () => ipcRenderer.invoke('files:pick'),
   pickImages: () => ipcRenderer.invoke('files:pickImage'),

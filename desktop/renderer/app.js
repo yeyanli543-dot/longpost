@@ -30,6 +30,12 @@
   const AUTOSAVE_DELAY = 900;
   const PREVIEW_DELAY = 180;
   const OUTLINE_DELAY = 420;
+  /** 调度器：常驻空闲分析与后台监视心跳 */
+  const rIC = window.requestIdleCallback || ((cb) => setTimeout(() => cb({ timeRemaining: () => 15 }), 50));
+  const cIC = window.cancelIdleCallback || ((id) => clearTimeout(id));
+  let ambientIdleHandle = null;
+  let ambientWatchTimer = null;
+  let ambientDismissedArticleId = null;
   /** 附件 / 图片在正文里的引用格式，跟 lib/repo.js 的 lp:// 约定一致。 */
   const ASSET_RE = /lp:\/\/files\/([A-Za-z0-9._-]+)/g;
 
@@ -656,6 +662,9 @@
             markHits(article.title || '未命名', query) +
             '</div>' +
             (article.pinnedAt ? '<span class="item-pin" title="已置顶">' + icon('star') + '</span>' : '') +
+            (article.proposalsCount
+              ? '<span class="chip proposal-chip" title="有 ' + article.proposalsCount + ' 条未处理的排版建议">💡 ' + article.proposalsCount + '</span>'
+              : '') +
             '<button class="icon-btn item-more" data-more="' +
             esc(article.id) +
             '" aria-label="更多操作" title="更多操作">' +
@@ -779,6 +788,17 @@
     // 列表态下 .tools 没有布局宽度，量不出溢出；进入编辑器后必须重算一次，
     // 否则 1320/1280 宽下「更多」还是会跑到视口外（截图里抓到的就是这个）。
     syncToolsOverflow();
+
+    // 💡 提议加载与环境监视条激活
+    try {
+      const savedProposals = await LP.getProposals(id);
+      if (Array.isArray(savedProposals)) state.current.proposals = savedProposals;
+    } catch (err) {
+      /* 忽略 */
+    }
+    if (ambientDismissedArticleId !== id) ambientDismissedArticleId = null;
+    renderAmbientBar();
+    scheduleIdleAnalysis();
   }
 
   function hasLayer(name) {
@@ -808,6 +828,7 @@
     $('empty').hidden = false;
     $('stats').textContent = '';
     $('app').dataset.view = 'list';
+    $('ambientBar').hidden = true;
     closeFind();
     renderPreview();
     renderList();
@@ -3458,6 +3479,7 @@
     void flushBeforeSwitch();
     dismissOverlays();
     $('app').dataset.view = 'list';
+    $('ambientBar').hidden = true;
     if (hasLayer('view:editor')) closeLayerByName('view:editor', false);
     syncTabs();
     renderList();
@@ -3831,6 +3853,211 @@
     }
   }
 
+  // ==========================================================================
+  // 常驻后台监视调度器与排版提议落盘
+  // ==========================================================================
+
+  function evaluateArticleProposals(title, content) {
+    const full = (title || '') + '\n' + (content || '');
+    const proposals = [];
+
+    // 1. 连续多行空行
+    if (/\n{3,}/.test(content || '')) {
+      proposals.push({
+        id: 'blanks',
+        type: 'format',
+        fixLabel: '压缩空行',
+        text: '检测到连续多行空行，建议精简保持紧凑',
+        canFix: true,
+        resolved: false,
+      });
+    }
+
+    // 2. 未闭合代码围栏
+    const fenceMatches = ((content || '').match(/^```/gm) || []).length;
+    if (fenceMatches % 2 !== 0) {
+      proposals.push({
+        id: 'fences',
+        type: 'syntax',
+        fixLabel: '闭合代码块',
+        text: '检测到未闭合的代码块围栏 (```)',
+        canFix: true,
+        resolved: false,
+      });
+    }
+
+    // 3. 缺失 Alt 的插图
+    if (/!\[\s*\]\(/.test(content || '')) {
+      proposals.push({
+        id: 'alt',
+        type: 'a11y',
+        fixLabel: '补齐Alt',
+        text: '部分插图缺失 Alt 说明，建议补齐',
+        canFix: true,
+        resolved: false,
+      });
+    }
+
+    // 4. 缺少 Markdown 标题（有一定正文长度时）
+    if ((content || '').trim().length > 60 && !/^#{1,6}\s+/m.test(full)) {
+      proposals.push({
+        id: 'headings',
+        type: 'structure',
+        fixLabel: '设首行为标题',
+        text: '建议添加 Markdown 标题 (# 一级，## 二级) 提高可读性',
+        canFix: true,
+        resolved: false,
+      });
+    }
+
+    // 5. 损坏的图表卡片 JSON
+    const chartBlocks = (content || '').match(/```chart\s*\n([\s\S]*?)```/g) || [];
+    let brokenChart = false;
+    for (let i = 0; i < chartBlocks.length; i++) {
+      const raw = chartBlocks[i].replace(/^```chart\s*\n/, '').replace(/\n```$/, '');
+      try {
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.type || !parsed.data) brokenChart = true;
+      } catch (err) {
+        brokenChart = true;
+      }
+    }
+    if (brokenChart) {
+      proposals.push({
+        id: 'chart',
+        type: 'data',
+        fixLabel: '检查图表',
+        text: '检测到格式损坏的图表卡片 JSON',
+        canFix: false,
+        resolved: false,
+      });
+    }
+
+    return proposals;
+  }
+
+  function scheduleIdleAnalysis() {
+    if (ambientIdleHandle) cIC(ambientIdleHandle);
+    ambientIdleHandle = rIC(() => {
+      ambientIdleHandle = null;
+      runAmbientAnalysis();
+    });
+  }
+
+  function tickAmbientWatcher() {
+    if (!state.current || $('app').dataset.view !== 'editor') return;
+    scheduleIdleAnalysis();
+  }
+
+  async function runAmbientAnalysis() {
+    if (!state.current || !$('editor')) return;
+    const currentId = state.current.id;
+    const title = ($('title') && $('title').value) || '';
+    const content = ($('editor') && $('editor').value) || '';
+    const fresh = evaluateArticleProposals(title, content);
+
+    const prev = Array.isArray(state.current.proposals) ? state.current.proposals : [];
+    const prevUnresolved = prev.filter((p) => !p.resolved);
+    const freshUnresolved = fresh.filter((p) => !p.resolved);
+
+    const same =
+      prevUnresolved.length === freshUnresolved.length &&
+      prevUnresolved.every((p, idx) => p.id === freshUnresolved[idx].id);
+
+    if (!same) {
+      state.current.proposals = fresh;
+      if (LP && typeof LP.saveProposals === 'function') {
+        await LP.saveProposals(currentId, fresh).catch(() => {});
+      }
+      const found = state.articles.find((a) => a.id === currentId);
+      if (found) {
+        found.proposalsCount = freshUnresolved.length;
+        renderList();
+      }
+    }
+
+    renderAmbientBar();
+  }
+
+  function renderAmbientBar() {
+    const bar = $('ambientBar');
+    const textEl = $('ambientText');
+    if (!bar || !textEl) return;
+
+    if (!state.current || $('app').dataset.view !== 'editor') {
+      bar.hidden = true;
+      return;
+    }
+
+    if (ambientDismissedArticleId === state.current.id) {
+      bar.hidden = true;
+      return;
+    }
+
+    const unresolved = (state.current.proposals || []).filter((p) => !p.resolved);
+    if (unresolved.length === 0) {
+      bar.hidden = true;
+      return;
+    }
+
+    bar.hidden = false;
+    const labels = unresolved.map((p) => p.fixLabel || p.text).slice(0, 3).join('、');
+    textEl.textContent = '检测到 ' + unresolved.length + ' 条可优化的排版建议：' + labels;
+  }
+
+  async function applyAllProposals() {
+    if (!state.current || !$('editor')) return;
+    const editor = $('editor');
+    const oldVal = editor.value;
+    let newVal = oldVal;
+    const curTitle = ($('title') && $('title').value.trim()) || '文章标题';
+
+    const unresolved = (state.current.proposals || []).filter((p) => !p.resolved && p.canFix);
+    if (!unresolved.length) {
+      toast('当前没有可自动优化的排版建议');
+      return;
+    }
+
+    unresolved.forEach((p) => {
+      if (p.id === 'blanks') {
+        newVal = newVal.replace(/\n{3,}/g, '\n\n');
+      } else if (p.id === 'fences') {
+        newVal = newVal + (/\n$/.test(newVal) ? '' : '\n') + '```\n';
+      } else if (p.id === 'alt') {
+        newVal = newVal.replace(/!\[\s*\]\(/g, '![插图](');
+      } else if (p.id === 'headings') {
+        newVal = '# ' + curTitle + '\n\n' + newVal;
+      }
+    });
+
+    if (newVal !== oldVal) {
+      editor.value = newVal;
+      markDirty();
+      renderPreview();
+    }
+
+    const allResolved = (state.current.proposals || []).map((p) => Object.assign({}, p, { resolved: true }));
+    state.current.proposals = allResolved;
+    if (LP && typeof LP.saveProposals === 'function') {
+      await LP.saveProposals(state.current.id, allResolved).catch(() => {});
+    }
+
+    const found = state.articles.find((a) => a.id === state.current.id);
+    if (found) {
+      found.proposalsCount = 0;
+      renderList();
+    }
+
+    renderAmbientBar();
+    toast('已一键优化所有排版问题（Ctrl+Z 可撤销）', 'ok');
+  }
+
+  function dismissAmbient() {
+    if (state.current) ambientDismissedArticleId = state.current.id;
+    $('ambientBar').hidden = true;
+    toast('已暂存排版建议，可在「写作实验室」中随时查看');
+  }
+
   let diffRevs = [];
   async function openDiff() {
     openSheet('diffModal');
@@ -3996,7 +4223,11 @@
   $('title').addEventListener('input', () => {
     updateStats();
     markDirty();
+    scheduleIdleAnalysis();
   });
+  $('btnAmbientFix').addEventListener('click', applyAllProposals);
+  $('btnAmbientDetail').addEventListener('click', openLab);
+  $('btnAmbientDismiss').addEventListener('click', dismissAmbient);
   $('btnPin').addEventListener('click', togglePin);
   $('btnTagsEdit').addEventListener('click', () => openTags(true));
   $('btnShare').addEventListener('click', openShare);
@@ -4121,6 +4352,7 @@
       scheduleOutline();
       markDirty();
       refreshFmtState();
+      scheduleIdleAnalysis();
       if (state.find.open && !$('findBar').hidden) runFind();
     });
     editor.addEventListener('scroll', () => {
@@ -4800,6 +5032,8 @@
     setPaneMode(isNarrow() ? 'write' : 'split');
     renderPreview();
     syncTabs();
+
+    ambientWatchTimer = setInterval(tickAmbientWatcher, 3500);
 
     try {
       const info = await LP.appInfo();

@@ -249,6 +249,11 @@ function registerIpc() {
   ipcMain.handle('articles:revisions', (_e, id) => store.listRevisions(id));
   ipcMain.handle('articles:restoreRevision', (_e, id, index) => store.restoreRevision(id, index));
 
+  // 诊断与提议通道（后台常驻监视提议落盘与跨端追踪）
+  ipcMain.handle('proposals:get', (_e, id) => store.getProposals(id));
+  ipcMain.handle('proposals:save', (_e, id, proposals) => store.saveProposals(id, proposals));
+  ipcMain.handle('proposals:listUnresolved', () => store.listUnresolvedProposals());
+
   ipcMain.handle('files:pick', async () => {
     const res = await dialog.showOpenDialog(mainWindow, {
       title: '选择要附加的文件',

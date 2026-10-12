@@ -247,6 +247,21 @@
           <!-- 格式工具栏：按钮由 app.js 按 FMT_ACTIONS 表生成，避免 id 重复与漏绑 -->
           <div class="fmtbar" id="fmtbar" role="toolbar" aria-label="格式与插入"></div>
 
+          <!-- 常驻监视建议条：当后台调度器发现未闭合围栏、多余空行、无Alt插图等问题时，非阻塞静默浮现 -->
+          <div class="ambient-bar" id="ambientBar" hidden>
+            <div class="ambient-content">
+              <span class="ambient-icon">💡</span>
+              <span class="ambient-text" id="ambientText">检测到可优化的排版建议</span>
+            </div>
+            <div class="ambient-actions">
+              <button class="btn sm primary" id="btnAmbientFix">一键优化</button>
+              <button class="btn sm ghost" id="btnAmbientDetail">查看建议</button>
+              <button class="icon-btn sm" id="btnAmbientDismiss" title="暂不处理" aria-label="暂不处理">
+                <svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>
+              </button>
+            </div>
+          </div>
+
           <!-- 窄屏专用：写作 / 对照 / 预览 三态切换（桌面端隐藏，用分栏 + 「预览」按钮） -->
           <div class="paneswitch only-mobile" id="paneSwitch" role="tablist" aria-label="编辑与预览">
             <button class="pswitch" id="paneWrite" data-mode="write" role="tab">写作</button>

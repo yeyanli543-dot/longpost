@@ -122,6 +122,8 @@
 
   function toListItem(a) {
     const content = String(a.content || '');
+    const proposals = Array.isArray(a.proposals) ? a.proposals : [];
+    const proposalsCount = proposals.filter((p) => !p.resolved).length;
     return {
       id: a.id,
       title: a.title || '未命名',
@@ -132,6 +134,7 @@
       minutes: readingMinutes(content),
       pinnedAt: a.pinnedAt || 0,
       revisionCount: Array.isArray(a.history) ? a.history.length : 0,
+      proposalsCount,
       createdAt: a.createdAt || 0,
       updatedAt: a.updatedAt || 0,
       // 列表里的搜索用的是这份预先算好的小写文本，避免每次输入都重扫全部正文
@@ -446,6 +449,45 @@
       return next;
     }
 
+    // ------------------------------------------------------------ 提议 / 建议通道
+
+    async function getProposals(articleId) {
+      if (!articleId) return [];
+      const all = await readAll();
+      const found = all.find((a) => a.id === articleId);
+      return found && Array.isArray(found.proposals) ? found.proposals : [];
+    }
+
+    async function saveProposals(articleId, proposals) {
+      if (!articleId) return [];
+      const list = await readAll();
+      const idx = list.findIndex((a) => a.id === articleId);
+      if (idx === -1) return [];
+      const valid = Array.isArray(proposals) ? proposals : [];
+      list[idx].proposals = valid;
+      list[idx].unresolvedProposalsCount = valid.filter((p) => !p.resolved).length;
+      await writeAll(list);
+      return valid;
+    }
+
+    async function listUnresolvedProposals() {
+      const all = await readAll();
+      const out = [];
+      for (const a of all) {
+        if (a.deletedAt) continue;
+        const unres = (a.proposals || []).filter((p) => !p.resolved);
+        if (unres.length > 0) {
+          out.push({
+            articleId: a.id,
+            title: a.title || '未命名',
+            count: unres.length,
+            proposals: unres,
+          });
+        }
+      }
+      return out;
+    }
+
     return {
       listArticles,
       listTrash,
@@ -467,6 +509,9 @@
       listOrphanFiles,
       deleteFiles,
       collectRefs,
+      getProposals,
+      saveProposals,
+      listUnresolvedProposals,
       getSettings,
       setSettings,
       dataDir: () => backend.dataDir(),
