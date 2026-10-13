@@ -105,11 +105,11 @@ function createWindow() {
   });
 
   const distHtml = path.join(__dirname, '..', 'dist', 'client', 'index.html');
-  const fallbackHtml = path.join(__dirname, 'renderer', 'index.html');
   if (fs.existsSync(distHtml)) {
     mainWindow.loadFile(distHtml);
   } else {
-    mainWindow.loadFile(fallbackHtml);
+    mainWindow.loadURL('about:blank');
+    console.error('[启动失败] 未检测到 dist/client/index.html，请先运行 npm run build:client 构建现代前端产物。');
   }
 
   if (SMOKE_OUT) attachSmokeHooks();
