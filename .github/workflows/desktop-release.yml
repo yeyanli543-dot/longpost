@@ -51,9 +51,9 @@ jobs:
           node-version: 22
 
       - name: 构建现代前端应用
-        working-directory: .
+        working-directory: ${{ github.workspace }}
         run: |
-          npm install --no-audit --no-fund
+          npm install --legacy-peer-deps --no-audit --no-fund
           npm run build:client
 
       # desktop/package-lock.json 不进仓库（见 .gitignore），所以这里用 npm install；
@@ -64,7 +64,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          npm install --no-audit --no-fund 2>&1 | tee ci-install.log
+          npm install --legacy-peer-deps --no-audit --no-fund 2>&1 | tee ci-install.log
           code=${PIPESTATUS[0]}
           if [ "$code" -ne 0 ]; then
             {

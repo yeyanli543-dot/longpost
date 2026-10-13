@@ -67,13 +67,13 @@ jobs:
 
       - name: 构建现代前端应用
         run: |
-          npm install --no-audit --no-fund
+          npm install --legacy-peer-deps --no-audit --no-fund
           npm run build:client
 
       - name: 装桌面端依赖与准备图标
         working-directory: desktop
         run: |
-          npm install --omit=dev --ignore-scripts --no-audit --no-fund
+          npm install --legacy-peer-deps --omit=dev --ignore-scripts --no-audit --no-fund
           node scripts/make-icon.js
 
       - name: 逻辑自检
@@ -82,7 +82,7 @@ jobs:
 
       - name: 装手机壳依赖
         working-directory: mobile
-        run: npm install --no-audit --no-fund
+        run: npm install --legacy-peer-deps --no-audit --no-fund
 
       - name: 生成 Android 工程
         working-directory: mobile
