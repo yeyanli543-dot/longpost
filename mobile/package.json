@@ -2,10 +2,10 @@
   "name": "longpost-mobile",
   "version": "2.7.4",
   "private": true,
-  "description": "LongPost 手机版外壳：前端复用 desktop/renderer，数据落在设备本地（IndexedDB）",
+  "description": "LongPost 手机版外壳：前端复用现代 React 产物 dist/client，数据落在设备本地（IndexedDB/SQLite）",
   "license": "MIT",
   "scripts": {
-    "web": "node ../desktop/scripts/sync-vendor.js",
+    "web": "npm --prefix .. run build:client",
     "add:android": "cap add android",
     "sync:android": "cap sync android",
     "apk": "cd android && gradlew assembleDebug"
