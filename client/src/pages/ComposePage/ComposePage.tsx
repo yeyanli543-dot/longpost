@@ -103,9 +103,9 @@ const ComposePage = () => {
   const isEditMode = !!articleId && !!articleData;
 
   return (
-    <div className="min-h-screen bg-black text-gray-100 pb-24 md:pb-0">
+    <div className="min-h-screen bg-background text-foreground pb-24 md:pb-0">
       {/* Sticky header with tabs */}
-      <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-md border-b border-gray-800">
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border pt-safe">
         <div className="flex">
           <button
              onClick={() => setActiveTab('post')}

@@ -290,7 +290,7 @@ const MeetingDetailPage = () => {
   return (
     <div className="min-h-screen pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-black/80 backdrop-blur border-b border-[#2f3336] px-4 py-3">
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3 pt-safe">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/meetings')}

@@ -1,6 +1,13 @@
-export type UserRole = 'admin' | 'editor' | 'user';
-export type ThemeMode = 'light' | 'dark' | 'system';
-export type FontSize = 'small' | 'medium' | 'large';
+export type ThemeMode =
+  | 'light'
+  | 'dark'
+  | 'system'
+  | 'oled'
+  | 'sepia'
+  | 'nord'
+  | 'forest'
+  | 'lavender';
+export type FontSize = 'small' | 'medium' | 'large' | 'xlarge';
 export type CommentContentType = 'post' | 'article';
 export type TimelineView = 'all' | 'following' | 'hot';
 export type CommentSortMode = 'time' | 'hot';

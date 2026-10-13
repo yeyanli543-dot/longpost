@@ -7,10 +7,78 @@
 @config "../../tailwind.config.ts";
 
 :root {
-  --safe-area-inset-top: env(safe-area-inset-top, 0px);
+  --custom-punch-hole-offset: 0px;
+  --safe-area-inset-top: max(env(safe-area-inset-top, 0px), var(--custom-punch-hole-offset, 0px));
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
   --safe-area-inset-left: env(safe-area-inset-left, 0px);
   --safe-area-inset-right: env(safe-area-inset-right, 0px);
+  --reading-line-height: 1.75;
+}
+
+/* 手机端挖孔屏 / 异形屏顶部前摄避让档位 */
+html.notch-punch-hole {
+  --custom-punch-hole-offset: 36px;
+}
+html.notch-island {
+  --custom-punch-hole-offset: 48px;
+}
+html.notch-compact {
+  --custom-punch-hole-offset: 0px;
+}
+
+/* 手机横屏双侧避让 */
+html.notch-landscape-guard {
+  --safe-area-inset-left: max(env(safe-area-inset-left, 0px), 16px);
+  --safe-area-inset-right: max(env(safe-area-inset-right, 0px), 16px);
+}
+
+/* 字号排版档位 */
+html.font-size-small {
+  font-size: 14.5px;
+}
+html.font-size-medium {
+  font-size: 16px;
+}
+html.font-size-large {
+  font-size: 17.5px;
+}
+html.font-size-xlarge {
+  font-size: 19px;
+}
+
+/* 行距排版 */
+html.line-height-compact {
+  --reading-line-height: 1.5;
+}
+html.line-height-normal {
+  --reading-line-height: 1.75;
+}
+html.line-height-relaxed {
+  --reading-line-height: 2.05;
+}
+
+/* 安全区辅助工具类 */
+.pt-safe {
+  padding-top: var(--safe-area-inset-top);
+}
+.pb-safe {
+  padding-bottom: var(--safe-area-inset-bottom);
+}
+.pl-safe {
+  padding-left: var(--safe-area-inset-left);
+}
+.pr-safe {
+  padding-right: var(--safe-area-inset-right);
+}
+.px-safe {
+  padding-left: var(--safe-area-inset-left);
+  padding-right: var(--safe-area-inset-right);
+}
+.top-safe {
+  top: var(--safe-area-inset-top);
+}
+.bottom-safe {
+  bottom: var(--safe-area-inset-bottom);
 }
 
 html, body, #root {
@@ -23,8 +91,8 @@ html {
 }
 
 body {
-  padding-top: var(--safe-area-inset-top);
-  padding-bottom: var(--safe-area-inset-bottom);
+  padding-top: 0;
+  padding-bottom: 0;
   min-height: 100vh;
   min-height: 100dvh;
   overscroll-behavior: none;

@@ -388,12 +388,12 @@ const HomePage = () => {
   return (
     <div className="min-h-screen">
       {/* Sticky header */}
-      <header className="sticky top-0 z-10 bg-black/70 backdrop-blur-md border-b border-gray-800">
+      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border pt-safe">
         <div className="px-4 py-2.5 md:py-3">
-          <h1 className="text-lg md:text-xl font-bold text-gray-100">首页</h1>
+          <h1 className="text-lg md:text-xl font-bold text-foreground">首页</h1>
         </div>
         {/* View tabs */}
-        <div className="flex border-t border-gray-800 overflow-x-auto md:overflow-visible">
+        <div className="flex border-t border-border overflow-x-auto md:overflow-visible">
           {viewTabs.map((tab) => (
             <button
               key={tab.key}

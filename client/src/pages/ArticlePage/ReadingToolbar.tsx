@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Minus, Plus, Sun, Moon, List } from 'lucide-react';
-
-type FontSize = 'small' | 'medium' | 'large';
-type Theme = 'dark' | 'light';
+import type { ThemeMode, FontSize } from '@shared/api.interface';
 
 interface ReadingToolbarProps {
   fontSize: FontSize;
   setFontSize: (size: FontSize) => void;
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
+  theme: ThemeMode;
+  setTheme: (theme: ThemeMode) => void;
 }
 
 export default function ReadingToolbar({
@@ -28,25 +26,30 @@ export default function ReadingToolbar({
   }, []);
 
   const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    if (theme === 'light') setTheme('dark');
+    else if (theme === 'dark') setTheme('sepia');
+    else setTheme('light');
   };
 
   const decreaseFont = () => {
-    if (fontSize === 'large') setFontSize('medium');
+    if (fontSize === 'xlarge') setFontSize('large');
+    else if (fontSize === 'large') setFontSize('medium');
     else if (fontSize === 'medium') setFontSize('small');
   };
 
   const increaseFont = () => {
     if (fontSize === 'small') setFontSize('medium');
     else if (fontSize === 'medium') setFontSize('large');
+    else if (fontSize === 'large') setFontSize('xlarge');
   };
 
   return (
     <div
-       className={`fixed right-3 md:right-4 top-20 z-40 flex flex-col gap-2 md:gap-1 p-2 md:p-1.5 rounded-full bg-[#16181c] border border-[#2f3336] transition-opacity duration-300 ${
-         visible ? 'opacity-100' : 'opacity-0 pointer-events-none'
-       }`}
-     >
+      className={`fixed right-3 md:right-4 z-40 flex flex-col gap-2 md:gap-1 p-2 md:p-1.5 rounded-full bg-card/90 backdrop-blur border border-border transition-opacity duration-300 shadow-md ${
+        visible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      }`}
+      style={{ top: 'calc(4.5rem + var(--safe-area-inset-top))' }}
+    >
       <button
          onClick={decreaseFont}
          disabled={fontSize === 'small'}

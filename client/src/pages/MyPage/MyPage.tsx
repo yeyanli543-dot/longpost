@@ -407,8 +407,8 @@ const MyPage = () => {
   return (
     <div className="min-h-screen pb-24 md:pb-0">
       {/* Header */}
-      <div className="sticky top-0 z-10 backdrop-blur-md bg-black/70 border-b border-gray-800 px-4 py-3">
-        <h1 className="text-xl font-bold text-gray-100">我的内容</h1>
+      <div className="sticky top-0 z-10 backdrop-blur-md bg-background/80 border-b border-border px-4 py-3 pt-safe">
+        <h1 className="text-xl font-bold text-foreground">我的内容</h1>
       </div>
 
       {/* Profile section */}

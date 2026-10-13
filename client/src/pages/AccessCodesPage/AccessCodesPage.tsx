@@ -32,8 +32,8 @@ const AccessCodesPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-[#e7e9ea]">
-      <div className="border-b border-[#2f3336] px-4 py-4 sticky top-0 bg-black/90 backdrop-blur z-10">
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="border-b border-border px-4 py-4 sticky top-0 bg-background/90 backdrop-blur-md z-10 pt-safe">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>

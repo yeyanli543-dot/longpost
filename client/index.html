@@ -36,22 +36,47 @@
     }
   </script>
   <script>
-    // 首帧就把主题类挂上，否则会先闪一下"黑底黑字"再变成正常配色
+    // 首帧把主题、强调色、挖孔屏等类挂上，避免页面闪白或布局跳跃
     (function () {
       try {
-        var saved = localStorage.getItem('app-theme-preference');
-        var mode = saved === 'light' || saved === 'dark' || saved === 'system' ? saved : 'dark';
-        var resolved = mode;
-        if (mode === 'system') {
+        var root = document.documentElement;
+        var savedTheme = localStorage.getItem('app-theme-preference') || 'dark';
+        var resolved = savedTheme;
+        if (savedTheme === 'system') {
           resolved = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
         }
-        var root = document.documentElement;
+        root.classList.remove('light-mode', 'dark-mode', 'dark', 'theme-oled', 'theme-sepia', 'theme-nord', 'theme-forest', 'theme-lavender');
         if (resolved === 'light') {
           root.classList.add('light-mode');
-          root.classList.remove('dark-mode', 'dark');
+        } else if (resolved === 'sepia') {
+          root.classList.add('theme-sepia');
         } else {
           root.classList.add('dark-mode', 'dark');
-          root.classList.remove('light-mode');
+          if (resolved === 'oled') root.classList.add('theme-oled');
+          else if (resolved === 'nord') root.classList.add('theme-nord');
+          else if (resolved === 'forest') root.classList.add('theme-forest');
+          else if (resolved === 'lavender') root.classList.add('theme-lavender');
+        }
+
+        // 挂载强调色
+        var savedAccent = localStorage.getItem('app-accent-preference') || 'blue';
+        root.classList.add('accent-' + savedAccent);
+
+        // 挂载字体
+        var savedFont = localStorage.getItem('app-font-preference') || 'sans';
+        root.classList.add('font-pref-' + savedFont);
+
+        // 挂载字号
+        var savedFontSize = localStorage.getItem('app-fontsize-preference') || 'medium';
+        root.classList.add('font-size-' + savedFontSize);
+
+        // 挂载挖孔屏/异形屏补偿
+        var savedNotch = localStorage.getItem('app-notch-mode') || 'auto';
+        if (savedNotch !== 'auto') {
+          root.classList.add('notch-' + savedNotch);
+        }
+        if (localStorage.getItem('app-notch-landscape') === 'true') {
+          root.classList.add('notch-landscape-guard');
         }
       } catch (e) {}
     })();

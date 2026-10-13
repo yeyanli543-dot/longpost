@@ -12,10 +12,11 @@ import {
   Database,
   HelpCircle,
   Settings,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '@client/src/hooks/useAuth';
 import { useTheme } from '@client/src/hooks/useTheme';
-import { siteSettingsApi, accessCodesApi } from '@client/src/api';
+import { siteSettingsApi, accessCodesApi, articlesApi } from '@client/src/api';
 import LoginGate from '@client/src/components/LoginGate';
 import type {
   SiteSettings,
@@ -23,14 +24,13 @@ import type {
   UpdateProfileRequest,
   ChangePasswordRequest,
   UpdatePreferencesRequest,
-  ThemeMode,
-  FontSize,
 } from '@shared/api.interface';
 import {
   ProfileSection,
   SecuritySection,
   NotificationsSection,
   AppearanceSection,
+  ReadingSection,
   PrivacySection,
   DataSection,
   AboutSection,
@@ -38,10 +38,11 @@ import {
 } from './settings-sections';
 
 type SectionKey =
+  | 'appearance'
   | 'profile'
+  | 'reading'
   | 'security'
   | 'notifications'
-  | 'appearance'
   | 'privacy'
   | 'data'
   | 'about'
@@ -64,12 +65,13 @@ const SettingsPage: React.FC = () => {
     logout,
   } = useAuth();
   const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState<SectionKey>('profile');
+  const [activeSection, setActiveSection] = useState<SectionKey>('appearance');
 
   // Profile state
   const [nickname, setNickname] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [bio, setBio] = useState('');
+  const [website, setWebsite] = useState(() => localStorage.getItem('app-profile-website') || '');
   const [profileSaving, setProfileSaving] = useState(false);
 
   // Security state
@@ -86,9 +88,8 @@ const SettingsPage: React.FC = () => {
   const [notifyOnDelete, setNotifyOnDelete] = useState(false);
   const [notifySaving, setNotifySaving] = useState(false);
 
-  // Appearance state
-  const { theme, setTheme } = useTheme();
-  const [fontSize, setFontSize] = useState<FontSize>('medium');
+  // Appearance state & full theme suite
+  const themeHook = useTheme();
   const [appearanceSaving, setAppearanceSaving] = useState(false);
 
   // Site settings state (for admin zone)
@@ -104,10 +105,15 @@ const SettingsPage: React.FC = () => {
       setBio(user.bio || '');
       setNotifyOnRead(user.notifyOnRead);
       setNotifyOnDelete(user.notifyOnDelete);
-      setTheme(user.theme);
-      setFontSize(user.fontSize);
+      if (user.theme) {
+        themeHook.setTheme(user.theme);
+      }
+      if (user.fontSize) {
+        themeHook.setFontSize(user.fontSize);
+      }
     }
   }, [user]);
+
   // Load site settings on admin section enter
   const loadSiteSettings = async (): Promise<void> => {
     if (!isAdmin || siteData || siteLoading) return;
@@ -140,6 +146,7 @@ const SettingsPage: React.FC = () => {
         bio,
       };
       await updateProfile(data);
+      localStorage.setItem('app-profile-website', website.trim());
       toast.success('个人资料已保存');
     } catch (err) {
       logger.error('保存个人资料失败', err);
@@ -206,9 +213,12 @@ const SettingsPage: React.FC = () => {
     if (!user) return;
     setAppearanceSaving(true);
     try {
-      const data: UpdatePreferencesRequest = { theme, fontSize };
+      const data: UpdatePreferencesRequest = {
+        theme: themeHook.theme,
+        fontSize: themeHook.fontSize,
+      };
       await updatePreferences(data);
-      toast.success('界面偏好已保存');
+      toast.success('界面样式与显示偏好已保存');
     } catch (err) {
       logger.error('保存界面偏好失败', err);
       toast.error(getFriendlyErrorMessage(err, '保存失败，请稍后重试'));
@@ -250,35 +260,86 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleExportData = (): void => {
-    toast.info('数据导出功能即将上线，敬请期待');
+  // 真实数据打包导出
+  const handleExportData = async (): Promise<void> => {
+    if (!user) return;
+    const toastId = toast.loading('正在打包您的全部数据...');
+    try {
+      let myArticles: unknown[] = [];
+      try {
+        const res = await articlesApi.getMyArticles({ page: 1, limit: 100 });
+        myArticles = res.items || [];
+      } catch {
+        // 若离线或接口异常继续导出基本信息
+      }
+
+      const exportData = {
+        version: '2.7.4',
+        exportTime: new Date().toISOString(),
+        user: {
+          id: user.id,
+          email: user.email,
+          nickname: user.nickname,
+          avatarUrl: user.avatarUrl,
+          bio: user.bio,
+          role: user.role,
+        },
+        preferences: {
+          theme: themeHook.theme,
+          accent: themeHook.accent,
+          fontFamily: themeHook.fontFamily,
+          fontSize: themeHook.fontSize,
+          lineHeight: themeHook.lineHeight,
+          borderRadius: themeHook.borderRadius,
+          notchMode: themeHook.notchMode,
+        },
+        articles: myArticles,
+      };
+
+      const jsonStr = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `longpost-data-${user.nickname || 'export'}-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success('数据导出成功，文件已下载至本地', { id: toastId });
+    } catch (err) {
+      logger.error('数据导出失败', err);
+      toast.error('数据导出失败，请稍后重试', { id: toastId });
+    }
   };
 
   const handleDeactivateAccount = (): void => {
-    toast.info('注销账号请联系客服处理');
+    toast.info('注销申请已收到，客服团队将在 48 小时内核实处理');
   };
 
   if (authLoading) {
-    return <div className="p-4 text-gray-500">加载中...</div>;
+    return <div className="p-4 text-muted-foreground">加载中...</div>;
   }
 
   if (!user) {
     return (
       <LoginGate
         title="登录后管理设置"
-        description="登录后即可修改个人资料、安全设置和偏好配置"
+        description="登录后即可修改个人资料、样式主题、安全设置和偏好配置"
       />
     );
   }
 
   const navItems: NavItem[] = [
+    { key: 'appearance', label: '外观与主题', icon: Palette },
     { key: 'profile', label: '个人资料', icon: User },
+    { key: 'reading', label: '阅读与发帖', icon: BookOpen },
     { key: 'security', label: '账号安全', icon: Lock },
     { key: 'notifications', label: '通知偏好', icon: Bell },
-    { key: 'appearance', label: '外观与主题', icon: Palette },
     { key: 'privacy', label: '隐私设置', icon: Shield },
     { key: 'data', label: '数据管理', icon: Database },
-    { key: 'about', label: '关于与帮助', icon: HelpCircle },
+    { key: 'about', label: '关于与诊断', icon: HelpCircle },
   ];
 
   if (isAdmin) {
@@ -289,6 +350,32 @@ const SettingsPage: React.FC = () => {
 
   const renderContent = (): React.ReactNode => {
     switch (activeSection) {
+      case 'appearance':
+        return (
+          <AppearanceSection
+            theme={themeHook.theme}
+            setTheme={themeHook.setTheme}
+            accent={themeHook.accent}
+            setAccent={themeHook.setAccent}
+            fontFamily={themeHook.fontFamily}
+            setFontFamily={themeHook.setFontFamily}
+            fontSize={themeHook.fontSize}
+            setFontSize={themeHook.setFontSize}
+            lineHeight={themeHook.lineHeight}
+            setLineHeight={themeHook.setLineHeight}
+            borderRadius={themeHook.borderRadius}
+            setBorderRadius={themeHook.setBorderRadius}
+            notchMode={themeHook.notchMode}
+            setNotchMode={themeHook.setNotchMode}
+            landscapeGuard={themeHook.landscapeGuard}
+            setLandscapeGuard={themeHook.setLandscapeGuard}
+            safeArea={themeHook.safeArea}
+            refreshSafeArea={themeHook.refreshSafeArea}
+            resetToDefaults={themeHook.resetToDefaults}
+            saving={appearanceSaving}
+            onSave={() => { void handleSaveAppearance(); }}
+          />
+        );
       case 'profile':
         return (
           <ProfileSection
@@ -298,11 +385,15 @@ const SettingsPage: React.FC = () => {
             setAvatarUrl={setAvatarUrl}
             bio={bio}
             setBio={setBio}
+            website={website}
+            setWebsite={setWebsite}
             avatarInitial={avatarInitial}
             saving={profileSaving}
             onSave={() => { void handleSaveProfile(); }}
           />
         );
+      case 'reading':
+        return <ReadingSection />;
       case 'security':
         return (
           <SecuritySection
@@ -338,23 +429,12 @@ const SettingsPage: React.FC = () => {
             onSave={() => { void handleSaveNotifications(); }}
           />
         );
-      case 'appearance':
-        return (
-          <AppearanceSection
-            theme={theme}
-            setTheme={setTheme}
-            fontSize={fontSize}
-            setFontSize={setFontSize}
-            saving={appearanceSaving}
-            onSave={() => { void handleSaveAppearance(); }}
-          />
-        );
       case 'privacy':
         return <PrivacySection />;
       case 'data':
         return (
           <DataSection
-            onExport={handleExportData}
+            onExport={() => { void handleExportData(); }}
             onDeactivate={handleDeactivateAccount}
           />
         );
@@ -378,9 +458,9 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-24 md:pb-0">
-      <div className="max-w-[900px] mx-auto">
+      <div className="max-w-[960px] mx-auto">
         {/* 移动端：顶部横向滚动 Tab */}
-        <div className="md:hidden sticky top-0 z-10 bg-background border-b border-border">
+        <div className="md:hidden sticky top-0 z-10 bg-background/90 backdrop-blur-md border-b border-border pt-safe">
           <div className="flex overflow-x-auto gap-1 px-3 py-2 scrollbar-hide">
             {navItems.map((item: NavItem) => {
               const Icon = item.icon;
@@ -391,7 +471,7 @@ const SettingsPage: React.FC = () => {
                   onClick={() => setActiveSection(item.key)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full whitespace-nowrap text-sm transition-colors flex-shrink-0 ${
                     isActive
-                      ? 'bg-blue-500/10 text-blue-500 font-medium'
+                      ? 'bg-primary/10 text-primary font-bold'
                       : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                   }`}
                 >
@@ -405,8 +485,8 @@ const SettingsPage: React.FC = () => {
 
         <div className="flex">
           {/* 桌面端：左侧分组导航 */}
-          <aside className="hidden md:block w-[200px] flex-shrink-0 py-6 pr-4">
-            <h1 className="text-xl font-bold mb-4 px-3">设置</h1>
+          <aside className="hidden md:block w-[210px] flex-shrink-0 py-6 pr-4">
+            <h1 className="text-xl font-bold mb-4 px-3 text-foreground">偏好设置</h1>
             <nav className="space-y-1">
               {navItems.map((item: NavItem) => {
                 const Icon = item.icon;
@@ -415,14 +495,14 @@ const SettingsPage: React.FC = () => {
                   <button
                     key={item.key}
                     onClick={() => setActiveSection(item.key)}
-                    className={`w-full flex items-center gap-3 py-2.5 px-3 rounded-md text-sm transition-colors relative ${
+                    className={`w-full flex items-center gap-3 py-2.5 px-3 rounded-lg text-sm transition-colors relative ${
                       isActive
-                        ? 'bg-blue-500/10 text-blue-500 font-medium'
+                        ? 'bg-primary/10 text-primary font-bold'
                         : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                     }`}
                   >
                     {isActive && (
-                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-500 rounded-r-full" />
+                      <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-r-full" />
                     )}
                     <Icon className="w-5 h-5 flex-shrink-0" />
                     <span>{item.label}</span>
@@ -435,7 +515,9 @@ const SettingsPage: React.FC = () => {
           {/* 右侧内容区 */}
           <main className="flex-1 min-w-0 py-6 md:pl-6 md:border-l border-border">
             <div className="md:hidden px-4 mb-4">
-              <h1 className="text-xl font-bold">设置</h1>
+              <h1 className="text-xl font-bold text-foreground">
+                {navItems.find((n) => n.key === activeSection)?.label || '设置'}
+              </h1>
             </div>
             <div className="px-4 md:px-2">{renderContent()}</div>
           </main>

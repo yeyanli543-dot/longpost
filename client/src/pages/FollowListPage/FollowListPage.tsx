@@ -217,9 +217,9 @@ const FollowListPage: React.FC = () => {
   return (
     <div className="min-h-screen pb-24 md:pb-0">
       {/* Sticky header */}
-      <header className="sticky top-0 z-10 bg-black/70 backdrop-blur-md border-b border-gray-800">
+      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border pt-safe">
         <div className="px-4 py-3">
-          <h1 className="text-xl font-bold text-gray-100">
+          <h1 className="text-xl font-bold text-foreground">
             {activeTab === 'followers' ? '粉丝' : '关注'}
           </h1>
           <p className="text-xs text-gray-500 mt-0.5">

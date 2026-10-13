@@ -145,9 +145,9 @@ const MeetingsPage = () => {
   return (
     <div className="min-h-screen pb-24 md:pb-0">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-black/80 backdrop-blur border-b border-[#2f3336] px-4 py-3">
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3 pt-safe">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-[#e7e9ea]">会议</h1>
+          <h1 className="text-xl font-bold text-foreground">会议</h1>
           <button
             onClick={() => setShowCreateModal(true)}
             className="flex items-center gap-1.5 px-4 py-2 bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-bold rounded-full transition-colors text-sm"

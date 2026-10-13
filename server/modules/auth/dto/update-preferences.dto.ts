@@ -12,11 +12,11 @@ export class UpdatePreferencesDto implements UpdatePreferencesRequest {
 
   @IsOptional()
   @IsString()
-  @IsIn(['light', 'dark', 'system'])
-  theme?: 'light' | 'dark' | 'system';
+  @IsIn(['light', 'dark', 'system', 'oled', 'sepia', 'nord', 'forest', 'lavender'])
+  theme?: 'light' | 'dark' | 'system' | 'oled' | 'sepia' | 'nord' | 'forest' | 'lavender';
 
   @IsOptional()
   @IsString()
-  @IsIn(['small', 'medium', 'large'])
-  fontSize?: 'small' | 'medium' | 'large';
+  @IsIn(['small', 'medium', 'large', 'xlarge'])
+  fontSize?: 'small' | 'medium' | 'large' | 'xlarge';
 }

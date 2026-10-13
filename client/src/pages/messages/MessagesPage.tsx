@@ -136,8 +136,8 @@ const MessagesPage = () => {
   return (
     <div className="flex flex-col h-[calc(100vh-0px)] md:flex-row">
       <div className={`flex flex-col ${showChatDesktop ? 'w-[340px] flex-shrink-0 border-r border-[#2f3336]' : 'w-full'} ${isMobile && showMobileChat ? 'hidden' : 'flex'}`}>
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#2f3336] sticky top-0 bg-black/80 backdrop-blur z-10 md:static md:bg-transparent md:backdrop-blur-0">
-            <h1 className="text-xl font-bold text-[#e7e9ea]">私信</h1>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-[#2f3336] sticky top-0 bg-background/80 backdrop-blur z-10 md:static md:bg-transparent md:backdrop-blur-0 pt-safe">
+            <h1 className="text-xl font-bold text-foreground">私信</h1>
             <button
               onClick={() => setShowNewMessage(true)}
               className="p-2 rounded-full hover:bg-white/10 transition-colors text-[#1d9bf0]"

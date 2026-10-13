@@ -343,9 +343,9 @@ const NotificationsPage: React.FC = () => {
   return (
     <div className="min-h-screen">
       {/* Sticky header */}
-      <header className="sticky top-0 z-10 bg-black/70 backdrop-blur-md border-b border-gray-800">
+      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border pt-safe">
         <div className="max-w-[700px] mx-auto flex items-center justify-between px-4 min-h-[52px]">
-          <h1 className="text-xl font-bold text-gray-100">通知</h1>
+          <h1 className="text-xl font-bold text-foreground">通知</h1>
           {unreadCount > 0 && (
             <button
               onClick={handleMarkAllRead}

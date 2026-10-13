@@ -3,15 +3,8 @@ import { FileText, Image as ImageIcon, Paperclip, Download } from 'lucide-react'
 import { Image } from '@client/src/components/ui/image';
 import ArticleBody from '@client/src/components/ArticleBody';
 import { UniversalLink } from '@/lib/components/UniversalLink';
-import type { ArticleDetail, ArticleImage, ArticleAttachment } from '@shared/api.interface';
+import type { ArticleDetail, ArticleImage, ArticleAttachment, FontSize } from '@shared/api.interface';
 import ImageLightbox from './ImageLightbox';
-
-type FontSize = 'small' | 'medium' | 'large';
-
-interface ArticleContentProps {
-  article: ArticleDetail;
-  fontSize: FontSize;
-}
 
 function formatFileSize(bytes: number | null): string {
   if (!bytes) return '';
@@ -31,7 +24,13 @@ const fontSizeMap: Record<FontSize, string> = {
   small: 'text-sm md:text-base',
   medium: 'text-base md:text-lg',
   large: 'text-lg md:text-xl',
+  xlarge: 'text-xl md:text-2xl',
 };
+
+interface ArticleContentProps {
+  article: ArticleDetail;
+  fontSize: FontSize;
+}
 
 export default function ArticleContent({ article, fontSize }: ArticleContentProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);

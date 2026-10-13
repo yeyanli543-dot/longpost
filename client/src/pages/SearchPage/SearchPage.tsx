@@ -127,9 +127,9 @@ export default function SearchPage() {
   const showHashtags = activeTab === 'all' || activeTab === 'hashtags';
 
   return (
-    <div className="min-h-screen bg-black text-gray-100 pb-24 md:pb-0">
+    <div className="min-h-screen bg-background text-foreground pb-24 md:pb-0">
       {/* 顶部搜索栏 */}
-      <div className="sticky top-0 z-10 bg-black px-4 py-2.5 border-b border-gray-800">
+      <div className="sticky top-0 z-10 bg-background/85 backdrop-blur-md px-4 py-2.5 border-b border-border pt-safe">
         <div className="relative max-w-xl mx-auto">
           <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
             <Search className="w-5 h-5 text-gray-500" />

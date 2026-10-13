@@ -148,7 +148,7 @@ export default function ArticlePage() {
       <ReadingToolbar fontSize={fontSize} setFontSize={setFontSize} theme={theme} setTheme={setTheme} />
 
       {/* Top nav */}
-      <header className="sticky top-0 z-10 flex items-center h-14 px-4 bg-background/80 backdrop-blur border-b border-border">
+      <header className="sticky top-0 z-10 flex items-center h-[calc(3.5rem+var(--safe-area-inset-top))] pt-safe px-4 bg-background/80 backdrop-blur border-b border-border">
         <button
           onClick={() => navigate(-1)}
           className="p-2 -ml-2 rounded-full hover:bg-[#16181c] transition-colors"
@@ -251,7 +251,7 @@ function ArticleSkeleton() {
   return (
     <div className="min-h-screen bg-background">
       <ReadingProgressBar />
-      <header className="sticky top-0 z-10 flex items-center h-14 px-4 bg-background/80 backdrop-blur border-b border-border">
+      <header className="sticky top-0 z-10 flex items-center h-[calc(3.5rem+var(--safe-area-inset-top))] pt-safe px-4 bg-background/80 backdrop-blur border-b border-border">
         <div className="w-9 h-9 rounded-full bg-[#2f3336] animate-pulse" />
         <div className="flex-1 flex justify-center">
           <div className="h-4 w-20 bg-[#2f3336] rounded animate-pulse" />

@@ -21,12 +21,12 @@ export default function ArticleHeader({ article }: ArticleHeaderProps) {
 
   return (
     <header className="mb-6">
-      <h1 className="text-2xl md:text-3xl font-bold mb-4 text-[#e7e9ea] leading-tight">
+      <h1 className="text-2xl md:text-3xl font-bold mb-4 text-foreground leading-tight">
         {article.title}
       </h1>
 
       {/* Author row */}
-      <div className="flex items-center gap-3 pb-4 border-b border-[#2f3336]">
+      <div className="flex items-center gap-3 pb-4 border-b border-border">
         <Link
           to={`/user/${article.authorId}`}
           className="w-9 h-9 rounded-full bg-[#2f3336] flex-shrink-0 flex items-center justify-center hover:opacity-80 transition-opacity overflow-hidden"
@@ -45,15 +45,15 @@ export default function ArticleHeader({ article }: ArticleHeaderProps) {
           <div className="flex items-center gap-1">
             <Link
               to={`/user/${article.authorId}`}
-              className="text-sm font-semibold text-[#e7e9ea] hover:underline truncate"
+              className="text-sm font-semibold text-foreground hover:underline truncate"
             >
               {article.authorName}
             </Link>
             {article.authorRole === 'admin' && (
-              <Award className="w-4 h-4 text-[#1d9bf0] flex-shrink-0" aria-label="认证作者" />
+              <Award className="w-4 h-4 text-primary flex-shrink-0" aria-label="认证作者" />
             )}
           </div>
-          <div className="flex items-center gap-2 text-xs text-[#71767b]">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span>{dayjs(article.createdAt).format('YYYY-MM-DD')}</span>
             <span>·</span>
             <span className="flex items-center gap-1">

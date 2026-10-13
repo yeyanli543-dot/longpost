@@ -1850,7 +1850,7 @@ const AdminPage: React.FC = () => {
   return (
     <div className="min-h-[calc(100vh-60px)] bg-black pb-24 md:pb-0 overflow-x-hidden">
       {/* 移动端：顶部横向滚动 Tab */}
-      <div className="md:hidden sticky top-0 z-10 bg-[#16181c] border-b border-[#2f3336]">
+      <div className="md:hidden sticky top-0 z-10 bg-card border-b border-border pt-safe">
         <div className="px-4 pt-3 pb-2">
           <h1 className="text-lg font-bold text-[#e7e9ea]">管理后台</h1>
         </div>

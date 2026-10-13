@@ -201,8 +201,8 @@ const ChatWindow = ({
     : '?';
 
   return (
-    <div className="flex flex-col h-full bg-black border-l border-[#2f3336]">
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-[#2f3336] sticky top-0 bg-black/80 backdrop-blur z-10">
+    <div className="flex flex-col h-full bg-background border-l border-border">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-border sticky top-0 bg-background/80 backdrop-blur z-10 pt-safe">
         {isMobile && (
           <button
             onClick={onBack}

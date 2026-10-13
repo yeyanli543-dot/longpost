@@ -303,7 +303,7 @@ const Layout = () => {
           </div>
         </aside>
 
-        <main className="flex-1 min-w-0 border-r border-gray-800 min-h-screen relative pb-[calc(56px+env(safe-area-inset-bottom))] md:pb-0">
+        <main className="flex-1 min-w-0 border-r border-border min-h-screen relative pb-[calc(56px+var(--safe-area-inset-bottom))] md:pb-0 px-safe md:px-0">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -319,17 +319,17 @@ const Layout = () => {
 
         <div className="w-[350px] h-screen sticky top-0 p-4 hidden xl:block space-y-4">
           <TrendingSidebar />
-          <div className="bg-[#16181c] rounded-2xl p-4 border border-[#2f3336]">
-            <h3 className="text-xl font-bold mb-3 text-[#e7e9ea]">关于 LongPost</h3>
-            <p className="text-sm text-[#71767b] leading-relaxed">长文发布平台。短帖引流，长文阅读。像 X 一样发帖，也可以写完整长文，通过链接跳转阅读。</p>
+          <div className="bg-card rounded-2xl p-4 border border-border">
+            <h3 className="text-xl font-bold mb-3 text-card-foreground">关于 LongPost</h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">长文发布平台。短帖引流，长文阅读。像 X 一样发帖，也可以写完整长文，通过链接跳转阅读。</p>
           </div>
         </div>
       </div>
 
       {/* Mobile bottom navigation */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 bg-black/90 backdrop-blur border-t border-[#2f3336] md:hidden"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-t border-border md:hidden px-safe"
+        style={{ paddingBottom: 'var(--safe-area-inset-bottom)' }}
       >
         <div className="flex items-center justify-around h-14 relative overflow-x-auto scrollbar-hide">
           {bottomNavItems.map((item) => {
@@ -345,7 +345,7 @@ const Layout = () => {
                   end={item.to === '/'}
                   className={({ isActive }) =>
                     `flex flex-col items-center justify-center flex-1 min-w-[44px] max-w-[56px] h-14 relative flex-shrink-0 ${
-                      isActive ? 'text-[#1d9bf0]' : 'text-[#71767b]'
+                      isActive ? 'text-primary font-bold' : 'text-muted-foreground'
                     }`
                   }
                 >
@@ -367,8 +367,8 @@ const Layout = () => {
       {/* Mobile FAB button */}
       <button
         onClick={handleComposeClick}
-        className="fixed right-4 z-40 w-14 h-14 rounded-full bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white shadow-lg flex items-center justify-center transition-all active:scale-95 md:hidden"
-        style={{ bottom: 'calc(76px + env(safe-area-inset-bottom))' }}
+        className="fixed right-4 z-40 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg flex items-center justify-center transition-all active:scale-95 md:hidden"
+        style={{ bottom: 'calc(76px + var(--safe-area-inset-bottom))' }}
         aria-label="发布"
         data-ai-section-type="button"
       >
