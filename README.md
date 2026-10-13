@@ -4,7 +4,7 @@
 
 **下一代长文创作与社交平台 · 🍏 Apple 极简 ↔ 🔷 Google 专业双工作区 · 交互式活数据图表 · 免登录公开阅读 · 零服务器离线工作台**
 
-[![Version](https://img.shields.io/badge/version-2.7.5-blue.svg)](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.7.5)
+[![Version](https://img.shields.io/badge/version-2.9.0-blue.svg)](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.9.0)
 [![Build Desktop](https://github.com/yeyanli543-dot/longpost/actions/workflows/desktop-release.yml/badge.svg)](https://github.com/yeyanli543-dot/longpost/actions/workflows/desktop-release.yml)
 [![Build Android](https://github.com/yeyanli543-dot/longpost/actions/workflows/android-release.yml/badge.svg)](https://github.com/yeyanli543-dot/longpost/actions/workflows/android-release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -41,17 +41,17 @@
 
 ---
 
-## 📥 多端下载 (v2.7.5 最新全平台安装包)
+## 📥 多端下载 (v2.9.0 最新全平台安装包)
 
 所有安装包均通过 GitHub Actions 自动化 CI 构建并带有防篡改校验，即下即用：
 
 | 平台 | 安装包格式 | 下载渠道 | 说明 |
 | :--- | :--- | :--- | :--- |
-| **🪟 Windows** | `.exe` 安装版 / 便携版 | [**下载安装版**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.7.5/LongPost.Setup.2.7.5.exe) · [**免安装便携版**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.7.5/LongPost.2.7.5.exe) | 支持 Windows 10/11，便携免安装版解压双击直接运行 |
-| **🤖 Android** | `.apk` 手机安装包 | [**下载 LongPost-v2.7.5-android.apk**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.7.5/LongPost-v2.7.5-android.apk) | 手机端离线写作，固定签名密钥支持无缝覆盖升级 |
-| **🍎 macOS** | `.dmg` 镜像 | [**下载 LongPost-2.7.5-arm64.dmg**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.7.5/LongPost-2.7.5-arm64.dmg) | 支持 Apple Silicon & Intel，首次打开右键放行 |
-| **🐧 Linux** | `.AppImage` | [**下载 LongPost-2.7.5.AppImage**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.7.5/LongPost-2.7.5.AppImage) | 赋予执行权限 `chmod +x` 后直接运行 |
-| **📦 全部版本** | 全部 5 端安装产物 | [**GitHub Releases v2.7.5 (最新发布页)**](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.7.5) | 包含所有平台的安装包、源码与校验哈希 |
+| **🪟 Windows** | `.exe` 安装版 / 便携版 | [**下载安装版**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.0/LongPost.Setup.2.9.0.exe) · [**免安装便携版**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.0/LongPost.2.9.0.exe) | 支持 Windows 10/11，便携免安装版解压双击直接运行 |
+| **🤖 Android** | `.apk` 手机安装包 | [**下载 LongPost-v2.9.0-android.apk**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.0/LongPost-v2.9.0-android.apk) | 手机端离线写作，固定签名密钥支持无缝覆盖升级 |
+| **🍎 macOS** | `.dmg` 镜像 | [**下载 LongPost-2.9.0-arm64.dmg**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.0/LongPost-2.9.0-arm64.dmg) | 支持 Apple Silicon & Intel，首次打开右键放行 |
+| **🐧 Linux** | `.AppImage` | [**下载 LongPost-2.9.0.AppImage**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.0/LongPost-2.9.0.AppImage) | 赋予执行权限 `chmod +x` 后直接运行 |
+| **📦 全部版本** | 全部 5 端安装产物 | [**GitHub Releases v2.9.0 (最新发布页)**](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.9.0) | 包含所有平台的安装包、源码与校验哈希 |
 
 ---
 
@@ -117,7 +117,7 @@ LongPost 拒绝粗暴的“换皮换色”，而是从 **apple.com 官方原始 
 ```
 ```
 
-### v2.7.5 视觉与交互升级亮点：
+### v2.9.0 视觉与交互升级亮点：
 - **自适应现代调色板**：浅色模式采用高雅莫兰迪色系（`#2563eb`, `#7c3aed`, `#db2777`, `#059669`），深色模式采用柔和微光色系（`#38bdf8`, `#818cf8`, `#c084fc`, `#34d399`）；
 - **柱状图现代圆角**：柱体顶部统一增加 `borderRadius: [6, 6, 0, 0]`，告别生硬切角；
 - **环形图优雅间隙**：饼图与环形图引入 `borderRadius: 6` 及主题自适应微隙描边；
