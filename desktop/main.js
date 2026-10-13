@@ -142,6 +142,9 @@ function attachSmokeHooks() {
         const code = fs.readFileSync(SMOKE_SCRIPT, 'utf8');
         const result = await wc.executeJavaScript(code, true);
         console.log('SMOKE_SCRIPT_RESULT ' + JSON.stringify(result));
+        if (typeof result === 'string' && result.startsWith('FAIL:')) {
+          failed = true;
+        }
       } catch (err) {
         failed = true;
         console.log('SMOKE_SCRIPT_ERROR ' + String(err && err.message ? err.message : err));
@@ -323,7 +326,7 @@ function registerIpc() {
   });
 
   ipcMain.handle('export:html', async (_e, id) => {
-    const article = store.getArticle(id);
+    const article = await store.getArticle(id);
     if (!article) return { ok: false, error: '文章不存在' };
 
     const suggested = (article.title || '未命名').replace(/[\\/:*?"<>|]/g, '_').slice(0, 60);
@@ -354,7 +357,7 @@ function registerIpc() {
   });
 
   ipcMain.handle('export:markdown', async (_e, id) => {
-    const article = store.getArticle(id);
+    const article = await store.getArticle(id);
     if (!article) return { ok: false, error: '文章不存在' };
     const suggested = (article.title || '未命名').replace(/[\\/:*?"<>|]/g, '_').slice(0, 60);
     const res = await dialog.showSaveDialog(mainWindow, {

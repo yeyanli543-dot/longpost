@@ -3603,83 +3603,6 @@
   }
 
   // ==========================================================================
-  // 15. 事件绑定
-  // ==========================================================================
-
-  function bind() {
-    // ---------------------------------------------------------- 侧栏
-    $('search').addEventListener('input', (event) => {
-      state.query = event.target.value;
-      $('btnSearchClear').hidden = !state.query;
-      renderList();
-    });
-    $('btnSearchClear').addEventListener('click', () => {
-      state.query = '';
-      $('search').value = '';
-      $('btnSearchClear').hidden = true;
-      renderList();
-      $('search').focus();
-    });
-    $('tagFilterSelect').addEventListener('change', (event) => {
-      state.tagFilter = event.target.value;
-      renderList();
-    });
-    $('btnNew').addEventListener('click', () => {
-      newArticle();
-    });
-    $('btnNew2').addEventListener('click', () => {
-      newArticle();
-    });
-    $('btnImport').addEventListener('click', importArticleFromFile);
-    $('btnTags').addEventListener('click', () => openTags(false));
-    $('btnTrash').addEventListener('click', openTrash);
-    $('btnDataDir').addEventListener('click', openDataDir);
-    $('btnSettings').addEventListener('click', openSettings);
-
-    // 列表：点开、点标签筛选、更多、长按
-    $('list').addEventListener('click', (event) => {
-      if (swallowedByLongPress) {
-        swallowedByLongPress = false;
-        event.preventDefault();
-        return;
-      }
-      const clear = event.target.closest('[data-act="clear-filter"]');
-      if (clear) {
-        clearFilters();
-        return;
-      }
-      const create = event.target.closest('[data-act="new-article"]');
-      if (create) {
-        newArticle();
-        return;
-      }
-      const chip = event.target.closest('.chip');
-      if (chip) {
-        const tag = chip.getAttribute('data-tag');
-        state.tagFilter = state.tagFilter === tag ? '' : tag;
-        $('tagFilterSelect').value = state.tagFilter;
-        renderList();
-        return;
-      }
-      const more = event.target.closest('[data-more]');
-      if (more) {
-        event.stopPropagation();
-        openItemMenu(more.getAttribute('data-more'), more);
-        return;
-      }
-      const item = event.target.closest('.item');
-      if (item) openArticle(item.getAttribute('data-id'));
-    });
-    $('list').addEventListener('keydown', (event) => {
-      if (event.key !== 'Enter' && event.key !== ' ') return;
-      const item = event.target.closest('.item');
-      if (!item) return;
-      event.preventDefault();
-      openArticle(item.getAttribute('data-id'));
-    });
-    setupLongPress();
-
-  // ==========================================================================
   // 专业版专属四大生产力工具：知识图谱 / 写作实验室 / 版本差分 / 灵感白板
   // ==========================================================================
 
@@ -4124,11 +4047,11 @@
     select.innerHTML = '';
     $('diffContainer').innerHTML = '<div class="hint">正在加载历史版本…</div>';
 
-    if (!state.currentId) {
+    if (!state.current || !state.current.id) {
       $('diffContainer').innerHTML = '<div class="hint">当前无打开的文章</div>';
       return;
     }
-    diffRevs = await LP.listRevisions(state.currentId);
+    diffRevs = await LP.listRevisions(state.current.id);
     if (!diffRevs.length) {
       $('diffContainer').innerHTML = '<div class="hint">本文暂无历史版本记录（每次编辑保存都会自动沉淀历史快照）</div>';
       return;
@@ -4136,7 +4059,8 @@
     diffRevs.forEach((r, idx) => {
       const opt = document.createElement('option');
       opt.value = String(idx);
-      opt.textContent = `版本 #${diffRevs.length - idx} - ${r.time ? new Date(r.time).toLocaleString() : ''} (${(r.content || '').length} 字)`;
+      const ts = r.at || r.time;
+      opt.textContent = `版本 #${diffRevs.length - idx} - ${ts ? new Date(ts).toLocaleString() : ''} (${r.chars != null ? r.chars : (r.content || '').length} 字)`;
       select.appendChild(opt);
     });
     updateDiffContent();
@@ -4444,8 +4368,85 @@
     await applyAuthSpaceSwitch(null, '🌐 已退出私密空间，切回默认公共空间');
   }
 
-  // ---------------------------------------------------------- 顶部操作条
-  $('btnBack').addEventListener('click', showList);
+  // ==========================================================================
+  // 15. 事件绑定
+  // ==========================================================================
+
+  function bind() {
+    // ---------------------------------------------------------- 侧栏
+    $('search').addEventListener('input', (event) => {
+      state.query = event.target.value;
+      $('btnSearchClear').hidden = !state.query;
+      renderList();
+    });
+    $('btnSearchClear').addEventListener('click', () => {
+      state.query = '';
+      $('search').value = '';
+      $('btnSearchClear').hidden = true;
+      renderList();
+      $('search').focus();
+    });
+    $('tagFilterSelect').addEventListener('change', (event) => {
+      state.tagFilter = event.target.value;
+      renderList();
+    });
+    $('btnNew').addEventListener('click', () => {
+      newArticle();
+    });
+    $('btnNew2').addEventListener('click', () => {
+      newArticle();
+    });
+    $('btnImport').addEventListener('click', importArticleFromFile);
+    $('btnTags').addEventListener('click', () => openTags(false));
+    $('btnTrash').addEventListener('click', openTrash);
+    $('btnDataDir').addEventListener('click', openDataDir);
+    $('btnSettings').addEventListener('click', openSettings);
+
+    // 列表：点开、点标签筛选、更多、长按
+    $('list').addEventListener('click', (event) => {
+      if (swallowedByLongPress) {
+        swallowedByLongPress = false;
+        event.preventDefault();
+        return;
+      }
+      const clear = event.target.closest('[data-act="clear-filter"]');
+      if (clear) {
+        clearFilters();
+        return;
+      }
+      const create = event.target.closest('[data-act="new-article"]');
+      if (create) {
+        newArticle();
+        return;
+      }
+      const chip = event.target.closest('.chip');
+      if (chip) {
+        const tag = chip.getAttribute('data-tag');
+        state.tagFilter = state.tagFilter === tag ? '' : tag;
+        $('tagFilterSelect').value = state.tagFilter;
+        renderList();
+        return;
+      }
+      const more = event.target.closest('[data-more]');
+      if (more) {
+        event.stopPropagation();
+        openItemMenu(more.getAttribute('data-more'), more);
+        return;
+      }
+      const item = event.target.closest('.item');
+      if (item) openArticle(item.getAttribute('data-id'));
+    });
+    $('list').addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      const item = event.target.closest('.item');
+      if (!item) return;
+      event.preventDefault();
+      openArticle(item.getAttribute('data-id'));
+    });
+    setupLongPress();
+
+    // ---------------------------------------------------------- 顶部操作条
+    $('btnBack').addEventListener('click', showList);
   $('title').addEventListener('input', () => {
     updateStats();
     markDirty();

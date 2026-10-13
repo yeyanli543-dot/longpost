@@ -477,6 +477,7 @@
           index: i,
           at: h.at || 0,
           title: h.title || '未命名',
+          content: String(h.content || ''),
           chars: String(h.content || '').length,
           summary: makeSummary(h.content),
         }))
