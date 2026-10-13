@@ -2904,6 +2904,187 @@ body.reading-mode .preview {
   }
 }
 
+/* 🍎 8. Apple 官网 1:1 镜面扫光微交互 (Apple Card Specular Sheen Sweep) */
+.mode-apple .btn,
+.mode-apple .mode-pill-btn,
+.mode-apple .seg,
+.mode-apple .item,
+.mode-apple .feature-card,
+.mode-apple #btnNew,
+.mode-apple #btnNew2 {
+  position: relative;
+  overflow: hidden;
+}
+
+.mode-apple .btn::after,
+.mode-apple .mode-pill-btn::after,
+.mode-apple .seg::after,
+.mode-apple .item::after,
+.mode-apple .feature-card::after,
+.mode-apple #btnNew::after,
+.mode-apple #btnNew2::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.16) 46%,
+    rgba(255, 255, 255, 0.28) 50%,
+    rgba(255, 255, 255, 0.16) 54%,
+    transparent 65%
+  );
+  transform: translateX(-120%);
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.mode-apple .btn:hover::after,
+.mode-apple .mode-pill-btn:hover::after,
+.mode-apple .seg:hover::after,
+.mode-apple .item:hover::after,
+.mode-apple .feature-card:hover::after,
+.mode-apple #btnNew:hover::after,
+.mode-apple #btnNew2:hover::after {
+  transform: translateX(120%);
+}
+
+/* 🍎 9. Apple 官网 1:1 钛金属光泽字与首屏迎宾画卷 (Hero Showcase) */
+.mode-apple .brand-name::before {
+  content: ' ';
+  font-size: 1.08em;
+  color: var(--accent);
+}
+
+[data-theme='dark'] .mode-apple .empty-inner h2,
+[data-theme='dark'] .mode-apple .title-input,
+[data-theme='dark'] .mode-apple .brand-name {
+  background: linear-gradient(180deg, #ffffff 28%, rgba(255, 255, 255, 0.62) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.028em;
+}
+
+.mode-apple .empty-inner {
+  max-width: 580px;
+}
+
+.mode-apple .empty-mark {
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.4), 0 0 24px rgba(41, 151, 255, 0.2);
+  color: var(--accent);
+  font-size: 30px;
+}
+
+[data-theme='light'] .mode-apple .empty-mark {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.08), 0 0 20px rgba(0, 113, 227, 0.15);
+  color: #0071e3;
+}
+
+.mode-apple .hero-badge-apple {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 0.5px solid var(--accent-line);
+  margin-bottom: 14px;
+}
+
+.mode-apple .hero-badge-google {
+  display: none;
+}
+
+.mode-apple .empty-inner h2 {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-bottom: 10px;
+}
+
+.mode-apple .empty-features {
+  display: flex;
+  gap: 12px;
+  margin: 22px 0 28px;
+  width: 100%;
+  justify-content: center;
+}
+
+.mode-apple .feature-card {
+  flex: 1;
+  background: var(--surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 12px;
+  text-align: left;
+  box-shadow: var(--sh-1);
+  transition: transform 0.26s var(--apple-ease), box-shadow 0.26s var(--apple-ease), border-color 0.26s ease;
+}
+
+.mode-apple .feature-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--sh-2);
+  border-color: var(--accent-line);
+}
+
+.mode-apple .feature-icon {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+.mode-apple .feature-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 3px;
+  letter-spacing: -0.015em;
+}
+
+.mode-apple .feature-desc {
+  font-size: 11.5px;
+  color: var(--text-2);
+  line-height: 1.4;
+}
+
+.mode-apple #btnNew2 {
+  border-radius: 999px;
+  height: 44px;
+  padding: 0 30px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  background: var(--accent);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 6px 20px rgba(41, 151, 255, 0.35);
+}
+
+.mode-apple #btnNew2:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 26px rgba(41, 151, 255, 0.45);
+}
+
 
 /* ============================================================================
    🎨 谷歌专业模式 (Google Pro Studio)
@@ -3247,6 +3428,147 @@ body.reading-mode .preview {
   font-size: 12px;
   color: var(--text-2);
   padding: 4px 16px;
+}
+
+/* 🎨 8. Google 官网 1:1 贯穿顶栏 4 色呼吸流光条与 Gemini 渐变大标题 */
+.mode-google::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #4285f4 0%, #ea4335 25%, #fbbc05 50%, #34a853 75%, #4285f4 100%);
+  background-size: 200% 100%;
+  animation: google-color-flow 3.2s linear infinite;
+  z-index: 99999;
+  pointer-events: none;
+  box-shadow: 0 1px 8px rgba(66, 133, 244, 0.5);
+}
+
+.mode-google .brand-name::before {
+  content: 'G ';
+  font-weight: 800;
+}
+
+.mode-google .brand-name,
+.mode-google .empty-inner h2 {
+  background: linear-gradient(90deg, #4285f4 0%, #9b72cf 32%, #ea4335 64%, #4285f4 100%);
+  background-size: 200% auto;
+  animation: google-color-flow 4.5s linear infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: 'Google Sans', Roboto, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.mode-google .search-icon {
+  color: #4285f4;
+  filter: drop-shadow(0 1px 2px rgba(66, 133, 244, 0.35));
+}
+
+.mode-google .empty-inner {
+  max-width: 580px;
+}
+
+.mode-google .empty-mark {
+  width: 68px;
+  height: 68px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #4285f4 0%, #ea4335 32%, #fbbc05 64%, #34a853 100%);
+  background-size: 200% 200%;
+  animation: google-color-flow 4s ease infinite;
+  color: #ffffff;
+  font-size: 30px;
+  box-shadow: 0 10px 28px rgba(66, 133, 244, 0.35);
+}
+
+.mode-google .hero-badge-apple {
+  display: none;
+}
+
+.mode-google .hero-badge-google {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 16px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Google Sans', Roboto, sans-serif;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  margin-bottom: 14px;
+}
+
+.mode-google .empty-inner h2 {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.mode-google .empty-features {
+  display: flex;
+  gap: 12px;
+  margin: 22px 0 28px;
+  width: 100%;
+  justify-content: center;
+}
+
+.mode-google .feature-card {
+  flex: 1;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 14px 12px;
+  text-align: left;
+  box-shadow: 0 1px 3px rgba(60, 64, 67, 0.12);
+  transition: transform 0.22s var(--m3-ease-emphasized), box-shadow 0.22s var(--m3-ease-emphasized), border-color 0.22s ease;
+  font-family: 'Google Sans', Roboto, sans-serif;
+}
+
+.mode-google .feature-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 14px 2px rgba(60, 64, 67, 0.18);
+  border-color: var(--accent);
+}
+
+.mode-google .feature-icon {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+.mode-google .feature-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 3px;
+}
+
+.mode-google .feature-desc {
+  font-size: 11.5px;
+  color: var(--text-2);
+  line-height: 1.4;
+}
+
+.mode-google #btnNew2 {
+  border-radius: 24px;
+  height: 48px;
+  padding: 0 32px;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: 'Google Sans', Roboto, sans-serif;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  box-shadow: 0 4px 12px 2px rgba(66, 133, 244, 0.3);
+  transition: all 0.22s var(--m3-ease-emphasized);
+}
+
+.mode-google #btnNew2:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px 3px rgba(66, 133, 244, 0.4);
 }
 
 /* 📊 知识图谱盒子 */

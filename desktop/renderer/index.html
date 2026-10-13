@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN" data-theme="dark">
+<html lang="zh-CN" data-theme="dark" class="mode-apple mode-lite" data-workspace-mode="lite">
   <head>
     <meta charset="utf-8" />
     <meta
@@ -21,7 +21,7 @@
     <link rel="stylesheet" href="vendor/prism/themes/prism.min.css" />
     <link rel="stylesheet" href="vendor/prism/themes/prism-tomorrow.min.css" />
   </head>
-  <body>
+  <body class="mode-apple mode-lite">
     <!--
       ===========================================================================
       图标系统：内联 SVG sprite
@@ -162,16 +162,41 @@
         <section class="empty" id="empty">
           <div class="empty-inner">
             <div class="empty-mark"><svg class="icon" aria-hidden="true"><use href="#i-feather"></use></svg></div>
+            <div class="empty-hero-badge"><span class="hero-badge-apple"> Apple Zen · 官网极简美学</span><span class="hero-badge-google">🎨 Google Studio · M3 官方工坊</span></div>
             <h2>开始写点什么</h2>
             <p>
               正文用 Markdown 写，右边实时预览。<br />
               工具栏能插图表、图片、附件，手机上还能一键分享出去。<br />
               所有内容只保存在你自己的设备上，不联网、不上传。
             </p>
+            <div class="empty-features">
+              <div class="feature-card feature-card-1">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-text">
+                  <div class="feature-title">官网 1:1 双形态</div>
+                  <div class="feature-desc">Alt+M 瞬间丝滑插值蜕变</div>
+                </div>
+              </div>
+              <div class="feature-card feature-card-2">
+                <div class="feature-icon">📊</div>
+                <div class="feature-text">
+                  <div class="feature-title">图表卡片复制</div>
+                  <div class="feature-desc">一键 PNG 进系统剪贴板</div>
+                </div>
+              </div>
+              <div class="feature-card feature-card-3">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-text">
+                  <div class="feature-title">全域离线私有</div>
+                  <div class="feature-desc">数据零出网 · 本地优先</div>
+                </div>
+              </div>
+            </div>
             <button class="btn primary" id="btnNew2">
               <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>新建文章
             </button>
             <div class="kbd-hints">
+              <span><kbd>Alt</kbd>+<kbd>M</kbd> 切换官网双形态</span>
               <span><kbd>Ctrl</kbd>+<kbd>B</kbd> 加粗</span>
               <span><kbd>Ctrl</kbd>+<kbd>F</kbd> 查找替换</span>
               <span><kbd>Ctrl</kbd>+<kbd>S</kbd> 保存</span>

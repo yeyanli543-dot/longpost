@@ -22,6 +22,7 @@ const DEFAULT_SETTINGS = {
   sort: 'updated',
   readingMode: false,
   fontSize: 16,
+  workspaceMode: 'lite',
 };
 
 function createFsBackend() {

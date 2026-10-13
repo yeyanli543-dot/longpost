@@ -743,6 +743,9 @@
     padding: 2px 12px;
     color: var(--accent);
   }
+  .empty-features {
+    flex-direction: column;
+  }
 
   /* ------------------------------------------------------------ 安全区：横屏刘海 */
 
