@@ -46,6 +46,13 @@ export class JwtAuthGuard implements CanActivate {
     if (user.isBanned) {
       throw new UnauthorizedException('账号已被封禁');
     }
+    if (
+      payload.tokenVersion !== undefined &&
+      user.tokenVersion !== undefined &&
+      payload.tokenVersion !== user.tokenVersion
+    ) {
+      throw new UnauthorizedException('登录凭证已失效，请重新登录');
+    }
 
     request.user = {
       id: user.id,
@@ -80,7 +87,14 @@ export class OptionalJwtAuthGuard implements CanActivate {
       const payload = this.authService.verifyToken(token);
       if (payload) {
         const user = await this.authService.validateUserActive(payload.sub);
-        if (user && user.isActive && !user.isBanned) {
+        if (
+          user &&
+          user.isActive &&
+          !user.isBanned &&
+          (payload.tokenVersion === undefined ||
+            user.tokenVersion === undefined ||
+            payload.tokenVersion === user.tokenVersion)
+        ) {
           request.user = {
             id: user.id,
             email: user.email,

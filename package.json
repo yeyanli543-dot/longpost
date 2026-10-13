@@ -18,7 +18,8 @@
     "stylelint": "stylelint client/src/**/*.css --quiet",
     "type:check": "concurrently -n \"server,client\" -c \"blue,green\" \"npm run type:check:server\" \"npm run type:check:client\"",
     "type:check:client": "tsc --noEmit --project tsconfig.app.json",
-    "type:check:server": "tsc --noEmit --project tsconfig.node.json"
+    "type:check:server": "tsc --noEmit --project tsconfig.node.json",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",

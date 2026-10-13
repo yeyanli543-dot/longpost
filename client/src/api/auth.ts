@@ -45,6 +45,11 @@ export async function changePassword(data: ChangePasswordRequest): Promise<void>
   await axiosForBackend.post('/api/auth/password', data);
 }
 
+export async function revokeAllSessions(): Promise<{ success: boolean; message: string }> {
+  const response = await axiosForBackend.post('/api/auth/revoke-sessions');
+  return response.data;
+}
+
 export async function updatePreferences(data: UpdatePreferencesRequest): Promise<UserProfile> {
   const response = await axiosForBackend.patch('/api/auth/preferences', data);
   return response.data;

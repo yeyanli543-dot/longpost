@@ -530,6 +530,7 @@ export class AdminService {
         isBanned: true,
         banReason: reason ?? null,
         bannedAt: new Date(),
+        tokenVersion: sql`${appUsers.tokenVersion} + 1`,
       })
       .where(eq(appUsers.id, userId))
       .returning({ id: appUsers.id });

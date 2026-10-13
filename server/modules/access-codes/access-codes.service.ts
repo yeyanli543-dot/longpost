@@ -4,9 +4,8 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common';
-import { Inject } from '@nestjs/common';
 import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@server/database/database.module';
-import { eq, desc, count, ilike, or } from 'drizzle-orm';
+import { eq, desc, count, ilike, or, and, gte, sql } from 'drizzle-orm';
 import * as crypto from 'crypto';
 import * as bcrypt from 'bcryptjs';
 import { accessCodes, appUsers } from '../../database/schema';
@@ -81,7 +80,8 @@ export class AccessCodesService {
   private mapLogItem(row: typeof accessCodeLogs.$inferSelect): AccessCodeLogItem {
     return {
       id: row.id,
-      accessCodeId: row.accessCodeId,
+      accessCodeId: row.accessCodeId ?? null,
+      attemptedCode: row.attemptedCode ?? null,
       ipAddress: row.ipAddress ?? null,
       userAgent: row.userAgent ?? null,
       success: row.success,
@@ -319,30 +319,55 @@ export class AccessCodesService {
     return this.mapAccessCode(updated);
   }
 
-  private readonly ipFailTracker = new Map<string, { count: number; lockedUntil: number }>();
+  private async checkIpLock(ipAddress?: string | null): Promise<void> {
+    if (!ipAddress) return;
+    const key = ipAddress.trim();
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
-  private checkIpLock(ipAddress?: string | null): void {
-    const key = (ipAddress || 'unknown').trim();
-    const rec = this.ipFailTracker.get(key);
-    if (rec && rec.lockedUntil > Date.now()) {
+    // 查询该 IP 最近一次成功登录的时间点（成功登录之后的连续失败才计入计数器）
+    const [lastSuccess] = await this.db
+      .select({ createdAt: accessCodeLogs.createdAt })
+      .from(accessCodeLogs)
+      .where(and(eq(accessCodeLogs.ipAddress, key), eq(accessCodeLogs.success, true)))
+      .orderBy(desc(accessCodeLogs.createdAt))
+      .limit(1);
+
+    const sinceTime =
+      lastSuccess && lastSuccess.createdAt > fifteenMinutesAgo
+        ? lastSuccess.createdAt
+        : fifteenMinutesAgo;
+
+    const [failRecord] = await this.db
+      .select({ failCount: count() })
+      .from(accessCodeLogs)
+      .where(
+        and(
+          eq(accessCodeLogs.ipAddress, key),
+          eq(accessCodeLogs.success, false),
+          gte(accessCodeLogs.createdAt, sinceTime),
+        ),
+      );
+
+    if (Number(failRecord?.failCount || 0) >= 5) {
       throw new ForbiddenException('通行码尝试次数过多，请稍后再试');
     }
   }
 
-  private recordIpFail(ipAddress?: string | null): void {
-    const key = (ipAddress || 'unknown').trim();
-    const now = Date.now();
-    const prev = this.ipFailTracker.get(key);
-    const nextCount = (prev && prev.lockedUntil <= now ? prev.count : 0) + 1;
-    this.ipFailTracker.set(key, {
-      count: nextCount,
-      lockedUntil: nextCount >= 5 ? now + 15 * 60 * 1000 : 0,
+  private async recordIpFail(
+    ipAddress?: string | null,
+    userAgent?: string | null,
+    attemptedCode?: string,
+    errorReason = 'code_not_found',
+  ): Promise<void> {
+    await this.db.insert(accessCodeLogs).values({
+      accessCodeId: null,
+      attemptedCode: (attemptedCode || '').slice(0, 32),
+      ipAddress: ipAddress ? ipAddress.trim() : null,
+      userAgent: userAgent ?? null,
+      success: false,
+      errorReason,
+      loggedInUserId: null,
     });
-  }
-
-  private clearIpFail(ipAddress?: string | null): void {
-    const key = (ipAddress || 'unknown').trim();
-    this.ipFailTracker.delete(key);
   }
 
   private async recordCodeFailure(
@@ -352,7 +377,6 @@ export class AccessCodesService {
     userAgent?: string | null,
     statusPatch?: string,
   ): Promise<void> {
-    this.recordIpFail(ipAddress);
     const nextFailCount = (accessCode.failCount ?? 0) + 1;
     const patch: Partial<typeof accessCodes.$inferInsert> = {
       failCount: nextFailCount,
@@ -370,7 +394,8 @@ export class AccessCodesService {
 
     await this.db.insert(accessCodeLogs).values({
       accessCodeId: accessCode.id,
-      ipAddress: ipAddress ?? null,
+      attemptedCode: accessCode.code,
+      ipAddress: ipAddress ? ipAddress.trim() : null,
       userAgent: userAgent ?? null,
       success: false,
       errorReason,
@@ -383,7 +408,7 @@ export class AccessCodesService {
     ipAddress?: string | null,
     userAgent?: string | null,
   ): Promise<AuthResponse> {
-    this.checkIpLock(ipAddress);
+    await this.checkIpLock(ipAddress);
 
     const rows = await this.db
       .select()
@@ -392,7 +417,7 @@ export class AccessCodesService {
       .limit(1);
 
     if (rows.length === 0) {
-      this.recordIpFail(ipAddress);
+      await this.recordIpFail(ipAddress, userAgent, code, 'code_not_found');
       throw new BadRequestException('通行码无效或已失效');
     }
 
@@ -490,6 +515,7 @@ export class AccessCodesService {
         bio: appUsers.bio,
         isActive: appUsers.isActive,
         isBanned: appUsers.isBanned,
+        tokenVersion: appUsers.tokenVersion,
         createdAt: appUsers.createdAt,
       })
       .from(appUsers)
@@ -505,8 +531,6 @@ export class AccessCodesService {
       await this.recordCodeFailure(accessCode, 'user_banned_or_inactive', ipAddress, userAgent);
       throw new ForbiddenException('账号已被封禁或停用');
     }
-
-    this.clearIpFail(ipAddress);
 
     const newUseCount = accessCode.useCount + 1;
     const isExhausted = accessCode.maxUses !== null && newUseCount >= accessCode.maxUses;
@@ -537,7 +561,13 @@ export class AccessCodesService {
       createdAt: userRow.createdAt.toISOString(),
     };
 
-    const token = this.authService.signToken(user.id, user.email, user.nickname, user.role);
+    const token = this.authService.signToken(
+      user.id,
+      user.email,
+      user.nickname,
+      user.role,
+      userRow.tokenVersion,
+    );
     await this.db.insert(accessCodeLogs).values({
       accessCodeId: accessCode.id,
       ipAddress: ipAddress ?? null,
@@ -610,7 +640,10 @@ export class AccessCodesService {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const patch: Partial<typeof appUsers.$inferInsert> = { passwordHash };
+    const patch: any = {
+      passwordHash,
+      tokenVersion: sql`${appUsers.tokenVersion} + 1`,
+    };
     if (user.provider === 'access_code') {
       patch.provider = 'email';
     }

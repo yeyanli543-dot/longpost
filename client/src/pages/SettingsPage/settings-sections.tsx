@@ -905,6 +905,8 @@ interface SecuritySectionProps {
   setSetConfirmPwd: (v: string) => void;
   setPwdSaving: boolean;
   onSetPassword: () => void;
+  onRevokeAllSessions?: () => void;
+  revokingSessions?: boolean;
 }
 
 export function SecuritySection({
@@ -927,6 +929,8 @@ export function SecuritySection({
   setSetConfirmPwd,
   setPwdSaving,
   onSetPassword,
+  onRevokeAllSessions,
+  revokingSessions = false,
 }: SecuritySectionProps): React.ReactElement {
   const isGoogleBound = provider === 'google';
   const isAccessCodeUser = provider === 'access_code';
@@ -1086,20 +1090,37 @@ export function SecuritySection({
         </Card>
       )}
 
-      {/* 退出登录 */}
+      {/* 会话安全与退出登录 */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">退出当前会话</CardTitle>
-          <CardDescription>退出登录将安全清除本地当前访问令牌</CardDescription>
+          <CardTitle className="text-lg">会话安全与跨设备下线</CardTitle>
+          <CardDescription>
+            支持退出当前会话，或通过服务端版本化 Token 吊销机制一键强制下线所有其他已登录设备。
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Button
-            variant="destructive"
-            onClick={onLogout}
-            data-ai-section-type="button"
-          >
-            退出当前账号
-          </Button>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            {onRevokeAllSessions && (
+              <Button
+                variant="outline"
+                className="text-destructive border-destructive/40 hover:bg-destructive/10"
+                onClick={onRevokeAllSessions}
+                disabled={revokingSessions}
+              >
+                {revokingSessions ? '正在注销...' : '强制下线所有设备'}
+              </Button>
+            )}
+            <Button
+              variant="destructive"
+              onClick={onLogout}
+              data-ai-section-type="button"
+            >
+              退出当前账号
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            注：强制下线所有设备将使所有已签发的访问凭证即刻失效，任何其他终端在下次请求时都会被安全拦截并要求重新验证。
+          </p>
         </CardContent>
       </Card>
     </div>

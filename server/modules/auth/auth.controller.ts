@@ -83,6 +83,14 @@ export class AuthController {
     return { success: true };
   }
 
+  @Post('revoke-sessions')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async revokeSessions(@Req() req: AuthRequest): Promise<{ success: boolean; message: string }> {
+    await this.authService.revokeAllSessions(req.user!.id);
+    return { success: true, message: '已成功注销所有设备的会话' };
+  }
+
   @Patch('preferences')
   @UseGuards(JwtAuthGuard)
   async updatePreferences(

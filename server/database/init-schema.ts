@@ -41,6 +41,7 @@ export async function initDatabaseSchema(sql: postgres.Sql): Promise<void> {
       is_banned BOOLEAN NOT NULL DEFAULT false,
       ban_reason VARCHAR(500),
       banned_at TIMESTAMPTZ(3),
+      token_version INTEGER NOT NULL DEFAULT 1,
       _created_at TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       _created_by user_profile,
       _updated_at TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -76,7 +77,8 @@ export async function initDatabaseSchema(sql: postgres.Sql): Promise<void> {
   await sql`
     CREATE TABLE IF NOT EXISTS access_code_logs (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      access_code_id UUID NOT NULL REFERENCES access_codes(id) ON DELETE CASCADE,
+      access_code_id UUID REFERENCES access_codes(id) ON DELETE CASCADE,
+      attempted_code VARCHAR(64),
       ip_address VARCHAR(64),
       user_agent TEXT,
       success BOOLEAN NOT NULL DEFAULT true,
@@ -422,4 +424,18 @@ export async function initDatabaseSchema(sql: postgres.Sql): Promise<void> {
       _updated_by user_profile
     );
   `.simple().catch(() => {});
+
+  // 9. 渐进式架构升级补丁 (Idempotent schema migrations)
+  await sql`
+    ALTER TABLE app_users ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAULT 1;
+  `.simple().catch(() => {});
+
+  await sql`
+    ALTER TABLE access_code_logs ALTER COLUMN access_code_id DROP NOT NULL;
+  `.simple().catch(() => {});
+
+  await sql`
+    ALTER TABLE access_code_logs ADD COLUMN IF NOT EXISTS attempted_code VARCHAR(64);
+  `.simple().catch(() => {});
 }
+

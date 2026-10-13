@@ -10,7 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Inject } from '@nestjs/common';
 import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@server/database/database.module';
 import * as bcrypt from 'bcryptjs';
-import { eq, and, desc, count, sum, inArray, ne } from 'drizzle-orm';
+import { eq, and, desc, count, sum, inArray, ne, sql } from 'drizzle-orm';
 import { appUsers, siteSettings, posts, articles, bookmarks } from '../../database/schema';
 import type {
   AuthResponse,
@@ -30,6 +30,7 @@ export interface JwtPayload {
   email: string;
   username?: string;
   role?: string;
+  tokenVersion?: number;
 }
 
 const JWT_SECRET = authConfig.jwtSecret;
@@ -109,6 +110,7 @@ export class AuthService {
         notifyOnDelete: appUsers.notifyOnDelete,
         theme: appUsers.theme,
         fontSize: appUsers.fontSize,
+        tokenVersion: appUsers.tokenVersion,
         createdAt: appUsers.createdAt,
       });
 
@@ -117,7 +119,7 @@ export class AuthService {
     }
 
     const user = this.mapUser(inserted);
-    const token = this.signToken(user.id, user.email, user.nickname, user.role);
+    const token = this.signToken(user.id, user.email, user.nickname, user.role, inserted.tokenVersion);
 
     await this.db
       .update(appUsers)
@@ -144,6 +146,7 @@ export class AuthService {
         fontSize: appUsers.fontSize,
         isActive: appUsers.isActive,
         isBanned: appUsers.isBanned,
+        tokenVersion: appUsers.tokenVersion,
         createdAt: appUsers.createdAt,
       })
       .from(appUsers)
@@ -169,7 +172,7 @@ export class AuthService {
 
     const isOwner = await this.ensureOwnerRole(row.id, row.email);
     const user = this.mapUser(isOwner ? { ...row, role: 'admin' } : row);
-    const token = this.signToken(user.id, user.email, user.nickname, user.role);
+    const token = this.signToken(user.id, user.email, user.nickname, user.role, row.tokenVersion);
 
     await this.db
       .update(appUsers)
@@ -180,11 +183,12 @@ export class AuthService {
   }
 
   async oauthLogin(userId: string, email: string, nickname?: string, role?: string): Promise<string> {
-    await this.db
+    const [user] = await this.db
       .update(appUsers)
       .set({ lastLoginAt: new Date() })
-      .where(eq(appUsers.id, userId));
-    return this.signToken(userId, email, nickname, role);
+      .where(eq(appUsers.id, userId))
+      .returning({ tokenVersion: appUsers.tokenVersion });
+    return this.signToken(userId, email, nickname, role, user?.tokenVersion);
   }
 
   async getCurrentUser(userId: string): Promise<UserProfile> {
@@ -287,7 +291,19 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await this.db
       .update(appUsers)
-      .set({ passwordHash })
+      .set({
+        passwordHash,
+        tokenVersion: sql`${appUsers.tokenVersion} + 1`,
+      })
+      .where(eq(appUsers.id, userId));
+  }
+
+  async revokeAllSessions(userId: string): Promise<void> {
+    await this.db
+      .update(appUsers)
+      .set({
+        tokenVersion: sql`${appUsers.tokenVersion} + 1`,
+      })
       .where(eq(appUsers.id, userId));
   }
 
@@ -642,10 +658,17 @@ export class AuthService {
     }
   }
 
-  signToken(userId: string, email: string, nickname?: string, role?: string): string {
+  signToken(
+    userId: string,
+    email: string,
+    nickname?: string,
+    role?: string,
+    tokenVersion?: number,
+  ): string {
     const payload: JwtPayload = { sub: userId, email };
     if (nickname) payload.username = nickname;
     if (role) payload.role = role;
+    if (typeof tokenVersion === 'number') payload.tokenVersion = tokenVersion;
     return this.jwtService.sign(payload);
   }
 
@@ -656,6 +679,7 @@ export class AuthService {
     nickname: string;
     isActive: boolean;
     isBanned: boolean;
+    tokenVersion: number;
   } | null> {
     const rows = await this.db
       .select({
@@ -665,6 +689,7 @@ export class AuthService {
         nickname: appUsers.nickname,
         isActive: appUsers.isActive,
         isBanned: appUsers.isBanned,
+        tokenVersion: appUsers.tokenVersion,
       })
       .from(appUsers)
       .where(eq(appUsers.id, userId))

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@client/src/hooks/useAuth';
 import { useTheme } from '@client/src/hooks/useTheme';
-import { siteSettingsApi, accessCodesApi, articlesApi } from '@client/src/api';
+import { siteSettingsApi, accessCodesApi, articlesApi, authApi } from '@client/src/api';
 import LoginGate from '@client/src/components/LoginGate';
 import type {
   SiteSettings,
@@ -91,6 +91,7 @@ const SettingsPage: React.FC = () => {
   // Appearance state & full theme suite
   const themeHook = useTheme();
   const [appearanceSaving, setAppearanceSaving] = useState(false);
+  const [revokingSessions, setRevokingSessions] = useState(false);
 
   // Site settings state (for admin zone)
   const [siteLoading, setSiteLoading] = useState(false);
@@ -260,6 +261,21 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+  const handleRevokeAllSessions = async (): Promise<void> => {
+    setRevokingSessions(true);
+    try {
+      await authApi.revokeAllSessions();
+      toast.success('已强制下线所有已登录设备，请重新登录');
+      logout();
+      navigate('/login');
+    } catch (err) {
+      logger.error('注销会话失败', err);
+      toast.error(getFriendlyErrorMessage(err, '注销设备会话失败'));
+    } finally {
+      setRevokingSessions(false);
+    }
+  };
+
   // 真实数据打包导出
   const handleExportData = async (): Promise<void> => {
     if (!user) return;
@@ -416,6 +432,8 @@ const SettingsPage: React.FC = () => {
             setSetConfirmPwd={setSetConfirmPwd}
             setPwdSaving={setPwdSaving}
             onSetPassword={() => { void handleSetPassword(); }}
+            onRevokeAllSessions={() => { void handleRevokeAllSessions(); }}
+            revokingSessions={revokingSessions}
           />
         );
       case 'notifications':

@@ -866,7 +866,8 @@ export interface AccessCodeLoginRequest {
 
 export interface AccessCodeLogItem {
   id: string;
-  accessCodeId: string;
+  accessCodeId: string | null;
+  attemptedCode?: string | null;
   ipAddress: string | null;
   userAgent: string | null;
   success: boolean;

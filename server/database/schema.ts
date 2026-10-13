@@ -119,7 +119,8 @@ export const fileAttachmentArray = customType<{
 
 export const accessCodeLogs = pgTable("access_code_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
-  accessCodeId: uuid("access_code_id").notNull(),
+  accessCodeId: uuid("access_code_id"),
+  attemptedCode: varchar("attempted_code", { length: 64 }),
   ipAddress: varchar("ip_address", { length: 64 }),
   userAgent: text("user_agent"),
   success: boolean("success").notNull().default(true),
@@ -709,6 +710,7 @@ export const appUsers = pgTable("app_users", {
   isBanned: boolean("is_banned").notNull().default(false),
   banReason: varchar("ban_reason", { length: 500 }),
   bannedAt: customTimestamptz("banned_at", { precision: 3 }),
+  tokenVersion: integer("token_version").notNull().default(1),
   // System field: Creation time (auto-filled, do not modify)
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
