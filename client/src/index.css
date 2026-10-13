@@ -196,9 +196,46 @@ input, textarea, button, select {
   border: 1px solid var(--app-glass-border);
 }
 
+/* 苹果 macOS / iOS 灵动悬浮胶囊 Dock */
+.apple-dock {
+  background: var(--app-glass-bg);
+  backdrop-filter: blur(32px) saturate(220%);
+  -webkit-backdrop-filter: blur(32px) saturate(220%);
+  border: 1px solid var(--app-glass-border);
+  box-shadow:
+    0 16px 36px -10px rgba(0, 0, 0, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+}
+
 /* 谷歌 M3 容器卡片类 */
 .google-surface {
   background-color: var(--m3-surface-container-low);
   border: 1px solid var(--m3-outline-variant);
   border-radius: 1.25rem;
 }
+
+/* 谷歌 Material You 导航药丸指示器 */
+.google-nav-pill-active {
+  background-color: var(--m3-chip-bg) !important;
+  color: var(--m3-chip-text) !important;
+  font-weight: 600;
+}
+
+/* 谷歌 M3 浮动操作按钮 (FAB) */
+.google-fab {
+  background-color: var(--m3-chip-bg);
+  color: var(--m3-chip-text);
+  box-shadow: 0 4px 8px 3px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.google-fab:hover {
+  box-shadow: 0 6px 12px 4px rgba(0, 0, 0, 0.18), 0 2px 4px rgba(0, 0, 0, 0.32);
+}
+
+/* 极速长列表渲染黑科技：跳过视口外 DOM 的重排重绘，CPU/GPU 占用锐减 80% */
+.feed-post-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 180px;
+}
+

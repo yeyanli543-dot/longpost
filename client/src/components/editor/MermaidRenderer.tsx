@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AlertCircle, Check, Copy } from 'lucide-react';
+import { AlertCircle, Check, Copy, Download } from 'lucide-react';
 
 interface MermaidRendererProps {
   chart: string;
@@ -65,6 +65,41 @@ export const MermaidRenderer: React.FC<MermaidRendererProps> = ({ chart, classNa
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleExportPng = () => {
+    if (!containerRef.current) return;
+    const svgEl = containerRef.current.querySelector('svg');
+    if (!svgEl) return;
+    try {
+      const svgData = new XMLSerializer().serializeToString(svgEl);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+      img.onload = () => {
+        const rect = svgEl.getBoundingClientRect();
+        const width = Math.max(rect.width, 300);
+        const height = Math.max(rect.height, 150);
+        canvas.width = width * 2; // 2x 超清 Retina
+        canvas.height = height * 2;
+        if (ctx) {
+          ctx.scale(2, 2);
+          const isDark =
+            document.documentElement.classList.contains('dark') ||
+            document.documentElement.classList.contains('dark-mode');
+          ctx.fillStyle = isDark ? '#0f172a' : '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+          ctx.drawImage(img, 0, 0, width, height);
+        }
+        const a = document.createElement('a');
+        a.download = `flowchart-${Date.now()}.png`;
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+      };
+    } catch (e) {
+      console.error('Failed to export mermaid svg as png', e);
+    }
+  };
+
   if (error) {
     return (
       <div className="my-4 p-4 rounded-xl border border-red-500/20 bg-red-500/5 text-sm text-red-400">
@@ -86,13 +121,22 @@ export const MermaidRenderer: React.FC<MermaidRendererProps> = ({ chart, classNa
 
   return (
     <div className={`group relative my-6 p-4 rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm overflow-x-auto ${className}`}>
-      <button
-        onClick={handleCopy}
-        className="absolute top-3 right-3 p-1.5 rounded-lg bg-background/80 border border-border/40 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:text-foreground"
-        title="复制 Mermaid 源码"
-      >
-        {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-      </button>
+      <div className="absolute top-3 right-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        <button
+          onClick={handleExportPng}
+          className="p-1.5 rounded-lg bg-background/80 border border-border/40 text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+          title="导出为高清 PNG 图片"
+        >
+          <Download className="w-3.5 h-3.5" />
+        </button>
+        <button
+          onClick={handleCopy}
+          className="p-1.5 rounded-lg bg-background/80 border border-border/40 text-muted-foreground hover:text-foreground hover:bg-background transition-colors"
+          title="复制 Mermaid 源码"
+        >
+          {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+        </button>
+      </div>
       <div
         ref={containerRef}
         className="flex items-center justify-center min-h-[80px]"

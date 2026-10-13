@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Controller,
+  Logger,
   Post,
   UploadedFile,
   UseGuards,
@@ -8,9 +9,10 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { mkdirSync } from 'fs';
+import { mkdirSync, unlinkSync, statSync } from 'fs';
 import { extname, join, relative, sep } from 'path';
 import { randomBytes } from 'crypto';
+import sharp from 'sharp';
 
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { uploadConfig } from '../../config/upload.config';
@@ -57,6 +59,8 @@ export interface UploadResult {
 @Controller('api/upload')
 @UseGuards(JwtAuthGuard)
 export class UploadsController {
+  private readonly logger = new Logger(UploadsController.name);
+
   @Post()
   @UseInterceptors(
     FileInterceptor('file', {
@@ -86,20 +90,51 @@ export class UploadsController {
       },
     }),
   )
-  uploadFile(@UploadedFile() file?: Express.Multer.File): UploadResult {
+  async uploadFile(@UploadedFile() file?: Express.Multer.File): Promise<UploadResult> {
     if (!file) {
       throw new BadRequestException('没有收到文件');
     }
 
     const ext = extname(file.originalname).toLowerCase();
-    const relativePath = relative(uploadConfig.dir, file.path).split(sep).join('/');
+    const isImage = IMAGE_EXTENSIONS.has(ext);
+
+    let finalPath = file.path;
+    let finalSize = file.size;
+    let finalMime = file.mimetype;
+
+    // 对位图图片执行 Sharp 优化流水线：保持 EXIF 转向，最大宽高 1920px 等比压缩，统一转码高质量 WebP
+    if (isImage && ext !== '.gif') {
+      try {
+        const webpPath = file.path.replace(/\.[^.]+$/, '') + '.webp';
+        await sharp(file.path)
+          .rotate()
+          .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true })
+          .webp({ quality: 82, effort: 4 })
+          .toFile(webpPath);
+
+        if (webpPath !== file.path) {
+          try {
+            unlinkSync(file.path);
+          } catch {
+            // ignore unlink error
+          }
+        }
+        finalPath = webpPath;
+        finalSize = statSync(webpPath).size;
+        finalMime = 'image/webp';
+      } catch (err) {
+        this.logger.warn(`Sharp 图像转码失败，降级保存原图: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    }
+
+    const relativePath = relative(uploadConfig.dir, finalPath).split(sep).join('/');
 
     return {
       url: `${uploadConfig.urlPrefix}/${relativePath}`,
       fileName: file.originalname,
-      fileSize: file.size,
-      fileType: file.mimetype,
-      isImage: IMAGE_EXTENSIONS.has(ext),
+      fileSize: finalSize,
+      fileType: finalMime,
+      isImage,
     };
   }
 }

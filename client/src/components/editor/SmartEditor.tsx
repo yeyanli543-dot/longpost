@@ -11,8 +11,10 @@ import { WhiteboardCanvas } from './tools/WhiteboardCanvas';
 import { DiffInspector } from './tools/DiffInspector';
 import { KnowledgeGraphView } from './tools/KnowledgeGraphView';
 import { WritingLab } from './tools/WritingLab';
+import { ShortcutsModal } from './ShortcutsModal';
 import { useWorkspaceMode } from '@client/src/hooks/useWorkspaceMode';
 import { uploadsApi } from '@client/src/api';
+import { toast } from 'sonner';
 
 interface SmartEditorProps {
   value: string;
@@ -60,6 +62,66 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
 
   // 导出弹窗
   const [showExportModal, setShowExportModal] = useState(false);
+
+  // 快捷键指南弹窗
+  const [showShortcuts, setShowShortcuts] = useState(false);
+
+  // 飞行记录仪崩溃数据自救
+  const [recoveredDraft, setRecoveredDraft] = useState<{ content: string; timestamp: number } | null>(null);
+
+  // 挂载时检查未持久化的浏览器退出遗留草稿
+  useEffect(() => {
+    try {
+      const savedRaw = localStorage.getItem('lp_flight_recorder_draft');
+      if (savedRaw) {
+        const parsed = JSON.parse(savedRaw);
+        if (
+          parsed &&
+          typeof parsed.content === 'string' &&
+          parsed.content.trim().length > 10 &&
+          parsed.content.trim() !== value.trim() &&
+          Date.now() - parsed.timestamp < 7 * 24 * 3600 * 1000
+        ) {
+          setRecoveredDraft(parsed);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // 防抖镜像保存至飞行记录仪（防断电 / 误关 / 崩溃）
+  useEffect(() => {
+    if (!value || value.trim().length < 5) return;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(
+          'lp_flight_recorder_draft',
+          JSON.stringify({ content: value, timestamp: Date.now() }),
+        );
+      } catch {
+        // storage quota exceeded
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [value]);
+
+  const handleRestoreDraft = () => {
+    if (recoveredDraft) {
+      updateContent(recoveredDraft.content);
+      setRecoveredDraft(null);
+      toast.success('已一键恢复异常退出前的暂存草稿');
+    }
+  };
+
+  const handleDismissDraft = () => {
+    setRecoveredDraft(null);
+    try {
+      localStorage.removeItem('lp_flight_recorder_draft');
+    } catch {
+      // ignore
+    }
+  };
 
   // 简易 Undo/Redo 历史记录
   const [history, setHistory] = useState<string[]>([value]);
@@ -215,6 +277,11 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
       e.preventDefault();
       if (e.shiftKey) handleRedo();
       else handleUndo();
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && (e.key === '/' || e.key === '?')) {
+      e.preventDefault();
+      setShowShortcuts((prev) => !prev);
       return;
     }
 
@@ -416,7 +483,38 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
         onOpenDiff={() => setShowDiff(true)}
         onOpenGraph={() => setShowGraph(true)}
         onOpenWritingLab={() => setShowWritingLab(true)}
+        onOpenShortcuts={() => setShowShortcuts(true)}
       />
+
+      {/* 飞行记录仪崩溃数据自救横幅 */}
+      {recoveredDraft && (
+        <div className="mx-4 my-2 px-4 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-800 dark:text-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs sm:text-sm animate-in fade-in duration-200">
+          <div className="flex items-center gap-2.5">
+            <span className="text-lg">🛟</span>
+            <div>
+              <p className="font-semibold">检测到异常退出或误关前留下的自动暂存草稿</p>
+              <p className="text-[11px] text-amber-700/80 dark:text-amber-300/80">
+                字数：{recoveredDraft.content.trim().length} 字符 · 暂存时间：
+                {new Date(recoveredDraft.timestamp).toLocaleTimeString()}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <button
+              onClick={handleRestoreDraft}
+              className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs shadow-sm transition-all active:scale-95"
+            >
+              一键恢复
+            </button>
+            <button
+              onClick={handleDismissDraft}
+              className="px-3 py-1.5 rounded-xl hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-medium text-xs transition-colors"
+            >
+              忽略
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 编辑与预览工作区 */}
       <div className={`flex flex-1 min-h-[${minHeight}] overflow-hidden`}>
@@ -516,6 +614,11 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
         onClose={() => setShowWritingLab(false)}
         content={value}
         onApplyFormattedContent={(formatted) => updateContent(formatted)}
+      />
+
+      <ShortcutsModal
+        isOpen={showShortcuts}
+        onClose={() => setShowShortcuts(false)}
       />
     </div>
   );

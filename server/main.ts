@@ -6,6 +6,7 @@ import { __express as hbsExpressEngine } from 'hbs';
 
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { mkdirSync } from 'fs';
+import compression from 'compression';
 import { AppModule } from './app.module';
 import { uploadConfig } from './config/upload.config';
 import { vendorConfig } from './config/vendor.config';
@@ -34,6 +35,8 @@ async function bootstrap() {
     origin: corsOrigin,
     credentials: true,
   });
+  // 启用 Gzip/Brotli 高效 HTTP 传输压缩
+  app.use(compression());
   app.use(json({ limit: '25mb' }));
   app.use(urlencoded({ extended: true, limit: '25mb' }));
   // 用户上传的文件落在磁盘上，由本站直接托管

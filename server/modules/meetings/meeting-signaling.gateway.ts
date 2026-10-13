@@ -314,7 +314,7 @@ export class MeetingSignalingGateway
     if (!userId || !meetingId) return;
 
     try {
-      const detail = await this.meetingsService.getMeeting(meetingId, userId);
+      const detail = await this.meetingsService.getDetail(meetingId, userId);
       if (detail.meeting.creatorId !== userId && role !== 'admin') {
         client.emit('error', { message: '仅会议主持人可结束会议' });
         return;

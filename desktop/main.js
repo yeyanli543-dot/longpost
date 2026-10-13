@@ -104,7 +104,13 @@ function createWindow() {
     }
   });
 
-  mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  const distHtml = path.join(__dirname, '..', 'dist', 'client', 'index.html');
+  const fallbackHtml = path.join(__dirname, 'renderer', 'index.html');
+  if (fs.existsSync(distHtml)) {
+    mainWindow.loadFile(distHtml);
+  } else {
+    mainWindow.loadFile(fallbackHtml);
+  }
 
   if (SMOKE_OUT) attachSmokeHooks();
 }

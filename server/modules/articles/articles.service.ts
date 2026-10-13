@@ -16,6 +16,7 @@ import { UpdateArticleDto } from './dto/update-article.dto';
 import { AuthService } from '../auth/auth.service';
 import { HashtagsService } from '../hashtags/hashtags.service';
 import { SiteSettingsService } from '../site-settings/site-settings.service';
+import { contentGuard } from '@server/common/utils/content-guard';
 import type {
   ArticleSummary,
   ArticleDetail,
@@ -113,8 +114,13 @@ export class ArticlesService {
       : this.extractExcerpt(content);
     const finalStatus = status ?? 'published';
 
+    const isAdmin = await this.authService.isAdmin(authorId);
+    const validation = contentGuard.validateContent(`${title} ${content}`);
+    if (!validation.valid && !isAdmin) {
+      throw new BadRequestException(`文章内容包含违规或垃圾信息关键词：${validation.matchedWords.join(', ')}`);
+    }
+
     const result = await this.db.transaction(async (tx) => {
-      const isAdmin = await this.authService.isAdmin(authorId);
       const settings = await this.siteSettingsService.getSettings();
       const moderationStatus: string = !isAdmin && settings.contentModerationEnabled
         ? 'pending_moderation'

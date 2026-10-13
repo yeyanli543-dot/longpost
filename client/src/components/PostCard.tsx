@@ -110,7 +110,7 @@ const PostCard = ({ post }: PostCardProps) => {
       transition={{ duration: 0.5, ease: 'easeOut', backgroundColor: { duration: 0.15 } }}
       whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.02)' }}
       whileTap={{ scale: 0.99 }}
-      className="flex gap-3 px-4 py-3 border-b border-gray-800 cursor-pointer transition-colors duration-150"
+      className="feed-post-card flex gap-3 px-4 py-3 border-b border-gray-800 cursor-pointer transition-colors duration-150"
       data-ai-section-type="card-list"
     >
       {/* Avatar */}

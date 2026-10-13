@@ -25,6 +25,7 @@ import {
   GitCompare,
   Network,
   Sparkles,
+  HelpCircle,
 } from 'lucide-react';
 import { useWorkspaceMode } from '@client/src/hooks/useWorkspaceMode';
 import { WorkspaceModeSwitcher } from '@client/src/components/WorkspaceMode/WorkspaceModeSwitcher';
@@ -49,6 +50,7 @@ interface EditorToolbarProps {
   onOpenDiff?: () => void;
   onOpenGraph?: () => void;
   onOpenWritingLab?: () => void;
+  onOpenShortcuts?: () => void;
 }
 
 export const EditorToolbar: React.FC<EditorToolbarProps> = ({
@@ -69,6 +71,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   onOpenDiff,
   onOpenGraph,
   onOpenWritingLab,
+  onOpenShortcuts,
 }) => {
   const { isLite, isPro } = useWorkspaceMode();
 
@@ -378,6 +381,17 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
             >
               {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
             </button>
+
+            {/* 快捷键指南 */}
+            {onOpenShortcuts && (
+              <button
+                onClick={onOpenShortcuts}
+                className="p-1.5 rounded-full bg-white dark:bg-[#1a1b1e] border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                title="快捷键与语法指南 (Ctrl+/)"
+              >
+                <HelpCircle className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         </>
       )}

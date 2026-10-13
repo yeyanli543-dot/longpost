@@ -1,4 +1,4 @@
-import { Injectable, Inject, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, Inject, Logger, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@server/database/database.module';
 import { posts, articles, articleImages, articleAttachments, appUsers, follows, contentHashtags, hashtags, siteSettings } from '@server/database/schema';
 import { eq, desc, lt, inArray, sql, count, and } from 'drizzle-orm';
@@ -6,6 +6,7 @@ import { AuthService } from '../auth/auth.service';
 import { HashtagsService } from '../hashtags/hashtags.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SiteSettingsService } from '../site-settings/site-settings.service';
+import { contentGuard } from '@server/common/utils/content-guard';
 import type { PostItem, ArticleSummary, TimelineResponse, TimelineItem, TimelineView } from '@shared/api.interface';
 
 @Injectable()
@@ -22,6 +23,13 @@ export class PostsService {
 
   async create(userId: string, content: string, articleId?: string): Promise<{ id: string }> {
     const isAdmin = await this.authService.isAdmin(userId);
+
+    // 本地零延迟敏感/黑产风控校验
+    const validation = contentGuard.validateContent(content);
+    if (!validation.valid && !isAdmin) {
+      throw new BadRequestException(`发布内容包含违规或垃圾信息关键词：${validation.matchedWords.join(', ')}`);
+    }
+
     const settings = await this.siteSettingsService.getSettings();
     const moderationStatus: string = !isAdmin && settings.contentModerationEnabled
       ? 'pending_moderation'

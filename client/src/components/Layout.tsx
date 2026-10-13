@@ -164,9 +164,17 @@ const Layout = () => {
             to={to}
             end={item.to === '/'}
             className={({ isActive }) =>
-              `flex items-center gap-4 px-4 py-3 rounded-full transition-colors hover:bg-gray-900 w-fit relative ${
-                isActive && user ? 'font-bold' : 'font-normal'
-              }`
+              isLite
+                ? `flex items-center gap-4 px-4 py-2.5 rounded-2xl transition-all duration-200 relative ${
+                    isActive && user
+                      ? 'bg-blue-500/10 dark:bg-blue-400/15 text-blue-600 dark:text-blue-400 font-semibold shadow-sm'
+                      : 'hover:bg-black/5 dark:hover:bg-white/5 text-foreground/85 font-normal'
+                  }`
+                : `flex items-center gap-4 px-5 py-3 rounded-full transition-colors relative ${
+                    isActive && user
+                      ? 'google-nav-pill-active font-semibold'
+                      : 'hover:bg-muted/70 text-foreground font-normal'
+                  }`
             }
           >
              <div className="relative">
@@ -184,10 +192,10 @@ const Layout = () => {
                      }}
                      style={{ transformOrigin: 'top center' }}
                    >
-                     <Icon className="w-7 h-7" />
+                     <Icon className="w-6 h-6" />
                    </motion.div>
                  ) : (
-                   <Icon className="w-7 h-7" />
+                   <Icon className="w-6 h-6" />
                  )}
                 {showBadge && (
                   <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-xs flex items-center justify-center text-white font-bold leading-none animate-badge-pulse">
@@ -195,7 +203,7 @@ const Layout = () => {
                   </span>
                 )}
               </div>
-             <span className="text-xl">{item.label}</span>
+             <span className="text-base tracking-normal">{item.label}</span>
            </NavLink>
           );
         })}
@@ -230,7 +238,11 @@ const Layout = () => {
 
           <button
             onClick={handleComposeClick}
-            className="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-full w-full transition-all duration-150 hover:scale-[1.02] active:scale-95"
+            className={`mt-4 text-white font-bold py-3 px-8 transition-all duration-150 hover:scale-[1.02] active:scale-95 ${
+              isLite
+                ? 'bg-blue-600 hover:bg-blue-500 rounded-2xl shadow-md'
+                : 'bg-[#1a73e8] hover:bg-[#1557b0] dark:bg-[#8ab4f8] dark:hover:bg-[#aecbfa] dark:text-[#001d35] rounded-full shadow-sm'
+            } w-full`}
             data-ai-section-type="button"
           >发布</button>
 
@@ -328,7 +340,9 @@ const Layout = () => {
 
       {/* Mobile bottom navigation */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-t border-border md:hidden px-safe"
+        className={`fixed bottom-0 left-0 right-0 z-50 border-t md:hidden px-safe transition-colors ${
+          isLite ? 'apple-glass border-zinc-200/50 dark:border-zinc-800/50' : 'bg-[#f0f4f9] dark:bg-[#1e1f20] border-gray-200 dark:border-gray-800'
+        }`}
         style={{ paddingBottom: 'var(--safe-area-inset-bottom)' }}
       >
         <div className="flex items-center justify-around h-14 relative overflow-x-auto scrollbar-hide">
@@ -345,7 +359,9 @@ const Layout = () => {
                   end={item.to === '/'}
                   className={({ isActive }) =>
                     `flex flex-col items-center justify-center flex-1 min-w-[44px] max-w-[56px] h-14 relative flex-shrink-0 ${
-                      isActive ? 'text-primary font-bold' : 'text-muted-foreground'
+                      isActive
+                        ? isLite ? 'text-blue-500 font-semibold' : 'google-nav-pill-active py-1'
+                        : 'text-muted-foreground'
                     }`
                   }
                 >
@@ -367,13 +383,98 @@ const Layout = () => {
       {/* Mobile FAB button */}
       <button
         onClick={handleComposeClick}
-        className="fixed right-4 z-40 w-14 h-14 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg flex items-center justify-center transition-all active:scale-95 md:hidden"
+        className={`fixed right-4 z-40 w-14 h-14 shadow-lg flex items-center justify-center transition-all active:scale-95 md:hidden ${
+          isLite ? 'rounded-2xl bg-blue-600 text-white' : 'rounded-2xl google-fab'
+        }`}
         style={{ bottom: 'calc(76px + var(--safe-area-inset-bottom))' }}
         aria-label="发布"
         data-ai-section-type="button"
       >
         <Plus className="w-7 h-7" />
       </button>
+
+      {/* 🍏 Apple 模式专享：macOS / iPadOS 悬浮灵动胶囊 Dock (桌面端) */}
+      {isLite && (
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 apple-dock px-5 py-2.5 hidden md:flex items-center gap-5"
+        >
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              `p-2 rounded-xl transition-all duration-150 hover:scale-110 active:scale-95 ${
+                isActive ? 'text-blue-500 bg-blue-500/10' : 'text-foreground/75 hover:text-foreground'
+              }`
+            }
+            title="首页"
+          >
+            <Home className="w-5 h-5" />
+          </NavLink>
+          <NavLink
+            to="/search"
+            className={({ isActive }) =>
+              `p-2 rounded-xl transition-all duration-150 hover:scale-110 active:scale-95 ${
+                isActive ? 'text-blue-500 bg-blue-500/10' : 'text-foreground/75 hover:text-foreground'
+              }`
+            }
+            title="搜索"
+          >
+            <Search className="w-5 h-5" />
+          </NavLink>
+          <button
+            onClick={handleComposeClick}
+            className="p-2.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-md transition-all duration-150 hover:scale-110 active:scale-95"
+            title="撰写新内容"
+          >
+            <Edit3 className="w-5 h-5" />
+          </button>
+          <NavLink
+            to={user ? '/notifications' : '/login'}
+            className={({ isActive }) =>
+              `p-2 rounded-xl transition-all duration-150 hover:scale-110 active:scale-95 relative ${
+                isActive ? 'text-blue-500 bg-blue-500/10' : 'text-foreground/75 hover:text-foreground'
+              }`
+            }
+            title="通知"
+          >
+            <Bell className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
+            )}
+          </NavLink>
+          <NavLink
+            to={user ? '/messages' : '/login'}
+            className={({ isActive }) =>
+              `p-2 rounded-xl transition-all duration-150 hover:scale-110 active:scale-95 relative ${
+                isActive ? 'text-blue-500 bg-blue-500/10' : 'text-foreground/75 hover:text-foreground'
+              }`
+            }
+            title="私信"
+          >
+            <Mail className="w-5 h-5" />
+            {dmUnreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
+            )}
+          </NavLink>
+          <div className="w-[1px] h-5 bg-border/60 mx-1" />
+          <WorkspaceModeSwitcher compact />
+        </motion.div>
+      )}
+
+      {/* 🔷 Google 模式专享：桌面端 Material 3 浮动扩展 FAB */}
+      {isPro && (
+        <button
+          onClick={handleComposeClick}
+          className="fixed bottom-8 right-8 z-40 google-fab rounded-2xl px-5 py-3.5 hidden md:flex items-center gap-2.5 shadow-lg active:scale-95 transition-all"
+          aria-label="快速发帖 / 撰写长文"
+        >
+          <Plus className="w-5 h-5" />
+          <span className="text-sm font-semibold tracking-wide">撰写</span>
+        </button>
+      )}
 
       {/* Global Command Palette */}
       <CommandPalette />

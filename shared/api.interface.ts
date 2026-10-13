@@ -15,6 +15,8 @@ export type NotificationType = 'like' | 'repost' | 'comment' | 'follow' | 'menti
 
 export type RegistrationMode = 'google_only' | 'email_and_google';
 
+export type UserRole = 'user' | 'admin' | 'moderator' | string;
+
 export type ReportContentType = 'post' | 'article' | 'comment';
 export type ReportStatus = 'pending' | 'resolved' | 'ignored';
 export type ReportReason = 'spam' | 'misinformation' | 'harassment' | 'infringement' | 'other';

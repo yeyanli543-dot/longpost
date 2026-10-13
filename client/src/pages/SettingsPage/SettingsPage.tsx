@@ -283,7 +283,7 @@ const SettingsPage: React.FC = () => {
     try {
       let myArticles: unknown[] = [];
       try {
-        const res = await articlesApi.getMyArticles({ page: 1, limit: 100 });
+        const res = await articlesApi.getMyArticles();
         myArticles = res.items || [];
       } catch {
         // 若离线或接口异常继续导出基本信息

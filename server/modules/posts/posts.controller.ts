@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard, OptionalJwtAuthGuard, type AuthRequest } from '../auth/jwt-auth.guard';
+import { IdempotencyGuard } from '@server/common/guards/idempotency.guard';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { validateUUIDParam } from '@server/common/utils/validation';
@@ -28,7 +29,7 @@ export class PostsController {
     private readonly postsService: PostsService,
   ) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, IdempotencyGuard)
   @Post('posts')
   async createPost(
     @Req() req: AuthRequest,

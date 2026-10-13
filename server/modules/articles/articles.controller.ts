@@ -16,6 +16,7 @@ import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { JwtAuthGuard, OptionalJwtAuthGuard, type AuthRequest } from '../auth/jwt-auth.guard';
+import { IdempotencyGuard } from '@server/common/guards/idempotency.guard';
 import { validateUUIDParam } from '@server/common/utils/validation';
 import type {
   ArticleDetail,
@@ -34,7 +35,7 @@ export class ArticlesController {
     private readonly authService: AuthService,
   ) {}
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, IdempotencyGuard)
   @Post('articles')
   async create(
     @Req() req: AuthRequest,
