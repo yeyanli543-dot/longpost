@@ -1,7 +1,7 @@
 # 📐 LongPost 简洁版与专业版设计分工与能力集成白皮书
 
 > **LongPost Workspace Dual-System Specification**  
-> 版本：v2.7.4  
+> 版本：v2.7.5  
 > 适用端：桌面客户端 (Electron) · 移动客户端 (Android Capacitor) · 网页端 (Web)
 
 ---
@@ -27,15 +27,17 @@
 ┌───────────────────────────┬───────────────────────────────────┬───────────────────────────────────┐
 │ 维度                      │ 🍎 简洁版 (对标 apple.com / HIG)   │ 🎨 专业版 (对标 google.com / M3)   │
 ├───────────────────────────┼───────────────────────────────────┼───────────────────────────────────┤
+│ 布局形态 (Layout)         │ 零侧栏大留白 · 880px 居中画卷      │ M3 侧边抽屉栏 + 右侧探索与热帖栏    │
+│ 导航中枢 (Navigation)     │ 底部悬浮毛玻璃灵动 Dock 独占导航   │ 顶部/侧边 M3 功能带 + 底部/扩展 FAB │
 │ 字体栈 (Font Family)      │ SF Pro Display / Text, 苹方, 无衬线 │ Google Sans, Product Sans, Roboto │
-│ 标题字号与字重            │ 48px / 40px / 28px，字重 600 (Semibold)│ 45px / 32px / 28px，字重 400 (Regular)│
+│ 杂志排版 (Typography)     │ 首字下沉 (Drop Caps) + 标点挤压连字│ 严谨等宽字符 + 标点常规间隔        │
 │ 大标题字距 (Tracking)     │ -.022em (负字距，紧凑有力)         │ 0 (标准字距)                      │
-│ 正文字距 (Body Tracking)  │ -0.015em                          │ +0.03125em (+0.5px，透气易读)     │
+│ 正文字距 (Body Tracking)  │ -0.015em (OpenType palt/kern)     │ +0.03125em (+0.5px，透气易读)     │
 │ 行高节奏 (Line Height)    │ 精密小数 (1.2352 / 1.2857 / 1.7)  │ 黄金比例 (1.4 / 1.6 / 1.8)        │
 │ 容器层级表现              │ 背景色色阶台阶 (Tonal step)，不描边 │ 1px 细线描边 + 海拔双阴影 (Elevation)│
 │ 圆角阶梯 (Border Radius)  │ 6 / 10 / 12 / 18 / 980px (大胶囊) │ 4 / 8 / 12 / 16 / 28 / 9999px (固定)│
-│ 界面呼吸留白              │ 72px 大留白分区                   │ 48px 紧凑工坊留白                 │
-│ 顶栏与导航形态            │ 48px 毛玻璃浮动岛 (Frosted Glass) │ 64px 描边固定功能带 (M3 Ribbon)   │
+│ 数据图表 (ECharts)        │ 莫兰迪高雅调色 · 顶部 6px 圆角柱体 │ 活力主题色阶 · 结构化双轴对比     │
+│ 特殊质感 (Paper Texture)  │ 宣纸暖阳微噪点 (warm-paper 护眼纹理)│ 纯净冷色/深灰卡片 (M3 Surface)    │
 │ 开关控件 (Switch)         │ iOS 系统绿 #34c759 (透明本体+白滑块)│ M3 Primary 轨道 + On-Primary 滑块 │
 │ 对话框形态 (Modal)        │ 18px-20px 毛玻璃抽屉 (带抓手 Handle)│ 28px 超大圆角 M3 Tonal 卡片       │
 │ 品牌徽记                  │ macOS 红黄绿交通灯 (Red/Yellow/Green)│ Google 4-Color 蓝红黄绿经典渐变光带│
@@ -112,10 +114,10 @@ LongPost 坚持**100% 本地离线优先（Local-First）**架构。无论是极
 
 ### 2. 底层集成的 13+ 高质量开源引擎与组件
 
-所有外部库均严格存放在本地 `desktop/renderer/vendor/` 目录下，遵循宽松开源许可协议，严格做到零外部 CDN、零网络请求：
+所有外部引擎均通过现代工程化构建严密打包于 `dist/client`，遵循宽松开源许可协议，严格做到零外部 CDN、零网络隐私泄漏：
 
 1. **图表与可视化**：
-   - `ECharts 6`：提供柱状图、折线图、面积图、饼图与力导向关系网络渲染，支持悬浮探针与数据过滤。
+   - `ECharts 6`：提供柱状图、折线图、面积图、饼图与力导向关系网络渲染，支持悬浮探针、数据过滤与自适应莫兰迪配色；
 2. **文本与检索**：
    - `FlexSearch Compact`：高性能内存倒排索引，支持毫秒级中英双语全文搜索与高亮；
    - `Markdown-it 15` + 插件生态：任务列表（Task Lists）、脚注（Footnote）、定义列表（Deflist）、Emoji；

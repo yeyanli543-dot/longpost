@@ -82,7 +82,7 @@ export class InteractionsService {
         await tx.delete(likes).where(eq(likes.id, existing[0].id));
         const updated = await tx
           .update(contentTable)
-          .set({ likeCount: sql`${contentTable.likeCount} - 1` })
+          .set({ likeCount: sql`GREATEST(0, ${contentTable.likeCount} - 1)` })
           .where(eq(contentTable.id, contentId))
           .returning({ count: contentTable.likeCount });
         return { liked: false, likeCount: Number(updated[0].count) };
@@ -148,7 +148,7 @@ export class InteractionsService {
         await tx.delete(bookmarks).where(eq(bookmarks.id, existing[0].id));
         const updated = await tx
           .update(articles)
-          .set({ bookmarkCount: sql`${articles.bookmarkCount} - 1` })
+          .set({ bookmarkCount: sql`GREATEST(0, ${articles.bookmarkCount} - 1)` })
           .where(eq(articles.id, articleId))
           .returning({ count: articles.bookmarkCount });
         return { bookmarked: false, bookmarkCount: Number(updated[0].count) };
@@ -206,7 +206,7 @@ export class InteractionsService {
         await tx.delete(reposts).where(eq(reposts.id, existing[0].id));
         const updated = await tx
           .update(contentTable)
-          .set({ repostCount: sql`${contentTable.repostCount} - 1` })
+          .set({ repostCount: sql`GREATEST(0, ${contentTable.repostCount} - 1)` })
           .where(eq(contentTable.id, contentId))
           .returning({ count: contentTable.repostCount });
         return { reposted: false, repostCount: Number(updated[0].count) };
@@ -240,7 +240,7 @@ export class InteractionsService {
                 .where(eq(reposts.id, existingRows[0].id));
               const updated = await tx
                 .update(contentTable)
-                .set({ repostCount: sql`${contentTable.repostCount} - 1` })
+                .set({ repostCount: sql`GREATEST(0, ${contentTable.repostCount} - 1)` })
                 .where(eq(contentTable.id, contentId))
                 .returning({ count: contentTable.repostCount });
               return { reposted: false, repostCount: Number(updated[0].count) };

@@ -9,7 +9,7 @@ LongPost 手机版是一个**完全本地离线运行**的长文写作与阅读�
 ### 1. 下载 APK
 每次推送代码后，GitHub Actions 会自动编译并使用仓库固定的调试密钥完成签名验证，可以直接下载安装：
 
-👉 **[下载最新版 LongPost-v2.7.4-android.apk](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.7.4)** 或 **[查看全平台最新发布页](https://github.com/yeyanli543-dot/longpost/releases)**
+👉 **[下载最新版 LongPost-v2.7.5-android.apk](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.7.5)** 或 **[查看全平台最新发布页](https://github.com/yeyanli543-dot/longpost/releases)**
 
 > **安装提示**：
 > 1. 下载后在手机文件管理器中点击打开，如果系统弹出未知来源警告，请选择「允许来自此来源的应用」；
@@ -20,12 +20,12 @@ LongPost 手机版是一个**完全本地离线运行**的长文写作与阅读�
 ## 🛠️ 技术实现
 
 - **外壳框架**：基于 [Capacitor 8](https://capacitorjs.com/) 深度定制；
-- **渲染内核**：复用 `desktop/renderer/` 轻量渲染层，零额外打包体积；
-- **本地存储**：数据持久化于手机原生 Webview 的 IndexedDB，无需网络请求；
+- **渲染内核**：复用现代 React 19 + Tailwind CSS 4 构建产物 `dist/client`，完美支持 🍏 Apple 极简与 🔷 Google 专业双工作区切换；
+- **本地存储**：数据持久化于手机本地（IndexedDB/SQLite），无需网络请求；
+- **异形屏适配**：深度集成 Punch-hole / Dynamic Island 前摄挖孔避让算法与横竖屏安全区（`viewport-fit=cover`）；
 - **自适应设计**：
-  - 针对窄屏（< 820px）专门优化底部导航抽屉布局与移动端视口；
-  - 完美适配安全区域（`viewport-fit=cover`）；
-  - 图标与图表自适应缩放。
+  - 针对窄屏专门优化底部悬浮胶囊导航与移动端视口；
+  - 图标、交互式 ECharts 图表与富文本自适应缩放。
 
 ---
 

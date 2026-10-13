@@ -1,4 +1,4 @@
-import test, { describe, it } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
 // DFA Trie 纯逻辑验证（保持与 content-guard.ts 一致）
