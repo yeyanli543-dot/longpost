@@ -1,0 +1,935 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark" class="mode-apple mode-lite" data-workspace-mode="lite">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' file:; style-src 'self' 'unsafe-inline' file:; img-src 'self' file: lp: data: blob: https: http:; font-src 'self' file: data:; connect-src 'self';"
+    />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content"
+    />
+    <meta name="color-scheme" content="dark light" />
+    <title>LongPost</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style-mobile.css" />
+    <!-- 第三方样式：KaTeX 公式与两套 Prism 代码主题（浅色 + 深色，靠 [data-theme] 覆盖切换）。
+         随包分发给用户的许可证全文在 desktop/THIRD-PARTY-NOTICES.md；
+         开发用的接线说明见 desktop/VENDOR.md 与 desktop/VENDOR-LICENSES.md（不随包分发） -->
+    <link rel="stylesheet" href="vendor/katex/katex.min.css" />
+    <link rel="stylesheet" href="vendor/prism/themes/prism.min.css" />
+    <link rel="stylesheet" href="vendor/prism/themes/prism-tomorrow.min.css" />
+  </head>
+  <body class="mode-apple mode-lite">
+    <!--
+      ===========================================================================
+      图标系统：内联 SVG sprite
+      ---------------------------------------------------------------------------
+      图标取自 Feather Icons v4.29（https://github.com/feathericons/feather），
+      许可证 MIT —— 与仓库本体的 MIT 完全兼容，且不引入任何 npm 依赖、不引 CDN。
+      唯一的例外是 i-sigma（求和号，Feather 没有这个字形），取自 Lucide
+      （https://github.com/lucide-icons/lucide，ISC 许可证，同为宽松许可；Lucide 本身
+      就是 Feather 的衍生项目，两套 24×24 线性风格一致）。
+      这里只保留实际用到的那些，全部是 24×24 的正交线性图标；
+      fill / stroke / stroke-width 由 CSS 的 .icon 统一给（SVG 的继承属性会穿透
+      <use> 的 shadow tree），所以 symbol 里只写几何。
+      ===========================================================================
+    -->
+    <svg class="svg-sprite" aria-hidden="true" focusable="false">
+      <!-- i-sigma：Lucide (ISC) —— 见上面注释 -->
+      <symbol id="i-sigma" viewBox="0 0 24 24"><path d="M18 7V4H6l6 8-6 8h12v-3"/></symbol>
+      <symbol id="i-feather" viewBox="0 0 24 24"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+      <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></symbol>
+      <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+      <symbol id="i-arrow-left" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></symbol>
+      <symbol id="i-chevron-up" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></symbol>
+      <symbol id="i-chevron-down" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></symbol>
+      <symbol id="i-list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></symbol>
+      <symbol id="i-align-left" viewBox="0 0 24 24"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></symbol>
+      <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></symbol>
+      <symbol id="i-tag" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></symbol>
+      <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+      <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></symbol>
+      <symbol id="i-chart" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></symbol>
+      <symbol id="i-paperclip" viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+      <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></symbol>
+      <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+      <symbol id="i-maximize" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></symbol>
+      <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+      <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></symbol>
+      <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+      <symbol id="i-file-text" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></symbol>
+      <symbol id="i-file-plus" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></symbol>
+      <symbol id="i-folder" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></symbol>
+      <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></symbol>
+      <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+      <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></symbol>
+      <symbol id="i-bold" viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></symbol>
+      <symbol id="i-italic" viewBox="0 0 24 24"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></symbol>
+      <symbol id="i-type" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></symbol>
+      <symbol id="i-hash" viewBox="0 0 24 24"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></symbol>
+      <symbol id="i-check-square" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></symbol>
+      <symbol id="i-quote" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+      <symbol id="i-code" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></symbol>
+      <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></symbol>
+      <symbol id="i-minus" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+      <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+      <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></symbol>
+      <symbol id="i-columns" viewBox="0 0 24 24"><path d="M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7"/><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7"/><line x1="12" y1="3" x2="12" y2="21"/></symbol>
+      <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+      <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+    </svg>
+
+    <div class="app" id="app" data-view="list" data-pane="write">
+      <!-- 全局忙碌条：导入 / 导出 / 分享 / 打开文章时给一条进度反馈 -->
+      <div class="busy" id="busyBar" hidden><span class="busy-fill"></span></div>
+
+      <!-- ================================================================ 左：文章列表 -->
+      <aside class="sidebar" id="sidebar">
+        <header class="side-head">
+          <div class="brand">
+            <span class="logo"><svg class="icon" aria-hidden="true"><use href="#i-feather"></use></svg></span>
+            <div class="brand-text">
+              <div class="brand-name">LongPost</div>
+              <div class="brand-sub">本地写作台 · 离线</div>
+            </div>
+            <button class="btn mode-pill-btn" id="btnModeSwitch" title="一键切换工作区风格（Alt+M）：🍎 苹果极简版 ↔ 🎨 谷歌专业版">
+              <span class="mode-badge" id="modeBadge">🍎</span><span class="mode-label" id="modeLabel">苹果极简</span>
+            </button>
+          </div>
+
+          <div class="search-wrap">
+            <svg class="icon search-icon" aria-hidden="true"><use href="#i-search"></use></svg>
+            <input class="search" id="search" type="search" placeholder="搜索标题、正文、标签…" aria-label="搜索文章" />
+            <button class="icon-btn search-clear" id="btnSearchClear" hidden aria-label="清空搜索" title="清空搜索">
+              <svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>
+            </button>
+          </div>
+
+          <div class="filter-row">
+            <label class="select-wrap">
+              <svg class="icon" aria-hidden="true"><use href="#i-tag"></use></svg>
+              <select class="select" id="tagFilterSelect" aria-label="按标签筛选">
+                <option value="">全部标签</option>
+              </select>
+              <svg class="icon select-caret" aria-hidden="true"><use href="#i-chevron-down"></use></svg>
+            </label>
+          </div>
+
+          <div class="side-actions">
+            <button class="btn primary block" id="btnNew">
+              <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>新建文章
+            </button>
+            <div class="btn-row">
+              <button class="btn ghost sm" id="btnImport" title="把已有的 Markdown / 文本文件读成一篇文章">
+                <svg class="icon" aria-hidden="true"><use href="#i-file-plus"></use></svg>导入
+              </button>
+              <button class="btn ghost sm" id="btnTags" title="查看全部标签，点一下按标签筛选">
+                <svg class="icon" aria-hidden="true"><use href="#i-tag"></use></svg>标签
+              </button>
+              <button class="btn ghost sm" id="btnTrash" title="误删的文章先放在这里">
+                <svg class="icon" aria-hidden="true"><use href="#i-trash"></use></svg>回收站
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <div class="list" id="list" role="list"></div>
+
+        <footer class="side-foot">
+          <span class="count" id="count">0 篇</span>
+          <div class="foot-btns">
+            <button class="btn ghost sm" id="btnAuth" title="Google 账号登录与专属通行码认证">
+              🔑 登录 / 通行码
+            </button>
+            <button class="btn ghost sm only-desktop" id="btnDataDir" title="在文件管理器里打开数据目录">
+              <svg class="icon" aria-hidden="true"><use href="#i-folder"></use></svg>数据目录
+            </button>
+            <button class="btn ghost sm" id="btnSettings" title="主题、字号、排序等">
+              <svg class="icon" aria-hidden="true"><use href="#i-settings"></use></svg>设置
+            </button>
+          </div>
+        </footer>
+      </aside>
+
+      <!-- ================================================================ 右：编辑器 -->
+      <main class="main">
+        <section class="empty" id="empty">
+          <div class="empty-inner">
+            <div class="empty-mark"><svg class="icon" aria-hidden="true"><use href="#i-feather"></use></svg></div>
+            <div class="empty-hero-badge"><span class="hero-badge-apple"> Apple Zen · 官网极简美学</span><span class="hero-badge-google">🎨 Google Studio · M3 官方工坊</span></div>
+            <h2>开始写点什么</h2>
+            <p>
+              正文用 Markdown 写，右边实时预览。<br />
+              工具栏能插图表、图片、附件，手机上还能一键分享出去。<br />
+              所有内容只保存在你自己的设备上，不联网、不上传。
+            </p>
+            <div class="empty-features">
+              <div class="feature-card feature-card-1">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-text">
+                  <div class="feature-title">官网 1:1 双形态</div>
+                  <div class="feature-desc">Alt+M 瞬间丝滑插值蜕变</div>
+                </div>
+              </div>
+              <div class="feature-card feature-card-2">
+                <div class="feature-icon">📊</div>
+                <div class="feature-text">
+                  <div class="feature-title">图表卡片复制</div>
+                  <div class="feature-desc">一键 PNG 进系统剪贴板</div>
+                </div>
+              </div>
+              <div class="feature-card feature-card-3">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-text">
+                  <div class="feature-title">全域离线私有</div>
+                  <div class="feature-desc">数据零出网 · 本地优先</div>
+                </div>
+              </div>
+            </div>
+            <div class="empty-actions">
+              <button class="btn primary" id="btnNew2">
+                <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>新建文章
+              </button>
+              <button class="btn ghost" id="btnEmptyAuth">
+                🔑 通行码 / Google 登录
+              </button>
+            </div>
+            <div class="kbd-hints">
+              <span><kbd>Alt</kbd>+<kbd>M</kbd> 切换官网双形态</span>
+              <span><kbd>Ctrl</kbd>+<kbd>B</kbd> 加粗</span>
+              <span><kbd>Ctrl</kbd>+<kbd>F</kbd> 查找替换</span>
+              <span><kbd>Ctrl</kbd>+<kbd>S</kbd> 保存</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="editor-wrap" id="editorWrap" hidden>
+          <!-- 顶部上下文操作条 -->
+          <div class="toolbar">
+            <button class="icon-btn only-mobile" id="btnBack" title="回到文章列表" aria-label="回到文章列表">
+              <svg class="icon" aria-hidden="true"><use href="#i-arrow-left"></use></svg>
+            </button>
+            <input class="title-input" id="title" placeholder="无标题" aria-label="文章标题" />
+            <button class="btn mode-pill-btn only-mobile" id="btnModeSwitchMobile" title="一键切换工作区风格 (Alt+M)">
+              <span class="mode-badge" id="modeBadgeMobile">🍎</span><span class="mode-label" id="modeLabelMobile">苹果极简</span>
+            </button>
+            <div class="tools">
+              <button class="btn" id="btnPin" title="把这篇文章顶到列表最前">
+                <svg class="icon" aria-hidden="true"><use href="#i-star"></use></svg><span class="btn-label">置顶</span>
+              </button>
+              <button class="btn" id="btnTagsEdit" title="给这篇文章打标签">
+                <svg class="icon" aria-hidden="true"><use href="#i-tag"></use></svg><span class="btn-label">标签</span>
+              </button>
+              <button class="btn" id="btnShare" title="复制成 Markdown / 网页，或调用系统分享">
+                <svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg><span class="btn-label">分享</span>
+              </button>
+              <span class="sep"></span>
+              <button class="btn" id="btnChart" title="插入柱状图 / 折线图 / 面积图 / 饼图">
+                <svg class="icon" aria-hidden="true"><use href="#i-chart"></use></svg><span class="btn-label">图表</span>
+              </button>
+              <button class="btn" id="btnImage" title="插入图片">
+                <svg class="icon" aria-hidden="true"><use href="#i-image"></use></svg><span class="btn-label">图片</span>
+              </button>
+              <button class="btn" id="btnFile" title="插入任意文件作为附件">
+                <svg class="icon" aria-hidden="true"><use href="#i-paperclip"></use></svg><span class="btn-label">附件</span>
+              </button>
+              <span class="sep"></span>
+              <button class="btn keep-in-reading" id="btnOutline" title="显示 / 隐藏正文大纲">
+                <svg class="icon" aria-hidden="true"><use href="#i-align-left"></use></svg><span class="btn-label">大纲</span>
+              </button>
+              <button class="btn keep-in-reading" id="btnReading" title="沉浸阅读：收起侧栏，只看正文内容">
+                <svg class="icon" aria-hidden="true"><use href="#i-maximize"></use></svg><span class="btn-label">沉浸</span>
+              </button>
+              <button class="btn keep-in-reading" id="btnPreview" title="显示 / 隐藏预览">
+                <svg class="icon" aria-hidden="true"><use href="#i-eye"></use></svg><span class="btn-label">预览</span>
+              </button>
+              <span class="sep keep-in-reading"></span>
+              <button class="btn keep-in-reading" id="btnFind" title="查找与替换（Ctrl/Cmd + F）">
+                <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg><span class="btn-label">查找</span>
+              </button>
+              <span class="sep pro-tool-item"></span>
+              <button class="btn pro-tool-item" id="btnProGraph" title="全库知识图谱关系网络">
+                <svg class="icon" aria-hidden="true"><use href="#i-grid"></use></svg><span class="btn-label">图谱</span>
+              </button>
+              <button class="btn pro-tool-item" id="btnProLab" title="写作实验室：字数词频与可读性深度分析">
+                <svg class="icon" aria-hidden="true"><use href="#i-file-text"></use></svg><span class="btn-label">实验室</span>
+              </button>
+              <button class="btn pro-tool-item" id="btnProDiff" title="版本差分比对器：与历史版本逐行差异核对">
+                <svg class="icon" aria-hidden="true"><use href="#i-columns"></use></svg><span class="btn-label">差分</span>
+              </button>
+              <button class="btn pro-tool-item" id="btnProBoard" title="灵感白板：手绘脑图与架构草图，一键插入正文">
+                <svg class="icon" aria-hidden="true"><use href="#i-edit"></use></svg><span class="btn-label">白板</span>
+              </button>
+              <button class="btn" id="btnMore" title="导出、历史版本、统计、删除" aria-haspopup="menu">
+                <svg class="icon" aria-hidden="true"><use href="#i-more"></use></svg><span class="btn-label">更多</span>
+              </button>
+            </div>
+            <!-- 工具条真溢出时才出现的「还能往右滑」提示；由 syncToolsOverflow() 挂类控制 -->
+            <span class="tools-hint" aria-hidden="true">›</span>
+          </div>
+
+          <!-- 格式工具栏：按钮由 app.js 按 FMT_ACTIONS 表生成，避免 id 重复与漏绑 -->
+          <div class="fmtbar" id="fmtbar" role="toolbar" aria-label="格式与插入"></div>
+
+          <!-- 常驻监视建议条：当后台调度器发现未闭合围栏、多余空行、无Alt插图等问题时，非阻塞静默浮现 -->
+          <div class="ambient-bar" id="ambientBar" hidden>
+            <div class="ambient-content">
+              <span class="ambient-icon">💡</span>
+              <span class="ambient-text" id="ambientText">检测到可优化的排版建议</span>
+            </div>
+            <div class="ambient-actions">
+              <button class="btn sm primary" id="btnAmbientFix">一键优化</button>
+              <button class="btn sm ghost" id="btnAmbientDetail">查看建议</button>
+              <button class="icon-btn sm" id="btnAmbientDismiss" title="暂不处理" aria-label="暂不处理">
+                <svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- 窄屏专用：写作 / 对照 / 预览 三态切换（桌面端隐藏，用分栏 + 「预览」按钮） -->
+          <div class="paneswitch only-mobile" id="paneSwitch" role="tablist" aria-label="编辑与预览">
+            <button class="pswitch" id="paneWrite" data-mode="write" role="tab">写作</button>
+            <button class="pswitch" id="paneSplit" data-mode="split" role="tab">对照</button>
+            <button class="pswitch" id="panePreview" data-mode="preview" role="tab">预览</button>
+          </div>
+
+          <div class="panes" id="panes" data-mode="split" swiped-left="lp" swiped-right="lp">
+            <textarea
+              class="editor"
+              id="editor"
+              spellcheck="false"
+              placeholder="用 Markdown 写正文…&#10;&#10;支持 # 标题、**加粗**、- 列表、- [ ] 任务、> 引用、| 表格 |、``` 代码块。&#10;&#10;★ 小技巧：Tab 缩进、Enter 自动续列表、Ctrl/Cmd+B 加粗、Ctrl/Cmd+F 查找替换、直接往这里粘贴或拖入图片 / 文件。"
+            ></textarea>
+            <div class="splitter" id="splitter" title="拖动调整编辑区与预览的宽度"></div>
+            <div class="preview" id="preview"></div>
+
+            <!--
+              大纲浮层：绝对定位在编辑区右侧，不参与 .panes 的 flex 分栏。
+              窄屏下（见 style-mobile.css）它会变成贴底的抽屉，这一层遮罩跟着出现。
+            -->
+            <div class="scrim" id="outlineScrim" hidden></div>
+            <div class="outline-panel" id="outlinePanel" hidden>
+              <div class="sheet-grip only-mobile" aria-hidden="true"></div>
+              <div class="outline-head">
+                <span class="panel-head-title"><svg class="icon" aria-hidden="true"><use href="#i-align-left"></use></svg>正文大纲</span>
+                <button class="icon-btn" id="outlineClose" title="收起大纲" aria-label="收起大纲">
+                  <svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>
+                </button>
+              </div>
+              <div class="outline-list" id="outlineList"></div>
+            </div>
+          </div>
+
+          <!-- 查找与替换：只在需要时展开，不占常驻空间 -->
+          <div class="findbar" id="findBar" hidden>
+            <div class="find-row">
+              <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
+              <input class="find-input" id="findInput" type="text" placeholder="查找…" aria-label="查找内容" />
+              <span class="find-count" id="findCount">0/0</span>
+              <button class="icon-btn" id="findPrev" title="上一处" aria-label="上一处">
+                <svg class="icon" aria-hidden="true"><use href="#i-chevron-up"></use></svg>
+              </button>
+              <button class="icon-btn" id="findNext" title="下一处" aria-label="下一处">
+                <svg class="icon" aria-hidden="true"><use href="#i-chevron-down"></use></svg>
+              </button>
+              <button class="btn ghost sm toggle" id="findCase" title="区分大小写" aria-pressed="false">Aa</button>
+              <button class="icon-btn" id="findClose" title="关闭（Esc）" aria-label="关闭查找">
+                <svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>
+              </button>
+            </div>
+            <div class="find-row">
+              <svg class="icon" aria-hidden="true"><use href="#i-refresh"></use></svg>
+              <input class="find-input" id="replaceInput" type="text" placeholder="替换为…" aria-label="替换内容" />
+              <button class="btn ghost sm" id="replaceOne" title="替换当前这一处">替换</button>
+              <button class="btn ghost sm" id="replaceAll" title="替换全部命中">全部替换</button>
+            </div>
+          </div>
+
+          <div class="statusbar">
+            <span class="status-text" id="status">就绪</span>
+            <div class="status-right">
+              <span class="render-note" id="renderNote"></span>
+              <span class="status-stats" id="stats"></span>
+              <button class="btn ghost sm" id="btnStats" title="查看这篇文章的详细统计">
+                <svg class="icon" aria-hidden="true"><use href="#i-info"></use></svg>统计
+              </button>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- ================================================================ 窄屏底部导航 -->
+      <nav class="tabbar" id="tabbar" aria-label="主导航">
+        <button class="tab" id="tabList" data-tab="list">
+          <svg class="icon" aria-hidden="true"><use href="#i-list"></use></svg><span>列表</span>
+        </button>
+        <button class="tab" id="tabEdit" data-tab="edit">
+          <svg class="icon" aria-hidden="true"><use href="#i-edit"></use></svg><span>写作</span>
+        </button>
+        <button class="tab" id="tabOutline" data-tab="outline">
+          <svg class="icon" aria-hidden="true"><use href="#i-align-left"></use></svg><span>大纲</span>
+        </button>
+        <button class="tab" id="tabSettings" data-tab="settings">
+          <svg class="icon" aria-hidden="true"><use href="#i-settings"></use></svg><span>设置</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- 上下文菜单（更多 / 列表长按）：位置与条目都由 app.js 生成 -->
+    <div class="menu" id="ctxMenu" hidden role="menu" aria-label="操作菜单"></div>
+
+    <!-- 图表对话框 -->
+    <div class="modal" id="chartModal" hidden data-dismiss="1">
+      <div class="dialog wide" role="dialog" aria-label="插入图表">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>插入图表</h3>
+          <button class="icon-btn" id="chartClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body split">
+          <div class="form">
+            <div class="field">
+              <label>图表类型</label>
+              <div class="segmented" id="chartTypes"></div>
+            </div>
+            <div class="field">
+              <label>标题（可留空）</label>
+              <input id="chartTitle" type="text" placeholder="例如：月度阅读量" />
+            </div>
+
+            <div id="cartesianFields">
+              <div class="field">
+                <label>x 轴分类（逗号分隔）</label>
+                <input id="chartX" type="text" placeholder="1月, 2月, 3月" />
+              </div>
+              <div class="field">
+                <label>系列</label>
+                <div id="seriesList" class="series-list"></div>
+                <button class="btn ghost sm" id="addSeries">+ 再加一条数据线</button>
+              </div>
+            </div>
+
+            <div id="pieFields" hidden>
+              <div class="field">
+                <label>数据（每行一项，写法：名称, 数值）</label>
+                <textarea id="chartPie" rows="6" spellcheck="false" placeholder="技术, 42&#10;随笔, 28"></textarea>
+              </div>
+            </div>
+
+            <div class="field">
+              <label>高度 <span class="hint" id="heightHint">360 px</span></label>
+              <input id="chartHeight" type="range" min="200" max="800" step="20" value="360" />
+            </div>
+          </div>
+
+          <div class="chart-preview">
+            <div class="chart-preview-box" id="chartPreviewBox"></div>
+            <div class="chart-error" id="chartError"></div>
+          </div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn ghost" id="chartCancel">取消</button>
+          <button class="btn primary" id="chartInsert">插入正文</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 设置 -->
+    <div class="modal" id="settingsModal" hidden data-dismiss="1">
+      <div class="dialog" role="dialog" aria-label="设置">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>设置</h3>
+          <button class="icon-btn" id="settingsClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <div class="field">
+            <label>工作区风格模式</label>
+            <div class="segmented" id="modeSwitch"></div>
+            <p class="field-help" id="modeSwitchHelp">🍎 苹果简洁版：极简禅意、毛玻璃留白、沉浸写作；🎨 谷歌专业版：M3 工坊、全功能工具条、图谱与实验室</p>
+          </div>
+          <div class="field">
+            <label>主题</label>
+            <div class="segmented" id="themeSwitch"></div>
+          </div>
+          <div class="field">
+            <label>编辑区字号 <span class="hint" id="fontSizeHint">16 px</span></label>
+            <input id="setFontSize" type="range" min="13" max="24" step="1" value="16" />
+          </div>
+          <div class="field">
+            <label>列表排序</label>
+            <div class="segmented" id="sortSwitch"></div>
+          </div>
+          <div class="field">
+            <label>阅读行宽</label>
+            <div class="segmented" id="lineWidthSwitch"></div>
+          </div>
+          <div class="field">
+            <label>沉浸阅读</label>
+            <div class="segmented" id="readingModeSwitch"></div>
+          </div>
+          <div class="field">
+            <label>正文大纲</label>
+            <div class="segmented" id="outlineSwitch"></div>
+          </div>
+
+          <div class="group-title">渲染增强</div>
+          <div class="field">
+            <label>Markdown 引擎 <span class="hint" id="engineHint">自动</span></label>
+            <div class="segmented" id="engineSwitch"></div>
+            <p class="hint" id="engineNote"></p>
+          </div>
+          <div class="field switch-field">
+            <div class="switch-text">
+              <label for="hlSwitch">代码高亮</label>
+              <span class="hint">Prism，20 种语言，离线</span>
+            </div>
+            <button class="switch" id="hlSwitch" role="switch" aria-checked="true" aria-label="代码高亮"></button>
+          </div>
+          <div class="field switch-field">
+            <div class="switch-text">
+              <label for="mathSwitch">数学公式</label>
+              <span class="hint">KaTeX，支持 $…$ 与 $$…$$</span>
+            </div>
+            <button class="switch" id="mathSwitch" role="switch" aria-checked="true" aria-label="数学公式"></button>
+          </div>
+
+          <div class="field switch-field">
+            <div class="switch-text">
+              <label for="autoSaveSwitch">自动保存</label>
+              <span class="hint">关闭后只有 Ctrl/Cmd + S 才会落盘</span>
+            </div>
+            <button class="switch" id="autoSaveSwitch" role="switch" aria-checked="true" aria-label="自动保存"></button>
+          </div>
+          <div class="field switch-field">
+            <div class="switch-text">
+              <label for="motionSwitch">减少动效</label>
+              <span class="hint">过渡与动画几乎全部去掉</span>
+            </div>
+            <button class="switch" id="motionSwitch" role="switch" aria-checked="false" aria-label="减少动效"></button>
+          </div>
+          <div class="field">
+            <label>数据保存在</label>
+            <div class="path-box" id="dataDirText"></div>
+          </div>
+          <div class="field">
+            <label>关于</label>
+            <p class="about" id="aboutText"></p>
+          </div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn ghost" id="openDataDir">打开数据目录</button>
+          <button class="btn primary" id="settingsOk">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 分享：复制 / 系统分享 -->
+    <div class="modal" id="shareModal" hidden data-dismiss="1">
+      <div class="dialog" role="dialog" aria-label="分享">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>分享这一篇</h3>
+          <button class="icon-btn" id="shareClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <p class="about" id="shareHint"></p>
+          <div class="share-grid">
+            <button class="share-item" id="shareMd">
+              <svg class="icon" aria-hidden="true"><use href="#i-file-text"></use></svg>
+              <span class="share-name">Markdown 文本</span>
+              <span class="share-desc">标题 + 正文，粘到哪儿都能接着改</span>
+            </button>
+            <button class="share-item" id="sharePlain">
+              <svg class="icon" aria-hidden="true"><use href="#i-copy"></use></svg>
+              <span class="share-name">纯文本</span>
+              <span class="share-desc">去掉 Markdown 记号，适合聊天窗口</span>
+            </button>
+            <button class="share-item" id="shareHtml">
+              <svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg>
+              <span class="share-name">网页 HTML</span>
+              <span class="share-desc">自包含单文件，双击就能看，图表也能画</span>
+            </button>
+            <button class="share-item" id="shareFile">
+              <svg class="icon" aria-hidden="true"><use href="#i-download"></use></svg>
+              <span class="share-name">导出为文件</span>
+              <span class="share-desc">手机上走系统分享，桌面走保存对话框</span>
+            </button>
+            <button class="share-item" id="shareTweet">
+              <svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg>
+              <span class="share-name">发到 X (Twitter)</span>
+              <span class="share-desc">直接调起发推，附带标题与社交卡片网页</span>
+            </button>
+            <button class="share-item" id="shareBackup">
+              <svg class="icon" aria-hidden="true"><use href="#i-save"></use></svg>
+              <span class="share-name">整库备份 (JSON)</span>
+              <span class="share-desc">一键导出全部文章、标签与快照档案</span>
+            </button>
+          </div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn primary" id="shareOk">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 文章统计 -->
+    <div class="modal" id="statsModal" hidden data-dismiss="1">
+      <div class="dialog" role="dialog" aria-label="文章统计">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>文章统计</h3>
+          <button class="icon-btn" id="statsClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <div class="stat-grid" id="statGrid"></div>
+          <p class="about" id="statsNote"></p>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn primary" id="statsOk">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 回收站 -->
+    <div class="modal" id="trashModal" hidden data-dismiss="1">
+      <div class="dialog" role="dialog" aria-label="回收站">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>回收站</h3>
+          <button class="icon-btn" id="trashClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <p class="about">删掉的文章会先放到这里，可以恢复，也可以彻底删除。彻底删除之后就找不回来了。</p>
+          <div class="panel-list" id="trashList"></div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn ghost" id="trashClear">清空回收站</button>
+          <button class="btn primary" id="trashOk">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 标签：两个入口共用，「标签」按钮进来能改当前这篇，侧栏进来是看全部 -->
+    <div class="modal" id="tagsModal" hidden data-dismiss="1">
+      <div class="dialog" role="dialog" aria-label="标签">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>标签</h3>
+          <button class="icon-btn" id="tagsClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <div class="field" id="tagsEditField">
+            <label>给这一篇打标签（逗号或空格分隔）</label>
+            <input id="tagsInput" type="text" placeholder="例如：技术, 随笔" />
+          </div>
+          <div class="field">
+            <label>全部标签（点一下筛选，再点取消）</label>
+            <div class="tag-cloud" id="tagCloud"></div>
+          </div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn ghost" id="tagsCancel">取消</button>
+          <button class="btn primary" id="tagsSave">保存标签</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 历史版本 -->
+    <div class="modal" id="historyModal" hidden data-dismiss="1">
+      <div class="dialog" role="dialog" aria-label="历史版本">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>历史版本</h3>
+          <button class="icon-btn" id="historyClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <p class="about">每次保存都会留一个版本，同一分钟内只保留最近一次。点「回滚」会把正文换成那一版，回滚本身也会先存一份当前的。</p>
+          <div class="panel-list" id="historyList"></div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn primary" id="historyOk">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 确认框：替换掉系统 window.confirm（难看、手机上还会被截断） -->
+    <div class="modal" id="confirmModal" hidden data-dismiss="1">
+      <div class="dialog narrow" role="dialog" aria-label="确认">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3 id="confirmTitle">确认</h3>
+          <button class="icon-btn" id="confirmClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <p class="about" id="confirmText"></p>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn ghost" id="confirmCancel">取消</button>
+          <button class="btn danger" id="confirmOk">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 长图：把正文导成一张 PNG（html-to-image） -->
+    <div class="modal" id="longImageModal" hidden data-dismiss="1">
+      <div class="dialog" role="dialog" aria-label="导出长图">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>导出长图</h3>
+          <button class="icon-btn" id="longImageClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <p class="about" id="longImageMeta">正在生成长图…</p>
+          <div class="long-image-box" id="longImageBox">
+            <img id="longImageImg" alt="文章长图预览" />
+          </div>
+          <p class="hint">长图按 2 倍像素渲染，发到聊天窗口里点开也能看清。图表会先转成图片再进长图。</p>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn ghost" id="longImageShare" hidden>
+            <svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg><span class="btn-label">系统分享</span>
+          </button>
+          <button class="btn primary" id="longImageSave">
+            <svg class="icon" aria-hidden="true"><use href="#i-download"></use></svg><span class="btn-label">保存 PNG</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 全库知识图谱弹窗 -->
+    <div class="modal" id="graphModal" hidden data-dismiss="1">
+      <div class="dialog wide" role="dialog" aria-label="全库知识图谱">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>📊 全库知识图谱关系网络</h3>
+          <button class="icon-btn" id="graphClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <p class="about" id="graphSummary">基于本地文章双链、标签与引用自动生成的知识力导向关系网络。拖拽节点可缩放交互，点击节点可直达对应文章。</p>
+          <div class="graph-box" id="graphContainer" style="width:100%;height:380px;"></div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn primary" id="graphOk">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 写作实验室弹窗 -->
+    <div class="modal" id="labModal" hidden data-dismiss="1">
+      <div class="dialog" role="dialog" aria-label="写作实验室">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>🧪 写作实验室 · 文本深度洞察</h3>
+          <button class="icon-btn" id="labClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <div class="lab-stats-grid" id="labStatsGrid"></div>
+          <div class="lab-section">
+            <h4>词频排行 Top 10</h4>
+            <div class="lab-tags" id="labWordFreq"></div>
+          </div>
+          <div class="lab-section">
+            <h4>排版与规范自检</h4>
+            <ul class="lab-checklist" id="labChecklist"></ul>
+          </div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn primary" id="labOk">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 历史版本差分比对器弹窗 -->
+    <div class="modal" id="diffModal" hidden data-dismiss="1">
+      <div class="dialog wide" role="dialog" aria-label="版本差分比对器">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>🔍 版本差分比对器 (Diff Inspector)</h3>
+          <button class="icon-btn" id="diffClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <div class="field">
+            <label>对比基准版本</label>
+            <select class="select" id="diffRevSelect"></select>
+          </div>
+          <div class="diff-view" id="diffContainer"></div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn primary" id="diffOk">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 灵感白板弹窗 -->
+    <div class="modal" id="boardModal" hidden data-dismiss="1">
+      <div class="dialog wide" role="dialog" aria-label="灵感白板">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>🎨 灵感白板 (Inspiration Canvas)</h3>
+          <button class="icon-btn" id="boardClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <div class="board-toolbar" id="boardToolbar">
+            <button class="btn sm" id="boardToolPen" data-tool="pen">✏️ 画笔</button>
+            <button class="btn sm" id="boardToolRect" data-tool="rect">⬜ 矩形</button>
+            <button class="btn sm" id="boardToolArrow" data-tool="arrow">➡️ 箭头</button>
+            <button class="btn sm" id="boardToolText" data-tool="text">🔤 文本</button>
+            <button class="btn sm ghost" id="boardClear">清空白板</button>
+          </div>
+          <div class="board-canvas-box" id="boardCanvasBox">
+            <canvas id="boardCanvas" width="680" height="360"></canvas>
+          </div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn" id="boardInsert">插入到文章正文</button>
+          <button class="btn primary" id="boardOk">完成</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 登录与通行码认证中心弹窗 -->
+    <div class="modal" id="authModal" hidden data-dismiss="1">
+      <div class="dialog" role="dialog" aria-label="登录与通行码认证">
+        <div class="sheet-grip" aria-hidden="true"></div>
+        <div class="dialog-head">
+          <h3>🔑 通行码与独立文章空间</h3>
+          <button class="icon-btn" id="authClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+        </div>
+        <div class="dialog-body">
+          <!-- 当前文章空间状态展示区 -->
+          <div class="auth-profile-box" id="authProfileBox">
+            <div class="auth-profile-info" id="authProfileInfo"></div>
+            <button class="btn sm danger" id="btnAuthLogout" type="button">切回公共空间</button>
+          </div>
+
+          <!-- 登录方式切换：通行码 / Google -->
+          <div class="field">
+            <label>切换或解锁独立文章空间</label>
+            <div class="segmented" id="authTabSwitch" role="tablist" aria-label="登录方式"></div>
+          </div>
+
+          <!-- 方式 1：通行码登录 -->
+          <div class="auth-pane" id="authPanePasscode">
+            <div class="field">
+              <label for="authPasscodeInput">专属通行码 (Passcode)</label>
+              <div class="auth-code-row">
+                <input class="input" id="authPasscodeInput" type="text" placeholder="输入通行码，例如 LP-2026-VIP…" autocomplete="off" />
+                <button class="btn sm ghost" id="btnGenPasscode" type="button" title="生成一组新的专属通行码并自动填入">生成通行码</button>
+              </div>
+              <p class="hint"><strong>一码一空间</strong>：每个通行码对应一个完全独立的本地私密文章空间（含独立文章列表、标签与回收站）。输入不同通行码即可秒级切换不同空间，完全无需联网或服务器。</p>
+            </div>
+            <button class="btn primary block" id="btnPasscodeLogin" type="button">🔑 进入该通行码独立空间</button>
+          </div>
+
+          <!-- 方式 2：Google 账号登录 -->
+          <div class="auth-pane" id="authPaneGoogle" hidden>
+            <div class="field">
+              <label for="authGoogleEmail">Google 邮箱账号</label>
+              <input class="input" id="authGoogleEmail" type="email" placeholder="yourname@gmail.com" autocomplete="email" />
+            </div>
+            <div class="field">
+              <label for="authGooglePin">空间安全口令 / PIN 码（加密密钥）</label>
+              <input class="input" id="authGooglePin" type="password" placeholder="请输入至少 4 位安全口令（防止他人仅凭邮箱进入）" autocomplete="current-password" />
+            </div>
+            <div class="field">
+              <label for="authGoogleName">创作者显示昵称（可选）</label>
+              <input class="input" id="authGoogleName" type="text" placeholder="例如：Alex · Google 创作者" autocomplete="name" />
+            </div>
+            <button class="btn google-auth-btn block" id="btnGoogleLogin" type="button">
+              <svg class="google-g-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              <span>使用 Google 账号与口令解锁空间</span>
+            </button>
+            <p class="hint" style="margin-top:8px;">采用「邮箱 + 安全口令」双重派生密钥流式加密本机文章，防止他人冒用邮箱访问您的私密空间。</p>
+          </div>
+        </div>
+        <div class="dialog-foot">
+          <button class="btn ghost" id="authOk" type="button">关闭</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" hidden role="status" aria-live="polite"></div>
+
+    <!--
+      vendor/ 下的文件都不是手写的，来自 npm run vendor（scripts/sync-vendor.js）：
+      echarts 从 node_modules 复制，其余是 lib/ 的共享模块的拷贝。
+      这么安排是为了手机版 —— Capacitor 只打包 renderer/ 这一个目录，
+      这里不能出现 "../lib/xxx.js" 这种跳出目录的引用。
+    -->
+    <script src="vendor/echarts.min.js"></script>
+    <script src="vendor/markdown.js"></script>
+    <script src="vendor/chart.js"></script>
+    <script src="vendor/page-style.js"></script>
+    <script src="vendor/outline.js"></script>
+    <script src="vendor/repo.js"></script>
+
+    <!-- ===================== 第三方库（本地文件，无 CDN、无内联脚本） =====================
+         加库 / 删库一律走 desktop/VENDOR.md：先改 desktop/package.json 与
+         desktop/scripts/sync-vendor.js，跑一次 sync-vendor，再把这里的标签对齐。
+         许可证：全部 MIT / ISC / Apache-2.0，跟着安装包分发的全文在
+         desktop/THIRD-PARTY-NOTICES.md（开发用明细见 desktop/VENDOR-LICENSES.md）。
+         顺序不能乱：katex 本体在 auto-render 之前；prism 本体在语言组件之前（c 在 cpp 之前）。
+    -->
+    <!-- 数学公式：KaTeX（离线 woff2 字体，不联网） -->
+    <script src="vendor/katex/katex.min.js"></script>
+    <script src="vendor/katex/contrib/auto-render.min.js"></script>
+
+    <!-- 代码高亮：Prism 本体 + 20 个语言组件 -->
+    <script src="vendor/prism/prism.js"></script>
+    <script src="vendor/prism/components/prism-bash.min.js"></script>
+    <script src="vendor/prism/components/prism-c.min.js"></script>
+    <script src="vendor/prism/components/prism-cpp.min.js"></script>
+    <script src="vendor/prism/components/prism-csharp.min.js"></script>
+    <script src="vendor/prism/components/prism-diff.min.js"></script>
+    <script src="vendor/prism/components/prism-docker.min.js"></script>
+    <script src="vendor/prism/components/prism-go.min.js"></script>
+    <script src="vendor/prism/components/prism-ini.min.js"></script>
+    <script src="vendor/prism/components/prism-java.min.js"></script>
+    <script src="vendor/prism/components/prism-json.min.js"></script>
+    <script src="vendor/prism/components/prism-latex.min.js"></script>
+    <script src="vendor/prism/components/prism-markdown.min.js"></script>
+    <script src="vendor/prism/components/prism-nginx.min.js"></script>
+    <script src="vendor/prism/components/prism-properties.min.js"></script>
+    <script src="vendor/prism/components/prism-python.min.js"></script>
+    <script src="vendor/prism/components/prism-rust.min.js"></script>
+    <script src="vendor/prism/components/prism-sql.min.js"></script>
+    <script src="vendor/prism/components/prism-toml.min.js"></script>
+    <script src="vendor/prism/components/prism-typescript.min.js"></script>
+    <script src="vendor/prism/components/prism-yaml.min.js"></script>
+
+    <!-- 增强 Markdown：markdown-it 本体 + 任务清单 / 脚注 / 定义列表 / emoji 四个插件 -->
+    <script src="vendor/markdown-it/markdown-it.umd.min.js"></script>
+    <script src="vendor/markdown-it/markdown-it-task-lists.min.js"></script>
+    <script src="vendor/markdown-it/markdown-it-footnote.min.js"></script>
+    <script src="vendor/markdown-it/markdown-it-deflist.min.js"></script>
+    <script src="vendor/markdown-it/markdown-it-emoji.min.js"></script>
+
+    <!-- 本地全文检索（中文）/ CSV-TSV 解析 / 长图导出 / 手机手势三件套 -->
+    <script src="vendor/flexsearch/flexsearch.compact.min.js"></script>
+    <script src="vendor/papaparse/papaparse.min.js"></script>
+    <script src="vendor/html-to-image/html-to-image.js"></script>
+    <script src="vendor/swiped-events/swiped-events.min.js"></script>
+    <script src="vendor/hammerjs/hammer.min.js"></script>
+    <script src="vendor/pulltorefreshjs/pulltorefresh.umd.min.js"></script>
+
+    <script src="backend-idb.js"></script>
+    <script src="export-web.js"></script>
+    <script src="platform.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

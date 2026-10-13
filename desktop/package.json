@@ -52,9 +52,10 @@
       "main.js",
       "preload.js",
       "lib/**/*",
-      "../dist/client/**/*",
+      "renderer/**/*",
       "package.json",
       "THIRD-PARTY-NOTICES.md",
+      "!renderer/vendor/VENDOR.md",
       "!VENDOR.md",
       "!VENDOR-LICENSES.md",
       "!node_modules/**"

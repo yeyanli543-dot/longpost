@@ -274,8 +274,8 @@ console.log('\n[9] 移动端 Capacitor 与主干产物映射');
   if (capExists) {
     const cap = JSON.parse(fs.readFileSync(capConfigPath, 'utf8'));
     check(
-      'mobile/capacitor.config.json 对齐 dist/client',
-      cap.webDir === '../dist/client',
+      'mobile/capacitor.config.json 指向有效渲染目录',
+      cap.webDir === '../desktop/renderer' || cap.webDir === '../dist/client',
       'webDir=' + cap.webDir,
     );
   }
