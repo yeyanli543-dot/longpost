@@ -216,106 +216,107 @@ const Layout = () => {
         ? 'bg-[#fbfbfd] text-[#1d1d1f] dark:bg-black dark:text-[#f5f5f7]'
         : 'bg-[#f8fafd] text-[#1f1f1f] dark:bg-[#131314] dark:text-[#e3e3e3]'
     }`}>
-      <div className="max-w-[1290px] mx-auto flex">
-        <aside className={`hidden md:flex w-[275px] h-screen sticky top-0 flex-col px-3 py-2 border-r transition-colors duration-300 ${
-          isLite ? 'border-zinc-200/60 dark:border-zinc-900' : 'border-gray-200 dark:border-gray-800'
-        }`}>
-          <div className="flex items-center justify-between px-2 py-3">
-            <div
-              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => navigate('/')}
-            >
-              <Feather className="w-7 h-7 text-blue-500" />
-              <span className="text-xl font-bold tracking-tight">LongPost</span>
-            </div>
-          </div>
-
-          <div className="px-2 py-1 mb-2">
-            <WorkspaceModeSwitcher compact />
-          </div>
-
-          {renderSidebarNav()}
-
-          <button
-            onClick={handleComposeClick}
-            className={`mt-4 text-white font-bold py-3 px-8 transition-all duration-150 hover:scale-[1.02] active:scale-95 ${
-              isLite
-                ? 'bg-blue-600 hover:bg-blue-500 rounded-2xl shadow-md'
-                : 'bg-[#1a73e8] hover:bg-[#1557b0] dark:bg-[#8ab4f8] dark:hover:bg-[#aecbfa] dark:text-[#001d35] rounded-full shadow-sm'
-            } w-full`}
-            data-ai-section-type="button"
-          >发布</button>
-
-          <div className="mt-auto pb-4 relative pb-[env(safe-area-inset-bottom)]" ref={menuRef}>
-            <div
-              className="flex items-center gap-3 px-4 py-3 rounded-full hover:bg-gray-900 cursor-pointer transition-colors"
-              onClick={handleUserClick}
-            >
-              {user ? (
-                <>
-                  <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    {user.avatarUrl ? (
-                      <Image src={user.avatarUrl} alt={user.nickname} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="text-base font-bold text-gray-300">{avatarInitial}</span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold truncate">{user.nickname}</p>
-                    <p className="text-sm text-gray-500 truncate">@{emailPrefix}</p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-gray-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold">登录 / 注册</p>
-                    <p className="text-sm text-gray-500 truncate">点击登录你的账号</p>
-                  </div>
-                </>
-              )}
+      <div className={`mx-auto flex transition-all duration-300 ${
+        isLite ? 'max-w-[880px] justify-center px-4 md:px-8' : 'max-w-[1290px]'
+      }`}>
+        {/* Apple 极简模式 (isLite)：隐藏桌面侧边栏与信息流侧栏，正文大留白居中，由底部的 Apple Dock 掌管全局导航；Google 专业模式 (isPro)：显示标准的 M3 侧抽屉栏 */}
+        {!isLite && (
+          <aside className="hidden md:flex w-[275px] h-screen sticky top-0 flex-col px-3 py-2 border-r border-gray-200 dark:border-gray-800 transition-colors duration-300">
+            <div className="flex items-center justify-between px-2 py-3">
+              <div
+                className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => navigate('/')}
+              >
+                <Feather className="w-7 h-7 text-blue-500" />
+                <span className="text-xl font-bold tracking-tight">LongPost</span>
+              </div>
             </div>
 
-            {user && menuOpen && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 mx-2 bg-gray-900 border border-gray-800 rounded-xl shadow-lg overflow-hidden">
-                <button
-                  onClick={() => { setMenuOpen(false); navigate('/me'); }}
-                  className="w-full px-4 py-3 text-left text-sm text-gray-100 hover:bg-gray-800 transition-colors flex items-center gap-3"
-                  data-ai-section-type="button"
-                >
-                  <FileText className="w-4 h-4" />我的内容
-                </button>
-                <button
-                  onClick={() => { setMenuOpen(false); navigate('/settings'); }}
-                  className="w-full px-4 py-3 text-left text-sm text-gray-100 hover:bg-gray-800 transition-colors flex items-center gap-3"
-                  data-ai-section-type="button"
-                >
-                  <FileText className="w-4 h-4" />设置
-                </button>
-                {user?.role === 'admin' && (
+            <div className="px-2 py-1 mb-2">
+              <WorkspaceModeSwitcher compact />
+            </div>
+
+            {renderSidebarNav()}
+
+            <button
+              onClick={handleComposeClick}
+              className="mt-4 text-white font-bold py-3 px-8 transition-all duration-150 hover:scale-[1.02] active:scale-95 bg-[#1a73e8] hover:bg-[#1557b0] dark:bg-[#8ab4f8] dark:hover:bg-[#aecbfa] dark:text-[#001d35] rounded-full shadow-sm w-full"
+              data-ai-section-type="button"
+            >发布</button>
+
+            <div className="mt-auto pb-4 relative pb-[env(safe-area-inset-bottom)]" ref={menuRef}>
+              <div
+                className="flex items-center gap-3 px-4 py-3 rounded-full hover:bg-gray-900 cursor-pointer transition-colors"
+                onClick={handleUserClick}
+              >
+                {user ? (
+                  <>
+                    <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      {user.avatarUrl ? (
+                        <Image src={user.avatarUrl} alt={user.nickname} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-base font-bold text-gray-300">{avatarInitial}</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold truncate">{user.nickname}</p>
+                      <p className="text-sm text-gray-500 truncate">@{emailPrefix}</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold">登录 / 注册</p>
+                      <p className="text-sm text-gray-500 truncate">点击登录你的账号</p>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {user && menuOpen && (
+                <div className="absolute bottom-full left-0 right-0 mb-2 mx-2 bg-gray-900 border border-gray-800 rounded-xl shadow-lg overflow-hidden">
                   <button
-                    onClick={() => { setMenuOpen(false); navigate('/admin'); }}
-                    className="w-full px-4 py-3 text-left text-sm text-blue-400 hover:bg-gray-800 transition-colors flex items-center gap-3 border-t border-gray-800"
+                    onClick={() => { setMenuOpen(false); navigate('/me'); }}
+                    className="w-full px-4 py-3 text-left text-sm text-gray-100 hover:bg-gray-800 transition-colors flex items-center gap-3"
                     data-ai-section-type="button"
                   >
-                    <Shield className="w-4 h-4" />管理后台
+                    <FileText className="w-4 h-4" />我的内容
                   </button>
-                )}
-                <button
-                  onClick={handleLogout}
-                  className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-gray-800 transition-colors flex items-center gap-3 border-t border-gray-800"
-                  data-ai-section-type="button"
-                >
-                  <LogOut className="w-4 h-4" />退出登录
-                </button>
-              </div>
-            )}
-          </div>
-        </aside>
+                  <button
+                    onClick={() => { setMenuOpen(false); navigate('/settings'); }}
+                    className="w-full px-4 py-3 text-left text-sm text-gray-100 hover:bg-gray-800 transition-colors flex items-center gap-3"
+                    data-ai-section-type="button"
+                  >
+                    <FileText className="w-4 h-4" />设置
+                  </button>
+                  {user?.role === 'admin' && (
+                    <button
+                      onClick={() => { setMenuOpen(false); navigate('/admin'); }}
+                      className="w-full px-4 py-3 text-left text-sm text-blue-400 hover:bg-gray-800 transition-colors flex items-center gap-3 border-t border-gray-800"
+                      data-ai-section-type="button"
+                    >
+                      <Shield className="w-4 h-4" />管理后台
+                    </button>
+                  )}
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-gray-800 transition-colors flex items-center gap-3 border-t border-gray-800"
+                    data-ai-section-type="button"
+                  >
+                    <LogOut className="w-4 h-4" />退出登录
+                  </button>
+                </div>
+              )}
+            </div>
+          </aside>
+        )}
 
-        <main className="flex-1 min-w-0 border-r border-border min-h-screen relative pb-[calc(56px+var(--safe-area-inset-bottom))] md:pb-0 px-safe md:px-0">
+        <main className={`flex-1 min-w-0 min-h-screen relative pb-[calc(56px+var(--safe-area-inset-bottom))] md:pb-0 px-safe md:px-0 ${
+          isLite ? '' : 'border-r border-border'
+        }`}>
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -329,13 +330,15 @@ const Layout = () => {
           </AnimatePresence>
         </main>
 
-        <div className="w-[350px] h-screen sticky top-0 p-4 hidden xl:block space-y-4">
-          <TrendingSidebar />
-          <div className="bg-card rounded-2xl p-4 border border-border">
-            <h3 className="text-xl font-bold mb-3 text-card-foreground">关于 LongPost</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">长文发布平台。短帖引流，长文阅读。像 X 一样发帖，也可以写完整长文，通过链接跳转阅读。</p>
+        {!isLite && (
+          <div className="w-[350px] h-screen sticky top-0 p-4 hidden xl:block space-y-4">
+            <TrendingSidebar />
+            <div className="bg-card rounded-2xl p-4 border border-border">
+              <h3 className="text-xl font-bold mb-3 text-card-foreground">关于 LongPost</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">长文发布平台。短帖引流，长文阅读。像 X 一样发帖，也可以写完整长文，通过链接跳转阅读。</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Mobile bottom navigation */}
@@ -460,6 +463,32 @@ const Layout = () => {
             )}
           </NavLink>
           <div className="w-[1px] h-5 bg-border/60 mx-1" />
+          {user ? (
+            <NavLink
+              to="/me"
+              className={({ isActive }) =>
+                `p-1 rounded-xl transition-all duration-150 hover:scale-110 active:scale-95 flex items-center justify-center ${
+                  isActive ? 'ring-2 ring-blue-500' : ''
+                }`
+              }
+              title={`我的账号 (@${user.nickname})`}
+            >
+              <div className="w-6 h-6 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
+                {user.avatarUrl ? (
+                  <Image src={user.avatarUrl} alt={user.nickname} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-[10px] font-bold text-gray-300">{avatarInitial}</span>
+                )}
+              </div>
+            </NavLink>
+          ) : (
+            <NavLink
+              to="/login"
+              className="text-xs px-2.5 py-1 rounded-full bg-blue-600/10 text-blue-600 dark:text-blue-400 font-medium hover:bg-blue-600/20 transition-colors"
+            >
+              登录
+            </NavLink>
+          )}
           <WorkspaceModeSwitcher compact />
         </motion.div>
       )}

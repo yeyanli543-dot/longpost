@@ -239,3 +239,37 @@ input, textarea, button, select {
   contain-intrinsic-size: 1px 180px;
 }
 
+/* ==========================================================================
+   排版美学与信息设计 (Typography & Information Design)
+   ========================================================================== */
+
+/* 杂志级精细排版：中英文标点压缩、连字与平滑抗锯齿 */
+.article-editorial-text {
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "palt", "kern";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.012em;
+}
+
+/* 首字下沉（Drop Caps）：纽约客/大西洋月刊风格长文开篇首字母 */
+.article-drop-cap > p:first-of-type::first-letter,
+.article-drop-cap > div:first-of-type > p:first-of-type::first-letter {
+  float: left;
+  font-size: 3.25em;
+  line-height: 0.85;
+  padding-top: 4px;
+  padding-right: 8px;
+  padding-bottom: 2px;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+/* 宣纸暖阳微纹理（暖纸模式 data-theme="warm-paper"） */
+[data-theme="warm-paper"] {
+  background-color: #f7f4ec !important;
+  background-image: radial-gradient(rgba(140, 115, 80, 0.07) 1px, transparent 0);
+  background-size: 24px 24px;
+  color: #2b2520 !important;
+}
+

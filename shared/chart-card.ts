@@ -183,8 +183,9 @@ function buildSeries(card: ChartCard): Record<string, unknown>[] {
     type: isArea ? 'line' : card.type,
     data: s.data,
     smooth: card.type === 'line' || isArea,
-    areaStyle: isArea ? {} : undefined,
-    barMaxWidth: 36,
+    areaStyle: isArea ? { opacity: 0.25 } : undefined,
+    itemStyle: card.type === 'bar' ? { borderRadius: [6, 6, 0, 0] } : undefined,
+    barMaxWidth: 32,
     emphasis: { focus: 'series' },
   }));
 }
@@ -203,12 +204,17 @@ export function chartCardToEchartsOption(
   const axisLineColor = dark ? '#2f3336' : '#e5e7eb';
   const splitLineColor = dark ? '#2f3336' : '#eef0f2';
 
+  const modernPalette = dark
+    ? ['#38bdf8', '#818cf8', '#c084fc', '#f472b6', '#34d399', '#fbbf24']
+    : ['#2563eb', '#7c3aed', '#db2777', '#059669', '#d97706', '#0284c7'];
+
   const multiSeries = (card.series?.length ?? 0) > 1;
   const hasTitle = Boolean(card.title);
 
   const base: Record<string, unknown> = {
     backgroundColor: 'transparent',
-    textStyle: { color: textColor },
+    color: modernPalette,
+    textStyle: { color: textColor, fontFamily: 'system-ui, -apple-system, sans-serif' },
     tooltip: { trigger: card.type === 'pie' ? 'item' : 'axis' },
   };
   if (card.title) {
@@ -227,8 +233,13 @@ export function chartCardToEchartsOption(
       series: [
         {
           type: 'pie',
-          radius: ['42%', '68%'],
+          radius: ['45%', '70%'],
           center: ['50%', hasTitle ? '54%' : '50%'],
+          itemStyle: {
+            borderRadius: 6,
+            borderColor: dark ? '#18181b' : '#ffffff',
+            borderWidth: 2,
+          },
           data: card.data ?? [],
           label: { color: textColor },
           labelLine: { lineStyle: { color: axisLineColor } },
