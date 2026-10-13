@@ -1,6 +1,6 @@
 {
   "name": "longpost-mobile",
-  "version": "2.7.2",
+  "version": "2.7.3",
   "private": true,
   "description": "LongPost 手机版外壳：前端复用 desktop/renderer，数据落在设备本地（IndexedDB）",
   "license": "MIT",

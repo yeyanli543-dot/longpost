@@ -42,11 +42,11 @@
 
 | 平台 | 安装包格式 | 下载渠道 | 说明 |
 | :--- | :--- | :--- | :--- |
-| **🪟 Windows** | `.exe` 安装版 / 便携版 | [**下载安装版**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.7.2/LongPost.Setup.2.7.2.exe) · [**免安装便携版**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.7.2/LongPost.2.7.2.exe) | 支持 Windows 10/11，免安装版解压双击直接运行 |
-| **🤖 Android** | `.apk` 手机安装包 | [**下载 LongPost-v2.7.2-android.apk**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.7.2/LongPost-v2.7.2-android.apk) | 手机端离线写作，固定签名密钥支持无缝覆盖升级 |
-| **🍎 macOS** | `.dmg` 镜像 | [**下载 LongPost-2.7.2-arm64.dmg**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.7.2/LongPost-2.7.2-arm64.dmg) | 支持 Apple Silicon & Intel，首次打开右键放行 |
-| **🐧 Linux** | `.AppImage` | [**下载 LongPost-2.7.2.AppImage**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.7.2/LongPost-2.7.2.AppImage) | 赋予执行权限 `chmod +x` 后直接运行 |
-| **📦 全部版本** | 全部 5 端安装包与源码 | [**GitHub Releases v2.7.2 (最新发布页)**](https://github.com/yeyanli543-dot/longpost/releases/latest) | 包含所有平台的安装产物、校验码与发布日志 |
+| **🪟 Windows** | `.exe` 安装版 / 便携版 | [**下载安装版**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.7.3/LongPost.Setup.2.7.3.exe) · [**免安装便携版**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.7.3/LongPost.2.7.3.exe) | 支持 Windows 10/11，免安装版解压双击直接运行 |
+| **🤖 Android** | `.apk` 手机安装包 | [**下载 LongPost-v2.7.3-android.apk**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.7.3/LongPost-v2.7.3-android.apk) | 手机端离线写作，固定签名密钥支持无缝覆盖升级 |
+| **🍎 macOS** | `.dmg` 镜像 | [**下载 LongPost-2.7.3-arm64.dmg**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.7.3/LongPost-2.7.3-arm64.dmg) | 支持 Apple Silicon & Intel，首次打开右键放行 |
+| **🐧 Linux** | `.AppImage` | [**下载 LongPost-2.7.3.AppImage**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.7.3/LongPost-2.7.3.AppImage) | 赋予执行权限 `chmod +x` 后直接运行 |
+| **📦 全部版本** | 全部 5 端安装包与源码 | [**GitHub Releases v2.7.3 (最新发布页)**](https://github.com/yeyanli543-dot/longpost/releases/latest) | 包含所有平台的安装产物、校验码与发布日志 |
 
 ---
 

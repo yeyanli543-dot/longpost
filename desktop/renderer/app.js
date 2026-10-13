@@ -2678,7 +2678,7 @@
       }
       const settings = (await LP.getSettings()) || {};
       const backupData = {
-        version: '2.7.2',
+        version: '2.7.3',
         exportedAt: new Date().toISOString(),
         appName: 'LongPost',
         stats: {
@@ -4278,7 +4278,7 @@
   }
 
   // ==========================================================================
-  // 通行码登录 (Passcode) 与 Google 账号登录中心
+  // 通行码登录 (Passcode) 与 Google 账号独立文章空间切换中心
   // ==========================================================================
   let currentAuthTab = 'passcode';
 
@@ -4288,36 +4288,63 @@
     const btnEmptyAuth = $('btnEmptyAuth');
     const profileBox = $('authProfileBox');
     const profileInfo = $('authProfileInfo');
+    const btnLogout = $('btnAuthLogout');
+    const articleCount = Array.isArray(state.articles) ? state.articles.length : 0;
 
     if (user && user.provider) {
-      const badge = user.provider === 'google' ? '🌐 Google' : '🔑 通行码';
+      const badge = user.provider === 'google' ? '🌐 Google 空间' : '🔒 通行码空间';
       const label = badge + ' · ' + (user.name || '创作者');
       if (btnAuth) {
         btnAuth.textContent = label;
-        btnAuth.title = '当前已登录：' + label + '（点击管理账号或切换）';
+        btnAuth.title = '当前处于独立文章空间：' + label + '（点击切换其他通行码或返回公共空间）';
       }
       if (btnEmptyAuth) {
         btnEmptyAuth.textContent = label;
       }
       if (profileBox && profileInfo) {
         profileBox.hidden = false;
-        const sub = user.provider === 'google' ? (user.email || 'Google OAuth 认证') : ('通行码：' + (user.code || '****'));
+        if (btnLogout) btnLogout.hidden = false;
+        const sub =
+          (user.provider === 'google'
+            ? '绑定邮箱：' + (user.email || 'Google 账号')
+            : '专属通行码：' + (user.code || '****')) +
+          ' · 当前空间共 ' +
+          articleCount +
+          ' 篇独立文章';
         profileInfo.innerHTML =
           '<div class="auth-user-title">' + esc(badge) + ' · <strong>' + esc(user.name || '创作者') + '</strong></div>' +
           '<div class="auth-user-sub">' + esc(sub) + '</div>';
       }
     } else {
       if (btnAuth) {
-        btnAuth.textContent = '🔑 登录 / 通行码';
-        btnAuth.title = 'Google 账号登录与专属通行码认证';
+        btnAuth.textContent = '🔑 登录 / 切换空间';
+        btnAuth.title = '输入通行码或登录 Google 账号，切换独立的私密文章空间';
       }
       if (btnEmptyAuth) {
-        btnEmptyAuth.textContent = '🔑 通行码 / Google 登录';
+        btnEmptyAuth.textContent = '🔑 通行码 / Google 独立空间';
       }
-      if (profileBox) {
-        profileBox.hidden = true;
+      if (profileBox && profileInfo) {
+        profileBox.hidden = false;
+        if (btnLogout) btnLogout.hidden = true;
+        profileInfo.innerHTML =
+          '<div class="auth-user-title">🌐 当前处于：<strong>默认公共空间</strong>（共 ' + articleCount + ' 篇文章）</div>' +
+          '<div class="auth-user-sub">下方输入任意通行码或 Google 账号，即可进入与公共空间完全隔离的独立文章空间</div>';
       }
     }
+  }
+
+  async function applyAuthSpaceSwitch(authUser, welcomePrefix) {
+    await flushBeforeSwitch();
+    state.settings = await LP.setSettings({ authUser: authUser || null, lastArticleId: '' });
+    state.tag = '';
+    clearCurrent();
+    await refreshAll();
+    syncAuthUi();
+    if (state.articles && state.articles.length > 0) {
+      await openArticle(state.articles[0].id);
+    }
+    const count = Array.isArray(state.articles) ? state.articles.length : 0;
+    toast(welcomePrefix + '（该独立空间共 ' + count + ' 篇文章）', 'ok');
   }
 
   function switchAuthTab(tab) {
@@ -4335,8 +4362,8 @@
     buildSegmented(
       'authTabSwitch',
       [
-        { key: 'passcode', label: '🔑 通行码登录' },
-        { key: 'google', label: '🌐 Google 登录' },
+        { key: 'passcode', label: '🔑 通行码独立空间' },
+        { key: 'google', label: '🌐 Google 独立空间' },
       ],
       currentAuthTab,
       (key) => switchAuthTab(key),
@@ -4358,7 +4385,7 @@
     if (LP && typeof LP.copyText === 'function') {
       await LP.copyText(code).catch(() => {});
     }
-    toast('已生成专属通行码并复制到剪贴板：' + code, 'ok');
+    toast('已生成新通行码并复制到剪贴板：' + code, 'ok');
   }
 
   async function handlePasscodeLogin() {
@@ -4369,17 +4396,17 @@
       if (input) input.focus();
       return;
     }
-    const suffix = code.slice(-4).toUpperCase();
+    const normalizedCode = code.toUpperCase();
+    const suffix = normalizedCode.slice(-4);
     const authUser = {
       provider: 'passcode',
       name: '通行证 #' + suffix,
-      code: code,
+      code: normalizedCode,
+      spaceKey: 'code:' + normalizedCode,
       loginAt: new Date().toISOString(),
     };
-    state.settings = await LP.setSettings({ authUser });
-    syncAuthUi();
     closeSheet('authModal');
-    toast('🔑 通行码登录成功！已激活专属创作者通行证', 'ok');
+    await applyAuthSpaceSwitch(authUser, '🔒 已切入通行码独立空间「#' + suffix + '」');
   }
 
   async function handleGoogleLogin() {
@@ -4387,7 +4414,7 @@
     const nameInput = $('authGoogleName');
     const rawEmail = (emailInput ? emailInput.value : '').trim();
     const rawName = (nameInput ? nameInput.value : '').trim();
-    const email = rawEmail || 'creator@gmail.com';
+    const email = (rawEmail || 'creator@gmail.com').toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       toast('请输入有效的 Google 邮箱地址', 'err');
       if (emailInput) emailInput.focus();
@@ -4398,18 +4425,16 @@
       provider: 'google',
       name: name,
       email: email,
+      spaceKey: 'google:' + email,
       loginAt: new Date().toISOString(),
     };
-    state.settings = await LP.setSettings({ authUser });
-    syncAuthUi();
     closeSheet('authModal');
-    toast('🌐 Google 账号登录成功！欢迎回来，' + name, 'ok');
+    await applyAuthSpaceSwitch(authUser, '🌐 已切入 Google 独立空间「' + name + '」');
   }
 
   async function handleAuthLogout() {
-    state.settings = await LP.setSettings({ authUser: null });
-    syncAuthUi();
-    toast('已退出当前登录账号', 'ok');
+    closeSheet('authModal');
+    await applyAuthSpaceSwitch(null, '🌐 已退出私密空间，切回默认公共空间');
   }
 
   // ---------------------------------------------------------- 顶部操作条

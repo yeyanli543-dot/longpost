@@ -137,6 +137,7 @@
       proposalsCount,
       createdAt: a.createdAt || 0,
       updatedAt: a.updatedAt || 0,
+      spaceKey: String(a.spaceKey || ''),
       // 列表里的搜索用的是这份预先算好的小写文本，避免每次输入都重扫全部正文
       searchText: (String(a.title || '') + '\n' + content).slice(0, SEARCH_LIMIT).toLowerCase(),
     };
@@ -162,7 +163,7 @@
   }
 
   function createRepo(backend) {
-    // ------------------------------------------------------------ 文章
+    // ------------------------------------------------------------ 文章与空间隔离
 
     async function readAll() {
       const arr = await backend.readArticles();
@@ -174,17 +175,38 @@
       return list;
     }
 
+    /** 根据当前登录的通行码或 Google 账号返回独立文章空间 Key；未登录时返回空串（默认公共空间）。 */
+    async function getActiveSpaceKey() {
+      const saved = await backend.readSettings();
+      const u = saved && typeof saved === 'object' ? saved.authUser : null;
+      if (!u || typeof u !== 'object') return '';
+      if (u.spaceKey) return String(u.spaceKey);
+      if (u.provider === 'passcode' && u.code) {
+        return 'code:' + String(u.code).trim().toUpperCase();
+      }
+      if (u.provider === 'google' && u.email) {
+        return 'google:' + String(u.email).trim().toLowerCase();
+      }
+      return '';
+    }
+
+    function inSpace(article, spaceKey) {
+      return String((article && article.spaceKey) || '') === String(spaceKey || '');
+    }
+
     async function listArticles(options) {
       const opts = options || {};
       const all = await readAll();
-      const live = all.filter((a) => !a.deletedAt);
+      const spaceKey = opts.spaceKey != null ? String(opts.spaceKey) : await getActiveSpaceKey();
+      const live = all.filter((a) => !a.deletedAt && inSpace(a, spaceKey));
       return sortList(live.map(toListItem), opts.sort);
     }
 
     async function listTrash() {
       const all = await readAll();
+      const spaceKey = await getActiveSpaceKey();
       return all
-        .filter((a) => a.deletedAt)
+        .filter((a) => a.deletedAt && inSpace(a, spaceKey))
         .map((a) => {
           const item = toListItem(a);
           item.deletedAt = a.deletedAt;
@@ -203,6 +225,7 @@
         tags: normalizeTags(found.tags),
         pinnedAt: found.pinnedAt || 0,
         deletedAt: found.deletedAt || 0,
+        spaceKey: String(found.spaceKey || ''),
         history: Array.isArray(found.history) ? found.history : [],
       };
     }
@@ -224,6 +247,7 @@
       const title = String(input.title || '').trim() || '未命名';
       const content = String(input.content == null ? '' : input.content);
       const tags = normalizeTags(input.tags);
+      const activeSpace = input.spaceKey != null ? String(input.spaceKey) : await getActiveSpaceKey();
       const index = input.id ? list.findIndex((a) => a.id === input.id) : -1;
 
       if (index === -1) {
@@ -235,6 +259,7 @@
           summary: makeSummary(content),
           pinnedAt: input.pinnedAt || 0,
           deletedAt: 0,
+          spaceKey: activeSpace,
           history: [],
           createdAt: now,
           updatedAt: now,
@@ -262,6 +287,7 @@
         tags,
         summary: makeSummary(content),
         pinnedAt: input.pinnedAt == null ? prev.pinnedAt || 0 : input.pinnedAt || 0,
+        spaceKey: input.spaceKey != null ? String(input.spaceKey) : String(prev.spaceKey || ''),
         history,
         updatedAt: now,
       };
@@ -300,7 +326,8 @@
 
     async function emptyTrash() {
       const list = await readAll();
-      const next = list.filter((a) => !a.deletedAt);
+      const spaceKey = await getActiveSpaceKey();
+      const next = list.filter((a) => !(a.deletedAt && inSpace(a, spaceKey)));
       const removed = list.length - next.length;
       if (removed) await writeAll(next);
       return { ok: true, removed };
@@ -326,12 +353,13 @@
       return { ok: true, tags: clean };
     }
 
-    /** 所有文章用过的标签，按出现次数排序，给标签筛选用。 */
+    /** 当前空间所有文章用过的标签，按出现次数排序，给标签筛选用。 */
     async function listTags() {
       const all = await readAll();
+      const spaceKey = await getActiveSpaceKey();
       const count = {};
       for (const a of all) {
-        if (a.deletedAt) continue;
+        if (a.deletedAt || !inSpace(a, spaceKey)) continue;
         for (const t of normalizeTags(a.tags)) count[t] = (count[t] || 0) + 1;
       }
       return Object.keys(count)
@@ -472,9 +500,10 @@
 
     async function listUnresolvedProposals() {
       const all = await readAll();
+      const spaceKey = await getActiveSpaceKey();
       const out = [];
       for (const a of all) {
-        if (a.deletedAt) continue;
+        if (a.deletedAt || !inSpace(a, spaceKey)) continue;
         const unres = (a.proposals || []).filter((p) => !p.resolved);
         if (unres.length > 0) {
           out.push({

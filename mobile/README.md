@@ -9,7 +9,7 @@ LongPost 手机版是一个**完全本地离线运行**的长文写作与阅读�
 ### 1. 下载 APK
 每次推送代码后，GitHub Actions 会自动编译并使用仓库固定的调试密钥完成签名验证，可以直接下载安装：
 
-👉 **[下载最新版 LongPost-v2.7.2-android.apk](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.7.2)** 或 **[查看全平台最新发布页](https://github.com/yeyanli543-dot/longpost/releases)**
+👉 **[下载最新版 LongPost-v2.7.3-android.apk](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.7.3)** 或 **[查看全平台最新发布页](https://github.com/yeyanli543-dot/longpost/releases)**
 
 > **安装提示**：
 > 1. 下载后在手机文件管理器中点击打开，如果系统弹出未知来源警告，请选择「允许来自此来源的应用」；
