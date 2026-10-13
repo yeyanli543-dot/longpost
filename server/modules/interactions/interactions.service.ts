@@ -18,6 +18,7 @@ import {
 } from '@server/database/schema';
 import { eq, and, inArray, sql } from 'drizzle-orm';
 import { NotificationsService } from '../notifications/notifications.service';
+import { contentGuard } from '@server/common/utils/content-guard';
 import type {
   ToggleLikeResponse,
   ToggleBookmarkResponse,
@@ -188,6 +189,14 @@ export class InteractionsService {
     const authorId = contentRows[0].authorId;
 
     const isQuote = !!quoteContent && quoteContent.length > 0;
+    if (isQuote) {
+      const validation = contentGuard.validateContent(quoteContent!);
+      if (!validation.valid) {
+        throw new BadRequestException(
+          `转发引用内容包含违规或垃圾信息关键词：${validation.matchedWords.join(', ')}`,
+        );
+      }
+    }
 
     const result = await this.db.transaction(async (tx) => {
       const existing = await tx

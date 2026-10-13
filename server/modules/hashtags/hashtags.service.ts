@@ -137,12 +137,12 @@ export class HashtagsService {
         if (contentType === 'post') {
           await tx
             .update(hashtags)
-            .set({ postCount: sql`${hashtags.postCount} - 1` })
+            .set({ postCount: sql`GREATEST(0, ${hashtags.postCount} - 1)` })
             .where(inArray(hashtags.id, removedIds));
         } else {
           await tx
             .update(hashtags)
-            .set({ articleCount: sql`${hashtags.articleCount} - 1` })
+            .set({ articleCount: sql`GREATEST(0, ${hashtags.articleCount} - 1)` })
             .where(inArray(hashtags.id, removedIds));
         }
       }

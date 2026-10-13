@@ -1,6 +1,6 @@
 import { Injectable, Inject, Logger, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { DRIZZLE_DATABASE, type PostgresJsDatabase } from '@server/database/database.module';
-import { posts, articles, articleImages, articleAttachments, appUsers, follows, contentHashtags, hashtags, siteSettings } from '@server/database/schema';
+import { posts, articles, articleImages, articleAttachments, appUsers, follows, contentHashtags, hashtags, siteSettings, likes, reposts, comments, notifications } from '@server/database/schema';
 import { eq, desc, lt, inArray, sql, count, and } from 'drizzle-orm';
 import { AuthService } from '../auth/auth.service';
 import { HashtagsService } from '../hashtags/hashtags.service';
@@ -294,7 +294,21 @@ export class PostsService {
     // Sync hashtags (decrement counters and remove associations)
     await this.hashtagsService.syncContentHashtags('post', id, '');
 
-    await this.db.delete(posts).where(eq(posts.id, id));
+    await this.db.transaction(async (tx) => {
+      await tx
+        .delete(likes)
+        .where(and(eq(likes.contentType, 'post'), eq(likes.contentId, id)));
+      await tx
+        .delete(reposts)
+        .where(and(eq(reposts.contentType, 'post'), eq(reposts.contentId, id)));
+      await tx
+        .delete(comments)
+        .where(and(eq(comments.contentType, 'post'), eq(comments.contentId, id)));
+      await tx
+        .delete(notifications)
+        .where(and(eq(notifications.contentType, 'post'), eq(notifications.contentId, id)));
+      await tx.delete(posts).where(eq(posts.id, id));
+    });
   }
 
   async getTimeline(

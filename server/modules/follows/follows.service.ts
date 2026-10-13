@@ -107,11 +107,11 @@ export class FollowsService {
           await tx.delete(follows).where(eq(follows.id, existing[0].id));
           await tx
             .update(appUsers)
-            .set({ followerCount: sql`${appUsers.followerCount} - 1` })
+            .set({ followerCount: sql`GREATEST(0, ${appUsers.followerCount} - 1)` })
             .where(eq(appUsers.id, followingId));
           await tx
             .update(appUsers)
-            .set({ followingCount: sql`${appUsers.followingCount} - 1` })
+            .set({ followingCount: sql`GREATEST(0, ${appUsers.followingCount} - 1)` })
             .where(eq(appUsers.id, followerId));
 
           const updated = await tx

@@ -10,7 +10,7 @@ import {
   DRIZZLE_DATABASE,
   type PostgresJsDatabase,
 } from '@server/database/database.module';
-import { articles, posts, articleImages, articleAttachments, appUsers, contentHashtags, hashtags } from '@server/database/schema';
+import { articles, posts, articleImages, articleAttachments, appUsers, contentHashtags, hashtags, likes, reposts, comments, notifications } from '@server/database/schema';
 import { eq, desc, sql, ilike, and, asc, count, inArray } from 'drizzle-orm';
 import { UpdateArticleDto } from './dto/update-article.dto';
 import { AuthService } from '../auth/auth.service';
@@ -995,7 +995,21 @@ export class ArticlesService {
 
     await this.hashtagsService.syncContentHashtags('article', id, '');
 
-    await this.db.delete(articles).where(eq(articles.id, id));
+    await this.db.transaction(async (tx) => {
+      await tx
+        .delete(likes)
+        .where(and(eq(likes.contentType, 'article'), eq(likes.contentId, id)));
+      await tx
+        .delete(reposts)
+        .where(and(eq(reposts.contentType, 'article'), eq(reposts.contentId, id)));
+      await tx
+        .delete(comments)
+        .where(and(eq(comments.contentType, 'article'), eq(comments.contentId, id)));
+      await tx
+        .delete(notifications)
+        .where(and(eq(notifications.contentType, 'article'), eq(notifications.contentId, id)));
+      await tx.delete(articles).where(eq(articles.id, id));
+    });
   }
 
   async getAdminContent(

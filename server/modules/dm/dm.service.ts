@@ -40,6 +40,7 @@ import type {
   NotificationType,
 } from '@shared/api.interface';
 import { NotificationsService } from '../notifications/notifications.service';
+import { contentGuard } from '@server/common/utils/content-guard';
 
 @Injectable()
 export class DmService {
@@ -436,6 +437,13 @@ export class DmService {
     );
     if (!isParticipant) {
       throw new ForbiddenException('无权向该会话发送消息');
+    }
+
+    const validation = contentGuard.validateContent(content);
+    if (!validation.valid) {
+      throw new BadRequestException(
+        `私信内容包含违规或垃圾信息关键词：${validation.matchedWords.join(', ')}`,
+      );
     }
 
     const now = new Date();

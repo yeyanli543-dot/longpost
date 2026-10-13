@@ -12,6 +12,7 @@ import { eq, and, asc, desc, sql, count, isNull } from 'drizzle-orm';
 import { AuthService } from '../auth/auth.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { HashtagsService } from '../hashtags/hashtags.service';
+import { contentGuard } from '@server/common/utils/content-guard';
 import type {
   CommentItem,
   CommentListResponse,
@@ -43,24 +44,44 @@ export class CommentsService {
   ) {}
 
   async create(userId: string, dto: CreateCommentDto): Promise<CommentItem> {
-    await this.validateContentExists(dto.contentType, dto.contentId);
-
-    if (dto.parentId) {
-      const parentRows = await this.db
-        .select({ id: comments.id, userId: comments.userId })
-        .from(comments)
-        .where(and(eq(comments.id, dto.parentId), eq(comments.isDeleted, false)))
-        .limit(1);
-      if (parentRows.length === 0) {
-        throw new BadRequestException('Parent comment not found');
-      }
+    const isAdmin = await this.authService.isAdmin(userId);
+    const validation = contentGuard.validateContent(dto.body);
+    if (!validation.valid && !isAdmin) {
+      throw new BadRequestException(
+        `评论内容包含违规或垃圾信息关键词：${validation.matchedWords.join(', ')}`,
+      );
     }
+
+    await this.validateContentExists(dto.contentType, dto.contentId);
 
     const contentTable = dto.contentType === 'post' ? posts : articles;
     const contentAuthorCol =
       dto.contentType === 'post' ? posts.appUserId : articles.appUserId;
 
     const result = await this.db.transaction(async (tx) => {
+      if (dto.parentId) {
+        const parentRows = await tx
+          .select({
+            id: comments.id,
+            isDeleted: comments.isDeleted,
+            contentType: comments.contentType,
+            contentId: comments.contentId,
+          })
+          .from(comments)
+          .where(eq(comments.id, dto.parentId))
+          .limit(1);
+
+        if (parentRows.length === 0 || parentRows[0].isDeleted) {
+          throw new BadRequestException('回复的评论不存在或已被删除');
+        }
+        if (
+          parentRows[0].contentType !== dto.contentType ||
+          parentRows[0].contentId !== dto.contentId
+        ) {
+          throw new BadRequestException('回复的评论与当前主题不匹配');
+        }
+      }
+
       const [inserted] = await tx
         .insert(comments)
         .values({
@@ -445,7 +466,7 @@ export class CommentsService {
         await tx.delete(commentLikes).where(eq(commentLikes.id, existing[0].id));
         const updated = await tx
           .update(comments)
-          .set({ likeCount: sql`${comments.likeCount} - 1` })
+          .set({ likeCount: sql`GREATEST(0, ${comments.likeCount} - 1)` })
           .where(eq(comments.id, commentId))
           .returning({ count: comments.likeCount });
         return { liked: false, likeCount: Number(updated[0].count) };
@@ -475,7 +496,7 @@ export class CommentsService {
                 .where(eq(commentLikes.id, existingRows[0].id));
               const updated = await tx
                 .update(comments)
-                .set({ likeCount: sql`${comments.likeCount} - 1` })
+                .set({ likeCount: sql`GREATEST(0, ${comments.likeCount} - 1)` })
                 .where(eq(comments.id, commentId))
                 .returning({ count: comments.likeCount });
               return { liked: false, likeCount: Number(updated[0].count) };
@@ -552,7 +573,7 @@ export class CommentsService {
 
       await tx
         .update(contentTable)
-        .set({ commentCount: sql`${contentTable.commentCount} - 1` })
+        .set({ commentCount: sql`GREATEST(0, ${contentTable.commentCount} - 1)` })
         .where(eq(contentTable.id, comment.contentId));
     });
   }
