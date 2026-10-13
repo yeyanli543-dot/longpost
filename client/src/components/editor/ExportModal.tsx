@@ -11,6 +11,7 @@ import {
   Globe,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { platform } from '@/lib/platform';
 
 interface ExportModalProps {
   title: string;
@@ -454,6 +455,28 @@ generator: "LongPost"
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-foreground">生成分享长图 (.png)</div>
                 <div className="text-xs text-muted-foreground">超清渲染排版，适合手机长图传播</div>
+              </div>
+            </button>
+          )}
+
+          {/* 桌面端原生数据目录 */}
+          {platform.isDesktop && (
+            <button
+              onClick={async () => {
+                await platform.openDataDir();
+                toast.success('已在系统文件管理器中打开数据目录');
+              }}
+              className="w-full flex items-center gap-3.5 p-3 rounded-xl border border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 text-left transition-all group"
+            >
+              <div className="p-2.5 rounded-lg bg-blue-500/20 text-blue-500 group-hover:scale-105 transition-transform">
+                <FileCode className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <div className="text-sm font-semibold text-foreground">打开桌面端存储目录</div>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-medium">Electron</span>
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5">查看磁盘本地 SQLite / JSON 文章存档与导出文件</div>
               </div>
             </button>
           )}

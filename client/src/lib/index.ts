@@ -5,3 +5,4 @@ export * from './components/UniversalLink';
 export * from './components/AppContainer';
 export * from './components/ErrorRender';
 export * from './components/NotFoundRender';
+export * from './platform';
