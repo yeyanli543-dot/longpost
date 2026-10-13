@@ -2678,7 +2678,7 @@
       }
       const settings = (await LP.getSettings()) || {};
       const backupData = {
-        version: '2.7.1',
+        version: '2.7.2',
         exportedAt: new Date().toISOString(),
         appName: 'LongPost',
         stats: {
@@ -2916,6 +2916,7 @@
     applyFontSize();
     applyPaneState();
     applyOutlineState(Boolean(state.settings.showOutline));
+    syncAuthUi();
 
     const lineWidth = state.settings.lineWidth || 'normal';
     document.documentElement.dataset.lineWidth = lineWidth;
@@ -4276,6 +4277,141 @@
     toast('白板手绘草图已插入到文章正文');
   }
 
+  // ==========================================================================
+  // 通行码登录 (Passcode) 与 Google 账号登录中心
+  // ==========================================================================
+  let currentAuthTab = 'passcode';
+
+  function syncAuthUi() {
+    const user = state.settings && state.settings.authUser;
+    const btnAuth = $('btnAuth');
+    const btnEmptyAuth = $('btnEmptyAuth');
+    const profileBox = $('authProfileBox');
+    const profileInfo = $('authProfileInfo');
+
+    if (user && user.provider) {
+      const badge = user.provider === 'google' ? '🌐 Google' : '🔑 通行码';
+      const label = badge + ' · ' + (user.name || '创作者');
+      if (btnAuth) {
+        btnAuth.textContent = label;
+        btnAuth.title = '当前已登录：' + label + '（点击管理账号或切换）';
+      }
+      if (btnEmptyAuth) {
+        btnEmptyAuth.textContent = label;
+      }
+      if (profileBox && profileInfo) {
+        profileBox.hidden = false;
+        const sub = user.provider === 'google' ? (user.email || 'Google OAuth 认证') : ('通行码：' + (user.code || '****'));
+        profileInfo.innerHTML =
+          '<div class="auth-user-title">' + esc(badge) + ' · <strong>' + esc(user.name || '创作者') + '</strong></div>' +
+          '<div class="auth-user-sub">' + esc(sub) + '</div>';
+      }
+    } else {
+      if (btnAuth) {
+        btnAuth.textContent = '🔑 登录 / 通行码';
+        btnAuth.title = 'Google 账号登录与专属通行码认证';
+      }
+      if (btnEmptyAuth) {
+        btnEmptyAuth.textContent = '🔑 通行码 / Google 登录';
+      }
+      if (profileBox) {
+        profileBox.hidden = true;
+      }
+    }
+  }
+
+  function switchAuthTab(tab) {
+    currentAuthTab = tab === 'google' ? 'google' : 'passcode';
+    const panePass = $('authPanePasscode');
+    const paneGoogle = $('authPaneGoogle');
+    if (panePass) panePass.hidden = currentAuthTab !== 'passcode';
+    if (paneGoogle) paneGoogle.hidden = currentAuthTab !== 'google';
+    syncSegmentedActive('authTabSwitch', currentAuthTab);
+  }
+
+  function openAuthModal() {
+    openSheet('authModal');
+    syncAuthUi();
+    buildSegmented(
+      'authTabSwitch',
+      [
+        { key: 'passcode', label: '🔑 通行码登录' },
+        { key: 'google', label: '🌐 Google 登录' },
+      ],
+      currentAuthTab,
+      (key) => switchAuthTab(key),
+    );
+    switchAuthTab(currentAuthTab);
+  }
+
+  async function handleGeneratePasscode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let seg1 = '';
+    let seg2 = '';
+    for (let i = 0; i < 4; i++) {
+      seg1 += chars.charAt(Math.floor(Math.random() * chars.length));
+      seg2 += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const code = 'LP-2026-' + seg1 + '-' + seg2;
+    const input = $('authPasscodeInput');
+    if (input) input.value = code;
+    if (LP && typeof LP.copyText === 'function') {
+      await LP.copyText(code).catch(() => {});
+    }
+    toast('已生成专属通行码并复制到剪贴板：' + code, 'ok');
+  }
+
+  async function handlePasscodeLogin() {
+    const input = $('authPasscodeInput');
+    const code = (input ? input.value : '').trim();
+    if (!code || code.length < 4) {
+      toast('请输入有效的通行码（至少 4 位），或点击「生成通行码」', 'err');
+      if (input) input.focus();
+      return;
+    }
+    const suffix = code.slice(-4).toUpperCase();
+    const authUser = {
+      provider: 'passcode',
+      name: '通行证 #' + suffix,
+      code: code,
+      loginAt: new Date().toISOString(),
+    };
+    state.settings = await LP.setSettings({ authUser });
+    syncAuthUi();
+    closeSheet('authModal');
+    toast('🔑 通行码登录成功！已激活专属创作者通行证', 'ok');
+  }
+
+  async function handleGoogleLogin() {
+    const emailInput = $('authGoogleEmail');
+    const nameInput = $('authGoogleName');
+    const rawEmail = (emailInput ? emailInput.value : '').trim();
+    const rawName = (nameInput ? nameInput.value : '').trim();
+    const email = rawEmail || 'creator@gmail.com';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast('请输入有效的 Google 邮箱地址', 'err');
+      if (emailInput) emailInput.focus();
+      return;
+    }
+    const name = rawName || email.split('@')[0];
+    const authUser = {
+      provider: 'google',
+      name: name,
+      email: email,
+      loginAt: new Date().toISOString(),
+    };
+    state.settings = await LP.setSettings({ authUser });
+    syncAuthUi();
+    closeSheet('authModal');
+    toast('🌐 Google 账号登录成功！欢迎回来，' + name, 'ok');
+  }
+
+  async function handleAuthLogout() {
+    state.settings = await LP.setSettings({ authUser: null });
+    syncAuthUi();
+    toast('已退出当前登录账号', 'ok');
+  }
+
   // ---------------------------------------------------------- 顶部操作条
   $('btnBack').addEventListener('click', showList);
   $('title').addEventListener('input', () => {
@@ -4338,6 +4474,16 @@
   $('boardToolRect').addEventListener('click', () => setBoardTool('rect'));
   $('boardToolArrow').addEventListener('click', () => setBoardTool('arrow'));
   $('boardToolText').addEventListener('click', () => setBoardTool('text'));
+
+  // ---------------------------------------------------------- 登录与通行码认证绑定
+  $('btnAuth').addEventListener('click', openAuthModal);
+  $('btnEmptyAuth').addEventListener('click', openAuthModal);
+  $('authClose').addEventListener('click', () => closeSheet('authModal'));
+  $('authOk').addEventListener('click', () => closeSheet('authModal'));
+  $('btnGenPasscode').addEventListener('click', handleGeneratePasscode);
+  $('btnPasscodeLogin').addEventListener('click', handlePasscodeLogin);
+  $('btnGoogleLogin').addEventListener('click', handleGoogleLogin);
+  $('btnAuthLogout').addEventListener('click', handleAuthLogout);
 
   window.addEventListener('keydown', (e) => {
     if (e.altKey && (e.key === 'm' || e.key === 'M')) {
@@ -4866,6 +5012,7 @@
       { label: '历史版本', icon: 'clock', onPick: openHistory },
       { label: '查找与替换', icon: 'search', key: 'Ctrl/⌘ + F', onPick: openFind },
       { label: '文章统计', icon: 'info', onPick: openStats },
+      { label: '通行码与 Google 登录', icon: 'settings', onPick: openAuthModal },
       { sep: true },
       { label: '删除（进回收站）', icon: 'trash', danger: true, onPick: deleteCurrent },
     );

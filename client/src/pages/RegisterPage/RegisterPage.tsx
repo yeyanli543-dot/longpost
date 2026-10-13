@@ -64,7 +64,7 @@ const RegisterPageContent: React.FC = () => {
     }
   };
 
-  const googleEnabled = siteSettings?.googleLoginEnabled ?? false;
+  const googleEnabled = siteSettings?.googleLoginEnabled ?? true;
   const registrationMode = siteSettings?.registrationMode ?? 'email_and_google';
 
   const validate = (): boolean => {

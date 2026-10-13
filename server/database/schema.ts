@@ -628,7 +628,7 @@ export const siteSettings = pgTable("site_settings", {
   siteDescription: varchar("site_description", { length: 500 }),
   siteLogoUrl: text("site_logo_url"),
   allowRegister: boolean("allow_register").notNull().default(true),
-  googleLoginEnabled: boolean("google_login_enabled").notNull().default(false),
+  googleLoginEnabled: boolean("google_login_enabled").notNull().default(true),
   siteAnnouncement: varchar("site_announcement", { length: 500 }),
   contentModerationEnabled: boolean("content_moderation_enabled").notNull().default(false),
   registrationMode: varchar("registration_mode", { length: 50 }).notNull().default('google_only'),

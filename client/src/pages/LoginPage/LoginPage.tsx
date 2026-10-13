@@ -118,14 +118,14 @@ const LoginPageContent: React.FC = () => {
       navigate(from, { replace: true });
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : '访问码无效或已过期';
+        err instanceof Error ? err.message : '通行码无效或已过期';
       toast.error(message);
     } finally {
       setCodeSubmitting(false);
     }
   };
 
-  const googleEnabled = siteSettings?.googleLoginEnabled ?? false;
+  const googleEnabled = siteSettings?.googleLoginEnabled ?? true;
   const registrationMode = siteSettings?.registrationMode ?? 'email_and_google';
   const showEmailForm = showEmailLogin || registrationMode === 'email_and_google';
 
@@ -159,7 +159,7 @@ const LoginPageContent: React.FC = () => {
                       : 'text-gray-500 hover:text-gray-300'
                   }`}
                 >
-                  访问码
+                  通行码
                   {loginMode === 'code' && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500" />
                   )}
@@ -284,12 +284,12 @@ const LoginPageContent: React.FC = () => {
                 </div>
               )}
 
-              {/* 访问码登录 */}
+              {/* 通行码登录 */}
               {loginMode === 'code' && (
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="accessCode" className="text-gray-300">
-                      团队访问码
+                      专属通行码
                     </Label>
                     <div className="relative">
                       <Input
@@ -297,7 +297,7 @@ const LoginPageContent: React.FC = () => {
                         type={showAccessCode ? 'text' : 'password'}
                         value={accessCode}
                         onChange={(e) => setAccessCode(e.target.value)}
-                        placeholder="请输入访问码"
+                        placeholder="请输入通行码"
                         disabled={codeSubmitting}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
@@ -321,7 +321,7 @@ const LoginPageContent: React.FC = () => {
                       </button>
                     </div>
                     <p className="text-xs text-gray-500">
-                      输入访问码即可直接登录，无需注册账号
+                      输入通行码即可直接登录，无需注册账号
                     </p>
                   </div>
 
@@ -331,7 +331,7 @@ const LoginPageContent: React.FC = () => {
                     disabled={codeSubmitting || !accessCode.trim()}
                     className="w-full min-h-11 md:min-h-9 bg-blue-500 hover:bg-blue-600 text-white border-transparent"
                   >
-                    {codeSubmitting ? '登录中...' : '使用访问码登录'}
+                    {codeSubmitting ? '登录中...' : '使用通行码登录'}
                   </Button>
                 </div>
               )}
