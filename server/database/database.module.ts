@@ -3,6 +3,8 @@ import { drizzle, type PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
 
+import { initDatabaseSchema } from './init-schema';
+
 export const DRIZZLE_DATABASE = 'DRIZZLE_DATABASE';
 export type { PostgresJsDatabase };
 
@@ -25,16 +27,9 @@ export type { PostgresJsDatabase };
           connect_timeout: 10,
         });
 
-        // 自动确保标准 PostgreSQL 实例中存在自定义复合类型（兼容非平台自建数据库）
-        client`
-          DO $$ BEGIN
-            CREATE TYPE user_profile AS (user_id text);
-          EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-          DO $$ BEGIN
-            CREATE TYPE file_attachment AS (bucket_id text, file_path text);
-          EXCEPTION WHEN duplicate_object THEN NULL; END $$;
-        `.simple().catch(() => {
-          // 忽略只读副本或连接尚未就绪时的预检异常
+        // 自动确保全新 PostgreSQL 实例中存在自定义复合类型与全部 25 张业务表
+        initDatabaseSchema(client).catch((err) => {
+          logger.warn('数据库模式自检/初始化提示：' + String((err && err.message) || err));
         });
 
         logger.log('已建立原生 Drizzle ORM (PostgreSQL) 数据库连接');

@@ -296,7 +296,21 @@ export class PostsService {
     currentUserId?: string,
   ): Promise<TimelineResponse> {
     const fetchLimit = limit + 1;
-    const cursorDate = cursor ? new Date(cursor) : null;
+    let cursorDate: Date | null = null;
+    let hotCursorScore: number | null = null;
+    if (cursor) {
+      if (view === 'hot' && cursor.startsWith('hot:')) {
+        const parts = cursor.split(':');
+        const parsedScore = Number(parts[1]);
+        const isoStr = parts.slice(2).join(':');
+        if (!Number.isNaN(parsedScore) && isoStr) {
+          hotCursorScore = parsedScore;
+          cursorDate = new Date(isoStr);
+        }
+      } else {
+        cursorDate = new Date(cursor);
+      }
+    }
 
     // Build author filter for 'following' view
     let followingIds: string[] = [];
@@ -315,23 +329,34 @@ export class PostsService {
       return { items: [], nextCursor: null, hasMore: false };
     }
 
-    const buildConditions = (table: typeof posts | typeof articles) => {
-      const conds = [eq(table.moderationStatus, 'approved')];
-      if (cursorDate) conds.push(lt(table.createdAt, cursorDate));
-      if (view === 'following' && followingIds.length > 0) {
-        conds.push(inArray(table.appUserId, followingIds));
-      }
-      return conds;
-    };
+    const postScoreExpr = sql<number>`(${posts.likeCount} * 3 + ${posts.commentCount} * 5 + ${posts.repostCount} * 4)`;
+    const articleScoreExpr = sql<number>`(${articles.likeCount} * 3 + ${articles.commentCount} * 5 + ${articles.repostCount} * 4 + ${articles.bookmarkCount} * 2)`;
 
-    const postConds = buildConditions(posts);
-    const articleConds = [...buildConditions(articles), eq(articles.status, 'published')];
+    const postConds = [eq(posts.moderationStatus, 'approved')];
+    const articleConds = [eq(articles.moderationStatus, 'approved'), eq(articles.status, 'published')];
+
+    if (view === 'following' && followingIds.length > 0) {
+      postConds.push(inArray(posts.appUserId, followingIds));
+      articleConds.push(inArray(articles.appUserId, followingIds));
+    }
+
+    if (view === 'hot' && hotCursorScore !== null && cursorDate) {
+      postConds.push(
+        sql`(${postScoreExpr} < ${hotCursorScore} OR (${postScoreExpr} = ${hotCursorScore} AND ${posts.createdAt} < ${cursorDate}))`,
+      );
+      articleConds.push(
+        sql`(${articleScoreExpr} < ${hotCursorScore} OR (${articleScoreExpr} = ${hotCursorScore} AND ${articles.createdAt} < ${cursorDate}))`,
+      );
+    } else if (view !== 'hot' && cursorDate) {
+      postConds.push(lt(posts.createdAt, cursorDate));
+      articleConds.push(lt(articles.createdAt, cursorDate));
+    }
 
     const postOrderBy = view === 'hot'
-      ? [desc(sql`${posts.likeCount} + ${posts.commentCount} + ${posts.repostCount}`)]
+      ? [desc(postScoreExpr), desc(posts.createdAt)]
       : [desc(posts.isPinned), desc(posts.pinnedAt), desc(posts.createdAt)];
     const articleOrderBy = view === 'hot'
-      ? [desc(sql`${articles.likeCount} + ${articles.commentCount} + ${articles.repostCount}`)]
+      ? [desc(articleScoreExpr), desc(articles.createdAt)]
       : [desc(articles.isPinned), desc(articles.pinnedAt), desc(articles.createdAt)];
 
     const postQuery = postConds.length > 0
@@ -373,18 +398,16 @@ export class PostsService {
       }),
     );
 
+    const computeHotScore = (item: { data: typeof posts.$inferSelect | typeof articles.$inferSelect }) =>
+      (item.data.likeCount ?? 0) * 3 +
+      (item.data.commentCount ?? 0) * 5 +
+      (item.data.repostCount ?? 0) * 4 +
+      ('bookmarkCount' in item.data ? (item.data.bookmarkCount ?? 0) * 2 : 0);
+
     const merged = [...postItems, ...articleItems].sort((a, b) => {
       if (view === 'hot') {
-        const aScore =
-          (a.data.likeCount ?? 0) * 3 +
-          (a.data.commentCount ?? 0) * 5 +
-          (a.data.repostCount ?? 0) * 4 +
-          ('bookmarkCount' in a.data ? (a.data.bookmarkCount ?? 0) * 2 : 0);
-        const bScore =
-          (b.data.likeCount ?? 0) * 3 +
-          (b.data.commentCount ?? 0) * 5 +
-          (b.data.repostCount ?? 0) * 4 +
-          ('bookmarkCount' in b.data ? (b.data.bookmarkCount ?? 0) * 2 : 0);
+        const aScore = computeHotScore(a);
+        const bScore = computeHotScore(b);
         if (bScore !== aScore) return bScore - aScore;
         return b.createdAt.getTime() - a.createdAt.getTime();
       }
@@ -543,7 +566,14 @@ export class PostsService {
       }
     });
 
-    const nextCursor = hasMore && pageItems.length > 0 ? pageItems[pageItems.length - 1].createdAt.toISOString() : null;
+    let nextCursor: string | null = null;
+    if (hasMore && pageItems.length > 0) {
+      const lastItem = pageItems[pageItems.length - 1];
+      nextCursor =
+        view === 'hot'
+          ? `hot:${computeHotScore(lastItem)}:${lastItem.createdAt.toISOString()}`
+          : lastItem.createdAt.toISOString();
+    }
 
     return {
       items,

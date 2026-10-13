@@ -319,11 +319,72 @@ export class AccessCodesService {
     return this.mapAccessCode(updated);
   }
 
+  private readonly ipFailTracker = new Map<string, { count: number; lockedUntil: number }>();
+
+  private checkIpLock(ipAddress?: string | null): void {
+    const key = (ipAddress || 'unknown').trim();
+    const rec = this.ipFailTracker.get(key);
+    if (rec && rec.lockedUntil > Date.now()) {
+      throw new ForbiddenException('通行码尝试次数过多，请稍后再试');
+    }
+  }
+
+  private recordIpFail(ipAddress?: string | null): void {
+    const key = (ipAddress || 'unknown').trim();
+    const now = Date.now();
+    const prev = this.ipFailTracker.get(key);
+    const nextCount = (prev && prev.lockedUntil <= now ? prev.count : 0) + 1;
+    this.ipFailTracker.set(key, {
+      count: nextCount,
+      lockedUntil: nextCount >= 5 ? now + 15 * 60 * 1000 : 0,
+    });
+  }
+
+  private clearIpFail(ipAddress?: string | null): void {
+    const key = (ipAddress || 'unknown').trim();
+    this.ipFailTracker.delete(key);
+  }
+
+  private async recordCodeFailure(
+    accessCode: typeof accessCodes.$inferSelect,
+    errorReason: string,
+    ipAddress?: string | null,
+    userAgent?: string | null,
+    statusPatch?: string,
+  ): Promise<void> {
+    this.recordIpFail(ipAddress);
+    const nextFailCount = (accessCode.failCount ?? 0) + 1;
+    const patch: Partial<typeof accessCodes.$inferInsert> = {
+      failCount: nextFailCount,
+    };
+    if (nextFailCount >= 5) {
+      patch.lockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+    }
+    if (statusPatch) {
+      patch.status = statusPatch;
+    }
+    await this.db
+      .update(accessCodes)
+      .set(patch)
+      .where(eq(accessCodes.id, accessCode.id));
+
+    await this.db.insert(accessCodeLogs).values({
+      accessCodeId: accessCode.id,
+      ipAddress: ipAddress ?? null,
+      userAgent: userAgent ?? null,
+      success: false,
+      errorReason,
+      loggedInUserId: accessCode.appUserId ?? null,
+    });
+  }
+
   async loginWithCode(
     code: string,
     ipAddress?: string | null,
     userAgent?: string | null,
   ): Promise<AuthResponse> {
+    this.checkIpLock(ipAddress);
+
     const rows = await this.db
       .select()
       .from(accessCodes)
@@ -331,6 +392,7 @@ export class AccessCodesService {
       .limit(1);
 
     if (rows.length === 0) {
+      this.recordIpFail(ipAddress);
       throw new BadRequestException('通行码无效或已失效');
     }
 
@@ -340,26 +402,22 @@ export class AccessCodesService {
       accessCode.lockedUntil &&
       new Date(accessCode.lockedUntil) > new Date()
     ) {
+      await this.recordCodeFailure(accessCode, 'locked', ipAddress, userAgent);
       throw new ForbiddenException('通行码尝试次数过多，请稍后再试');
     }
 
     if (accessCode.status !== 'active') {
+      await this.recordCodeFailure(accessCode, `status_${accessCode.status}`, ipAddress, userAgent);
       throw new BadRequestException('通行码无效或已失效');
     }
 
     if (accessCode.expiresAt && accessCode.expiresAt < new Date()) {
-      await this.db
-        .update(accessCodes)
-        .set({ status: 'expired' })
-        .where(eq(accessCodes.id, accessCode.id));
+      await this.recordCodeFailure(accessCode, 'expired', ipAddress, userAgent, 'expired');
       throw new BadRequestException('通行码已过期');
     }
 
     if (accessCode.maxUses !== null && accessCode.useCount >= accessCode.maxUses) {
-      await this.db
-        .update(accessCodes)
-        .set({ status: 'exhausted' })
-        .where(eq(accessCodes.id, accessCode.id));
+      await this.recordCodeFailure(accessCode, 'exhausted', ipAddress, userAgent, 'exhausted');
       throw new BadRequestException('通行码使用次数已用尽');
     }
 
@@ -379,6 +437,7 @@ export class AccessCodesService {
         .limit(1);
       if (userRows.length > 0) {
         if (!userRows[0].isActive || userRows[0].isBanned) {
+          await this.recordCodeFailure(accessCode, 'user_banned_or_inactive', ipAddress, userAgent);
           throw new ForbiddenException('账号已被封禁或停用');
         }
         appUserId = userRows[0].id;
@@ -443,8 +502,11 @@ export class AccessCodesService {
 
     const userRow = userRows[0];
     if (!userRow.isActive || userRow.isBanned) {
+      await this.recordCodeFailure(accessCode, 'user_banned_or_inactive', ipAddress, userAgent);
       throw new ForbiddenException('账号已被封禁或停用');
     }
+
+    this.clearIpFail(ipAddress);
 
     const newUseCount = accessCode.useCount + 1;
     const isExhausted = accessCode.maxUses !== null && newUseCount >= accessCode.maxUses;
@@ -452,6 +514,8 @@ export class AccessCodesService {
     const updateData: Partial<typeof accessCodes.$inferInsert> = {
       useCount: newUseCount,
       lastUsedAt: new Date(),
+      failCount: 0,
+      lockedUntil: null,
     };
     if (isExhausted) {
       updateData.status = 'exhausted';
@@ -534,7 +598,8 @@ export class AccessCodesService {
     }
 
     const user = rows[0];
-    if (user.passwordHash && user.provider !== 'access_code') {
+    const isOauthPlaceholder = user.passwordHash?.startsWith('oauth_');
+    if (user.passwordHash && !isOauthPlaceholder && user.provider !== 'access_code') {
       if (!oldPassword) {
         throw new BadRequestException('需要提供正确的原密码');
       }
