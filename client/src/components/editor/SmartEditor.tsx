@@ -12,6 +12,7 @@ import { DiffInspector } from './tools/DiffInspector';
 import { KnowledgeGraphView } from './tools/KnowledgeGraphView';
 import { WritingLab } from './tools/WritingLab';
 import { useWorkspaceMode } from '@client/src/hooks/useWorkspaceMode';
+import { uploadsApi } from '@client/src/api';
 
 interface SmartEditorProps {
   value: string;
@@ -363,8 +364,28 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
     });
   };
 
-  const handleInsertWhiteboardImage = (dataUrl: string) => {
-    insertText(`\n\n![架构草图](${dataUrl})\n\n`);
+  const handleInsertWhiteboardImage = async (dataUrl: string) => {
+    try {
+      const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+      if (match) {
+        const mimeType = match[1];
+        const byteCharacters = atob(match[2]);
+        const byteArray = new Uint8Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteArray[i] = byteCharacters.charCodeAt(i);
+        }
+        const blob = new Blob([byteArray], { type: mimeType });
+        const file = new File([blob], `whiteboard-${Date.now()}.png`, { type: mimeType });
+        const uploaded = await uploadsApi.uploadImage(file);
+        if (uploaded?.url) {
+          insertText(`\n\n![手绘白板](${uploaded.url})\n\n`);
+          return;
+        }
+      }
+    } catch {
+      // Fall back to inline data URL when offline or unauthenticated
+    }
+    insertText(`\n\n![手绘白板](${dataUrl})\n\n`);
   };
 
   return (

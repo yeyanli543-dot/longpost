@@ -38,3 +38,6 @@ export async function uploadFile(
     throw error;
   }
 }
+
+export const uploadImage = uploadFile;
+

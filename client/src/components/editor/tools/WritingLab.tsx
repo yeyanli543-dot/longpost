@@ -19,17 +19,46 @@ interface WritingLabProps {
   onApplyFormattedContent: (formattedText: string) => void;
 }
 
-// 盘古之白规则：中英文、数字之间自动添加适度空格美化
+// 盘古之白规则：中英文、数字之间自动添加适度空格美化（保护代码块、行内代码、链接/图片及行首缩进）
 function panguFormat(text: string): string {
+  const placeholders: string[] = [];
+  const stash = (match: string) => {
+    const idx = placeholders.length;
+    placeholders.push(match);
+    return `\u0000PANGU_PH_${idx}\u0000`;
+  };
+
   let result = text;
-  // 中文与英文之间加空格
-  result = result.replace(/([\u4e00-\u9fa5])([a-zA-Z0-9])/g, '$1 $2');
-  result = result.replace(/([a-zA-Z0-9])([\u4e00-\u9fa5])/g, '$1 $2');
-  // 中文与百分号/数字
-  result = result.replace(/([\u4e00-\u9fa5])([0-9]+%?)/g, '$1 $2');
-  result = result.replace(/([0-9]+%?)([\u4e00-\u9fa5])/g, '$1 $2');
-  // 修正多余空格
-  result = result.replace(/[ \t]{2,}/g, ' ');
+  // 1. 保护多行代码块 ```...```
+  result = result.replace(/```[\s\S]*?```/g, stash);
+  // 2. 保护行内代码 `...`
+  result = result.replace(/`[^`\n]+`/g, stash);
+  // 3. 保护 Markdown 图片与链接 ![...](...) / [...](...)
+  result = result.replace(/!?\[[^\]]*\]\([^)]*\)/g, stash);
+
+  // 4. 逐行处理正文，保留行首缩进 ^[ \t]+
+  result = result
+    .split('\n')
+    .map((line) => {
+      const indentMatch = line.match(/^([ \t]+)(.*)$/);
+      const indent = indentMatch ? indentMatch[1] : '';
+      let body = indentMatch ? indentMatch[2] : line;
+
+      // 中文与英文/数字之间加空格
+      body = body.replace(/([\u4e00-\u9fa5])([a-zA-Z0-9])/g, '$1 $2');
+      body = body.replace(/([a-zA-Z0-9])([\u4e00-\u9fa5])/g, '$1 $2');
+      // 中文与百分号/数字
+      body = body.replace(/([\u4e00-\u9fa5])([0-9]+%?)/g, '$1 $2');
+      body = body.replace(/([0-9]+%?)([\u4e00-\u9fa5])/g, '$1 $2');
+      // 修正多余水平空格（不影响行首缩进）
+      body = body.replace(/[ \t]{2,}/g, ' ');
+
+      return indent + body;
+    })
+    .join('\n');
+
+  // 5. 还原受保护片段
+  result = result.replace(/\u0000PANGU_PH_(\d+)\u0000/g, (_, idx) => placeholders[Number(idx)] ?? '');
   return result;
 }
 

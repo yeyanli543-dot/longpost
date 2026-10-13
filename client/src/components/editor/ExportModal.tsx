@@ -20,6 +20,172 @@ interface ExportModalProps {
   onExportLongImage?: () => void;
 }
 
+function escapeHtml(raw: string): string {
+  return raw
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function sanitizeHref(url: string): string {
+  const trimmed = url.trim();
+  if (
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('/') ||
+    trimmed.startsWith('#') ||
+    trimmed.startsWith('mailto:') ||
+    trimmed.startsWith('data:image/')
+  ) {
+    return escapeHtml(trimmed);
+  }
+  return '#';
+}
+
+function formatInlineMarkdown(raw: string): string {
+  const inlineCodes: string[] = [];
+  const textWithPlaceholders = raw.replace(/`([^`\n]+)`/g, (_, code: string) => {
+    const idx = inlineCodes.length;
+    inlineCodes.push(`<code>${escapeHtml(code)}</code>`);
+    return `\u0000INLINECODE_${idx}\u0000`;
+  });
+
+  let html = escapeHtml(textWithPlaceholders);
+
+  // Images: ![alt](url)
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt: string, url: string) => {
+    const safeUrl = sanitizeHref(url);
+    return `<img src="${safeUrl}" alt="${alt}" style="max-width:100%;height:auto;border-radius:8px;margin:12px 0;" />`;
+  });
+
+  // Links: [label](url)
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label: string, url: string) => {
+    const safeUrl = sanitizeHref(url);
+    return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+  });
+
+  // Highlights: ==text==
+  html = html.replace(/==([^=\n]+)==/g, '<mark>$1</mark>');
+  // Bold + Italic: ***text***
+  html = html.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
+  // Bold: **text**
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  // Italic: *text*
+  html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  // Strikethrough: ~~text~~
+  html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+
+  // Restore inline code
+  html = html.replace(/\u0000INLINECODE_(\d+)\u0000/g, (_, idx: string) => inlineCodes[Number(idx)] ?? '');
+  return html;
+}
+
+function markdownToSafeHtml(markdown: string): string {
+  const codeBlocks: string[] = [];
+  const withoutFencedCode = markdown.replace(/```([^\n]*)\n([\s\S]*?)```/g, (_, lang: string, code: string) => {
+    const idx = codeBlocks.length;
+    const safeLang = escapeHtml(lang.trim());
+    const langAttr = safeLang ? ` class="language-${safeLang}"` : '';
+    codeBlocks.push(`<pre><code${langAttr}>${escapeHtml(code.replace(/\n$/, ''))}</code></pre>`);
+    return `\n\u0000CODEBLOCK_${idx}\u0000\n`;
+  });
+
+  const lines = withoutFencedCode.split(/\r?\n/);
+  const blocks: string[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (!trimmed) {
+      i++;
+      continue;
+    }
+
+    const codeMatch = trimmed.match(/^\u0000CODEBLOCK_(\d+)\u0000$/);
+    if (codeMatch) {
+      blocks.push(codeBlocks[Number(codeMatch[1])] ?? '');
+      i++;
+      continue;
+    }
+
+    if (/^(\*{3,}|-{3,}|_{3,})$/.test(trimmed)) {
+      blocks.push('<hr />');
+      i++;
+      continue;
+    }
+
+    const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
+    if (headingMatch) {
+      const level = headingMatch[1].length;
+      blocks.push(`<h${level}>${formatInlineMarkdown(headingMatch[2].trim())}</h${level}>`);
+      i++;
+      continue;
+    }
+
+    if (line.trimStart().startsWith('>')) {
+      const quoteLines: string[] = [];
+      while (i < lines.length && lines[i].trimStart().startsWith('>')) {
+        const cleaned = lines[i].trimStart().replace(/^>\s?/, '');
+        if (!/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i.test(cleaned)) {
+          quoteLines.push(formatInlineMarkdown(cleaned));
+        } else {
+          const calloutType = cleaned.match(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i)?.[1]?.toUpperCase() || 'NOTE';
+          quoteLines.push(`<strong>[${calloutType}]</strong>`);
+        }
+        i++;
+      }
+      blocks.push(`<blockquote>${quoteLines.join('<br />')}</blockquote>`);
+      continue;
+    }
+
+    if (/^\s*[-*+]\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i])) {
+        const itemText = lines[i].replace(/^\s*[-*+]\s+/, '');
+        items.push(`<li>${formatInlineMarkdown(itemText)}</li>`);
+        i++;
+      }
+      blocks.push(`<ul>${items.join('')}</ul>`);
+      continue;
+    }
+
+    if (/^\s*\d+\.\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\s*\d+\.\s+/.test(lines[i])) {
+        const itemText = lines[i].replace(/^\s*\d+\.\s+/, '');
+        items.push(`<li>${formatInlineMarkdown(itemText)}</li>`);
+        i++;
+      }
+      blocks.push(`<ol>${items.join('')}</ol>`);
+      continue;
+    }
+
+    const paraLines: string[] = [];
+    while (
+      i < lines.length &&
+      lines[i].trim() !== '' &&
+      !/^\u0000CODEBLOCK_\d+\u0000$/.test(lines[i].trim()) &&
+      !/^(#{1,6})\s+/.test(lines[i]) &&
+      !lines[i].trimStart().startsWith('>') &&
+      !/^\s*[-*+]\s+/.test(lines[i]) &&
+      !/^\s*\d+\.\s+/.test(lines[i]) &&
+      !/^(\*{3,}|-{3,}|_{3,})$/.test(lines[i].trim())
+    ) {
+      paraLines.push(formatInlineMarkdown(lines[i]));
+      i++;
+    }
+    if (paraLines.length > 0) {
+      blocks.push(`<p>${paraLines.join('<br />')}</p>`);
+    }
+  }
+
+  return blocks.join('\n');
+}
+
 export const ExportModal: React.FC<ExportModalProps> = ({
   title,
   content,
@@ -62,12 +228,16 @@ generator: "LongPost"
     setExporting('html');
     try {
       const fileName = `${(title || '未命名长文').replace(/[\/\\:*?"<>|]/g, '_')}.html`;
+      const safeDocTitle = escapeHtml(title || 'LongPost 文章');
+      const safeHeadingTitle = escapeHtml(title || '无标题文章');
+      const renderedContentHtml = markdownToSafeHtml(content);
+
       const htmlTemplate = `<!DOCTYPE html>
 <html lang="zh-CN" class="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title || 'LongPost 文章'}</title>
+  <title>${safeDocTitle}</title>
   <style>
     :root {
       --bg: #090a0f;
@@ -110,8 +280,49 @@ generator: "LongPost"
     }
     .content {
       font-size: 1.05rem;
-      white-space: pre-wrap;
       word-break: break-word;
+    }
+    .content h1, .content h2, .content h3, .content h4, .content h5, .content h6 {
+      color: #fff;
+      margin-top: 1.6em;
+      margin-bottom: 0.6em;
+      line-height: 1.35;
+    }
+    .content p {
+      margin: 1em 0;
+    }
+    .content ul, .content ol {
+      margin: 1em 0;
+      padding-left: 1.6em;
+    }
+    .content li {
+      margin: 0.35em 0;
+    }
+    .content a {
+      color: var(--primary);
+      text-decoration: underline;
+    }
+    .content code {
+      background: var(--card-bg);
+      padding: 0.15em 0.4em;
+      border-radius: 6px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.9em;
+    }
+    .content pre code {
+      background: transparent;
+      padding: 0;
+    }
+    .content mark {
+      background: rgba(250, 204, 21, 0.25);
+      color: #fef08a;
+      padding: 0.1em 0.3em;
+      border-radius: 4px;
+    }
+    .content hr {
+      border: 0;
+      border-top: 1px solid var(--border);
+      margin: 2em 0;
     }
     pre {
       background: var(--card-bg);
@@ -143,13 +354,13 @@ generator: "LongPost"
 </head>
 <body>
   <article class="article-container">
-    <h1 class="title">${title || '无标题文章'}</h1>
+    <h1 class="title">${safeHeadingTitle}</h1>
     <div class="meta">
       <span>发布于 LongPost</span>
       <span>·</span>
       <span>${new Date().toLocaleDateString('zh-CN')}</span>
     </div>
-    <div class="content">${content.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+    <div class="content">${renderedContentHtml}</div>
     <footer>
       本文档由 LongPost 独立全功能工作台生成 · 纯本地自包含离线页面
     </footer>

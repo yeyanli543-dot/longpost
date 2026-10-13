@@ -24,9 +24,13 @@ echo "   ✅ 环境准备完毕"
 echo ""
 
 # ==================== 步骤 1 ====================
-echo "📝 [1/6] 更新 openapi 代码"
+echo "📝 [1/6] 检查接口定义"
 STEP_START=$(node -e "console.log(Date.now())")
-npm run gen:openapi
+if npm run | grep -q "gen:openapi"; then
+  npm run gen:openapi || true
+else
+  echo "   ✅ 使用内置 TypeScript 接口契约 (shared/api.interface.ts)"
+fi
 print_time $STEP_START
 echo ""
 
@@ -34,42 +38,14 @@ echo ""
 echo "🗑️  [2/6] 清理 dist 目录"
 STEP_START=$(node -e "console.log(Date.now())")
 rm -rf "$ROOT_DIR/dist"
+mkdir -p "$ROOT_DIR/dist"
 print_time $STEP_START
 echo ""
 
 # ==================== 步骤 3 ====================
-echo "🗺️  [3/6] 生成路由定义"
+echo "🗺️  [3/6] 检查路由定义"
 STEP_START=$(node -e "console.log(Date.now())")
-
-# 在 client/server 构建之前生成到 dist/，供 DefinePlugin 注入前端 bundle
-# 注意：nest-cli.json 中 deleteOutDir 必须为 false（模板默认值），否则 nest build 会清掉 dist/
-echo "   ├─ 生成 API 路由定义..."
-npx generate-api-routes --server-dir ./server --out-dir ./dist > /tmp/gen-api-routes.log 2>&1 &
-API_ROUTES_PID=$!
-
-echo "   ├─ 生成页面路由定义..."
-npx generate-page-routes --app-path ./client/src/app.tsx --out-dir ./dist > /tmp/gen-page-routes.log 2>&1 &
-PAGE_ROUTES_PID=$!
-
-API_ROUTES_EXIT=0
-PAGE_ROUTES_EXIT=0
-
-wait $API_ROUTES_PID || API_ROUTES_EXIT=$?
-wait $PAGE_ROUTES_PID || PAGE_ROUTES_EXIT=$?
-
-if [ $API_ROUTES_EXIT -ne 0 ]; then
-  echo "   ⚠️  API 路由生成失败（不影响构建）"
-  cat /tmp/gen-api-routes.log
-else
-  echo "   ✅ API 路由生成完成"
-fi
-
-if [ $PAGE_ROUTES_EXIT -ne 0 ]; then
-  echo "   ⚠️  页面路由生成失败（不影响构建）"
-  cat /tmp/gen-page-routes.log
-else
-  echo "   ✅ 页面路由生成完成"
-fi
+echo "   ✅ 使用 NestJS 装饰器路由与 React Router 动态路由"
 print_time $STEP_START
 echo ""
 

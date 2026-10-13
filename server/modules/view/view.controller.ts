@@ -106,26 +106,13 @@ export class ViewController {
     @Inject(DRIZZLE_DATABASE) private readonly db: PostgresJsDatabase,
   ) {}
 
-  @Get('p/:slug')
+  @Get('a/:slug')
   async renderSharePageBySlug(
     @Param('slug') slug: string,
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
     return this.renderShareArticle(slug, true, req, res);
-  }
-
-  @Get('article/:id')
-  async renderSharePageById(
-    @Param('id') id: string,
-    @Req() req: Request,
-    @Res() res: Response,
-  ): Promise<void> {
-    if (!isUuid(id)) {
-      res.status(404).send(buildNotFoundHtml(this.siteName));
-      return;
-    }
-    return this.renderShareArticle(id, false, req, res);
   }
 
   private async renderShareArticle(

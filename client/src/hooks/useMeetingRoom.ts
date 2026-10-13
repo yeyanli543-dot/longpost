@@ -234,7 +234,7 @@ export function useMeetingRoom({
   const joinRoom = useCallback(
     (token: string) => {
       const socketPath = getSocketPath();
-      const socket = io({
+      const socket = io('/meetings', {
         path: socketPath,
         auth: { token },
         transports: ['websocket', 'polling'],
@@ -343,36 +343,85 @@ export function useMeetingRoom({
     [meetingId],
   );
 
-  const setLocalStream = useCallback((stream: MediaStream | null) => {
-    const oldStream = localStreamRef.current;
-    localStreamRef.current = stream;
+  const setLocalStream = useCallback(
+    (stream: MediaStream | null) => {
+      const oldStream = localStreamRef.current;
+      localStreamRef.current = stream;
 
-    for (const [, peer] of peerConnectionsRef.current) {
-      if (stream) {
-        const senders = peer.pc.getSenders();
-        for (const track of stream.getTracks()) {
-          const existing = senders.find((s) => s.track?.kind === track.kind);
-          if (existing) {
-            void existing.replaceTrack(track);
-          } else {
-            void peer.pc.addTrack(track, stream);
-          }
-        }
-      } else if (oldStream) {
-        for (const track of oldStream.getTracks()) {
-          const senders = peer.pc.getSenders();
-          const sender = senders.find((s) => s.track?.id === track.id);
-          if (sender) {
-            try {
-              peer.pc.removeTrack(sender);
-            } catch {
-              // track already removed
+      if (peerConnectionsRef.current.size === 0) return;
+
+      for (const [peerUserId, peer] of peerConnectionsRef.current) {
+        void (async () => {
+          try {
+            if (stream) {
+              const senders = peer.pc.getSenders();
+              for (const track of stream.getTracks()) {
+                const existing = senders.find((s) => s.track?.kind === track.kind);
+                if (existing) {
+                  await existing.replaceTrack(track);
+                } else {
+                  peer.pc.addTrack(track, stream);
+                }
+              }
+            } else if (oldStream) {
+              for (const track of oldStream.getTracks()) {
+                const senders = peer.pc.getSenders();
+                const sender = senders.find((s) => s.track?.id === track.id);
+                if (sender) {
+                  try {
+                    peer.pc.removeTrack(sender);
+                  } catch {
+                    // track already removed
+                  }
+                }
+              }
             }
+
+            const offer = await peer.pc.createOffer();
+            await peer.pc.setLocalDescription(offer);
+            socketRef.current?.emit('signal_offer', {
+              meetingId,
+              to: peerUserId,
+              offer,
+            });
+          } catch (err) {
+            logger.error('本地媒体流重协商失败', err);
           }
+        })();
+      }
+    },
+    [meetingId],
+  );
+
+  const replaceVideoTrack = useCallback(
+    async (newTrack: MediaStreamTrack | null) => {
+      for (const [peerUserId, peer] of peerConnectionsRef.current) {
+        try {
+          const senders = peer.pc.getSenders();
+          const videoSender = senders.find(
+            (s) => s.track?.kind === 'video' || (!s.track && s.dtmf === null),
+          );
+          if (videoSender) {
+            await videoSender.replaceTrack(newTrack);
+          } else if (newTrack) {
+            const targetStream =
+              screenStreamRef.current || localStreamRef.current || new MediaStream([newTrack]);
+            peer.pc.addTrack(newTrack, targetStream);
+            const offer = await peer.pc.createOffer();
+            await peer.pc.setLocalDescription(offer);
+            socketRef.current?.emit('signal_offer', {
+              meetingId,
+              to: peerUserId,
+              offer,
+            });
+          }
+        } catch (err) {
+          logger.error('替换视频轨道失败', err);
         }
       }
-    }
-  }, []);
+    },
+    [meetingId],
+  );
 
   useEffect(() => {
     return () => {
@@ -390,8 +439,10 @@ export function useMeetingRoom({
     sendMediaState,
     sendChatMessage,
     setLocalStream,
+    replaceVideoTrack,
     localStreamRef,
     screenStreamRef,
     socketRef,
   };
 }
+

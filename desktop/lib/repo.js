@@ -190,15 +190,96 @@
       return '';
     }
 
+    /** 将空间密钥单向散列为固定指纹，避免在 articles.json 中明文暴露通行码或口令。 */
+    function hashSpaceKey(spaceKey) {
+      const s = String(spaceKey || '');
+      if (!s) return '';
+      let h1 = 0x811c9dc5;
+      let h2 = 0x01000193;
+      const input = 'lp-space-v1:' + s;
+      for (let i = 0; i < input.length; i += 1) {
+        const c = input.charCodeAt(i);
+        h1 ^= c;
+        h1 = Math.imul(h1, 0x01000193);
+        h2 ^= c + (i & 0xff);
+        h2 = Math.imul(h2, 0x85ebca6b);
+      }
+      return 'sh:' + (h1 >>> 0).toString(16).padStart(8, '0') + (h2 >>> 0).toString(16).padStart(8, '0');
+    }
+
+    /** 使用空间密钥对私密空间文章字段进行流式加密（公共空间保持明文以兼容既有工具）。 */
+    function cipherField(plain, spaceKey) {
+      const text = String(plain == null ? '' : plain);
+      const key = String(spaceKey || '');
+      if (!key || !text) return text;
+      let state = 0x9e3779b9;
+      for (let i = 0; i < key.length; i += 1) {
+        state = Math.imul(state ^ key.charCodeAt(i), 0x85ebca6b) >>> 0;
+      }
+      let out = 'enc1:';
+      for (let i = 0; i < text.length; i += 1) {
+        state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+        const mask = (state >>> 16) & 0xffff;
+        const enc = (text.charCodeAt(i) ^ mask) & 0xffff;
+        out += enc.toString(16).padStart(4, '0');
+      }
+      return out;
+    }
+
+    function decipherField(stored, spaceKey) {
+      const raw = String(stored == null ? '' : stored);
+      if (!raw.startsWith('enc1:')) return raw;
+      const key = String(spaceKey || '');
+      if (!key) return '';
+      const hex = raw.slice(5);
+      let state = 0x9e3779b9;
+      for (let i = 0; i < key.length; i += 1) {
+        state = Math.imul(state ^ key.charCodeAt(i), 0x85ebca6b) >>> 0;
+      }
+      let out = '';
+      for (let i = 0; i + 4 <= hex.length; i += 4) {
+        state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
+        const mask = (state >>> 16) & 0xffff;
+        const val = parseInt(hex.slice(i, i + 4), 16);
+        out += String.fromCharCode((val ^ mask) & 0xffff);
+      }
+      return out;
+    }
+
+    function decodeArticle(a, spaceKey) {
+      if (!a || !spaceKey) return a;
+      const history = Array.isArray(a.history)
+        ? a.history.map((h) => ({
+            ...h,
+            title: decipherField(h.title, spaceKey),
+            content: decipherField(h.content, spaceKey),
+          }))
+        : [];
+      return {
+        ...a,
+        title: decipherField(a.title, spaceKey),
+        content: decipherField(a.content, spaceKey),
+        summary: decipherField(a.summary, spaceKey),
+        history,
+      };
+    }
+
     function inSpace(article, spaceKey) {
-      return String((article && article.spaceKey) || '') === String(spaceKey || '');
+      const k = String(spaceKey || '');
+      const aHash = String((article && article.spaceHash) || '');
+      if (aHash) {
+        return Boolean(k) && aHash === hashSpaceKey(k);
+      }
+      return String((article && article.spaceKey) || '') === k;
     }
 
     async function listArticles(options) {
       const opts = options || {};
       const all = await readAll();
       const spaceKey = opts.spaceKey != null ? String(opts.spaceKey) : await getActiveSpaceKey();
-      const live = all.filter((a) => !a.deletedAt && inSpace(a, spaceKey));
+      const live = all
+        .filter((a) => !a.deletedAt && inSpace(a, spaceKey))
+        .map((a) => decodeArticle(a, spaceKey));
       return sortList(live.map(toListItem), opts.sort);
     }
 
@@ -208,7 +289,8 @@
       return all
         .filter((a) => a.deletedAt && inSpace(a, spaceKey))
         .map((a) => {
-          const item = toListItem(a);
+          const decoded = decodeArticle(a, spaceKey);
+          const item = toListItem(decoded);
           item.deletedAt = a.deletedAt;
           return item;
         })
@@ -216,8 +298,10 @@
     }
 
     async function getArticle(id) {
-      const found = (await readAll()).find((a) => a.id === id);
-      if (!found) return null;
+      const spaceKey = await getActiveSpaceKey();
+      const raw = (await readAll()).find((a) => a.id === id);
+      if (!raw || !inSpace(raw, spaceKey)) return null;
+      const found = decodeArticle(raw, spaceKey);
       return {
         ...found,
         title: found.title || '未命名',
@@ -225,7 +309,7 @@
         tags: normalizeTags(found.tags),
         pinnedAt: found.pinnedAt || 0,
         deletedAt: found.deletedAt || 0,
-        spaceKey: String(found.spaceKey || ''),
+        spaceKey: spaceKey,
         history: Array.isArray(found.history) ? found.history : [],
       };
     }
@@ -246,60 +330,75 @@
       const input = payload || {};
       const title = String(input.title || '').trim() || '未命名';
       const content = String(input.content == null ? '' : input.content);
+      const summary = makeSummary(content);
       const tags = normalizeTags(input.tags);
       const activeSpace = input.spaceKey != null ? String(input.spaceKey) : await getActiveSpaceKey();
+      const spaceHash = hashSpaceKey(activeSpace);
       const index = input.id ? list.findIndex((a) => a.id === input.id) : -1;
 
       if (index === -1) {
-        const article = {
+        const storedArticle = {
           id: newId(),
-          title,
-          content,
+          title: cipherField(title, activeSpace),
+          content: cipherField(content, activeSpace),
           tags,
-          summary: makeSummary(content),
+          summary: cipherField(summary, activeSpace),
           pinnedAt: input.pinnedAt || 0,
           deletedAt: 0,
-          spaceKey: activeSpace,
+          spaceKey: activeSpace ? '' : '',
+          spaceHash,
           history: [],
           createdAt: now,
           updatedAt: now,
         };
-        list.unshift(article);
+        list.unshift(storedArticle);
         await writeAll(list);
-        return { ...article };
+        return {
+          ...storedArticle,
+          title,
+          content,
+          summary,
+          spaceKey: activeSpace,
+        };
       }
 
-      const prev = list[index];
-      const history = Array.isArray(prev.history) ? prev.history.slice() : [];
-      if (shouldSnapshot(prev, { content })) {
+      const prevRaw = list[index];
+      const prevDecoded = decodeArticle(prevRaw, activeSpace);
+      const history = Array.isArray(prevRaw.history) ? prevRaw.history.slice() : [];
+      if (shouldSnapshot(prevDecoded, { content })) {
         history.push({
-          at: prev.updatedAt || now,
-          title: prev.title || '未命名',
-          content: String(prev.content || ''),
+          at: prevRaw.updatedAt || now,
+          title: cipherField(prevDecoded.title || '未命名', activeSpace),
+          content: cipherField(String(prevDecoded.content || ''), activeSpace),
         });
         while (history.length > MAX_REVISIONS) history.shift();
       }
 
-      const next = {
-        ...prev,
-        title,
-        content,
+      const nextStored = {
+        ...prevRaw,
+        title: cipherField(title, activeSpace),
+        content: cipherField(content, activeSpace),
         tags,
-        summary: makeSummary(content),
-        pinnedAt: input.pinnedAt == null ? prev.pinnedAt || 0 : input.pinnedAt || 0,
-        spaceKey: input.spaceKey != null ? String(input.spaceKey) : String(prev.spaceKey || ''),
+        summary: cipherField(summary, activeSpace),
+        pinnedAt: input.pinnedAt == null ? prevRaw.pinnedAt || 0 : input.pinnedAt || 0,
+        spaceKey: '',
+        spaceHash: spaceHash || String(prevRaw.spaceHash || ''),
         history,
         updatedAt: now,
       };
-      list[index] = next;
+      list[index] = nextStored;
       await writeAll(list);
-      return { ...next };
+      return {
+        ...decodeArticle(nextStored, activeSpace),
+        spaceKey: activeSpace,
+      };
     }
 
     /** 软删除：先进回收站，还能捞回来。 */
     async function deleteArticle(id) {
       const list = await readAll();
-      const index = list.findIndex((a) => a.id === id);
+      const spaceKey = await getActiveSpaceKey();
+      const index = list.findIndex((a) => a.id === id && inSpace(a, spaceKey));
       if (index === -1) return { ok: false, error: '文章不存在' };
       list[index] = { ...list[index], deletedAt: Date.now() };
       await writeAll(list);
@@ -308,7 +407,8 @@
 
     async function restoreArticle(id) {
       const list = await readAll();
-      const index = list.findIndex((a) => a.id === id);
+      const spaceKey = await getActiveSpaceKey();
+      const index = list.findIndex((a) => a.id === id && inSpace(a, spaceKey));
       if (index === -1) return { ok: false, error: '文章不存在' };
       list[index] = { ...list[index], deletedAt: 0 };
       await writeAll(list);
@@ -335,7 +435,8 @@
 
     async function togglePin(id) {
       const list = await readAll();
-      const index = list.findIndex((a) => a.id === id);
+      const spaceKey = await getActiveSpaceKey();
+      const index = list.findIndex((a) => a.id === id && inSpace(a, spaceKey));
       if (index === -1) return { ok: false, error: '文章不存在' };
       const next = !list[index].pinnedAt;
       list[index] = { ...list[index], pinnedAt: next ? Date.now() : 0 };
@@ -345,7 +446,8 @@
 
     async function setTags(id, tags) {
       const list = await readAll();
-      const index = list.findIndex((a) => a.id === id);
+      const spaceKey = await getActiveSpaceKey();
+      const index = list.findIndex((a) => a.id === id && inSpace(a, spaceKey));
       if (index === -1) return { ok: false, error: '文章不存在' };
       const clean = normalizeTags(tags);
       list[index] = { ...list[index], tags: clean, updatedAt: Date.now() };
@@ -395,21 +497,25 @@
       if (!found) return { ok: false, error: '文章不存在' };
       const h = found.history[index];
       if (!h) return { ok: false, error: '这个版本已不在' };
+      const spaceKey = await getActiveSpaceKey();
       const list = await readAll();
-      const i = list.findIndex((a) => a.id === id);
+      const i = list.findIndex((a) => a.id === id && inSpace(a, spaceKey));
+      if (i === -1) return { ok: false, error: '文章不存在' };
       const prev = list[i];
       const history = Array.isArray(prev.history) ? prev.history.slice() : [];
       history.push({
         at: prev.updatedAt || Date.now(),
-        title: prev.title || '未命名',
+        title: prev.title || cipherField('未命名', spaceKey),
         content: String(prev.content || ''),
       });
       while (history.length > MAX_REVISIONS) history.shift();
+      const nextTitle = h.title || found.title || '未命名';
+      const nextContent = String(h.content || '');
       list[i] = {
         ...prev,
-        title: h.title || prev.title,
-        content: String(h.content || ''),
-        summary: makeSummary(h.content),
+        title: cipherField(nextTitle, spaceKey),
+        content: cipherField(nextContent, spaceKey),
+        summary: cipherField(makeSummary(nextContent), spaceKey),
         history,
         updatedAt: Date.now(),
       };

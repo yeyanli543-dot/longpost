@@ -143,6 +143,7 @@ export class AuthService {
         theme: appUsers.theme,
         fontSize: appUsers.fontSize,
         isActive: appUsers.isActive,
+        isBanned: appUsers.isBanned,
         createdAt: appUsers.createdAt,
       })
       .from(appUsers)
@@ -156,6 +157,9 @@ export class AuthService {
     const row = rows[0];
     if (!row.isActive) {
       throw new UnauthorizedException('账号已被停用');
+    }
+    if (row.isBanned) {
+      throw new ForbiddenException('账号已被封禁');
     }
 
     const valid = await bcrypt.compare(password, row.passwordHash);
@@ -197,6 +201,7 @@ export class AuthService {
         notifyOnDelete: appUsers.notifyOnDelete,
         theme: appUsers.theme,
         fontSize: appUsers.fontSize,
+        isBanned: appUsers.isBanned,
         createdAt: appUsers.createdAt,
       })
       .from(appUsers)
@@ -208,6 +213,9 @@ export class AuthService {
     }
 
     const row = rows[0];
+    if (row.isBanned) {
+      throw new ForbiddenException('账号已被封禁');
+    }
     const isOwner = await this.ensureOwnerRole(row.id, row.email);
     return this.mapUser(isOwner ? { ...row, role: 'admin' } : row);
   }
@@ -384,22 +392,34 @@ export class AuthService {
     const [postCountRow] = await this.db
       .select({ count: count() })
       .from(posts)
-      .where(eq(posts.appUserId, userId));
+      .where(and(eq(posts.appUserId, userId), eq(posts.moderationStatus, 'approved')));
 
     const [articleCountRow] = await this.db
       .select({ count: count() })
       .from(articles)
-      .where(eq(articles.appUserId, userId));
+      .where(
+        and(
+          eq(articles.appUserId, userId),
+          eq(articles.status, 'published'),
+          eq(articles.moderationStatus, 'approved'),
+        ),
+      );
 
     const [postLikesRow] = await this.db
       .select({ total: sum(posts.likeCount) })
       .from(posts)
-      .where(eq(posts.appUserId, userId));
+      .where(and(eq(posts.appUserId, userId), eq(posts.moderationStatus, 'approved')));
 
     const [articleLikesRow] = await this.db
       .select({ total: sum(articles.likeCount) })
       .from(articles)
-      .where(eq(articles.appUserId, userId));
+      .where(
+        and(
+          eq(articles.appUserId, userId),
+          eq(articles.status, 'published'),
+          eq(articles.moderationStatus, 'approved'),
+        ),
+      );
 
     const postLikes = Number(postLikesRow.total) || 0;
     const articleLikes = Number(articleLikesRow.total) || 0;
@@ -437,7 +457,7 @@ export class AuthService {
           moderationStatus: posts.moderationStatus,
         })
        .from(posts)
-      .where(eq(posts.appUserId, userId))
+      .where(and(eq(posts.appUserId, userId), eq(posts.moderationStatus, 'approved')))
       .orderBy(desc(posts.createdAt))
       .limit(20);
 
@@ -479,7 +499,13 @@ export class AuthService {
            moderationStatus: articles.moderationStatus,
          })
        .from(articles)
-      .where(eq(articles.appUserId, userId))
+      .where(
+        and(
+          eq(articles.appUserId, userId),
+          eq(articles.status, 'published'),
+          eq(articles.moderationStatus, 'approved'),
+        ),
+      )
       .orderBy(desc(articles.createdAt))
       .limit(20);
 

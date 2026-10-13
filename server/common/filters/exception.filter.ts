@@ -60,14 +60,19 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         },
       };
     } else {
-      // 未知异常
+      // 未知异常（生产环境屏蔽内部调用栈）
+      const isDev = process.env.NODE_ENV === 'development';
       httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
       errorResponse = {
         error: {
           code: ResponseCode.INTERNAL_ERROR,
           message: '服务器内部错误',
-          stack: (exception as Error).stack,
-          cause: (exception as Error).cause as string,
+          ...(isDev
+            ? {
+                stack: (exception as Error).stack,
+                cause: (exception as Error).cause as string,
+              }
+            : {}),
           timestamp: Date.now(),
         },
       };

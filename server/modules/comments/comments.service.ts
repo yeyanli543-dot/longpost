@@ -104,17 +104,6 @@ export class CommentsService {
 
     const { inserted, authorId } = result;
 
-    // Hashtag sync (fire-and-forget style, outside transaction)
-    try {
-      await this.hashtagsService.syncContentHashtags(
-        dto.contentType,
-        dto.contentId,
-        dto.body,
-      );
-    } catch (err) {
-      this.logger.error(`Hashtag sync failed for comment ${inserted.id}: ${JSON.stringify(err)}`);
-    }
-
     // Notify content author (skip if commenter is the author)
     if (authorId && authorId !== userId) {
       try {

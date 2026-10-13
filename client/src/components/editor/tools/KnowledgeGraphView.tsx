@@ -1,5 +1,7 @@
 import { FC, useState, useEffect, useRef, useMemo } from 'react';
 import { Network, X, ZoomIn, ZoomOut, RefreshCw, Hash, FileText, Link2 } from 'lucide-react';
+import { articlesApi } from '@client/src/api';
+import type { ArticleSummary } from '@shared/api.interface';
 
 interface KnowledgeGraphViewProps {
   isOpen: boolean;
@@ -25,6 +27,78 @@ interface GraphEdge {
   target: string;
 }
 
+function computeForceLayout(
+  rawNodes: GraphNode[],
+  edges: GraphEdge[],
+  iterations = 100,
+): GraphNode[] {
+  if (rawNodes.length === 0) return [];
+  const localNodes = rawNodes.map((n) => ({ ...n }));
+  const nodeById = new Map<string, GraphNode>();
+  localNodes.forEach((n) => nodeById.set(n.id, n));
+
+  const width = 700;
+  const height = 450;
+
+  for (let step = 1; step <= iterations; step++) {
+    const alpha = Math.max(0.02, 1 - step / iterations);
+
+    // 斥力 (Coulomb)
+    for (let i = 0; i < localNodes.length; i++) {
+      for (let j = i + 1; j < localNodes.length; j++) {
+        const dx = localNodes[j].x - localNodes[i].x;
+        const dy = localNodes[j].y - localNodes[i].y;
+        const distSq = dx * dx + dy * dy + 100;
+        const dist = Math.sqrt(distSq);
+        const force = (800 / distSq) * alpha;
+        const fx = (dx / dist) * force;
+        const fy = (dy / dist) * force;
+
+        if (localNodes[i].id !== 'root') {
+          localNodes[i].x -= fx;
+          localNodes[i].y -= fy;
+        }
+        if (localNodes[j].id !== 'root') {
+          localNodes[j].x += fx;
+          localNodes[j].y += fy;
+        }
+      }
+    }
+
+    // 引力 (Spring)
+    for (const edge of edges) {
+      const source = nodeById.get(edge.source);
+      const target = nodeById.get(edge.target);
+      if (!source || !target) continue;
+
+      const dx = target.x - source.x;
+      const dy = target.y - source.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const springForce = (dist - 110) * 0.05 * alpha;
+      const fx = (dx / dist) * springForce;
+      const fy = (dy / dist) * springForce;
+
+      if (source.id !== 'root') {
+        source.x += fx;
+        source.y += fy;
+      }
+      if (target.id !== 'root') {
+        target.x -= fx;
+        target.y -= fy;
+      }
+    }
+
+    // 向中心吸引力
+    for (const n of localNodes) {
+      if (n.id === 'root') continue;
+      n.x += (width / 2 - n.x) * 0.02 * alpha;
+      n.y += (height / 2 - n.y) * 0.02 * alpha;
+    }
+  }
+
+  return localNodes;
+}
+
 export const KnowledgeGraphView: FC<KnowledgeGraphViewProps> = ({
   isOpen,
   onClose,
@@ -34,14 +108,33 @@ export const KnowledgeGraphView: FC<KnowledgeGraphViewProps> = ({
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [zoom, setZoom] = useState<number>(1);
   const [draggedNode, setDraggedNode] = useState<string | null>(null);
-  const animFrameRef = useRef<number | null>(null);
+  const [remoteArticles, setRemoteArticles] = useState<ArticleSummary[]>([]);
 
-  // 解析 Markdown 内容提取节点和关系边
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    articlesApi
+      .getArticles({ page: 1, pageSize: 30 })
+      .then((res) => {
+        if (!cancelled && Array.isArray(res?.items)) {
+          setRemoteArticles(res.items.slice(0, 15));
+        }
+      })
+      .catch(() => {
+        // Fallback to current document graph when offline or unauthenticated
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
+  // 解析 Markdown 内容与全库文章提取节点和关系边，并一次性完成力导向布局计算
   const { initialNodes, initialEdges } = useMemo(() => {
     if (!isOpen) return { initialNodes: [], initialEdges: [] };
 
     const nodes: GraphNode[] = [];
     const edges: GraphEdge[] = [];
+    const tagNodeMap = new Map<string, string>();
 
     // 中心根节点：当前文档
     const rootId = 'root';
@@ -63,34 +156,31 @@ export const KnowledgeGraphView: FC<KnowledgeGraphViewProps> = ({
     const headings: string[] = [];
 
     lines.forEach((line) => {
-      // 提取标题 (# 标题)
       const hMatch = line.match(/^(#{1,3})\s+(.+)$/);
       if (hMatch && hMatch[2]) {
         headings.push(hMatch[2].trim());
       }
 
-      // 提取 #tag 标签
       const tagMatches = line.matchAll(/#([\p{L}\p{N}_-]+)/gu);
       for (const m of tagMatches) {
-        if (m[1]) tagsSet.add(m[1]);
+        if (m[1]) tagsSet.add(m[1].toLowerCase());
       }
 
-      // 提取 [[WikiLink]] 双向链
       const wikiMatches = line.matchAll(/\[\[(.*?)\]\]/g);
       for (const m of wikiMatches) {
         if (m[1]) wikiLinksSet.add(m[1].trim());
       }
     });
 
-    // 挂载标题节点
     headings.slice(0, 10).forEach((h, idx) => {
       const hId = `heading-${idx}`;
+      const angle = (idx / Math.max(1, headings.length)) * Math.PI * 2;
       nodes.push({
         id: hId,
         label: h,
         type: 'heading',
-        x: 350 + (Math.random() - 0.5) * 200,
-        y: 220 + (Math.random() - 0.5) * 200,
+        x: 350 + Math.cos(angle) * 120,
+        y: 220 + Math.sin(angle) * 120,
         vx: 0,
         vy: 0,
         radius: 12,
@@ -99,42 +189,92 @@ export const KnowledgeGraphView: FC<KnowledgeGraphViewProps> = ({
       edges.push({ source: rootId, target: hId });
     });
 
-    // 挂载标签节点
-    Array.from(tagsSet).slice(0, 10).forEach((tag, idx) => {
-      const tId = `tag-${idx}`;
+    Array.from(tagsSet)
+      .slice(0, 12)
+      .forEach((tag, idx) => {
+        const tId = `tag-${tag}`;
+        tagNodeMap.set(tag, tId);
+        const angle = (idx / Math.max(1, tagsSet.size)) * Math.PI * 2 + 0.4;
+        nodes.push({
+          id: tId,
+          label: `#${tag}`,
+          type: 'tag',
+          x: 350 + Math.cos(angle) * 160,
+          y: 220 + Math.sin(angle) * 160,
+          vx: 0,
+          vy: 0,
+          radius: 10,
+          color: '#ea4335', // Google Red
+        });
+        edges.push({ source: rootId, target: tId });
+      });
+
+    Array.from(wikiLinksSet)
+      .slice(0, 10)
+      .forEach((link, idx) => {
+        const lId = `link-${idx}`;
+        const angle = (idx / Math.max(1, wikiLinksSet.size)) * Math.PI * 2 + 0.8;
+        nodes.push({
+          id: lId,
+          label: `[[${link}]]`,
+          type: 'link',
+          x: 350 + Math.cos(angle) * 180,
+          y: 220 + Math.sin(angle) * 180,
+          vx: 0,
+          vy: 0,
+          radius: 11,
+          color: '#fbbc04', // Google Yellow
+        });
+        edges.push({ source: rootId, target: lId });
+      });
+
+    // 挂载全库关联文章节点与共享标签连线
+    remoteArticles.forEach((art, idx) => {
+      if (art.title && art.title === title) return;
+      const docNodeId = `article-${art.id}`;
+      const angle = (idx / Math.max(1, remoteArticles.length)) * Math.PI * 2 + 1.1;
       nodes.push({
-        id: tId,
-        label: `#${tag}`,
-        type: 'tag',
-        x: 350 + (Math.random() - 0.5) * 300,
-        y: 220 + (Math.random() - 0.5) * 300,
+        id: docNodeId,
+        label: art.title || '无标题文章',
+        type: 'doc',
+        x: 350 + Math.cos(angle) * 210,
+        y: 220 + Math.sin(angle) * 210,
         vx: 0,
         vy: 0,
-        radius: 10,
-        color: '#ea4335', // Google Red
+        radius: 14,
+        color: '#1a73e8',
       });
-      edges.push({ source: rootId, target: tId });
+
+      const artTags = Array.isArray(art.hashtags) ? art.hashtags : [];
+      if (artTags.length > 0) {
+        artTags.slice(0, 5).forEach((rawTag) => {
+          const normTag = rawTag.toLowerCase();
+          let tId = tagNodeMap.get(normTag);
+          if (!tId) {
+            tId = `tag-${normTag}`;
+            tagNodeMap.set(normTag, tId);
+            nodes.push({
+              id: tId,
+              label: `#${normTag}`,
+              type: 'tag',
+              x: 350 + Math.cos(angle + 0.2) * 150,
+              y: 220 + Math.sin(angle + 0.2) * 150,
+              vx: 0,
+              vy: 0,
+              radius: 10,
+              color: '#ea4335',
+            });
+          }
+          edges.push({ source: docNodeId, target: tId });
+        });
+      } else {
+        edges.push({ source: rootId, target: docNodeId });
+      }
     });
 
-    // 挂载双链节点
-    Array.from(wikiLinksSet).slice(0, 10).forEach((link, idx) => {
-      const lId = `link-${idx}`;
-      nodes.push({
-        id: lId,
-        label: `[[${link}]]`,
-        type: 'link',
-        x: 350 + (Math.random() - 0.5) * 320,
-        y: 220 + (Math.random() - 0.5) * 320,
-        vx: 0,
-        vy: 0,
-        radius: 11,
-        color: '#fbbc04', // Google Yellow
-      });
-      edges.push({ source: rootId, target: lId });
-    });
-
-    return { initialNodes: nodes, initialEdges: edges };
-  }, [isOpen, content, title]);
+    const settledNodes = computeForceLayout(nodes, edges, 100);
+    return { initialNodes: settledNodes, initialEdges: edges };
+  }, [isOpen, content, title, remoteArticles]);
 
   const [nodes, setNodes] = useState<GraphNode[]>(initialNodes);
   const [edges, setEdges] = useState<GraphEdge[]>(initialEdges);
@@ -143,85 +283,6 @@ export const KnowledgeGraphView: FC<KnowledgeGraphViewProps> = ({
     setNodes(initialNodes);
     setEdges(initialEdges);
   }, [initialNodes, initialEdges]);
-
-  // 物理力导向模拟循环 (Force Simulation)
-  useEffect(() => {
-    if (!isOpen || nodes.length === 0) return;
-
-    let localNodes = [...nodes];
-    const width = 700;
-    const height = 450;
-    let iteration = 0;
-
-    const tick = () => {
-      iteration++;
-      const alpha = Math.max(0.01, 1 - iteration / 180);
-
-      // 斥力 (Coulomb)
-      for (let i = 0; i < localNodes.length; i++) {
-        for (let j = i + 1; j < localNodes.length; j++) {
-          const dx = localNodes[j].x - localNodes[i].x;
-          const dy = localNodes[j].y - localNodes[i].y;
-          const distSq = dx * dx + dy * dy + 100;
-          const dist = Math.sqrt(distSq);
-          const force = (800 / distSq) * alpha;
-          const fx = (dx / dist) * force;
-          const fy = (dy / dist) * force;
-
-          if (localNodes[i].id !== draggedNode) {
-            localNodes[i].x -= fx;
-            localNodes[i].y -= fy;
-          }
-          if (localNodes[j].id !== draggedNode) {
-            localNodes[j].x += fx;
-            localNodes[j].y += fy;
-          }
-        }
-      }
-
-      // 引力 (Spring)
-      edges.forEach((edge) => {
-        const source = localNodes.find((n) => n.id === edge.source);
-        const target = localNodes.find((n) => n.id === edge.target);
-        if (!source || !target) return;
-
-        const dx = target.x - source.x;
-        const dy = target.y - source.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const springForce = (dist - 100) * 0.05 * alpha;
-        const fx = (dx / (dist || 1)) * springForce;
-        const fy = (dy / (dist || 1)) * springForce;
-
-        if (source.id !== draggedNode && source.id !== 'root') {
-          source.x += fx;
-          source.y += fy;
-        }
-        if (target.id !== draggedNode) {
-          target.x -= fx;
-          target.y -= fy;
-        }
-      });
-
-      // 向中心吸引力
-      localNodes.forEach((n) => {
-        if (n.id === draggedNode) return;
-        n.x += (width / 2 - n.x) * 0.02 * alpha;
-        n.y += (height / 2 - n.y) * 0.02 * alpha;
-      });
-
-      setNodes([...localNodes]);
-
-      if (iteration < 180 || draggedNode) {
-        animFrameRef.current = requestAnimationFrame(tick);
-      }
-    };
-
-    animFrameRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    };
-  }, [isOpen, edges, draggedNode]);
 
   const handleMouseDown = (nodeId: string) => {
     setDraggedNode(nodeId);

@@ -11,6 +11,7 @@ import {
 } from '@server/database/database.module';
 import { follows, appUsers } from '@server/database/schema';
 import { eq, and, lt, sql, desc, or } from 'drizzle-orm';
+import { NotificationsService } from '../notifications/notifications.service';
 import type {
   FollowUserResponse,
   FollowListResponse,
@@ -72,6 +73,7 @@ export class FollowsService {
 
   constructor(
     @Inject(DRIZZLE_DATABASE) private readonly db: PostgresJsDatabase,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async toggleFollow(followerId: string, followingId: string): Promise<FollowUserResponse> {
@@ -89,7 +91,7 @@ export class FollowsService {
     }
 
     try {
-      return await this.db.transaction(async (tx) => {
+      const result = await this.db.transaction(async (tx) => {
         const existing = await tx
           .select({ id: follows.id })
           .from(follows)
@@ -148,6 +150,23 @@ export class FollowsService {
           };
         }
       });
+
+      if (result.following) {
+        try {
+          await this.notificationsService.createNotification(
+            followingId,
+            'follow',
+            followerId,
+            null,
+          );
+        } catch (notifyErr) {
+          this.logger.warn(
+            `Follow notification failed: ${notifyErr instanceof Error ? notifyErr.message : String(notifyErr)}`,
+          );
+        }
+      }
+
+      return result;
     } catch (error) {
       const code = extractPostgresErrorCode(error);
       if (code === '23505') {

@@ -67,13 +67,15 @@ export class MeetingSignalingGateway
       }
 
       const payload = this.jwtService.verify(token);
-      client.data.userId = payload.sub;
-      let userName = payload.username;
-      if (!userName) {
-        const user = await this.authService.validateUserActive(payload.sub);
-        userName = user?.nickname;
+      const user = await this.authService.validateUserActive(payload.sub);
+      if (!user || !user.isActive || user.isBanned) {
+        client.emit('error', { message: '账号已被封禁或停用' });
+        client.disconnect();
+        return;
       }
-      client.data.userName = userName || '用户';
+      client.data.userId = user.id;
+      client.data.role = user.role;
+      client.data.userName = user.nickname || payload.username || '用户';
     } catch (err) {
       this.logger.warn('连接鉴权失败');
       client.emit('error', { message: '认证失败' });
@@ -191,9 +193,11 @@ export class MeetingSignalingGateway
   ): void {
     const { userId } = client.data;
     const { to, offer, meetingId } = data;
+    if (!userId || !meetingId) return;
 
     const room = this.rooms.get(meetingId);
-    const target = room?.users.get(to);
+    if (!room || !room.users.has(userId)) return;
+    const target = room.users.get(to);
     if (!target) return;
 
     client.to(target.socketId).emit('signal_offer', {
@@ -209,9 +213,11 @@ export class MeetingSignalingGateway
   ): void {
     const { userId } = client.data;
     const { to, answer, meetingId } = data;
+    if (!userId || !meetingId) return;
 
     const room = this.rooms.get(meetingId);
-    const target = room?.users.get(to);
+    if (!room || !room.users.has(userId)) return;
+    const target = room.users.get(to);
     if (!target) return;
 
     client.to(target.socketId).emit('signal_answer', {
@@ -227,9 +233,11 @@ export class MeetingSignalingGateway
   ): void {
     const { userId } = client.data;
     const { to, candidate, meetingId } = data;
+    if (!userId || !meetingId) return;
 
     const room = this.rooms.get(meetingId);
-    const target = room?.users.get(to);
+    if (!room || !room.users.has(userId)) return;
+    const target = room.users.get(to);
     if (!target) return;
 
     client.to(target.socketId).emit('signal_ice', {
@@ -297,16 +305,34 @@ export class MeetingSignalingGateway
   }
 
   @SubscribeMessage('end_meeting')
-  handleEndMeeting(
+  async handleEndMeeting(
     @MessageBody() data: { meetingId: string },
     @ConnectedSocket() client: Socket,
-  ): void {
+  ): Promise<void> {
+    const { userId, role } = client.data;
     const { meetingId } = data;
-    if (!meetingId) return;
+    if (!userId || !meetingId) return;
 
-    client.to(`meeting:${meetingId}`).emit('meeting_ended', {
-      meetingId,
-    });
+    try {
+      const detail = await this.meetingsService.getMeeting(meetingId, userId);
+      if (detail.meeting.creatorId !== userId && role !== 'admin') {
+        client.emit('error', { message: '仅会议主持人可结束会议' });
+        return;
+      }
+      if (detail.meeting.status !== 'ended') {
+        try {
+          await this.meetingsService.endMeeting(meetingId, userId);
+        } catch {
+          // ignore if already ended
+        }
+      }
+      this.server.to(`meeting:${meetingId}`).emit('meeting_ended', {
+        meetingId,
+      });
+      this.rooms.delete(meetingId);
+    } catch (err) {
+      client.emit('error', { message: '结束会议失败或无权限' });
+    }
   }
 
   private getOrCreateRoom(meetingId: string): ActiveRoom {

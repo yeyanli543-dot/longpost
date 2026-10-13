@@ -244,6 +244,7 @@ export class HashtagsService {
             and(
               eq(contentHashtags.hashtagId, hashtagRow.id),
               eq(contentHashtags.contentType, 'post'),
+              eq(posts.moderationStatus, 'approved'),
               lt(posts.createdAt, cursorDate),
             ),
           )
@@ -260,6 +261,7 @@ export class HashtagsService {
             and(
               eq(contentHashtags.hashtagId, hashtagRow.id),
               eq(contentHashtags.contentType, 'post'),
+              eq(posts.moderationStatus, 'approved'),
             ),
           )
           .orderBy(desc(posts.createdAt))
@@ -277,6 +279,8 @@ export class HashtagsService {
             and(
               eq(contentHashtags.hashtagId, hashtagRow.id),
               eq(contentHashtags.contentType, 'article'),
+              eq(articles.status, 'published'),
+              eq(articles.moderationStatus, 'approved'),
               lt(articles.createdAt, cursorDate),
             ),
           )
@@ -293,6 +297,8 @@ export class HashtagsService {
             and(
               eq(contentHashtags.hashtagId, hashtagRow.id),
               eq(contentHashtags.contentType, 'article'),
+              eq(articles.status, 'published'),
+              eq(articles.moderationStatus, 'approved'),
             ),
           )
           .orderBy(desc(articles.createdAt))

@@ -1001,11 +1001,11 @@ export class AdminService {
     }
 
     const authorId = updated[0].appUserId;
-    if (authorId) {
-      const metadata: Record<string, unknown> = { reason: reason || '' };
+    if (authorId && status === 'rejected') {
+      const metadata: Record<string, unknown> = { reason: reason || '审核未通过' };
       await this.notificationsService.createNotification(
         authorId,
-        status === 'approved' ? 'mention' : 'content_removed',
+        'content_removed',
         handlerId,
         'post',
         id,
@@ -1044,11 +1044,11 @@ export class AdminService {
     }
 
     const authorId = updated[0].appUserId;
-    if (authorId) {
-      const metadata: Record<string, unknown> = { reason: reason || '' };
+    if (authorId && status === 'rejected') {
+      const metadata: Record<string, unknown> = { reason: reason || '审核未通过' };
       await this.notificationsService.createNotification(
         authorId,
-        status === 'approved' ? 'mention' : 'content_removed',
+        'content_removed',
         handlerId,
         'article',
         id,
@@ -1064,7 +1064,10 @@ export class AdminService {
 
   private escapeCsv(value: unknown): string {
     if (value === null || value === undefined) return '';
-    const str = String(value);
+    let str = String(value);
+    if (/^[=+\-@\t\r]/.test(str)) {
+      str = `'${str}`;
+    }
     if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
       return `"${str.replace(/"/g, '""')}"`;
     }

@@ -10,5 +10,5 @@ const rawClientBasePath = process.env.CLIENT_BASE_PATH;
 
 export const ASSET_BASE_PATH =
   rawClientBasePath === undefined
-    ? '/app/app_17ea4bnn0xw'
+    ? ''
     : rawClientBasePath.trim().replace(/\/+$/, '');

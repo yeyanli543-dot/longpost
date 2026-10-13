@@ -45,8 +45,20 @@ export class AccessCodesController {
   ) {}
 
   @Post('auth/access-code/login')
-  async loginWithCode(@Body() dto: LoginWithCodeDto): Promise<AuthResponse> {
-    return this.accessCodesService.loginWithCode(dto.code);
+  async loginWithCode(
+    @Req() req: Request,
+    @Body() dto: LoginWithCodeDto,
+  ): Promise<AuthResponse> {
+    const forwarded = req.headers['x-forwarded-for'];
+    const rawIp =
+      req.ip ||
+      (Array.isArray(forwarded) ? forwarded[0] : forwarded) ||
+      null;
+    const ip = typeof rawIp === 'string' ? rawIp : null;
+    const rawUa = req.headers['user-agent'];
+    const userAgent =
+      (Array.isArray(rawUa) ? rawUa[0] : rawUa) || null;
+    return this.accessCodesService.loginWithCode(dto.code, ip, userAgent);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -153,6 +165,10 @@ export class AccessCodesController {
     @Body() dto: SetPasswordDto,
   ): Promise<void> {
     const userId = req.user?.id ?? '';
-    await this.accessCodesService.setPassword(userId, dto.password);
+    await this.accessCodesService.setPassword(
+      userId,
+      dto.password,
+      dto.oldPassword,
+    );
   }
 }

@@ -877,4 +877,5 @@ export interface AccessCodeLogListResponse {
 
 export interface SetPasswordRequest {
   password: string;
+  oldPassword?: string;
 }

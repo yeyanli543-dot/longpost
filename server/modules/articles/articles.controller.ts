@@ -15,7 +15,7 @@ import {
 import { ArticlesService } from './articles.service';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
-import { JwtAuthGuard, type AuthRequest } from '../auth/jwt-auth.guard';
+import { JwtAuthGuard, OptionalJwtAuthGuard, type AuthRequest } from '../auth/jwt-auth.guard';
 import { validateUUIDParam } from '@server/common/utils/validation';
 import type {
   ArticleDetail,
@@ -53,36 +53,48 @@ export class ArticlesController {
     );
   }
 
+  @UseGuards(OptionalJwtAuthGuard)
   @Get('articles/slug/:slug')
-  async getBySlug(@Param('slug') slug: string): Promise<ArticleDetail> {
-    return this.articlesService.getDetail(slug);
+  async getBySlug(
+    @Req() req: AuthRequest,
+    @Param('slug') slug: string,
+  ): Promise<ArticleDetail> {
+    return this.articlesService.getDetail(slug, req.user?.id);
   }
 
+  @UseGuards(OptionalJwtAuthGuard)
   @Get('articles/:id')
-  async getDetail(@Param('id') id: string): Promise<ArticleDetail> {
+  async getDetail(
+    @Req() req: AuthRequest,
+    @Param('id') id: string,
+  ): Promise<ArticleDetail> {
     validateUUIDParam(id, 'articleId');
-    return this.articlesService.getDetail(id);
+    return this.articlesService.getDetail(id, req.user?.id);
   }
 
+  @UseGuards(OptionalJwtAuthGuard)
   @Get('articles')
   async getList(
+    @Req() req: AuthRequest,
     @Query('authorId') authorId?: string,
   ): Promise<{ items: ArticleSummary[] }> {
-    return this.articlesService.getList(authorId);
+    return this.articlesService.getList(authorId, req.user?.id);
   }
 
+  @UseGuards(OptionalJwtAuthGuard)
   @Get('users/:userId/articles')
   async getUserArticles(
+    @Req() req: AuthRequest,
     @Param('userId') userId: string,
   ): Promise<UserArticlesResponse> {
     validateUUIDParam(userId, 'userId');
-    return this.articlesService.getUserArticles(userId);
+    return this.articlesService.getUserArticles(userId, req.user?.id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('me/articles')
   async getMyArticles(@Req() req: AuthRequest): Promise<UserArticlesResponse> {
-    return this.articlesService.getUserArticles(req.user!.id);
+    return this.articlesService.getUserArticles(req.user!.id, req.user!.id);
   }
 
   @Get('search')

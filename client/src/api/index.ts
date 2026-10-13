@@ -14,6 +14,7 @@ export * as adminApi from './admin';
 export * as dmApi from './dm';
 export * as meetingsApi from './meetings';
 export * as accessCodesApi from './access-codes';
+export * as uploadsApi from './upload';
 
 // Add more API functions here, use axios instance (`axiosForBackend`) to make requests.
 // 

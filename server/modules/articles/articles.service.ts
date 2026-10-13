@@ -167,19 +167,12 @@ export class ArticlesService {
     return result;
   }
 
-  async getDetail(idOrSlug: string): Promise<ArticleDetail> {
+  async getDetail(idOrSlug: string, currentUserId?: string): Promise<ArticleDetail> {
     const bySlug = !this.isUuid(idOrSlug);
+    const lookupCond = bySlug ? eq(articles.slug, idOrSlug) : eq(articles.id, idOrSlug);
 
-    // Atomic increment read_count
-    const whereCondition = bySlug
-      ? and(eq(articles.slug, idOrSlug), eq(articles.moderationStatus, 'approved'), eq(articles.status, 'published'))
-      : and(eq(articles.id, idOrSlug), eq(articles.moderationStatus, 'approved'), eq(articles.status, 'published'));
-
-    const updated = await this.db
-      .update(articles)
-      .set({ readCount: sql`${articles.readCount} + 1` })
-      .where(whereCondition)
-      .returning({
+    const found = await this.db
+      .select({
         id: articles.id,
         slug: articles.slug,
         title: articles.title,
@@ -190,24 +183,45 @@ export class ArticlesService {
         likeCount: articles.likeCount,
         commentCount: articles.commentCount,
         repostCount: articles.repostCount,
-         bookmarkCount: articles.bookmarkCount,
-         isPinned: articles.isPinned,
-         isFeatured: articles.isFeatured,
-         moderationStatus: articles.moderationStatus,
-         status: articles.status,
-         author: articles.author,
-         appUserId: articles.appUserId,
-         createdAt: articles.createdAt,
-       });
+        bookmarkCount: articles.bookmarkCount,
+        isPinned: articles.isPinned,
+        isFeatured: articles.isFeatured,
+        moderationStatus: articles.moderationStatus,
+        status: articles.status,
+        author: articles.author,
+        appUserId: articles.appUserId,
+        createdAt: articles.createdAt,
+      })
+      .from(articles)
+      .where(lookupCond)
+      .limit(1);
 
-     if (updated.length === 0) {
-       throw new NotFoundException('文章不存在');
-     }
+    if (found.length === 0) {
+      throw new NotFoundException('文章不存在');
+    }
 
-     const articleId: string = updated[0].id;
-
-    const article = updated[0];
+    let article = found[0];
     const authorId: string = this.getAuthorId(article);
+    const isOwner = Boolean(currentUserId && authorId === currentUserId);
+    const isPubliclyVisible =
+      article.status === 'published' && article.moderationStatus === 'approved';
+
+    if (!isPubliclyVisible && !isOwner) {
+      throw new NotFoundException('文章不存在');
+    }
+
+    if (article.status === 'published' && !isOwner) {
+      const [incremented] = await this.db
+        .update(articles)
+        .set({ readCount: sql`${articles.readCount} + 1` })
+        .where(eq(articles.id, article.id))
+        .returning({ readCount: articles.readCount });
+      if (incremented) {
+        article = { ...article, readCount: incremented.readCount };
+      }
+    }
+
+    const articleId: string = article.id;
 
     // Get linked posts (posts that reference this article)
      const linkedPostRows = await this.db
@@ -337,10 +351,14 @@ export class ArticlesService {
     };
   }
 
-  async getList(authorId?: string): Promise<{ items: ArticleSummary[] }> {
+  async getList(authorId?: string, currentUserId?: string): Promise<{ items: ArticleSummary[] }> {
     const conditions = [];
     if (authorId) {
       conditions.push(eq(articles.appUserId, authorId));
+      if (!currentUserId || currentUserId !== authorId) {
+        conditions.push(eq(articles.moderationStatus, 'approved'));
+        conditions.push(eq(articles.status, 'published'));
+      }
     } else {
       conditions.push(eq(articles.moderationStatus, 'approved'));
       conditions.push(eq(articles.status, 'published'));
@@ -472,7 +490,16 @@ export class ArticlesService {
     return result;
   }
 
-  async getUserArticles(userId: string): Promise<UserArticlesResponse> {
+  async getUserArticles(userId: string, currentUserId?: string): Promise<UserArticlesResponse> {
+    const isOwner = Boolean(currentUserId && currentUserId === userId);
+    const whereCond = isOwner
+      ? eq(articles.appUserId, userId)
+      : and(
+          eq(articles.appUserId, userId),
+          eq(articles.status, 'published'),
+          eq(articles.moderationStatus, 'approved'),
+        );
+
     const rows = await this.db
       .select({
         id: articles.id,
@@ -494,7 +521,7 @@ export class ArticlesService {
          createdAt: articles.createdAt,
        })
        .from(articles)
-       .where(eq(articles.appUserId, userId))
+       .where(whereCond)
        .orderBy(desc(articles.isPinned), desc(articles.pinnedAt), desc(articles.createdAt));
 
     if (rows.length === 0) {
@@ -548,6 +575,7 @@ export class ArticlesService {
              and(
                sql`(${articles.title} ILIKE ${keyword} OR ${articles.content} ILIKE ${keyword})`,
                eq(articles.status, 'published'),
+               eq(articles.moderationStatus, 'approved'),
              ),
            )
           .orderBy(desc(articles.createdAt))
@@ -566,12 +594,13 @@ export class ArticlesService {
        repostCount: posts.repostCount,
          isPinned: posts.isPinned,
          isFeatured: posts.isFeatured,
+         moderationStatus: posts.moderationStatus,
          author: posts.author,
          appUserId: posts.appUserId,
          createdAt: posts.createdAt,
        })
        .from(posts)
-       .where(ilike(posts.content, keyword))
+       .where(and(ilike(posts.content, keyword), eq(posts.moderationStatus, 'approved')))
           .orderBy(desc(posts.createdAt))
           .limit(safePageSize)
           .offset(offset)
@@ -957,6 +986,8 @@ export class ArticlesService {
     if (!isAdmin && existing[0].appUserId !== userId) {
       throw new ForbiddenException('无权删除他人的文章');
     }
+
+    await this.hashtagsService.syncContentHashtags('article', id, '');
 
     await this.db.delete(articles).where(eq(articles.id, id));
   }

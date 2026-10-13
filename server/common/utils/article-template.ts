@@ -267,8 +267,9 @@ ${chartScriptTag}
 </html>`;
 }
 
-export function buildNotFoundHtml(siteName: string): string {
+export function buildNotFoundHtml(siteName: string, assetBasePath = ''): string {
   const safeSite = escapeHtml(siteName);
+  const safeBase = escapeHtml(assetBasePath);
   return `<!DOCTYPE html>
 <html lang="zh">
 <head>
@@ -276,9 +277,9 @@ export function buildNotFoundHtml(siteName: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#1d9bf0">
   <meta name="mobile-web-app-capable" content="yes">
-  <link rel="icon" href="/app/app_17ea4bnn0xw/favicon.png">
-  <link rel="apple-touch-icon" href="/app/app_17ea4bnn0xw/icon-192.png">
-  <link rel="manifest" href="/app/app_17ea4bnn0xw/manifest.json">
+  <link rel="icon" href="${safeBase}/favicon.png">
+  <link rel="apple-touch-icon" href="${safeBase}/icon-192.png">
+  <link rel="manifest" href="${safeBase}/manifest.json">
   <title>文章不存在 — ${safeSite}</title>
   <meta property="og:title" content="文章不存在">
   <meta property="og:description" content="该文章可能已被删除或尚未发布。">

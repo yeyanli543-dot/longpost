@@ -346,7 +346,7 @@ export class AdminController {
   ): Promise<{ success: true }> {
     validateUUIDParam(id, 'postId');
     await this.ensureAdmin(req);
-    const { userId } = req.user || {};
+    const userId = req.user?.id || req.user?.userId;
     await this.adminService.reviewPost(id, body.status, body.reason, userId);
     return { success: true };
   }
@@ -360,7 +360,7 @@ export class AdminController {
   ): Promise<{ success: true }> {
     validateUUIDParam(id, 'articleId');
     await this.ensureAdmin(req);
-    const { userId } = req.user || {};
+    const userId = req.user?.id || req.user?.userId;
     await this.adminService.reviewArticle(id, body.status, body.reason, userId);
     return { success: true };
   }

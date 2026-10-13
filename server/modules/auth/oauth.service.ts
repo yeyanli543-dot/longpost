@@ -2,6 +2,7 @@ import {
   Injectable,
   NotImplementedException,
   BadRequestException,
+  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
@@ -154,6 +155,8 @@ export class OAuthService {
           provider: appUsers.provider,
           role: appUsers.role,
           bio: appUsers.bio,
+          isActive: appUsers.isActive,
+          isBanned: appUsers.isBanned,
           createdAt: appUsers.createdAt,
         })
         .from(appUsers)
@@ -164,6 +167,9 @@ export class OAuthService {
       let user: AuthUser;
 
       if (existing.length > 0) {
+        if (!existing[0].isActive || existing[0].isBanned) {
+          throw new ForbiddenException('账号已被封禁或停用');
+        }
         const promoted = await this.ensureOwnerRole(existing[0].id, email);
         user = {
           id: existing[0].id,
@@ -230,7 +236,7 @@ export class OAuthService {
 
       return { user, isNewUser, redirectTo };
     } catch (error) {
-      if (error instanceof BadRequestException) {
+      if (error instanceof BadRequestException || error instanceof ForbiddenException) {
         throw error;
       }
       this.logger.error('Google OAuth callback error', error);
@@ -290,6 +296,8 @@ export class OAuthService {
         provider: appUsers.provider,
         role: appUsers.role,
         bio: appUsers.bio,
+        isActive: appUsers.isActive,
+        isBanned: appUsers.isBanned,
         createdAt: appUsers.createdAt,
       })
       .from(appUsers)
@@ -297,6 +305,9 @@ export class OAuthService {
       .limit(1);
 
     if (existing.length > 0) {
+      if (!existing[0].isActive || existing[0].isBanned) {
+        throw new ForbiddenException('账号已被封禁或停用');
+      }
       const promoted = await this.ensureOwnerRole(existing[0].id, email);
       return {
         id: existing[0].id,

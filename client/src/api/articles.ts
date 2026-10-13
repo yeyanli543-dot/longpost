@@ -29,10 +29,20 @@ export async function getArticleBySlug(slug: string): Promise<ArticleDetail> {
   }
 }
 
-export async function getArticles(authorId?: string): Promise<{ items: ArticleSummary[] }> {
+export async function getArticles(
+  authorIdOrParams?: string | { authorId?: string; page?: number; pageSize?: number },
+): Promise<{ items: ArticleSummary[] }> {
   try {
     const params = new URLSearchParams();
-    if (authorId) params.set('authorId', authorId);
+    if (typeof authorIdOrParams === 'string') {
+      if (authorIdOrParams) params.set('authorId', authorIdOrParams);
+    } else if (authorIdOrParams && typeof authorIdOrParams === 'object') {
+      if (authorIdOrParams.authorId) params.set('authorId', authorIdOrParams.authorId);
+      if (authorIdOrParams.page !== undefined) params.set('page', String(authorIdOrParams.page));
+      if (authorIdOrParams.pageSize !== undefined) {
+        params.set('pageSize', String(authorIdOrParams.pageSize));
+      }
+    }
     const response = await axiosForBackend.get(
       `/api/articles${params.toString() ? `?${params.toString()}` : ''}`,
     );

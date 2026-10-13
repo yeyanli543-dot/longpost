@@ -25,6 +25,18 @@ export type { PostgresJsDatabase };
           connect_timeout: 10,
         });
 
+        // 自动确保标准 PostgreSQL 实例中存在自定义复合类型（兼容非平台自建数据库）
+        client`
+          DO $$ BEGIN
+            CREATE TYPE user_profile AS (user_id text);
+          EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+          DO $$ BEGIN
+            CREATE TYPE file_attachment AS (bucket_id text, file_path text);
+          EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+        `.simple().catch(() => {
+          // 忽略只读副本或连接尚未就绪时的预检异常
+        });
+
         logger.log('已建立原生 Drizzle ORM (PostgreSQL) 数据库连接');
         return drizzle(client, { schema });
       },

@@ -336,12 +336,16 @@ export const reports = pgTable("reports", {
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
   createdBy: userProfile("_created_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Updater (auto-filled, do not modify)
   updatedBy: userProfile("_updated_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
 }, (table) => [
   index("idx_reports_status").on(table.status, table.createdAt),
   index("idx_reports_content").on(table.contentType, table.contentId),
@@ -366,12 +370,16 @@ export const commentLikes = pgTable("comment_likes", {
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
   createdBy: userProfile("_created_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Updater (auto-filled, do not modify)
   updatedBy: userProfile("_updated_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
 }, (table) => [
   uniqueIndex("idx_comment_likes_user_comment").on(table.userId, table.commentId),
   index("idx_comment_likes_comment").on(table.commentId),
@@ -396,12 +404,16 @@ export const contentHashtags = pgTable("content_hashtags", {
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
   createdBy: userProfile("_created_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Updater (auto-filled, do not modify)
   updatedBy: userProfile("_updated_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
 }, (table) => [
   uniqueIndex("idx_content_hashtags_unique").on(table.hashtagId, table.contentType, table.contentId),
   index("idx_content_hashtags_content").on(table.contentType, table.contentId),
@@ -421,12 +433,16 @@ export const hashtags = pgTable("hashtags", {
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
   createdBy: userProfile("_created_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Updater (auto-filled, do not modify)
   updatedBy: userProfile("_updated_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
 }, (table) => [
   uniqueIndex("hashtags_tag_key").on(table.tag),
   index("idx_hashtags_tag").on(table.tag),
@@ -450,12 +466,16 @@ export const notifications = pgTable("notifications", {
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
   createdBy: userProfile("_created_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Updater (auto-filled, do not modify)
   updatedBy: userProfile("_updated_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
 }, (table) => [
   index("idx_notifications_user_read").on(table.userId, table.isRead, table.createdAt),
   index("idx_notifications_user_created").on(table.userId, table.createdAt),
@@ -484,12 +504,16 @@ export const follows = pgTable("follows", {
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
   createdBy: userProfile("_created_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Updater (auto-filled, do not modify)
   updatedBy: userProfile("_updated_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
 }, (table) => [
   uniqueIndex("idx_follows_follower_following").on(table.followerId, table.followingId),
   index("idx_follows_following").on(table.followingId),
@@ -519,12 +543,16 @@ export const comments = pgTable("comments", {
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
   createdBy: userProfile("_created_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Updater (auto-filled, do not modify)
   updatedBy: userProfile("_updated_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
 }, (table) => [
   index("idx_comments_content").on(table.contentType, table.contentId, table.createdAt),
   index("idx_comments_user").on(table.userId),
@@ -552,12 +580,16 @@ export const reposts = pgTable("reposts", {
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
   createdBy: userProfile("_created_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Updater (auto-filled, do not modify)
   updatedBy: userProfile("_updated_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
 }, (table) => [
   uniqueIndex("idx_reposts_user_content").on(table.userId, table.contentType, table.contentId),
   index("idx_reposts_content").on(table.contentType, table.contentId),
@@ -576,12 +608,16 @@ export const bookmarks = pgTable("bookmarks", {
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
   createdBy: userProfile("_created_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Updater (auto-filled, do not modify)
   updatedBy: userProfile("_updated_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
 }, (table) => [
   uniqueIndex("idx_bookmarks_user_article").on(table.userId, table.articleId),
   index("idx_bookmarks_article").on(table.articleId),
@@ -606,12 +642,16 @@ export const likes = pgTable("likes", {
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
   createdBy: userProfile("_created_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Updater (auto-filled, do not modify)
   updatedBy: userProfile("_updated_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
 }, (table) => [
   uniqueIndex("idx_likes_user_content").on(table.userId, table.contentType, table.contentId),
   index("idx_likes_content").on(table.contentType, table.contentId),
@@ -636,12 +676,16 @@ export const siteSettings = pgTable("site_settings", {
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
   createdBy: userProfile("_created_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Updater (auto-filled, do not modify)
   updatedBy: userProfile("_updated_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
 });
 
 export const appUsers = pgTable("app_users", {
@@ -669,12 +713,16 @@ export const appUsers = pgTable("app_users", {
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
   createdBy: userProfile("_created_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Updater (auto-filled, do not modify)
   updatedBy: userProfile("_updated_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
 }, (table) => [
   uniqueIndex("app_users_email_key").on(table.email),
   uniqueIndex("idx_app_users_email").on(table.email),
@@ -695,12 +743,16 @@ export const articleAttachments = pgTable("article_attachments", {
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
   createdBy: userProfile("_created_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Updater (auto-filled, do not modify)
   updatedBy: userProfile("_updated_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
 }, (table) => [
   index("idx_article_attachments_article_id").on(table.articleId),
   index("idx_article_attachments_app_user_id").on(table.appUserId),
@@ -726,12 +778,16 @@ export const articleImages = pgTable("article_images", {
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
   createdBy: userProfile("_created_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Updater (auto-filled, do not modify)
   updatedBy: userProfile("_updated_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
 }, (table) => [
   index("idx_article_images_article_id").on(table.articleId),
   index("idx_article_images_app_user_id").on(table.appUserId),
@@ -766,12 +822,16 @@ export const posts = pgTable("posts", {
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
   createdBy: userProfile("_created_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Updater (auto-filled, do not modify)
   updatedBy: userProfile("_updated_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
 }, (table) => [
   index("idx_posts_created_at").on(table.createdAt),
   index("idx_posts_moderation_created").on(table.moderationStatus, table.createdAt),
@@ -815,12 +875,16 @@ export const articles = pgTable("articles", {
   createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
   createdBy: userProfile("_created_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Updater (auto-filled, do not modify)
   updatedBy: userProfile("_updated_by").default(sql`CASE
-    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL`),
+    WHEN (current_setting('app.user_id'::text, true) = ''::text) THEN NULL
+    ELSE NULL
+  END`),
 }, (table) => [
   index("idx_articles_created_at").on(table.createdAt),
   index("idx_articles_status_created").on(table.status, table.moderationStatus, table.createdAt),

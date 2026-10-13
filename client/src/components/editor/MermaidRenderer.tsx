@@ -8,6 +8,13 @@ interface MermaidRendererProps {
 
 let mermaidInstance: any = null;
 
+function sanitizeSvgHtml(rawSvg: string): string {
+  return rawSvg
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+    .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    .replace(/on[a-z]+\s*=/gi, 'data-sanitized-attr=');
+}
+
 export const MermaidRenderer: React.FC<MermaidRendererProps> = ({ chart, className = '' }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [svgHtml, setSvgHtml] = useState<string>('');
@@ -28,7 +35,7 @@ export const MermaidRenderer: React.FC<MermaidRendererProps> = ({ chart, classNa
           mermaidInstance.initialize({
             startOnLoad: false,
             theme: document.documentElement.classList.contains('dark') || document.documentElement.classList.contains('dark-mode') ? 'dark' : 'neutral',
-            securityLevel: 'loose',
+            securityLevel: 'strict',
             fontFamily: 'inherit',
           });
         }
@@ -36,7 +43,7 @@ export const MermaidRenderer: React.FC<MermaidRendererProps> = ({ chart, classNa
         const id = `mermaid-${Math.random().toString(36).slice(2, 10)}`;
         const { svg } = await mermaidInstance.render(id, chart);
         if (isMounted) {
-          setSvgHtml(svg);
+          setSvgHtml(sanitizeSvgHtml(svg));
         }
       } catch (err: any) {
         if (isMounted) {
@@ -73,6 +80,10 @@ export const MermaidRenderer: React.FC<MermaidRendererProps> = ({ chart, classNa
     );
   }
 
+  const safeSvgHtml = svgHtml
+    ? sanitizeSvgHtml(svgHtml)
+    : '<div class="text-xs text-muted-foreground animate-pulse">正在渲染流程图...</div>';
+
   return (
     <div className={`group relative my-6 p-4 rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm overflow-x-auto ${className}`}>
       <button
@@ -85,8 +96,9 @@ export const MermaidRenderer: React.FC<MermaidRendererProps> = ({ chart, classNa
       <div
         ref={containerRef}
         className="flex items-center justify-center min-h-[80px]"
-        dangerouslySetInnerHTML={{ __html: svgHtml || '<div class="text-xs text-muted-foreground animate-pulse">正在渲染流程图...</div>' }}
+        dangerouslySetInnerHTML={{ __html: safeSvgHtml }}
       />
     </div>
   );
 };
+

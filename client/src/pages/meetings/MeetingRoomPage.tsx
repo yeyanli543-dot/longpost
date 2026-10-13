@@ -83,6 +83,7 @@ const MeetingRoomPage = () => {
     sendMediaState,
     sendChatMessage,
     setLocalStream,
+    replaceVideoTrack,
     localStreamRef,
     screenStreamRef,
   } = useMeetingRoom({
@@ -196,6 +197,10 @@ const MeetingRoomPage = () => {
     if (screenVideoRef.current) {
       screenVideoRef.current.srcObject = null;
     }
+    const cameraTrack = cameraOn
+      ? (localStreamRef.current?.getVideoTracks()[0] ?? null)
+      : null;
+    void replaceVideoTrack(cameraTrack);
     setScreenOn(false);
     if (roomParticipants.some((p) => p.userId === user?.id && p.screenSharing)) {
       sendMediaState({ screenSharing: false });
@@ -297,7 +302,9 @@ const MeetingRoomPage = () => {
         if (screenVideoRef.current) {
           screenVideoRef.current.srcObject = stream;
         }
-        stream.getVideoTracks()[0]?.addEventListener('ended', () => {
+        const screenTrack = stream.getVideoTracks()[0] ?? null;
+        await replaceVideoTrack(screenTrack);
+        screenTrack?.addEventListener('ended', () => {
           stopScreenShare();
         });
         setScreenOn(true);
@@ -490,7 +497,8 @@ const MeetingRoomPage = () => {
                 const initial = p.userName
                   ? p.userName.charAt(0).toUpperCase()
                   : '?';
-                const hasVideo = remoteStreams.has(p.userId) && p.videoEnabled;
+                const peerStream = remoteStreams.get(p.userId) ?? null;
+                const hasVideo = Boolean(peerStream && p.videoEnabled);
                 return (
                   <div
                     key={p.userId}
@@ -504,19 +512,32 @@ const MeetingRoomPage = () => {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#2f3336] flex items-center justify-center overflow-hidden">
-                        {p.userAvatarUrl ? (
-                          <Image
-                            src={p.userAvatarUrl}
-                            alt={p.userName}
-                            className="w-full h-full object-cover"
+                      <>
+                        {peerStream && (
+                          <audio
+                            autoPlay
+                            playsInline
+                            ref={(el) => {
+                              if (el && el.srcObject !== peerStream) {
+                                el.srcObject = peerStream;
+                              }
+                            }}
                           />
-                        ) : (
-                          <span className="text-2xl md:text-3xl font-bold text-gray-300">
-                            {initial}
-                          </span>
                         )}
-                      </div>
+                        <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[#2f3336] flex items-center justify-center overflow-hidden">
+                          {p.userAvatarUrl ? (
+                            <Image
+                              src={p.userAvatarUrl}
+                              alt={p.userName}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-2xl md:text-3xl font-bold text-gray-300">
+                              {initial}
+                            </span>
+                          )}
+                        </div>
+                      </>
                     )}
                     <p className="absolute bottom-2 left-3 text-sm font-medium text-white drop-shadow truncate max-w-[80%]">
                       {p.userName}

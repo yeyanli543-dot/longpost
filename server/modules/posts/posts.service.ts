@@ -325,7 +325,7 @@ export class PostsService {
     };
 
     const postConds = buildConditions(posts);
-    const articleConds = buildConditions(articles);
+    const articleConds = [...buildConditions(articles), eq(articles.status, 'published')];
 
     const postOrderBy = view === 'hot'
       ? [desc(sql`${posts.likeCount} + ${posts.commentCount} + ${posts.repostCount}`)]
@@ -374,6 +374,20 @@ export class PostsService {
     );
 
     const merged = [...postItems, ...articleItems].sort((a, b) => {
+      if (view === 'hot') {
+        const aScore =
+          (a.data.likeCount ?? 0) * 3 +
+          (a.data.commentCount ?? 0) * 5 +
+          (a.data.repostCount ?? 0) * 4 +
+          ('bookmarkCount' in a.data ? (a.data.bookmarkCount ?? 0) * 2 : 0);
+        const bScore =
+          (b.data.likeCount ?? 0) * 3 +
+          (b.data.commentCount ?? 0) * 5 +
+          (b.data.repostCount ?? 0) * 4 +
+          ('bookmarkCount' in b.data ? (b.data.bookmarkCount ?? 0) * 2 : 0);
+        if (bScore !== aScore) return bScore - aScore;
+        return b.createdAt.getTime() - a.createdAt.getTime();
+      }
       if (a.isPinned && !b.isPinned) return -1;
       if (!a.isPinned && b.isPinned) return 1;
       if (a.isPinned && b.isPinned) {

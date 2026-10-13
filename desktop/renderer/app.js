@@ -2678,7 +2678,7 @@
       }
       const settings = (await LP.getSettings()) || {};
       const backupData = {
-        version: '2.7.3',
+        version: '2.7.4',
         exportedAt: new Date().toISOString(),
         appName: 'LongPost',
         stats: {
@@ -4411,13 +4411,19 @@
 
   async function handleGoogleLogin() {
     const emailInput = $('authGoogleEmail');
+    const pinInput = $('authGooglePin');
     const nameInput = $('authGoogleName');
-    const rawEmail = (emailInput ? emailInput.value : '').trim();
+    const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
+    const pin = (pinInput ? pinInput.value : '').trim();
     const rawName = (nameInput ? nameInput.value : '').trim();
-    const email = (rawEmail || 'creator@gmail.com').toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       toast('请输入有效的 Google 邮箱地址', 'err');
       if (emailInput) emailInput.focus();
+      return;
+    }
+    if (!pin || pin.length < 4) {
+      toast('请输入至少 4 位空间安全口令（用于加密保护该 Google 独立空间）', 'err');
+      if (pinInput) pinInput.focus();
       return;
     }
     const name = rawName || email.split('@')[0];
@@ -4425,11 +4431,12 @@
       provider: 'google',
       name: name,
       email: email,
-      spaceKey: 'google:' + email,
+      spaceKey: 'google:' + email + ':' + pin,
       loginAt: new Date().toISOString(),
     };
+    if (pinInput) pinInput.value = '';
     closeSheet('authModal');
-    await applyAuthSpaceSwitch(authUser, '🌐 已切入 Google 独立空间「' + name + '」');
+    await applyAuthSpaceSwitch(authUser, '🌐 已解锁 Google 加密独立空间「' + name + '」');
   }
 
   async function handleAuthLogout() {

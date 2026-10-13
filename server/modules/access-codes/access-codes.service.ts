@@ -319,7 +319,11 @@ export class AccessCodesService {
     return this.mapAccessCode(updated);
   }
 
-  async loginWithCode(code: string): Promise<AuthResponse> {
+  async loginWithCode(
+    code: string,
+    ipAddress?: string | null,
+    userAgent?: string | null,
+  ): Promise<AuthResponse> {
     const rows = await this.db
       .select()
       .from(accessCodes)
@@ -331,6 +335,13 @@ export class AccessCodesService {
     }
 
     const accessCode = rows[0];
+
+    if (
+      accessCode.lockedUntil &&
+      new Date(accessCode.lockedUntil) > new Date()
+    ) {
+      throw new ForbiddenException('通行码尝试次数过多，请稍后再试');
+    }
 
     if (accessCode.status !== 'active') {
       throw new BadRequestException('通行码无效或已失效');
@@ -357,11 +368,19 @@ export class AccessCodesService {
 
     if (accessCode.appUserId) {
       const userRows = await this.db
-        .select({ id: appUsers.id, email: appUsers.email })
+        .select({
+          id: appUsers.id,
+          email: appUsers.email,
+          isActive: appUsers.isActive,
+          isBanned: appUsers.isBanned,
+        })
         .from(appUsers)
         .where(eq(appUsers.id, accessCode.appUserId))
         .limit(1);
       if (userRows.length > 0) {
+        if (!userRows[0].isActive || userRows[0].isBanned) {
+          throw new ForbiddenException('账号已被封禁或停用');
+        }
         appUserId = userRows[0].id;
         userEmail = userRows[0].email;
       }
@@ -401,6 +420,32 @@ export class AccessCodesService {
         .where(eq(accessCodes.id, accessCode.id));
     }
 
+    const userRows = await this.db
+      .select({
+        id: appUsers.id,
+        email: appUsers.email,
+        nickname: appUsers.nickname,
+        avatarUrl: appUsers.avatarUrl,
+        provider: appUsers.provider,
+        role: appUsers.role,
+        bio: appUsers.bio,
+        isActive: appUsers.isActive,
+        isBanned: appUsers.isBanned,
+        createdAt: appUsers.createdAt,
+      })
+      .from(appUsers)
+      .where(eq(appUsers.id, appUserId))
+      .limit(1);
+
+    if (userRows.length === 0) {
+      throw new BadRequestException('用户不存在');
+    }
+
+    const userRow = userRows[0];
+    if (!userRow.isActive || userRow.isBanned) {
+      throw new ForbiddenException('账号已被封禁或停用');
+    }
+
     const newUseCount = accessCode.useCount + 1;
     const isExhausted = accessCode.maxUses !== null && newUseCount >= accessCode.maxUses;
 
@@ -417,26 +462,6 @@ export class AccessCodesService {
       .set(updateData)
       .where(eq(accessCodes.id, accessCode.id));
 
-    const userRows = await this.db
-      .select({
-        id: appUsers.id,
-        email: appUsers.email,
-        nickname: appUsers.nickname,
-        avatarUrl: appUsers.avatarUrl,
-        provider: appUsers.provider,
-        role: appUsers.role,
-        bio: appUsers.bio,
-        createdAt: appUsers.createdAt,
-      })
-      .from(appUsers)
-      .where(eq(appUsers.id, appUserId))
-      .limit(1);
-
-    if (userRows.length === 0) {
-      throw new BadRequestException('用户不存在');
-    }
-
-    const userRow = userRows[0];
     const user: AuthUser = {
       id: userRow.id,
       email: userRow.email,
@@ -451,8 +476,8 @@ export class AccessCodesService {
     const token = this.authService.signToken(user.id, user.email, user.nickname, user.role);
     await this.db.insert(accessCodeLogs).values({
       accessCodeId: accessCode.id,
-      ipAddress: null,
-      userAgent: null,
+      ipAddress: ipAddress ?? null,
+      userAgent: userAgent ?? null,
       success: true,
       errorReason: null,
       loggedInUserId: appUserId,
@@ -489,15 +514,45 @@ export class AccessCodesService {
     return { items, total, page, pageSize };
   }
 
-  async setPassword(userId: string, password: string): Promise<void> {
-    const passwordHash = await bcrypt.hash(password, 10);
-    const updated = await this.db
-      .update(appUsers)
-      .set({ passwordHash })
+  async setPassword(
+    userId: string,
+    password: string,
+    oldPassword?: string,
+  ): Promise<void> {
+    const rows = await this.db
+      .select({
+        id: appUsers.id,
+        passwordHash: appUsers.passwordHash,
+        provider: appUsers.provider,
+      })
+      .from(appUsers)
       .where(eq(appUsers.id, userId))
-      .returning({ id: appUsers.id });
-    if (updated.length === 0) {
+      .limit(1);
+
+    if (rows.length === 0) {
       throw new NotFoundException('用户不存在');
     }
+
+    const user = rows[0];
+    if (user.passwordHash && user.provider !== 'access_code') {
+      if (!oldPassword) {
+        throw new BadRequestException('需要提供正确的原密码');
+      }
+      const valid = await bcrypt.compare(oldPassword, user.passwordHash);
+      if (!valid) {
+        throw new BadRequestException('需要提供正确的原密码');
+      }
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const patch: Partial<typeof appUsers.$inferInsert> = { passwordHash };
+    if (user.provider === 'access_code') {
+      patch.provider = 'email';
+    }
+
+    await this.db
+      .update(appUsers)
+      .set(patch)
+      .where(eq(appUsers.id, userId));
   }
 }

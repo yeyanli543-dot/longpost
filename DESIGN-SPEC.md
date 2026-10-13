@@ -1,7 +1,7 @@
 # 📐 LongPost 简洁版与专业版设计分工与能力集成白皮书
 
 > **LongPost Workspace Dual-System Specification**  
-> 版本：v2.7.3  
+> 版本：v2.7.4  
 > 适用端：桌面客户端 (Electron) · 移动客户端 (Android Capacitor) · 网页端 (Web)
 
 ---
@@ -115,14 +115,14 @@ LongPost 坚持**100% 本地离线优先（Local-First）**架构。无论是极
 所有外部库均严格存放在本地 `desktop/renderer/vendor/` 目录下，遵循宽松开源许可协议，严格做到零外部 CDN、零网络请求：
 
 1. **图表与可视化**：
-   - `ECharts 5`：提供柱状图、折线图、面积图、饼图与力导向关系网络渲染，支持悬浮探针与数据过滤。
+   - `ECharts 6`：提供柱状图、折线图、面积图、饼图与力导向关系网络渲染，支持悬浮探针与数据过滤。
 2. **文本与检索**：
    - `FlexSearch Compact`：高性能内存倒排索引，支持毫秒级中英双语全文搜索与高亮；
-   - `Markdown-it 14` + 插件生态：任务列表（Task Lists）、脚注（Footnote）、定义列表（Deflist）、Emoji；
+   - `Markdown-it 15` + 插件生态：任务列表（Task Lists）、脚注（Footnote）、定义列表（Deflist）、Emoji；
    - `PapaParse 5`：高效纯本地 CSV 数据解析器，支持表格数据一键导入图表。
 3. **排版与渲染**：
-   - `KaTeX 0.16`：科研级 LaTeX 数学公式渲染器，公式即敲即显；
-   - `Prism.js 1.29`：覆盖 Bash, C, C++, C#, Diff, Docker, Go, Java, JSON, Python, Rust, SQL, TS, YAML 等 20+ 语言的高性能语法着色；
+   - `KaTeX 0.19`：科研级 LaTeX 数学公式渲染器，公式即敲即显；
+   - `Prism.js 1.30`：覆盖 Bash, C, C++, C#, Diff, Docker, Go, Java, JSON, Python, Rust, SQL, TS, YAML 等 20+ 语言的高性能语法着色；
    - `html-to-image 1.11`：长图导出引擎，解开视口限制，按正文全高渲染 2 倍高清抗锯齿长图。
 4. **移动与交互**：
    - `Hammer.js` / `swiped-events` / `pulltorefreshjs`：移动端多点触控、滑动手势与下拉刷新引擎；
@@ -134,8 +134,8 @@ LongPost 坚持**100% 本地离线优先（Local-First）**架构。无论是极
 
 为确保双模式在全平台（桌面 Electron + 移动 Android + 网页 Web）上的极端稳定性，项目建立了自动化自检防线：
 
-- **桌面端基线自检（[`smoke-test.js`](desktop/scripts/smoke-test.js)）**：**84/84 项全绿**，覆盖长图全高渲染、标题防挤压（P2）、抽屉让位（P1）、图表销毁机制等；
-- **移动端接线自检（[`verify-mobile.js`](desktop/scripts/verify-mobile.js)）**：**108/108 项全绿**，覆盖 182 个 DOM ID 的成对取用、10 项跨端门面方法对齐、触控热区 $\ge 44\text{px}$ 无障碍达标等；
+- **桌面端基线自检（[`smoke-test.js`](desktop/scripts/smoke-test.js)）**：**87/87 项全绿**，覆盖长图全高渲染、标题防挤压（P2）、抽屉让位（P1）、图表销毁机制、多空间加密隔离等；
+- **移动端接线自检（[`verify-mobile.js`](desktop/scripts/verify-mobile.js)）**：**108/108 项全绿**，覆盖 DOM ID 成对取用、跨端门面方法对齐、触控热区 $\ge 44\text{px}$ 无障碍达标等；
 - **无障碍色对比度规范**：所有文字层级均达到 WCAG 2.1 AA 规范（正文与背景对比度 $\ge 4.5:1$），移动端底栏避免过度半透明导致的文字识别下降。
 
 ---
