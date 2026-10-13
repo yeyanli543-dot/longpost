@@ -50,6 +50,12 @@ jobs:
         with:
           node-version: 22
 
+      - name: 构建现代前端应用
+        working-directory: .
+        run: |
+          npm install --no-audit --no-fund
+          npm run build:client
+
       # desktop/package-lock.json 不进仓库（见 .gitignore），所以这里用 npm install；
       # 可复现性由 desktop/package.json 里钉死的精确版本保证。
       # 这一步会顺带跑 prepare，自动生成 renderer/vendor/echarts.min.js 和 resources/icon.png ——

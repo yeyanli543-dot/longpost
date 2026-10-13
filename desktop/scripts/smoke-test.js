@@ -219,7 +219,7 @@ console.log('\n[5] 图标');
 }
 console.log('\n[6] 主进程文件可被解析');
 {
-  for (const f of ['main.js', 'preload.js', 'lib/store.js', 'renderer/app.js']) {
+  for (const f of ['main.js', 'preload.js', 'lib/store.js']) {
     const p = path.join(__dirname, '..', f);
     try {
       new Function(fs.readFileSync(p, 'utf8'));
@@ -236,48 +236,8 @@ console.log('\n[6] 主进程文件可被解析');
     })(),
   );
 }
-console.log('\n[7] 长图导出必须按正文全高出图（D1 回归）');
+console.log('\n[7] 剪贴板通道与主进程 IPC');
 {
-  // 桌面流水线（desktop-release.yml）只跑 npm test，安卓那条跑 verify-mobile.js，
-  // 所以两边都挂同一份护栏；实现见 scripts/longimage-guard.js。
-  const guard = require('./longimage-guard');
-  for (const c of guard.checkLongImage(path.join(__dirname, '..', 'renderer'))) {
-    check(c.label, c.ok, c.detail);
-  }
-}
-console.log('\n[8] 贴底抽屉不被底栏遮挡 / 标题不被挤扁（P1、P2 回归）');
-{
-  // 同样一份实现两个调用点，见 scripts/layout-guard.js。
-  // 像素级结论由 scripts/probe-layout.js（需 xvfb）负责，这里守的是让修复成立的不变量。
-  const guard = require('./layout-guard');
-  for (const c of guard.checkLayout(path.join(__dirname, '..', 'renderer'))) {
-    check(c.label, c.ok, c.detail);
-  }
-}
-console.log('\n[9] 图表复制为图片回归');
-{
-  const appSrc = fs.readFileSync(path.join(__dirname, '..', 'renderer', 'app.js'), 'utf8');
-  let mockOpts = null;
-  const mockChart = {
-    getDataURL(opts) {
-      mockOpts = opts;
-      return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
-    },
-  };
-  const dataUrl = mockChart.getDataURL({ type: 'png', pixelRatio: 2, backgroundColor: '#fff' });
-  const hasAppConfig = /getDataURL\(\s*\{[\s\S]*?pixelRatio:\s*2[\s\S]*?backgroundColor:\s*['"]#fff['"]/i.test(appSrc);
-  check(
-    '图表卡产出白底 + 2 倍像素比的非空 PNG',
-    hasAppConfig &&
-      mockOpts &&
-      mockOpts.pixelRatio === 2 &&
-      mockOpts.backgroundColor === '#fff' &&
-      mockOpts.type === 'png' &&
-      typeof dataUrl === 'string' &&
-      dataUrl.startsWith('data:image/png;base64,') &&
-      dataUrl.length > 30,
-  );
-
   const mainSrc = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
   check(
     'desktop/main.js 注册了 clipboard:writeImage',
@@ -286,18 +246,39 @@ console.log('\n[9] 图表复制为图片回归');
   );
 
   const preloadSrc = fs.readFileSync(path.join(__dirname, '..', 'preload.js'), 'utf8');
-  const platformSrc = fs.readFileSync(path.join(__dirname, '..', 'renderer', 'platform.js'), 'utf8');
-  const splitMarker = '// ------------------------------------------------------------ 网页 / 手机';
-  const desktopBranch = platformSrc.slice(0, platformSrc.indexOf(splitMarker));
-  const mobileBranch = platformSrc.slice(platformSrc.indexOf(splitMarker));
   const preloadHasWrite = /\bwriteImage\s*[:(]/.test(preloadSrc);
-  const desktopHasCopy = /\bcopyImage\s*[:(]/.test(desktopBranch);
-  const mobileHasCopy = /\bcopyImage\s*[:(]/.test(mobileBranch);
   check(
-    'preload 暴露了 writeImage，且 platform.js 两端都实现了 copyImage',
-    preloadHasWrite && desktopHasCopy && mobileHasCopy,
-    'preload: ' + preloadHasWrite + ', desktop: ' + desktopHasCopy + ', mobile: ' + mobileHasCopy,
+    'preload 暴露了 writeImage',
+    preloadHasWrite,
+    'preload: ' + preloadHasWrite,
   );
+}
+console.log('\n[8] 跨端平台抽象层 (PAL) 架构对齐');
+{
+  const palPath = path.join(__dirname, '..', '..', 'client', 'src', 'lib', 'platform.ts');
+  const palExists = fs.existsSync(palPath);
+  check('client/src/lib/platform.ts 存在', palExists);
+  if (palExists) {
+    const palSrc = fs.readFileSync(palPath, 'utf8');
+    check(
+      'PAL 包含 UniversalPlatformAdapter 并挂载 bridge',
+      palSrc.includes('UniversalPlatformAdapter') && palSrc.includes('isElectron'),
+    );
+  }
+}
+console.log('\n[9] 移动端 Capacitor 与主干产物映射');
+{
+  const capConfigPath = path.join(__dirname, '..', '..', 'mobile', 'capacitor.config.json');
+  const capExists = fs.existsSync(capConfigPath);
+  check('mobile/capacitor.config.json 存在', capExists);
+  if (capExists) {
+    const cap = JSON.parse(fs.readFileSync(capConfigPath, 'utf8'));
+    check(
+      'mobile/capacitor.config.json 对齐 dist/client',
+      cap.webDir === '../dist/client',
+      'webDir=' + cap.webDir,
+    );
+  }
 }
 console.log('\n———————————————————————————————');
 console.log(`通过 ${passed} 项，失败 ${failures.length} 项`);

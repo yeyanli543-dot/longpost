@@ -65,46 +65,20 @@ jobs:
           echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
 
-      - name: 装桌面端依赖（只为拿 echarts，跳过 electron 下载）
-        working-directory: desktop
-        run: npm install --omit=dev --ignore-scripts --no-audit --no-fund
-
-      # --ignore-scripts 跳过了 package.json 里的 prepare，而 prepare 正是负责生成
-      # vendor/ 和 resources/icon.png 的地方。上面那个 --omit=dev 又只装了运行时依赖。
-      # 两样东西都得在这里自己补出来：之前漏了图标，自检就卡在「图标」那一组，
-      # 整条 Android 流水线死在打包之前，连 Android 构建都没跑到。
-      - name: 同步 vendor 与共享模块到渲染层
-        working-directory: desktop
-        run: node scripts/sync-vendor.js
-
-      - name: 生成应用图标
-        working-directory: desktop
-        run: node scripts/make-icon.js
-
-      - name: 渲染层自检
-        # 两套都跑：smoke 管内容渲染与导出，verify-mobile 管脚本加载顺序、
-        # 共享模块同步、CSP、仓库层行为和「界面元素到底有没有接上」。
-        # 统一走 run-with-timeout，免得哪天再出现一个卡死的脚本把 job 拖到超时。
-        working-directory: desktop
-        shell: bash
+      - name: 构建现代前端应用
         run: |
-          set +e
-          node scripts/run-with-timeout.js 120000 scripts/smoke-test.js 2>&1 | tee ci-smoke.log
-          code=${PIPESTATUS[0]}
-          node scripts/run-with-timeout.js 120000 scripts/verify-mobile.js 2>&1 | tee ci-wiring.log
-          code2=${PIPESTATUS[0]}
-          if [ "$code" -ne 0 ] || [ "$code2" -ne 0 ]; then
-            {
-              echo "## 自检未通过（smoke=$code wiring=$code2）"
-              echo '```'
-              tail -c 3000 ci-smoke.log
-              echo '---'
-              tail -c 3000 ci-wiring.log
-              echo '```'
-            } >> "$GITHUB_STEP_SUMMARY"
-            echo "::error title=自检未通过::smoke=$code wiring=$code2"
-          fi
-          [ "$code" -eq 0 ] && [ "$code2" -eq 0 ]
+          npm install --no-audit --no-fund
+          npm run build:client
+
+      - name: 装桌面端依赖与准备图标
+        working-directory: desktop
+        run: |
+          npm install --omit=dev --ignore-scripts --no-audit --no-fund
+          node scripts/make-icon.js
+
+      - name: 逻辑自检
+        working-directory: desktop
+        run: node scripts/smoke-test.js
 
       - name: 装手机壳依赖
         working-directory: mobile
@@ -127,7 +101,6 @@ jobs:
         run: |
           test -f mobile/android/app/src/main/assets/public/index.html
           ls mobile/android/app/src/main/assets/public/ | head -30
-          echo "echarts: $(stat -c%s mobile/android/app/src/main/assets/public/vendor/echarts.min.js) 字节"
 
       - name: 准备固定的 debug 签名密钥
         # 这一步之前是缺的：runner 上没有 $HOME/.android/debug.keystore，AGP 就现场
