@@ -87,7 +87,7 @@ html, body, #root {
 }
 
 html {
-  overscroll-behavior-y: none;
+  overscroll-behavior-y: contain;
 }
 
 body {
@@ -95,7 +95,11 @@ body {
   padding-bottom: 0;
   min-height: 100vh;
   min-height: 100dvh;
-  overscroll-behavior: none;
+  overscroll-behavior-y: contain;
+}
+
+a, button, input, select, textarea, [role="button"], .cursor-pointer {
+  touch-action: manipulation;
 }
 
 img {

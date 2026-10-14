@@ -27,10 +27,16 @@ const PostCard = ({ post }: PostCardProps) => {
   const navigate = useNavigate();
   const [shareOpen, setShareOpen] = useState(false);
 
+  const handlePostClick = () => {
+    if (post.article) {
+      navigate(post.article.slug ? `/p/${post.article.slug}` : `/article/${post.article.id}`);
+    }
+  };
+
   const handleArticleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (post.article) {
-      navigate(`/article/${post.article.id}`);
+      navigate(post.article.slug ? `/p/${post.article.slug}` : `/article/${post.article.id}`);
     }
   };
 
@@ -40,7 +46,7 @@ const PostCard = ({ post }: PostCardProps) => {
 
   const handleCommentClick = () => {
     if (post.article) {
-      navigate(`/article/${post.article.id}`);
+      navigate(post.article.slug ? `/p/${post.article.slug}` : `/article/${post.article.id}`);
     } else {
       toast.info('帖子评论功能即将上线');
     }
@@ -48,18 +54,21 @@ const PostCard = ({ post }: PostCardProps) => {
 
   return (
     <motion.article
+      onClick={handlePostClick}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.1 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
       whileHover={{ backgroundColor: 'rgba(22, 24, 28, 0.5)' }}
-      className="flex gap-3 px-4 py-3 border-b border-gray-800 cursor-pointer"
+      whileTap={{ scale: 0.99 }}
+      className="flex gap-3 px-4 py-3 border-b border-gray-800 cursor-pointer select-none active:bg-gray-800/40 transition-colors"
       data-ai-section-type="card-list"
     >
       {/* Avatar */}
       <div className="flex-shrink-0">
         <Link
           to={`/user/${post.authorId}`}
+          onClick={(e) => e.stopPropagation()}
           className="block w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-700 flex items-center justify-center hover:opacity-80 transition-opacity"
         >
           <FileText className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
@@ -72,6 +81,7 @@ const PostCard = ({ post }: PostCardProps) => {
         <div className="flex items-baseline gap-1 text-sm">
           <Link
             to={`/user/${post.authorId}`}
+            onClick={(e) => e.stopPropagation()}
             className="font-bold text-gray-100 truncate hover:underline"
           >
             {post.authorName}
@@ -163,7 +173,7 @@ const ArticleCard = ({ article }: ArticleCardProps) => {
   const [shareOpen, setShareOpen] = useState(false);
 
   const handleClick = () => {
-    navigate(`/article/${article.id}`);
+    navigate(article.slug ? `/p/${article.slug}` : `/article/${article.id}`);
   };
 
   const handleShare = () => {
@@ -171,7 +181,7 @@ const ArticleCard = ({ article }: ArticleCardProps) => {
   };
 
   const handleCommentClick = () => {
-    navigate(`/article/${article.id}`);
+    navigate(article.slug ? `/p/${article.slug}` : `/article/${article.id}`);
   };
 
   return (
@@ -182,13 +192,15 @@ const ArticleCard = ({ article }: ArticleCardProps) => {
       viewport={{ once: true, amount: 0.1 }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
       whileHover={{ backgroundColor: 'rgba(22, 24, 28, 0.5)' }}
-      className="flex gap-3 px-4 py-3 border-b border-gray-800 cursor-pointer"
+      whileTap={{ scale: 0.99 }}
+      className="flex gap-3 px-4 py-3 border-b border-gray-800 cursor-pointer select-none active:bg-gray-800/40 transition-colors"
       data-ai-section-type="card-list"
     >
       {/* Avatar */}
       <div className="flex-shrink-0">
         <Link
           to={`/user/${article.authorId}`}
+          onClick={(e) => e.stopPropagation()}
           className="block w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-700 flex items-center justify-center hover:opacity-80 transition-opacity"
         >
           <FileText className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
@@ -201,6 +213,7 @@ const ArticleCard = ({ article }: ArticleCardProps) => {
         <div className="flex items-baseline gap-1 text-sm">
           <Link
             to={`/user/${article.authorId}`}
+            onClick={(e) => e.stopPropagation()}
             className="font-bold text-gray-100 truncate hover:underline"
           >
             {article.authorName}

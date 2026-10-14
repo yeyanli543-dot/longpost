@@ -361,7 +361,7 @@ const Layout = () => {
                   to={to}
                   end={item.to === '/'}
                   className={({ isActive }) =>
-                    `flex flex-col items-center justify-center flex-1 min-w-[44px] max-w-[56px] h-14 relative flex-shrink-0 ${
+                    `flex flex-col items-center justify-center flex-1 min-w-[44px] max-w-[56px] h-14 relative flex-shrink-0 touch-manipulation select-none active:scale-95 transition-all ${
                       isActive
                         ? isLite ? 'text-blue-500 font-semibold' : 'google-nav-pill-active py-1'
                         : 'text-muted-foreground'
@@ -386,7 +386,7 @@ const Layout = () => {
       {/* Mobile FAB button */}
       <button
         onClick={handleComposeClick}
-        className={`fixed right-4 z-40 w-14 h-14 shadow-lg flex items-center justify-center transition-all active:scale-95 md:hidden ${
+        className={`fixed right-4 z-40 w-14 h-14 shadow-lg flex items-center justify-center transition-all touch-manipulation select-none active:scale-95 md:hidden ${
           isLite ? 'rounded-2xl bg-blue-600 text-white' : 'rounded-2xl google-fab'
         }`}
         style={{ bottom: 'calc(76px + var(--safe-area-inset-bottom))' }}

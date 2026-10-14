@@ -30,9 +30,12 @@
   {{/if}}
   <script>
     try {
-      window.__platform__ = JSON.parse('{{{__platform__}}}');
+      var rawPlatform = '{{{__platform__}}}';
+      if (rawPlatform && !rawPlatform.startsWith('{{')) {
+        window.__platform__ = JSON.parse(rawPlatform);
+      }
     } catch (e) {
-      console.error('Failed to parse __platform__', e);
+      // In static client preview or development mode
     }
   </script>
   <script>

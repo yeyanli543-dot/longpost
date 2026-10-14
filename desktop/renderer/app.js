@@ -400,6 +400,7 @@
     'labModal',
     'diffModal',
     'boardModal',
+    'authModal',
   ];
 
   function openSheet(id) {
@@ -545,6 +546,7 @@
     }
     state.menuItems = [];
     menuAnchor = null;
+    swallowedByLongPress = false;
   }
 
   // ==========================================================================
@@ -1555,17 +1557,28 @@
   let pullInited = false;
 
   /**
-   * 下拉刷新：只在窄屏装。默认它只听 touch 事件，desktop / 自动化里点不动，
-   * 所以显式打开 pointer 模式；手势落点归 triggerElement 管，不是 mainElement。
+   * 下拉刷新：只在窄屏装。
+   * 移动端保留默认 touch 事件，避免 pointer 模式在真机手势滑动时吃掉点击；
+   * 仅在非触屏（如桌面端无头自动化）下开启 pointer 模式；
+   * 配置 distIgnore 与精准 shouldPullToRefresh，避免微小触控晃动被误判为下拉而吞噬点击。
    */
   function setupPullToRefresh() {
     if (pullInited || !LIB.pull || !isNarrow()) return;
     pullInited = true;
     try {
-      if (typeof LIB.pull.setPointerEventsMode === 'function') LIB.pull.setPointerEventsMode(true);
+      const isTouch = 'ontouchstart' in window || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+      if (typeof LIB.pull.setPointerEventsMode === 'function') {
+        LIB.pull.setPointerEventsMode(!isTouch);
+      }
       LIB.pull.init({
         triggerElement: '#list',
         mainElement: '#list',
+        distThreshold: 65,
+        distIgnore: 18, // 18px 以内的触控晃动一律视为普通点击，绝不阻止事件冒泡与点击触发
+        shouldPullToRefresh: () => {
+          const list = $('list');
+          return list ? list.scrollTop <= 0 : false;
+        },
         onRefresh: async () => {
           await refreshAll();
           toast('已刷新', 'ok');
@@ -3534,7 +3547,6 @@
    */
   function dismissOverlays() {
     const panel = $('outlinePanel');
-    const sheet = $('settingsModal');
     if (panel && !panel.hidden) {
       applyOutlineState(false);
       syncSegmentedActive('outlineSwitch', 'off');
@@ -3542,7 +3554,11 @@
         .then((next) => { state.settings = next; })
         .catch(() => {});
     }
-    if (sheet && !sheet.hidden) closeSheet('settingsModal');
+    MODAL_IDS.forEach((id) => {
+      const modal = $(id);
+      if (modal && !modal.hidden) closeSheet(id);
+    });
+    closeMenu();
   }
 
   /** 放不下时按这个顺序逐个收进「更多」—— 每一项在「更多」菜单里都有等价入口 */
@@ -4984,6 +5000,10 @@
         clearTimeout(longPressTimer);
         longPressTimer = setTimeout(() => {
           swallowedByLongPress = true;
+          // 450ms 保护期过后自动释放，避免因点击外部 scrim 导致后续正常点击被永久吞噬
+          setTimeout(() => {
+            swallowedByLongPress = false;
+          }, 450);
           openItemMenu(item.getAttribute('data-id'), item);
           if (navigator.vibrate) {
             try {
