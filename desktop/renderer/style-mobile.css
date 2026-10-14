@@ -229,18 +229,25 @@
     font-size: 11px;
     font-family: inherit;
     cursor: pointer;
-    transition: color var(--dur-1) var(--ease);
+    transition: color var(--dur-1) var(--ease), transform var(--dur-1) var(--ease);
+  }
+
+  .tab:active {
+    transform: scale(0.94);
   }
 
   .tab .icon {
     font-size: 20px;
+    transition: transform var(--dur-1) var(--ease);
   }
 
   .tab.on {
     color: var(--accent);
+    font-weight: 600;
   }
 
   .tab.on .icon {
+    transform: translateY(-1px);
     filter: drop-shadow(0 0 6px var(--accent-soft));
   }
 
@@ -266,6 +273,7 @@
 
   #btnBack {
     order: 0;
+    flex-shrink: 0;
   }
 
   .title-input {
@@ -274,31 +282,90 @@
     min-width: 0;
     min-height: 44px;
     font-size: var(--fs-lg);
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  /* 移动端形态切换胶囊：隐藏繁复文字，精简为 38×38 紧凑圆角徽章，极大释放标题空间 */
+  #btnModeSwitchMobile {
+    order: 2;
+    flex-shrink: 0;
+    min-width: 38px;
+    width: 38px;
+    min-height: 38px;
+    height: 38px;
+    padding: 0;
+    border-radius: 999px;
+    margin: 0 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-2);
+    border: 1px solid var(--border-strong);
+    touch-action: manipulation;
+    transition: transform var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
+  }
+
+  #btnModeSwitchMobile:active {
+    transform: scale(0.92);
+  }
+
+  #btnModeSwitchMobile .mode-label {
+    display: none;
+  }
+
+  #btnModeSwitchMobile .mode-badge {
+    font-size: 17px;
+    line-height: 1;
   }
 
   .tools {
-    order: 2;
+    order: 3;
     width: auto;
-    margin-left: auto;
+    margin-left: 0;
     flex-wrap: nowrap;
     overflow: visible;
-    gap: 2px;
+    gap: 4px;
     padding-bottom: 0;
   }
 
-  /* 只留 3 个高频动作；其余（标签/分享/图表/图片/附件/大纲/沉浸/预览/导出/历史/长图/表格）
-     都在「更多」菜单里，一个都没少。 */
+  /* 移动端顶栏精炼为「预览 + 分享 + 更多」核心组合：
+     1. #btnPreview：即刻沉浸查阅渲染排版成果；
+     2. #btnShare：主要行动 CTA（导出/复制/系统分享），高亮胶囊样式；
+     3. #btnMore：汇聚全部次级功能与系统设置。
+     置顶、打标签、查找、插入多媒体等在「更多」抽屉或下方格式栏中一应俱全。 */
   .tools .btn {
     display: none;
     padding: 0;
     min-width: 44px;
+    min-height: 44px;
     justify-content: center;
+    border-radius: var(--r-sm);
+    transition: transform var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
   }
 
-  .tools #btnPin,
-  .tools #btnFind,
+  .tools .btn:active {
+    transform: scale(0.92);
+  }
+
+  .tools #btnPreview,
+  .tools #btnShare,
   .tools #btnMore {
     display: inline-flex;
+  }
+
+  /* 移动端 #btnShare 主行动点视觉强化 */
+  .tools #btnShare {
+    background: var(--accent-soft);
+    border-color: var(--accent-line);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .tools #btnShare:active {
+    background: var(--accent);
+    color: var(--on-accent);
+    transform: scale(0.92);
   }
 
   .tools .btn .btn-label {
@@ -319,6 +386,13 @@
     width: 44px;
     height: 44px;
     font-size: 17px;
+    border-radius: var(--r-sm);
+    transition: transform var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
+  }
+
+  .fmt:active {
+    transform: scale(0.92);
+    background: var(--surface-3);
   }
 
   .fmt-sep {

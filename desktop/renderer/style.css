@@ -394,6 +394,22 @@ body {
   gap: var(--sp-2);
 }
 
+.side-actions #btnNew {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 8px var(--accent-soft);
+  transition: transform var(--dur-1) var(--ease), box-shadow var(--dur-1) var(--ease), background var(--dur-1) var(--ease);
+}
+
+.side-actions #btnNew:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px var(--accent-soft);
+}
+
+.side-actions #btnNew:active {
+  transform: translateY(1px) scale(0.99);
+}
+
 /* 列表 */
 .list {
   flex: 1;
@@ -615,7 +631,7 @@ mark.hit {
 }
 
 .btn:active {
-  transform: translateY(1px);
+  transform: translateY(1px) scale(0.98);
 }
 
 .btn.primary {
@@ -675,13 +691,17 @@ mark.hit {
 }
 
 .btn-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--sp-1);
 }
 
 .btn-row .btn {
-  flex: 1;
+  width: 100%;
   min-width: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+  justify-content: center;
 }
 
 .icon-btn {
@@ -941,10 +961,34 @@ kbd {
 
 .sep {
   width: 1px;
-  height: 18px;
+  height: 16px;
   background: var(--border-strong);
-  margin: 0 var(--sp-1);
+  margin: 0 4px;
   flex: none;
+  opacity: 0.85;
+}
+
+/* 核心行动点（CTA）：分享与交付 */
+.tools .btn-share-cta {
+  background: var(--accent-soft);
+  border-color: var(--accent-line);
+  color: var(--accent);
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--r-sm);
+  transition: all var(--dur-1) var(--ease);
+}
+
+.tools .btn-share-cta:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  box-shadow: 0 2px 8px var(--accent-soft);
+  transform: translateY(-1px);
+}
+
+.tools .btn-share-cta:active {
+  transform: translateY(1px) scale(0.98);
 }
 
 /* 格式工具栏 */

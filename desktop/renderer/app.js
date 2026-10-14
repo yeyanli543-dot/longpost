@@ -3690,8 +3690,8 @@
 
   /** 放不下时按这个顺序逐个收进「更多」—— 每一项在「更多」菜单里都有等价入口 */
   const TOOLBAR_FOLD_ORDER = [
-    'btnTagsEdit', 'btnPin', 'btnShare', 'btnPreview',
-    'btnReading', 'btnOutline', 'btnFind', 'btnChart', 'btnImage', 'btnFile',
+    'btnFile', 'btnImage', 'btnChart', 'btnPin', 'btnTagsEdit',
+    'btnFind', 'btnReading', 'btnOutline', 'btnPreview', 'btnShare',
   ];
 
   /**

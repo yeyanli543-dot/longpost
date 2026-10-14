@@ -86,6 +86,7 @@
       <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></symbol>
       <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
       <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></symbol>
+      <symbol id="i-key" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></symbol>
     </svg>
 
     <div class="app" id="app" data-view="list" data-pane="write">
@@ -148,7 +149,7 @@
           <span class="count" id="count">0 篇</span>
           <div class="foot-btns">
             <button class="btn ghost sm" id="btnAuth" title="Google 账号登录与专属通行码认证">
-              🔑 登录 / 通行码
+              <svg class="icon" aria-hidden="true"><use href="#i-key"></use></svg><span>登录 / 通行码</span>
             </button>
             <button class="btn ghost sm only-desktop" id="btnDataDir" title="在文件管理器里打开数据目录">
               <svg class="icon" aria-hidden="true"><use href="#i-folder"></use></svg>数据目录
@@ -200,7 +201,7 @@
                 <svg class="icon" aria-hidden="true"><use href="#i-plus"></use></svg>新建文章
               </button>
               <button class="btn ghost" id="btnEmptyAuth">
-                🔑 通行码 / Google 登录
+                <svg class="icon" aria-hidden="true"><use href="#i-key"></use></svg>通行码 / Google 登录
               </button>
             </div>
             <div class="kbd-hints">
@@ -223,16 +224,15 @@
               <span class="mode-badge" id="modeBadgeMobile">🍎</span><span class="mode-label" id="modeLabelMobile">苹果极简</span>
             </button>
             <div class="tools">
+              <!-- 元数据管理组 -->
               <button class="btn" id="btnPin" title="把这篇文章顶到列表最前">
                 <svg class="icon" aria-hidden="true"><use href="#i-star"></use></svg><span class="btn-label">置顶</span>
               </button>
               <button class="btn" id="btnTagsEdit" title="给这篇文章打标签">
                 <svg class="icon" aria-hidden="true"><use href="#i-tag"></use></svg><span class="btn-label">标签</span>
               </button>
-              <button class="btn" id="btnShare" title="复制成 Markdown / 网页，或调用系统分享">
-                <svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg><span class="btn-label">分享</span>
-              </button>
               <span class="sep"></span>
+              <!-- 多媒体插入组 -->
               <button class="btn" id="btnChart" title="插入柱状图 / 折线图 / 面积图 / 饼图">
                 <svg class="icon" aria-hidden="true"><use href="#i-chart"></use></svg><span class="btn-label">图表</span>
               </button>
@@ -243,6 +243,7 @@
                 <svg class="icon" aria-hidden="true"><use href="#i-paperclip"></use></svg><span class="btn-label">附件</span>
               </button>
               <span class="sep"></span>
+              <!-- 视图与导航组 -->
               <button class="btn keep-in-reading" id="btnOutline" title="显示 / 隐藏正文大纲">
                 <svg class="icon" aria-hidden="true"><use href="#i-align-left"></use></svg><span class="btn-label">大纲</span>
               </button>
@@ -257,6 +258,7 @@
                 <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg><span class="btn-label">查找</span>
               </button>
               <span class="sep pro-tool-item"></span>
+              <!-- Google M3 专业工坊组 -->
               <button class="btn pro-tool-item" id="btnProGraph" title="全库知识图谱关系网络">
                 <svg class="icon" aria-hidden="true"><use href="#i-grid"></use></svg><span class="btn-label">图谱</span>
               </button>
@@ -268,6 +270,11 @@
               </button>
               <button class="btn pro-tool-item" id="btnProBoard" title="灵感白板：手绘脑图与架构草图，一键插入正文">
                 <svg class="icon" aria-hidden="true"><use href="#i-edit"></use></svg><span class="btn-label">白板</span>
+              </button>
+              <span class="sep keep-in-reading"></span>
+              <!-- 交付与更多动作组 -->
+              <button class="btn keep-in-reading btn-share-cta" id="btnShare" title="复制成 Markdown / 网页，或调用系统分享">
+                <svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg><span class="btn-label">分享</span>
               </button>
               <button class="btn" id="btnMore" title="导出、历史版本、统计、删除" aria-haspopup="menu">
                 <svg class="icon" aria-hidden="true"><use href="#i-more"></use></svg><span class="btn-label">更多</span>
