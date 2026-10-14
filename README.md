@@ -41,7 +41,7 @@
 
 ---
 
-## 📥 多端下载 (v2.9.5 最新全平台安装包)
+## <a id="-多端下载"></a>📥 多端下载 (v2.9.5 最新全平台安装包)
 
 所有安装包均通过 GitHub Actions 自动化 CI 构建并带有防篡改校验，即下即用：
 
@@ -161,7 +161,7 @@ LongPost 拒绝粗暴的“换皮换色”，而是从 **apple.com 官方原始 
 
 ## 🛡️ 安全加固与原生测试套件
 
-项目内置针对生产级网络攻击与边界场景的自动化安全防护，原生测试套件包含 **6 个专业套件、28 项测试用例全部通过（~440ms 极速验证）**：
+项目内置针对生产级网络攻击与边界场景的自动化安全防护，原生测试套件包含 **9 个专业套件、37 项测试用例全部通过（~570ms 极速验证）**：
 
 ```bash
 npm test
@@ -173,7 +173,10 @@ npm test
 3. **复合键游标深度分页（Compound Keyset Cursor）**：基于 `(score, createdAt, id)` 构造防篡改 Base64 游标，彻底规避传统 Offset 分页的性能雪崩与浮点时间精度漂移；
 4. **盘古之白排版算法回归保护**：严格保护多行代码块、行内反引号与 Markdown 图片链接不受文本美化算法干扰；
 5. **异形屏安全区与前摄挖孔避让**：精确计算 Dynamic Island、前摄挖孔及横屏模式下的系统安全边距（`--custom-punch-hole-offset`）；
-6. **防暴力破解与 JWT 瞬时吊销（Token Versioning）**：密码错误指数退避锁定，修改密码或登出时递增 `tokenVersion`，实现分布式无状态 JWT 的秒级即时失效。
+6. **防暴力破解与 JWT 瞬时吊销（Token Versioning）**：密码错误指数退避锁定，修改密码或登出时递增 `tokenVersion`，实现分布式无状态 JWT 的秒级即时失效；
+7. **数据完整性与多态级联回归（Data Integrity & Cascade）**：`GREATEST(0, val - 1)` 防负数下溢、禁止自关注、父评论与软删除一致性校验，模拟点赞、转发、评论、通知的多态安全级联清理；
+8. **全生态分发与数字第二大脑（Ecosystem Syndication）**：Obsidian 标准 YAML Frontmatter 与 `[[WikiLink]]` 导出适配、微信公众号原生 CSS 样式内联引擎，单键一键排版直通微信后台；
+9. **RSS 2.0 & RFC 4287 Atom 1.0 标准聚合 Feed**：自动生成严格合规的 XML 订阅源，支持主流阅读器（NetNewsWire, Reeder, Follow, Feedly）即刻抓取。
 
 ---
 
@@ -244,7 +247,7 @@ npm run apk
 | **图表引擎** | Apache ECharts 6 · 自适应莫兰迪色盘 · 同构 DSL 卡片解析器 |
 | **桌面客户端** | Electron 44 · 独立本地文件存储与数据隔离 · electron-builder |
 | **移动客户端** | Capacitor 8 (Android) · 挖孔屏自适应安全边距 · 独立离线密钥签名 |
-| **测试与质量** | Node.js 原生 Test Runner (`node --test`) · 28 项安全与算法测试用例 |
+| **测试与质量** | Node.js 原生 Test Runner (`node --test`) · 9 个套件 37 项安全与算法测试用例 |
 
 ---
 
@@ -269,7 +272,7 @@ npm run apk
 ├── mobile/              # Capacitor 8 移动端安卓工程
 │   └── capacitor.config.json # WebDir 指向 ../dist/client
 ├── shared/              # 前后端共享类型与图表卡片 DSL 规范 (chart-card.ts)
-├── test/                # 28 项原生极速单元安全与算法测试套件
+├── test/                # 9 个套件 37 项原生极速单元安全与算法测试
 └── .github/workflows/   # 云端自动化 CI/CD (多端编译与 Release 发布)
 ```
 
