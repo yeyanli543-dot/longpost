@@ -19,7 +19,7 @@ import {
   articleAttachments,
   appUsers,
 } from '@server/database/schema';
-import { eq, and, asc, sql } from 'drizzle-orm';
+import { eq, and, asc, desc, sql } from 'drizzle-orm';
 import {
   renderArticleBody,
   formatSize,
@@ -30,6 +30,11 @@ import {
   buildArticleHtml,
   buildNotFoundHtml,
 } from '@server/common/utils/article-template';
+import {
+  buildRss2Xml,
+  buildAtomXml,
+  type RssItemData,
+} from '@server/common/utils/rss-builder';
 import { ASSET_BASE_PATH } from '@server/config/client.config';
 
 function getRequestBaseUrl(req: Request): string {
@@ -193,6 +198,218 @@ export class ViewController {
       }
       res.status(500).send(buildNotFoundHtml(this.siteName));
     }
+  }
+
+  @Get(['rss.xml', 'feed.xml', 'feed', 'api/feed/rss.xml'])
+  async renderRssFeed(@Req() req: Request, @Res() res: Response): Promise<void> {
+    const baseUrl = getRequestBaseUrl(req);
+    const feedUrl = `${baseUrl}/rss.xml`;
+
+    try {
+      const items = await this.fetchFeedArticles(baseUrl);
+      const xml = buildRss2Xml(
+        {
+          title: 'LongPost - 发现深度好文',
+          link: baseUrl,
+          description: 'LongPost 优质长文聚合订阅源，连接全球深度思想与创作。',
+          feedUrl,
+          lastBuildDate: items.length > 0 ? items[0].publishedAt : new Date(),
+        },
+        items,
+      );
+
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=1800');
+      res.send(xml);
+    } catch (err) {
+      this.logger.error(
+        `Failed to generate RSS feed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      res.status(500).send('Failed to generate RSS feed');
+    }
+  }
+
+  @Get(['atom.xml', 'api/feed/atom.xml'])
+  async renderAtomFeed(@Req() req: Request, @Res() res: Response): Promise<void> {
+    const baseUrl = getRequestBaseUrl(req);
+    const feedUrl = `${baseUrl}/atom.xml`;
+
+    try {
+      const items = await this.fetchFeedArticles(baseUrl);
+      const xml = buildAtomXml(
+        {
+          title: 'LongPost - 发现深度好文',
+          link: baseUrl,
+          description: 'LongPost 优质长文聚合订阅源，连接全球深度思想与创作。',
+          feedUrl,
+          lastBuildDate: items.length > 0 ? items[0].publishedAt : new Date(),
+        },
+        items,
+      );
+
+      res.setHeader('Content-Type', 'application/atom+xml; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=1800');
+      res.send(xml);
+    } catch (err) {
+      this.logger.error(
+        `Failed to generate Atom feed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      res.status(500).send('Failed to generate Atom feed');
+    }
+  }
+
+  @Get(['user/:userId/rss.xml', 'api/users/:userId/rss.xml'])
+  async renderUserRssFeed(
+    @Param('userId') userId: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<void> {
+    const baseUrl = getRequestBaseUrl(req);
+    const feedUrl = `${baseUrl}/user/${userId}/rss.xml`;
+    const userUrl = `${baseUrl}/user/${userId}`;
+
+    try {
+      const user = await this.fetchAppUser(userId);
+      const items = await this.fetchFeedArticles(baseUrl, userId);
+      const authorName = user?.nickname || 'LongPost 创作者';
+
+      const xml = buildRss2Xml(
+        {
+          title: `${authorName} 的专栏 - LongPost`,
+          link: userUrl,
+          description:
+            user?.bio || `${authorName} 在 LongPost 发布的深度长文专栏。`,
+          feedUrl,
+          authorName,
+          lastBuildDate: items.length > 0 ? items[0].publishedAt : new Date(),
+        },
+        items,
+      );
+
+      res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=1800');
+      res.send(xml);
+    } catch (err) {
+      this.logger.error(
+        `Failed to generate User RSS feed for ${userId}: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+      res.status(500).send('Failed to generate User RSS feed');
+    }
+  }
+
+  @Get(['user/:userId/atom.xml', 'api/users/:userId/atom.xml'])
+  async renderUserAtomFeed(
+    @Param('userId') userId: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<void> {
+    const baseUrl = getRequestBaseUrl(req);
+    const feedUrl = `${baseUrl}/user/${userId}/atom.xml`;
+    const userUrl = `${baseUrl}/user/${userId}`;
+
+    try {
+      const user = await this.fetchAppUser(userId);
+      const items = await this.fetchFeedArticles(baseUrl, userId);
+      const authorName = user?.nickname || 'LongPost 创作者';
+
+      const xml = buildAtomXml(
+        {
+          title: `${authorName} 的专栏 - LongPost`,
+          link: userUrl,
+          description:
+            user?.bio || `${authorName} 在 LongPost 发布的深度长文专栏。`,
+          feedUrl,
+          authorName,
+          lastBuildDate: items.length > 0 ? items[0].publishedAt : new Date(),
+        },
+        items,
+      );
+
+      res.setHeader('Content-Type', 'application/atom+xml; charset=utf-8');
+      res.setHeader('Cache-Control', 'public, max-age=600, s-maxage=1800');
+      res.send(xml);
+    } catch (err) {
+      this.logger.error(
+        `Failed to generate User Atom feed for ${userId}: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      );
+      res.status(500).send('Failed to generate User Atom feed');
+    }
+  }
+
+  private async fetchFeedArticles(
+    baseUrl: string,
+    userId?: string,
+  ): Promise<RssItemData[]> {
+    const conditions = [
+      eq(articles.status, 'published'),
+      eq(articles.moderationStatus, 'approved'),
+    ];
+
+    if (userId) {
+      if (isUuid(userId)) {
+        conditions.push(eq(articles.appUserId, userId));
+      } else {
+        return [];
+      }
+    }
+
+    const rows = await this.db
+      .select({
+        id: articles.id,
+        title: articles.title,
+        content: articles.content,
+        excerpt: articles.excerpt,
+        slug: articles.slug,
+        createdAt: articles.createdAt,
+        updatedAt: articles.updatedAt,
+        authorNickname: appUsers.nickname,
+      })
+      .from(articles)
+      .leftJoin(appUsers, eq(articles.appUserId, appUsers.id))
+      .where(and(...conditions))
+      .orderBy(desc(articles.createdAt))
+      .limit(30);
+
+    return rows.map((r) => {
+      const linkPath = r.slug ? `/p/${r.slug}` : `/article/${r.id}`;
+      const fullLink = `${baseUrl}${linkPath}`;
+      let bodyHtml = '';
+      try {
+        bodyHtml = renderArticleBody(r.content, 'light').html;
+      } catch {
+        bodyHtml = r.content || '';
+      }
+
+      return {
+        id: r.id,
+        title: r.title,
+        link: fullLink,
+        excerpt: r.excerpt || r.title,
+        content: bodyHtml,
+        authorName: r.authorNickname || 'LongPost 创作者',
+        publishedAt: r.createdAt,
+        updatedAt: r.updatedAt,
+      };
+    });
+  }
+
+  private async fetchAppUser(
+    userId: string,
+  ): Promise<{ nickname: string; bio: string | null } | null> {
+    if (!isUuid(userId)) return null;
+    const rows = await this.db
+      .select({
+        nickname: appUsers.nickname,
+        bio: appUsers.bio,
+      })
+      .from(appUsers)
+      .where(eq(appUsers.id, userId))
+      .limit(1);
+    return rows[0] || null;
   }
 
   @Get(['/', '*'])

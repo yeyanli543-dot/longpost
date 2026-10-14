@@ -249,6 +249,10 @@ export default function ArticlePage() {
             summary: article.excerpt || article.content.slice(0, 80),
             authorName: article.authorName,
             coverUrl: article.coverUrl || null,
+            content: article.content,
+            publishedAt: article.createdAt,
+            tags: article.hashtags || [],
+            slug: article.slug || undefined,
           }}
         />
       )}

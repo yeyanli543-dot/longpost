@@ -2673,6 +2673,133 @@
     await sharePayload(wechatText, '微信分享导读文案');
   }
 
+  function buildWechatMpInlineHtml(title, content) {
+    function esc(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+    const safeTitle = esc(title || '未命名长文');
+    const MD = window.LPMarkdown;
+    let bodyHtml = '';
+    if (MD && typeof MD.renderMarkdown === 'function') {
+      bodyHtml = MD.renderMarkdown(content || '');
+    } else {
+      bodyHtml = esc(content || '').replace(/\n/g, '<br/>');
+    }
+
+    bodyHtml = bodyHtml
+      .replace(/<h1>(.*?)<\/h1>/gi, '<h2 style="margin: 32px 0 16px; padding-bottom: 8px; font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1.4; border-bottom: 2px solid #3b82f6;">$1</h2>')
+      .replace(/<h2>(.*?)<\/h2>/gi, '<h3 style="margin: 28px 0 14px; padding-left: 10px; border-left: 4px solid #3b82f6; font-size: 18px; font-weight: 700; color: #1e293b; line-height: 1.4;">$1</h3>')
+      .replace(/<h3>(.*?)<\/h3>/gi, '<h4 style="margin: 22px 0 12px; font-size: 16px; font-weight: 600; color: #334155; line-height: 1.4;">$1</h4>')
+      .replace(/<p>(.*?)<\/p>/gi, '<p style="font-size: 15px; color: #334155; line-height: 1.85; margin: 0 0 16px; text-align: justify; word-break: break-word; letter-spacing: 0.5px;">$1</p>')
+      .replace(/<blockquote>([\s\S]*?)<\/blockquote>/gi, '<blockquote style="margin: 20px 0; padding: 14px 18px; background-color: #f8fafc; border-left: 4px solid #3b82f6; border-radius: 0 8px 8px 0; color: #475569; font-size: 14px; line-height: 1.75;">$1</blockquote>')
+      .replace(/<pre>([\s\S]*?)<\/pre>/gi, '<pre style="background-color: #1e293b; color: #f8fafc; padding: 14px; border-radius: 8px; overflow-x: auto; font-family: monospace; font-size: 13px; line-height: 1.6; margin: 20px 0;">$1</pre>')
+      .replace(/<code>(.*?)<\/code>/gi, '<code style="background-color: #f1f5f9; color: #e11d48; padding: 2px 6px; border-radius: 4px; font-size: 88%; font-family: monospace;">$1</code>');
+
+    const header = '<section style="background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: 12px; padding: 22px 18px; margin-bottom: 24px; color: #ffffff;"><h1 style="margin: 0 0 8px 0; font-size: 21px; font-weight: 700; color: #ffffff;">' + safeTitle + '</h1><div style="font-size: 12px; color: #94a3b8;">LongPost 深度长文 · ' + new Date().toLocaleDateString('zh-CN') + '</div></section>';
+    const footer = '<section style="margin-top: 36px; padding: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 13px; color: #64748b; text-align: center;"><p style="margin: 0; font-weight: 600; color: #1e293b;">✨ 本文由 LongPost 排版生成 · 粘贴即成文</p></section>';
+
+    return '<section style="max-width: 677px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 15px; line-height: 1.85; color: #334155;">' + header + bodyHtml + footer + '</section>';
+  }
+
+  async function shareToWechatMp() {
+    if (!state.current) {
+      toast('请先选择一篇文章');
+      return;
+    }
+    const title = $('title').value.trim() || '未命名';
+    const content = $('editor').value || '';
+    const html = buildWechatMpInlineHtml(title, content);
+    const plain = title + '\n\n' + toPlainText(content);
+
+    if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
+      try {
+        const htmlBlob = new Blob([html], { type: 'text/html' });
+        const textBlob = new Blob([plain], { type: 'text/plain' });
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'text/html': htmlBlob, 'text/plain': textBlob })
+        ]);
+        toast('微信公众号排版已复制！在微信后台直接粘贴即可', 'ok');
+        return;
+      } catch (e) {
+        // Fallback below
+      }
+    }
+
+    try {
+      const container = document.createElement('div');
+      container.contentEditable = 'true';
+      container.innerHTML = html;
+      container.style.position = 'fixed';
+      container.style.left = '-9999px';
+      container.style.opacity = '0';
+      document.body.appendChild(container);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      const range = document.createRange();
+      range.selectNodeContents(container);
+      sel.addRange(range);
+      const res = document.execCommand('copy');
+      sel.removeAllRanges();
+      document.body.removeChild(container);
+      if (res) {
+        toast('微信公众号排版已复制！在微信后台直接粘贴即可', 'ok');
+        return;
+      }
+    } catch {}
+
+    await sharePayload(plain, '纯文本');
+  }
+
+  async function shareToObsidian() {
+    if (!state.current) {
+      toast('请先选择一篇文章');
+      return;
+    }
+    const title = $('title').value.trim() || '未命名';
+    const content = $('editor').value || '';
+    const tags = Array.isArray(state.current.tags) ? state.current.tags : [];
+    const dateIso = new Date(state.current.createdAt || Date.now()).toISOString();
+    const updatedIso = new Date(state.current.updatedAt || Date.now()).toISOString();
+
+    const tagLines = ['  - longpost', ...tags.map(t => '  - ' + t.replace(/^#/, ''))].join('\n');
+    const frontmatter = [
+      '---',
+      'title: "' + title.replace(/"/g, '\\"') + '"',
+      'date: ' + dateIso,
+      'updated: ' + updatedIso,
+      'tags:',
+      tagLines,
+      'source: "longpost"',
+      'generator: "LongPost Second Brain"',
+      '---',
+      '',
+      '# ' + title,
+      '',
+      content,
+      '',
+    ].join('\n');
+
+    const fileName = (title || 'article').replace(/[\/\\:*?"<>|]/g, '_') + '.md';
+    try {
+      const blob = new Blob([frontmatter], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast('已导出 Obsidian 格式笔记: ' + fileName, 'ok');
+    } catch (err) {
+      await sharePayload(frontmatter, 'Obsidian 笔记');
+    }
+  }
+
   async function shareToQQ() {
     if (!state.current) {
       toast('请先选择一篇文章');
@@ -4845,6 +4972,8 @@
     $('shareHtml').addEventListener('click', shareHtml);
     $('shareFile').addEventListener('click', () => exportArticle('html'));
     if ($('shareWechat')) $('shareWechat').addEventListener('click', shareToWechat);
+    if ($('shareWechatMp')) $('shareWechatMp').addEventListener('click', shareToWechatMp);
+    if ($('shareObsidian')) $('shareObsidian').addEventListener('click', shareToObsidian);
     if ($('shareQQ')) $('shareQQ').addEventListener('click', shareToQQ);
     if ($('shareWeibo')) $('shareWeibo').addEventListener('click', shareToWeibo);
     $('shareTweet').addEventListener('click', shareToTwitter);

@@ -21,17 +21,43 @@ const ComposePage = () => {
   const [searchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const articleId = searchParams.get('articleId');
+  const shareTitle = (searchParams.get('title') || '').trim();
+  const shareText = (searchParams.get('text') || '').trim();
+  const shareUrl = (searchParams.get('url') || '').trim();
+  const shareType = (searchParams.get('type') || searchParams.get('tab') || '').trim();
 
-  const [activeTab, setActiveTab] = useState<'post' | 'article'>('post');
+  // 是否判定为由外部应用分享的长文
+  const isIncomingArticle =
+    !articleId && (shareType === 'article' || (shareTitle && shareText.length > 200));
+
+  // 拼接长文正文与短帖内容
+  const initialArticleContent = shareText
+    ? (shareUrl ? `${shareText}\n\n> 来源引用：${shareUrl}` : shareText)
+    : (shareUrl ? `> 来源引用：${shareUrl}` : '');
+
+  const initialPostContent = [shareTitle, shareText, shareUrl].filter(Boolean).join('\n');
+
+  const [activeTab, setActiveTab] = useState<'post' | 'article'>(
+    articleId || isIncomingArticle ? 'article' : 'post',
+  );
   const [articleData, setArticleData] = useState<ArticleDetail | null>(null);
   const [articleLoading, setArticleLoading] = useState(false);
 
-  // If articleId is present, switch to article tab and load article
+  // If articleId or incoming article is present, switch to article tab
   useEffect(() => {
-    if (articleId) {
+    if (articleId || isIncomingArticle) {
       setActiveTab('article');
     }
-  }, [articleId]);
+  }, [articleId, isIncomingArticle]);
+
+  // 外部分享内容载入通知
+  const hasNotifiedShareRef = useRef(false);
+  useEffect(() => {
+    if ((shareTitle || shareText || shareUrl) && !hasNotifiedShareRef.current) {
+      hasNotifiedShareRef.current = true;
+      toast.info('已载入来自外部应用分享的内容');
+    }
+  }, [shareTitle, shareText, shareUrl]);
 
   // Load article data for edit mode
   useEffect(() => {
@@ -134,7 +160,7 @@ const ComposePage = () => {
 
        <div className="p-4 pb-[calc(16px+env(safe-area-inset-bottom))]">
         {activeTab === 'post' ? (
-          <PostComposer />
+          <PostComposer initialContent={initialPostContent} />
         ) : articleLoading ? (
           <div className="flex items-center justify-center py-16">
             <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
@@ -142,8 +168,8 @@ const ComposePage = () => {
         ) : (
           <ArticleComposer
              editId={articleId ?? undefined}
-             initialTitle={articleData?.title}
-             initialContent={articleData?.content}
+             initialTitle={articleData?.title || (isIncomingArticle ? shareTitle : undefined)}
+             initialContent={articleData?.content || (isIncomingArticle ? initialArticleContent : undefined)}
              initialExcerpt={articleData?.excerpt ?? undefined}
              initialCoverUrl={articleData?.coverUrl ?? undefined}
              initialStatus={articleData?.status}
@@ -158,13 +184,23 @@ const ComposePage = () => {
 
 // ---------- Post Composer ----------
 
-const PostComposer = () => {
+interface PostComposerProps {
+  initialContent?: string;
+}
+
+const PostComposer = ({ initialContent = '' }: PostComposerProps) => {
   const navigate = useNavigate();
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState(initialContent);
   const [showArticleSelector, setShowArticleSelector] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<ArticleSummary | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (initialContent) {
+      setContent(initialContent);
+    }
+  }, [initialContent]);
 
   const charCount = content.length;
   const isOverLimit = charCount > POST_CHAR_LIMIT;

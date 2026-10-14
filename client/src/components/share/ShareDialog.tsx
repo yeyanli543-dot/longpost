@@ -9,6 +9,9 @@ import {
   Smartphone,
   ExternalLink,
   ChevronLeft,
+  Sparkles,
+  FileText,
+  Rss,
 } from 'lucide-react';
 import {
   Dialog,
@@ -32,6 +35,8 @@ import {
   invokeNativeShare,
   openPlatformShare,
 } from './share-utils';
+import { copyWeChatFormatted } from '@/lib/wechat-formatter';
+import { exportObsidianMarkdown } from '@/lib/obsidian-exporter';
 
 interface ShareDialogProps {
   open: boolean;
@@ -105,6 +110,40 @@ export default function ShareDialog({
     if (invoked) {
       onOpenChange(false);
     }
+  };
+
+  const handleCopyWeChat = async () => {
+    await copyWeChatFormatted({
+      title: payload.title,
+      content: payload.content || payload.summary || '',
+      authorName: payload.authorName,
+      publishedAt: payload.publishedAt,
+      coverUrl: payload.coverUrl,
+      url: payload.url,
+      excerpt: payload.summary,
+    });
+  };
+
+  const handleExportObsidian = () => {
+    exportObsidianMarkdown({
+      title: payload.title,
+      content: payload.content || payload.summary || '',
+      authorName: payload.authorName,
+      publishedAt: payload.publishedAt,
+      updatedAt: payload.updatedAt,
+      tags: payload.tags,
+      slug: payload.slug,
+      url: payload.url,
+      excerpt: payload.summary,
+    });
+  };
+
+  const handleCopyRss = async () => {
+    const rssUrl = `${window.location.origin}/rss.xml`;
+    await copyTextToClipboard(
+      rssUrl,
+      'RSS 2.0 聚合订阅源已复制，可粘贴至 Follow / Reeder 等阅读器',
+    );
   };
 
   return (
@@ -290,6 +329,72 @@ export default function ShareDialog({
                   复制链接
                 </span>
               </button>
+            </div>
+
+            {/* 跨应用互联与知识库导出 */}
+            <div className="pt-2 border-t border-[#2f3336]/60">
+              <div className="text-[11px] font-semibold text-[#71767b] mb-2 px-1 flex items-center justify-between">
+                <span>跨应用连结与知识库互通</span>
+                <span className="text-[10px] text-blue-400/80">全生态套件</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {/* 微信公众号排版 */}
+                <button
+                  onClick={handleCopyWeChat}
+                  className="flex items-center gap-2 p-2 rounded-xl bg-[#1e2124] hover:bg-[#282c31] border border-[#2f3336] text-left transition-all active:scale-95 group"
+                  title="复制带内联 CSS 样式的公众号富文本，在微信后台直接粘贴"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-[#07C160]/15 text-[#07C160] flex items-center justify-center flex-shrink-0 group-hover:bg-[#07C160]/25 transition-colors">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-medium text-gray-200 group-hover:text-white truncate">
+                      公众号排版
+                    </div>
+                    <div className="text-[10px] text-gray-500 truncate">
+                      内联富文本
+                    </div>
+                  </div>
+                </button>
+
+                {/* Obsidian 导出 */}
+                <button
+                  onClick={handleExportObsidian}
+                  className="flex items-center gap-2 p-2 rounded-xl bg-[#1e2124] hover:bg-[#282c31] border border-[#2f3336] text-left transition-all active:scale-95 group"
+                  title="导出带完整 YAML Frontmatter 的 Markdown 笔记"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/15 text-purple-400 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-500/25 transition-colors">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-medium text-gray-200 group-hover:text-white truncate">
+                      Obsidian 笔记
+                    </div>
+                    <div className="text-[10px] text-gray-500 truncate">
+                      Frontmatter
+                    </div>
+                  </div>
+                </button>
+
+                {/* RSS 订阅源 */}
+                <button
+                  onClick={handleCopyRss}
+                  className="flex items-center gap-2 p-2 rounded-xl bg-[#1e2124] hover:bg-[#282c31] border border-[#2f3336] text-left transition-all active:scale-95 group"
+                  title="复制 RSS 2.0 订阅链接，导入 Follow / Reeder / NetNewsWire"
+                >
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-500/25 transition-colors">
+                    <Rss className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-medium text-gray-200 group-hover:text-white truncate">
+                      RSS 订阅源
+                    </div>
+                    <div className="text-[10px] text-gray-500 truncate">
+                      Follow/Reeder
+                    </div>
+                  </div>
+                </button>
+              </div>
             </div>
 
             {/* 底部链接展示条 */}

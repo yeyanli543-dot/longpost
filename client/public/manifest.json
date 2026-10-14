@@ -22,5 +22,20 @@
       "purpose": "any maskable"
     }
   ],
+  "share_target": {
+    "action": "compose",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+longpost",
+      "url": "compose?text=%s"
+    }
+  ],
   "categories": ["social", "news", "productivity"]
 }

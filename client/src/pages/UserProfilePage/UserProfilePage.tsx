@@ -14,9 +14,11 @@ import {
   ShieldCheck,
   Settings,
   Mail,
+  Rss,
 } from 'lucide-react';
 import { resolveAppUrl } from '@/lib/utils';
 import { logger } from '@/lib/logger';
+import { copyTextToClipboard } from '@/components/share/share-utils';
 import { Image } from '@client/src/components/ui/image';
 import ActionButtons from '@client/src/components/ActionButtons';
 import FollowButton from '@client/src/components/FollowButton';
@@ -505,7 +507,22 @@ const UserProfilePage = () => {
         <div className="px-4 pt-3 pb-4">
           {/* Action button (right-aligned, above name on desktop) */}
           {!loading && profile && (
-            <div className="flex justify-end mb-2">
+            <div className="flex justify-end mb-2 items-center gap-2">
+              <button
+                onClick={async () => {
+                  const rssUrl = `${window.location.origin}/user/${profile.id}/rss.xml`;
+                  await copyTextToClipboard(
+                    rssUrl,
+                    `已复制 ${profile.nickname} 的专栏 RSS 订阅源，可粘贴至阅读器`,
+                  );
+                }}
+                className="p-2 min-h-[40px] md:min-h-[44px] min-w-[40px] text-sm font-bold rounded-full border border-gray-600 text-amber-400 hover:bg-gray-800 transition-colors flex items-center justify-center"
+                title={`复制 ${profile.nickname} 的专栏 RSS 订阅源 (Follow / Reeder)`}
+                aria-label="订阅专栏 RSS"
+              >
+                <Rss className="w-4 h-4" />
+              </button>
+
               {isOwnProfile ? (
                  <button
                    onClick={() => navigate('/settings')}

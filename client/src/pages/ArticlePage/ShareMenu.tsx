@@ -6,6 +6,8 @@ import {
   Share2,
   Smartphone,
   ExternalLink,
+  Sparkles,
+  FileText,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -31,6 +33,8 @@ import {
   invokeNativeShare,
   openPlatformShare,
 } from '@/components/share/share-utils';
+import { copyWeChatFormatted } from '@/lib/wechat-formatter';
+import { exportObsidianMarkdown } from '@/lib/obsidian-exporter';
 import { resolveAppUrl } from '@/lib/utils';
 import type { ArticleDetail } from '@shared/api.interface';
 
@@ -57,6 +61,10 @@ export default function ShareMenu({ article, trigger }: ShareMenuProps) {
     summary: excerpt,
     authorName: article.authorName,
     coverUrl: article.coverUrl || null,
+    content: article.content,
+    publishedAt: article.createdAt,
+    tags: article.hashtags || [],
+    slug: article.slug || undefined,
   };
 
   const handleCopyLink = async () => {
@@ -86,6 +94,33 @@ export default function ShareMenu({ article, trigger }: ShareMenuProps) {
   const handleNativeShare = async () => {
     setDropdownOpen(false);
     await invokeNativeShare(payload);
+  };
+
+  const handleCopyWeChat = async () => {
+    setDropdownOpen(false);
+    await copyWeChatFormatted({
+      title: article.title,
+      content: article.content,
+      authorName: article.authorName,
+      publishedAt: article.createdAt,
+      coverUrl: article.coverUrl,
+      url: shareUrl,
+      excerpt: article.excerpt || undefined,
+    });
+  };
+
+  const handleExportObsidian = () => {
+    setDropdownOpen(false);
+    exportObsidianMarkdown({
+      title: article.title,
+      content: article.content,
+      authorName: article.authorName,
+      publishedAt: article.createdAt,
+      tags: article.hashtags || [],
+      slug: article.slug || undefined,
+      url: shareUrl,
+      excerpt: article.excerpt || undefined,
+    });
   };
 
   return (
@@ -174,6 +209,20 @@ export default function ShareMenu({ article, trigger }: ShareMenuProps) {
               <span>系统原生分享</span>
             </DropdownMenuItem>
           )}
+
+          <DropdownMenuSeparator className="bg-[#2f3336] my-1" />
+
+          {/* 复制公众号排版 */}
+          <DropdownMenuItem onClick={handleCopyWeChat} className="cursor-pointer flex items-center gap-2 hover:bg-[#1f2227] text-[#07C160]">
+            <Sparkles className="w-4 h-4 text-[#07C160]" />
+            <span>复制公众号排版</span>
+          </DropdownMenuItem>
+
+          {/* 导出 Obsidian 笔记 */}
+          <DropdownMenuItem onClick={handleExportObsidian} className="cursor-pointer flex items-center gap-2 hover:bg-[#1f2227] text-purple-400">
+            <FileText className="w-4 h-4 text-purple-400" />
+            <span>导出 Obsidian 笔记</span>
+          </DropdownMenuItem>
 
           <DropdownMenuSeparator className="bg-[#2f3336] my-1" />
 

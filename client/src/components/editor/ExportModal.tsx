@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { platform } from '@/lib/platform';
+import { copyWeChatFormatted } from '@/lib/wechat-formatter';
+import { exportObsidianMarkdown } from '@/lib/obsidian-exporter';
 
 interface ExportModalProps {
   title: string;
@@ -224,7 +226,29 @@ generator: "LongPost"
     }
   };
 
-  // 2. 导出为独立无损单文件 HTML
+  // 2. 复制为微信公众号富文本排版
+  const handleCopyWeChat = async () => {
+    const success = await copyWeChatFormatted({
+      title,
+      content,
+    });
+    if (success) {
+      onClose();
+    }
+  };
+
+  // 3. 导出为 Obsidian / 第二大脑笔记 (.md)
+  const handleExportObsidian = () => {
+    const success = exportObsidianMarkdown({
+      title,
+      content,
+    });
+    if (success) {
+      onClose();
+    }
+  };
+
+  // 4. 导出为独立无损单文件 HTML
   const handleExportStandaloneHtml = () => {
     setExporting('html');
     try {
@@ -423,6 +447,40 @@ generator: "LongPost"
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold text-foreground">独立单文件 HTML 网页</div>
               <div className="text-xs text-muted-foreground">内置精美样式，任何设备离线直接双击打开</div>
+            </div>
+          </button>
+
+          {/* 微信公众号排版复制 */}
+          <button
+            onClick={handleCopyWeChat}
+            className="w-full flex items-center gap-3.5 p-3 rounded-xl border border-[#07C160]/30 bg-[#07C160]/5 hover:bg-[#07C160]/10 text-left transition-all group"
+          >
+            <div className="p-2.5 rounded-lg bg-[#07C160]/15 text-[#07C160] group-hover:scale-105 transition-transform">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <div className="text-sm font-semibold text-foreground">复制微信公众号排版</div>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#07C160]/20 text-[#07C160] font-medium">内联样式</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5">自带优雅排版与行内样式，微信公众平台后台粘贴即成文</div>
+            </div>
+          </button>
+
+          {/* Obsidian / 第二大脑笔记 */}
+          <button
+            onClick={handleExportObsidian}
+            className="w-full flex items-center gap-3.5 p-3 rounded-xl border border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10 text-left transition-all group"
+          >
+            <div className="p-2.5 rounded-lg bg-purple-500/15 text-purple-400 group-hover:scale-105 transition-transform">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <div className="text-sm font-semibold text-foreground">导出 Obsidian 笔记 (.md)</div>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-400 font-medium">Frontmatter</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5">包含标准 YAML 元数据、标签与原始双链，直通第二大脑知识库</div>
             </div>
           </button>
 

@@ -7,6 +7,11 @@ export interface SharePayload {
   summary?: string;
   authorName?: string;
   coverUrl?: string | null;
+  content?: string;
+  publishedAt?: string | Date;
+  updatedAt?: string | Date;
+  tags?: string[];
+  slug?: string;
 }
 
 /**
