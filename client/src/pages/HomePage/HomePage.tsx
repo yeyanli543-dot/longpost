@@ -13,6 +13,7 @@ import RichTextContent from '@client/src/components/RichTextContent';
 import ErrorFallback from '@client/src/components/ErrorFallback';
 import { useAuth } from '@client/src/hooks/useAuth';
 import type { TimelineItem, PostItem, ArticleSummary, TimelineView } from '@shared/api.interface';
+import ShareDialog from '@/components/share/ShareDialog';
 
 dayjs.extend(relativeTime);
 
@@ -24,6 +25,7 @@ interface PostCardProps {
 
 const PostCard = ({ post }: PostCardProps) => {
   const navigate = useNavigate();
+  const [shareOpen, setShareOpen] = useState(false);
 
   const handleArticleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -32,17 +34,8 @@ const PostCard = ({ post }: PostCardProps) => {
     }
   };
 
-  const handleShare = async () => {
-    const shareUrl = resolveAppUrl(
-      post.article ? `/article/${post.article.id}` : `/post/${post.id}`,
-    );
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success('链接已复制');
-    } catch (err) {
-      logger.error('复制链接失败', err);
-      toast.error('复制失败');
-    }
+  const handleShare = () => {
+    setShareOpen(true);
   };
 
   const handleCommentClick = () => {
@@ -143,6 +136,18 @@ const PostCard = ({ post }: PostCardProps) => {
             onShareClick={handleShare}
           />
       </div>
+
+      <ShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        payload={{
+          title: post.article ? post.article.title : `${post.authorName} 的动态`,
+          url: resolveAppUrl(post.article ? (post.article.slug ? `/p/${post.article.slug}` : `/article/${post.article.id}`) : `/post/${post.id}`),
+          summary: post.article ? (post.article.excerpt || post.content) : post.content,
+          authorName: post.authorName,
+          coverUrl: post.article?.coverUrl || null,
+        }}
+      />
     </motion.article>
   );
 };
@@ -155,20 +160,14 @@ interface ArticleCardProps {
 
 const ArticleCard = ({ article }: ArticleCardProps) => {
   const navigate = useNavigate();
+  const [shareOpen, setShareOpen] = useState(false);
 
   const handleClick = () => {
     navigate(`/article/${article.id}`);
   };
 
-  const handleShare = async () => {
-    try {
-      const shareUrl = resolveAppUrl(`/article/${article.id}`);
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success('文章链接已复制');
-    } catch (err) {
-      logger.error('复制链接失败', err);
-      toast.error('复制失败');
-    }
+  const handleShare = () => {
+    setShareOpen(true);
   };
 
   const handleCommentClick = () => {
@@ -264,6 +263,18 @@ const ArticleCard = ({ article }: ArticleCardProps) => {
             onShareClick={handleShare}
           />
       </div>
+
+      <ShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        payload={{
+          title: article.title,
+          url: resolveAppUrl(article.slug ? `/p/${article.slug}` : `/article/${article.id}`),
+          summary: article.excerpt || '',
+          authorName: article.authorName,
+          coverUrl: article.coverUrl || null,
+        }}
+      />
     </motion.article>
   );
 };

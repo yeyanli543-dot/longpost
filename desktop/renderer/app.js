@@ -2636,6 +2636,69 @@
     }
   }
 
+  function getArticleShareInfo() {
+    const title = $('title').value.trim() || '未命名';
+    const content = $('editor').value || '';
+    const excerpt = (state.current && state.current.summary ? state.current.summary : content)
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .replace(/[#*`~\[\]()!<>]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 120);
+    return { title, content, excerpt };
+  }
+
+  async function shareToWechat() {
+    if (!state.current) {
+      toast('请先选择一篇文章');
+      return;
+    }
+    const { title, excerpt } = getArticleShareInfo();
+    const wechatText = '【长文推荐】《' + title + '》\n\n' + (excerpt ? '“' + excerpt + '...”\n\n' : '') + '——来自 LongPost 独立文章库';
+    await sharePayload(wechatText, '微信分享导读文案');
+  }
+
+  async function shareToQQ() {
+    if (!state.current) {
+      toast('请先选择一篇文章');
+      return;
+    }
+    const { title, excerpt } = getArticleShareInfo();
+    const qqUrl = 'https://connect.qq.com/widget/shareqq/index.html?title=' + encodeURIComponent(title) + '&summary=' + encodeURIComponent(excerpt) + '&desc=' + encodeURIComponent(excerpt) + '&site=LongPost';
+    try {
+      if (typeof window !== 'undefined' && window.open) {
+        window.open(qqUrl, '_blank');
+        toast('已打开 QQ 分享窗口', 'ok');
+      } else {
+        await sharePayload('《' + title + '》\n' + excerpt, 'QQ 分享内容');
+      }
+    } catch {
+      await sharePayload('《' + title + '》\n' + excerpt, 'QQ 分享内容');
+    }
+  }
+
+  async function shareToWeibo() {
+    if (!state.current) {
+      toast('请先选择一篇文章');
+      return;
+    }
+    const { title, excerpt } = getArticleShareInfo();
+    const weiboText = '【' + title + '】' + (excerpt ? ' ' + excerpt : '') + ' #LongPost#';
+    const weiboUrl = 'https://service.weibo.com/share/share.php?title=' + encodeURIComponent(weiboText);
+    try {
+      if (typeof window !== 'undefined' && window.open) {
+        window.open(weiboUrl, '_blank');
+        toast('已打开新浪微博发帖窗口', 'ok');
+      } else {
+        await sharePayload(weiboText, '微博分享文案');
+      }
+    } catch {
+      await sharePayload(weiboText, '微博分享文案');
+    }
+  }
+
   async function shareToTwitter() {
     if (!state.current) {
       toast('请先选择一篇文章');
@@ -4765,6 +4828,9 @@
     $('sharePlain').addEventListener('click', sharePlain);
     $('shareHtml').addEventListener('click', shareHtml);
     $('shareFile').addEventListener('click', () => exportArticle('html'));
+    if ($('shareWechat')) $('shareWechat').addEventListener('click', shareToWechat);
+    if ($('shareQQ')) $('shareQQ').addEventListener('click', shareToQQ);
+    if ($('shareWeibo')) $('shareWeibo').addEventListener('click', shareToWeibo);
     $('shareTweet').addEventListener('click', shareToTwitter);
     $('shareBackup').addEventListener('click', exportFullBackup);
 

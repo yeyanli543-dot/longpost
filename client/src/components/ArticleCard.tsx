@@ -14,6 +14,7 @@ import AdminBadge from '@client/src/components/AdminBadge';
 import { useAuth } from '@client/src/hooks/useAuth';
 import { adminApi } from '@client/src/api';
 import type { ArticleSummary } from '@shared/api.interface';
+import ShareDialog from '@/components/share/ShareDialog';
 
 dayjs.extend(relativeTime);
 
@@ -26,20 +27,14 @@ const ArticleCard = ({ article }: ArticleCardProps) => {
   const { user, isAdmin } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const handleClick = () => {
     navigate(`/article/${article.id}`);
   };
 
-  const handleShare = async () => {
-    try {
-      const shareUrl = resolveAppUrl(`/article/${article.id}`);
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success('文章链接已复制');
-    } catch (err) {
-      logger.error('复制链接失败', err);
-      toast.error('复制失败');
-    }
+  const handleShare = () => {
+    setShareOpen(true);
   };
 
   const handleCommentClick = () => {
@@ -250,6 +245,18 @@ const ArticleCard = ({ article }: ArticleCardProps) => {
         onClose={() => setReportOpen(false)}
         contentType="article"
         contentId={article.id}
+      />
+
+      <ShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        payload={{
+          title: article.title,
+          url: resolveAppUrl(article.slug ? `/p/${article.slug}` : `/article/${article.id}`),
+          summary: article.excerpt || '',
+          authorName: article.authorName,
+          coverUrl: article.coverUrl || null,
+        }}
       />
     </motion.article>
   );

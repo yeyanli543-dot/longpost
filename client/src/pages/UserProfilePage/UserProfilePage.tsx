@@ -28,6 +28,7 @@ import type {
   PostItem,
   ArticleSummary,
 } from '@shared/api.interface';
+import ShareDialog from '@/components/share/ShareDialog';
 
 dayjs.extend(relativeTime);
 
@@ -41,6 +42,7 @@ interface ProfilePostCardProps {
 
 const ProfilePostCard = ({ post }: ProfilePostCardProps) => {
   const navigate = useNavigate();
+  const [shareOpen, setShareOpen] = useState(false);
 
   const handleArticleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -49,17 +51,8 @@ const ProfilePostCard = ({ post }: ProfilePostCardProps) => {
     }
   };
 
-  const handleShare = async () => {
-    const shareUrl = resolveAppUrl(
-      post.article ? `/article/${post.article.id}` : `/post/${post.id}`,
-    );
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success('链接已复制');
-    } catch (err) {
-      logger.error('复制链接失败', err);
-      toast.error('复制失败');
-    }
+  const handleShare = () => {
+    setShareOpen(true);
   };
 
   const handleCommentClick = () => {
@@ -139,6 +132,18 @@ const ProfilePostCard = ({ post }: ProfilePostCardProps) => {
         onCommentClick={handleCommentClick}
         onShareClick={handleShare}
       />
+
+      <ShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        payload={{
+          title: post.article ? post.article.title : `${post.authorName} 的动态`,
+          url: resolveAppUrl(post.article ? (post.article.slug ? `/p/${post.article.slug}` : `/article/${post.article.id}`) : `/post/${post.id}`),
+          summary: post.article ? (post.article.excerpt || post.content) : post.content,
+          authorName: post.authorName,
+          coverUrl: post.article?.coverUrl || null,
+        }}
+      />
     </article>
   );
 };
@@ -151,20 +156,14 @@ interface ProfileArticleCardProps {
 
 const ProfileArticleCard = ({ article }: ProfileArticleCardProps) => {
   const navigate = useNavigate();
+  const [shareOpen, setShareOpen] = useState(false);
 
   const handleClick = () => {
     navigate(`/article/${article.id}`);
   };
 
-  const handleShare = async () => {
-    try {
-      const shareUrl = resolveAppUrl(`/article/${article.id}`);
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success('文章链接已复制');
-    } catch (err) {
-      logger.error('复制链接失败', err);
-      toast.error('复制失败');
-    }
+  const handleShare = () => {
+    setShareOpen(true);
   };
 
   const handleCommentClick = () => {
@@ -238,6 +237,18 @@ const ProfileArticleCard = ({ article }: ProfileArticleCardProps) => {
         showBookmark
         onCommentClick={handleCommentClick}
         onShareClick={handleShare}
+      />
+
+      <ShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        payload={{
+          title: article.title,
+          url: resolveAppUrl(article.slug ? `/p/${article.slug}` : `/article/${article.id}`),
+          summary: article.excerpt || '',
+          authorName: article.authorName,
+          coverUrl: article.coverUrl || null,
+        }}
       />
     </article>
   );

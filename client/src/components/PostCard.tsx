@@ -15,6 +15,7 @@ import ReportDialog from '@client/src/components/ReportDialog';
 import { useAuth } from '@client/src/hooks/useAuth';
 import { adminApi } from '@client/src/api';
 import type { PostItem } from '@shared/api.interface';
+import ShareDialog from '@/components/share/ShareDialog';
 
 type PostCardAuthor = PostItem & { authorRole?: string };
 
@@ -29,6 +30,7 @@ const PostCard = ({ post }: PostCardProps) => {
   const { user, isAdmin } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const handleArticleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -37,17 +39,8 @@ const PostCard = ({ post }: PostCardProps) => {
     }
   };
 
-  const handleShare = async () => {
-    const shareUrl = resolveAppUrl(
-      post.article ? `/article/${post.article.id}` : `/post/${post.id}`,
-    );
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success('链接已复制');
-    } catch (err) {
-      logger.error('复制链接失败', err);
-      toast.error('复制失败');
-    }
+  const handleShare = () => {
+    setShareOpen(true);
   };
 
   const handleCommentClick = () => {
@@ -269,6 +262,18 @@ const PostCard = ({ post }: PostCardProps) => {
         onClose={() => setReportOpen(false)}
         contentType="post"
         contentId={post.id}
+      />
+
+      <ShareDialog
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        payload={{
+          title: post.article ? post.article.title : `${post.authorName} 的动态`,
+          url: resolveAppUrl(post.article ? (post.article.slug ? `/p/${post.article.slug}` : `/article/${post.article.id}`) : `/post/${post.id}`),
+          summary: post.article ? (post.article.excerpt || post.content) : post.content,
+          authorName: post.authorName,
+          coverUrl: post.article?.coverUrl || null,
+        }}
       />
     </motion.article>
   );

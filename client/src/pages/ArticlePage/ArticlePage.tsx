@@ -17,6 +17,7 @@ import ArticleHeader from './ArticleHeader';
 import ArticleContent from './ArticleContent';
 import ReadingToolbar from './ReadingToolbar';
 import ShareMenu from './ShareMenu';
+import ShareDialog from '@/components/share/ShareDialog';
 
 type FontSize = 'small' | 'medium' | 'large';
 type Theme = 'dark' | 'light';
@@ -36,6 +37,7 @@ export default function ArticlePage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isNotFound, setIsNotFound] = useState<boolean>(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState<boolean>(false);
 
   // Reading preferences
   const [fontSize, setFontSizeState] = useState<FontSize>(() => {
@@ -99,18 +101,9 @@ export default function ArticlePage() {
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = () => {
     if (!article) return;
-    const shareUrl = article.slug
-      ? resolveAppUrl(`/p/${article.slug}`)
-      : resolveAppUrl(`/article/${article.id}`);
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      toast.success('链接已复制，可粘贴到 X、微博等平台分享');
-    } catch (err) {
-      logger.error('复制链接失败', err);
-      toast.error('复制失败，请手动复制浏览器地址栏链接');
-    }
+    setShareDialogOpen(true);
   };
 
   useEffect(() => {
@@ -243,6 +236,22 @@ export default function ArticlePage() {
           </section>
         )}
       </article>
+
+      {article && (
+        <ShareDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          payload={{
+            title: article.title,
+            url: article.slug
+              ? resolveAppUrl(`/p/${article.slug}`)
+              : resolveAppUrl(`/article/${article.id}`),
+            summary: article.excerpt || article.content.slice(0, 80),
+            authorName: article.authorName,
+            coverUrl: article.coverUrl || null,
+          }}
+        />
+      )}
     </div>
   );
 }
