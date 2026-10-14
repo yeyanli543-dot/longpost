@@ -55,6 +55,67 @@ export async function copyTextToClipboard(text: string, successMessage = '已复
 }
 
 /**
+ * 判断当前是否为移动端触屏设备
+ */
+export function isMobileDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+}
+
+/**
+ * 判断是否在微信内置浏览器内
+ */
+export function isWeChatBrowser(): boolean {
+  if (typeof window === 'undefined') return false;
+  return /MicroMessenger/i.test(navigator.userAgent);
+}
+
+/**
+ * 判断是否在手机 QQ 内置浏览器内
+ */
+export function isQQBrowser(): boolean {
+  if (typeof window === 'undefined') return false;
+  return /\bQQ\//i.test(navigator.userAgent) || /MQQBrowser/i.test(navigator.userAgent);
+}
+
+/**
+ * 判断 URL 是否属于本地局域网或 localhost
+ */
+export function isLocalUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.hostname === 'localhost' || u.hostname === '127.0.0.1' || /^192\.168\./.test(u.hostname) || /^10\./.test(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 确保返回完整的绝对 HTTP/HTTPS URL
+ */
+export function getAbsoluteShareUrl(url: string): string {
+  if (!url) {
+    return typeof window !== 'undefined' ? window.location.href : '';
+  }
+  if (/^https?:\/\//i.test(url)) return url;
+  if (typeof window !== 'undefined') {
+    const cleanPath = url.startsWith('/') ? url : `/${url}`;
+    return `${window.location.origin}${cleanPath}`;
+  }
+  return url;
+}
+
+/**
+ * 格式化用于 QQ 好友与 QQ 群的精炼推荐卡片文案
+ */
+export function formatQQShareText(payload: SharePayload): string {
+  const fullUrl = getAbsoluteShareUrl(payload.url);
+  const author = payload.authorName ? ` [作者: @${payload.authorName}]` : '';
+  const summary = payload.summary ? `\n> 导读：${payload.summary.trim().slice(0, 100)}...` : '';
+  return `📰【长文分享】《${payload.title}》${author}${summary}\n🔗 点击阅读全文：${fullUrl}\n—— 来自 LongPost 本地优先长文平台`;
+}
+
+/**
  * 判断当前环境是否支持系统原生分享 (Android / iOS / Safari / Edge 等)
  */
 export function canNativeShare(): boolean {
@@ -67,10 +128,11 @@ export function canNativeShare(): boolean {
 export async function invokeNativeShare(payload: SharePayload): Promise<boolean> {
   if (!canNativeShare()) return false;
   try {
+    const fullUrl = getAbsoluteShareUrl(payload.url);
     await navigator.share({
       title: payload.title,
-      text: formatShareText(payload),
-      url: payload.url,
+      text: formatShareText({ ...payload, url: fullUrl }),
+      url: fullUrl,
     });
     return true;
   } catch (err: unknown) {
@@ -90,18 +152,34 @@ export function openPlatformShare(
   platform: 'qq' | 'qzone' | 'weibo' | 'dingtalk' | 'twitter',
   payload: SharePayload
 ) {
-  const { title, url, summary = '', coverUrl = '' } = payload;
-  const encodedUrl = encodeURIComponent(url);
+  const fullUrl = getAbsoluteShareUrl(payload.url);
+  const { title, summary = '', coverUrl = '' } = payload;
+  const encodedUrl = encodeURIComponent(fullUrl);
   const encodedTitle = encodeURIComponent(title);
   const encodedSummary = encodeURIComponent(summary.slice(0, 120));
   const encodedPic = encodeURIComponent(coverUrl || '');
-  const shareText = formatShareText(payload);
+  const shareText = formatShareText({ ...payload, url: fullUrl });
+
+  // 在移动端优先尝试调起手机 QQ 原生协议
+  if (platform === 'qq' && isMobileDevice()) {
+    try {
+      const scheme = `mqqapi://share/to_fri?src_type=web&version=1&file_type=news&title=${encodedTitle}&description=${encodedSummary}&url=${encodedUrl}&previewimageUrl=${encodedPic}`;
+      window.location.href = scheme;
+      // 延迟检查，如果 1.5 秒后未切后台，说明未安装或无法拉起，降级复制文案
+      setTimeout(() => {
+        copyTextToClipboard(formatQQShareText(payload), '已复制 QQ 分享文案，可直接在 QQ 聊天窗粘贴');
+      }, 1500);
+      return;
+    } catch {
+      // 降级走网页端点
+    }
+  }
 
   let targetUrl = '';
 
   switch (platform) {
     case 'qq':
-      // 腾讯 QQ 好友官方网页分享端点
+      // 腾讯 QQ 好友官方网页分享端点，确保传递完整的绝对 URL
       targetUrl = `https://connect.qq.com/widget/shareqq/index.html?url=${encodedUrl}&title=${encodedTitle}&summary=${encodedSummary}&desc=${encodedSummary}&pics=${encodedPic}&site=LongPost`;
       break;
     case 'qzone':

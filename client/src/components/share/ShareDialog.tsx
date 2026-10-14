@@ -30,10 +30,15 @@ import {
 import {
   SharePayload,
   formatShareText,
+  formatQQShareText,
   copyTextToClipboard,
   canNativeShare,
   invokeNativeShare,
   openPlatformShare,
+  isMobileDevice,
+  isWeChatBrowser,
+  isLocalUrl,
+  getAbsoluteShareUrl,
 } from './share-utils';
 import { copyWeChatFormatted } from '@/lib/wechat-formatter';
 import { exportObsidianMarkdown } from '@/lib/obsidian-exporter';
@@ -49,20 +54,24 @@ export default function ShareDialog({
   onOpenChange,
   payload,
 }: ShareDialogProps) {
-  const [activeTab, setActiveTab] = useState<'platforms' | 'wechat'>('platforms');
+  const [activeTab, setActiveTab] = useState<'platforms' | 'wechat' | 'qq'>('platforms');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedText, setCopiedText] = useState(false);
+  const [copiedQQText, setCopiedQQText] = useState(false);
   const [hasNativeShare, setHasNativeShare] = useState(false);
 
   useEffect(() => {
     setHasNativeShare(canNativeShare());
   }, []);
 
-  // 当对话框打开时预先生成微信扫码二维码
+  const fullShareUrl = getAbsoluteShareUrl(payload.url);
+  const isLocal = isLocalUrl(fullShareUrl);
+
+  // 当对话框打开时预先生成扫码直达二维码
   useEffect(() => {
-    if (open && payload.url) {
-      QRCode.toDataURL(payload.url, {
+    if (open && fullShareUrl) {
+      QRCode.toDataURL(fullShareUrl, {
         width: 260,
         margin: 2,
         errorCorrectionLevel: 'M',
@@ -76,10 +85,10 @@ export default function ShareDialog({
     } else {
       setActiveTab('platforms');
     }
-  }, [open, payload.url]);
+  }, [open, fullShareUrl]);
 
   const handleCopyLink = async () => {
-    const success = await copyTextToClipboard(payload.url, '链接已复制到剪贴板');
+    const success = await copyTextToClipboard(fullShareUrl, '链接已复制到剪贴板');
     if (success) {
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2000);
@@ -87,11 +96,20 @@ export default function ShareDialog({
   };
 
   const handleCopyShareText = async () => {
-    const text = formatShareText(payload);
-    const success = await copyTextToClipboard(text, '分享文案已复制，可直接粘贴');
+    const text = formatShareText({ ...payload, url: fullShareUrl });
+    const success = await copyTextToClipboard(text, '微信分享文案已复制，可直接粘贴');
     if (success) {
       setCopiedText(true);
       setTimeout(() => setCopiedText(false), 2000);
+    }
+  };
+
+  const handleCopyQQShareText = async () => {
+    const text = formatQQShareText({ ...payload, url: fullShareUrl });
+    const success = await copyTextToClipboard(text, 'QQ 推荐文案已复制，可直接在 QQ 聊天窗粘贴');
+    if (success) {
+      setCopiedQQText(true);
+      setTimeout(() => setCopiedQQText(false), 2000);
     }
   };
 
@@ -99,14 +117,14 @@ export default function ShareDialog({
     if (!qrCodeDataUrl) return;
     const a = document.createElement('a');
     a.href = qrCodeDataUrl;
-    a.download = `longpost-qrcode-${Date.now()}.png`;
+    a.download = `longpost-${activeTab === 'qq' ? 'qq' : 'wechat'}-qrcode-${Date.now()}.png`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   };
 
   const handleNativeShare = async () => {
-    const invoked = await invokeNativeShare(payload);
+    const invoked = await invokeNativeShare({ ...payload, url: fullShareUrl });
     if (invoked) {
       onOpenChange(false);
     }
@@ -153,9 +171,9 @@ export default function ShareDialog({
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-bold flex items-center gap-2 text-white">
               <Share2 className="w-5 h-5 text-[#1d9bf0]" />
-              {activeTab === 'wechat' ? '微信扫一扫分享' : '分享长文'}
+              {activeTab === 'wechat' ? '微信扫一扫分享' : activeTab === 'qq' ? 'QQ 扫码直达与分享' : '分享长文'}
             </DialogTitle>
-            {activeTab === 'wechat' && (
+            {activeTab !== 'platforms' && (
               <button
                 onClick={() => setActiveTab('platforms')}
                 className="text-xs text-[#71767b] hover:text-[#1d9bf0] flex items-center gap-1 transition-colors"
@@ -197,9 +215,17 @@ export default function ShareDialog({
             <div className="grid grid-cols-4 gap-3 text-center">
               {/* 微信 */}
               <button
-                onClick={() => setActiveTab('wechat')}
+                onClick={() => {
+                  if (isWeChatBrowser()) {
+                    copyTextToClipboard(fullShareUrl, '微信内长按或点击右上角「···」即可直接分享给好友或朋友圈');
+                  } else if (isMobileDevice() && hasNativeShare) {
+                    handleNativeShare();
+                  } else {
+                    setActiveTab('wechat');
+                  }
+                }}
                 className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-[#1f2227] active:scale-95 transition-all"
-                title="生成微信二维码分享"
+                title="微信分享与扫码"
               >
                 <div className="w-12 h-12 rounded-2xl bg-[#07C160]/15 group-hover:bg-[#07C160]/25 text-[#07C160] flex items-center justify-center transition-colors shadow-sm">
                   <WeChatIcon className="w-7 h-7" />
@@ -211,9 +237,15 @@ export default function ShareDialog({
 
               {/* QQ 好友 */}
               <button
-                onClick={() => openPlatformShare('qq', payload)}
+                onClick={() => {
+                  if (isMobileDevice() && hasNativeShare) {
+                    handleNativeShare();
+                  } else {
+                    setActiveTab('qq');
+                  }
+                }}
                 className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-[#1f2227] active:scale-95 transition-all"
-                title="分享给 QQ 好友或讨论组"
+                title="QQ 扫码直达与分享"
               >
                 <div className="w-12 h-12 rounded-2xl bg-[#12B7F5]/15 group-hover:bg-[#12B7F5]/25 text-[#12B7F5] flex items-center justify-center transition-colors shadow-sm">
                   <QQIcon className="w-6 h-6" />
@@ -404,7 +436,7 @@ export default function ShareDialog({
                 <input
                   type="text"
                   readOnly
-                  value={payload.url}
+                  value={fullShareUrl}
                   className="bg-transparent text-gray-300 w-full outline-none font-mono select-all truncate"
                 />
                 <button
@@ -443,26 +475,95 @@ export default function ShareDialog({
               <p className="text-xs text-[#71767b] max-w-xs leading-relaxed">
                 扫码即可直接阅读，或点击右上角「···」分享给好友、转发至微信群与朋友圈
               </p>
+              {isLocal && (
+                <p className="text-[11px] text-amber-400/90 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-1 mt-1">
+                  💡 提示：当前为局域网/本地环境，手机扫码请确保与电脑连接同一 Wi-Fi
+                </p>
+              )}
             </div>
 
             <div className="flex items-center gap-3 w-full pt-1">
               <button
                 onClick={handleCopyShareText}
-                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-[#1e2124] hover:bg-[#282c31] border border-[#2f3336] text-xs font-medium text-gray-200 rounded-xl transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-[#1e2124] hover:bg-[#282c31] border border-[#2f3336] text-xs font-medium text-gray-200 rounded-xl transition-colors active:scale-95"
               >
                 {copiedText ? (
                   <Check className="w-4 h-4 text-green-400" />
                 ) : (
-                  <Copy className="w-4 h-4 text-[#1d9bf0]" />
+                  <Copy className="w-4 h-4 text-[#07C160]" />
                 )}
                 复制微信文案
               </button>
               <button
                 onClick={handleDownloadQrCode}
-                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-[#07C160] hover:bg-[#06ad56] text-white text-xs font-medium rounded-xl transition-colors shadow-sm"
+                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-[#07C160] hover:bg-[#06ad56] text-white text-xs font-medium rounded-xl transition-colors shadow-sm active:scale-95"
               >
                 <Download className="w-4 h-4" />
                 保存二维码图片
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 主视图 3：QQ 专属直达扫码卡片（彻底解决第三方挂件扫码打不开的顽疾） */}
+        {activeTab === 'qq' && (
+          <div className="pt-2 flex flex-col items-center text-center space-y-4">
+            <div className="p-3 bg-white rounded-2xl shadow-xl border-4 border-[#12B7F5]/30 inline-block relative">
+              {qrCodeDataUrl ? (
+                <img
+                  src={qrCodeDataUrl}
+                  alt="QQ 分享直达二维码"
+                  className="w-48 h-48 block rounded-lg"
+                />
+              ) : (
+                <div className="w-48 h-48 flex items-center justify-center text-gray-400 text-xs">
+                  正在生成二维码...
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-white flex items-center justify-center gap-1.5">
+                <QQIcon className="w-4 h-4 text-[#12B7F5]" />
+                打开手机 QQ「扫一扫」直达阅读
+              </p>
+              <p className="text-xs text-[#71767b] max-w-xs leading-relaxed">
+                直通本篇长文落地页，扫码即开；也可一键复制专属卡片文案直接发送给 QQ 好友
+              </p>
+              {isLocal && (
+                <p className="text-[11px] text-amber-400/90 bg-amber-500/10 border border-amber-500/20 rounded-lg px-2.5 py-1 mt-1">
+                  💡 提示：当前为局域网/本地环境，手机扫码请确保与电脑连接同一 Wi-Fi
+                </p>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 w-full pt-1">
+              <button
+                onClick={handleCopyQQShareText}
+                className="flex items-center justify-center gap-2 py-2 px-3 bg-[#1e2124] hover:bg-[#282c31] border border-[#2f3336] text-xs font-medium text-gray-200 rounded-xl transition-colors active:scale-95"
+              >
+                {copiedQQText ? (
+                  <Check className="w-4 h-4 text-green-400" />
+                ) : (
+                  <Copy className="w-4 h-4 text-[#12B7F5]" />
+                )}
+                复制 QQ 推荐文案
+              </button>
+              <button
+                onClick={() => openPlatformShare('qq', { ...payload, url: fullShareUrl })}
+                className="flex items-center justify-center gap-2 py-2 px-3 bg-[#12B7F5] hover:bg-[#0ea5e9] text-white text-xs font-medium rounded-xl transition-colors shadow-sm active:scale-95"
+              >
+                <ExternalLink className="w-4 h-4" />
+                QQ 网页分享窗口
+              </button>
+            </div>
+            <div className="w-full">
+              <button
+                onClick={handleDownloadQrCode}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-[#1e2124] hover:bg-[#282c31] border border-[#2f3336] text-xs font-medium text-gray-300 rounded-xl transition-colors"
+              >
+                <Download className="w-4 h-4 text-[#12B7F5]" />
+                保存 QQ 扫码海报图片
               </button>
             </div>
           </div>

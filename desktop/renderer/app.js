@@ -2670,7 +2670,21 @@
     }
     const { title, excerpt } = getArticleShareInfo();
     const wechatText = '【长文推荐】《' + title + '》\n\n' + (excerpt ? '“' + excerpt + '...”\n\n' : '') + '——来自 LongPost 独立文章库';
-    await sharePayload(wechatText, '微信分享导读文案');
+    if (CAPS.share && typeof LP.shareText === 'function') {
+      await LP.shareText({ title: title, text: wechatText, dialogTitle: '分享到微信' });
+      return;
+    }
+    await sharePayload(wechatText, '微信图文导读文案');
+    askConfirm({
+      title: '微信专属长文分享',
+      text: '已生成并复制微信专属长文导读文案！\n\n· 聊天发送：在电脑微信对话框按 Ctrl+V 即可粘贴发送给好友；\n· 朋友圈分享：推荐导出精美排版长图，微信群与朋友圈阅览体验最佳；\n· 公众号排版：也可直接使用「复制公众号排版」粘贴到微信后台。',
+      okLabel: '导出朋友圈长图',
+      cancelLabel: '知道了',
+      onOk: () => {
+        closeSheet('shareModal');
+        exportLongImage();
+      },
+    });
   }
 
   function buildWechatMpInlineHtml(title, content) {
@@ -2806,17 +2820,31 @@
       return;
     }
     const { title, excerpt } = getArticleShareInfo();
-    const qqUrl = 'https://connect.qq.com/widget/shareqq/index.html?title=' + encodeURIComponent(title) + '&summary=' + encodeURIComponent(excerpt) + '&desc=' + encodeURIComponent(excerpt) + '&site=LongPost';
-    try {
-      if (typeof window !== 'undefined' && window.open) {
-        window.open(qqUrl, '_blank');
-        toast('已打开 QQ 分享窗口', 'ok');
-      } else {
-        await sharePayload('《' + title + '》\n' + excerpt, 'QQ 分享内容');
-      }
-    } catch {
-      await sharePayload('《' + title + '》\n' + excerpt, 'QQ 分享内容');
+    const qqText = '【长文推荐】《' + title + '》\n\n' + (excerpt ? '导读：“' + excerpt + '...”\n\n' : '') + '——来自 LongPost 独立文章库';
+    if (CAPS.share && typeof LP.shareText === 'function') {
+      await LP.shareText({ title: title, text: qqText, dialogTitle: '分享到 QQ' });
+      return;
     }
+    await sharePayload(qqText, 'QQ 推荐卡片文案');
+    askConfirm({
+      title: 'QQ 专属长文分享',
+      text: '已生成并复制 QQ 推荐卡片文案！\n\n· 聊天发送：在电脑 QQ 或讨论组按 Ctrl+V 即可直接发送；\n· QQ 动态分享：推荐导出精美排版长图，免去第三方网页扫码打不开的问题；\n· 网页窗口：是否仍要打开 QQ 官方网页分享窗口？',
+      okLabel: '导出 QQ 长图',
+      cancelLabel: '打开网页窗口',
+      onOk: () => {
+        closeSheet('shareModal');
+        exportLongImage();
+      },
+      onCancel: () => {
+        const fullUrl = typeof window !== 'undefined' && window.location.href ? window.location.href : 'https://github.com/yeyanli543-dot/longpost';
+        const qqUrl = 'https://connect.qq.com/widget/shareqq/index.html?url=' + encodeURIComponent(fullUrl) + '&title=' + encodeURIComponent(title) + '&summary=' + encodeURIComponent(excerpt) + '&desc=' + encodeURIComponent(excerpt) + '&site=LongPost';
+        try {
+          if (typeof window !== 'undefined' && window.open) {
+            window.open(qqUrl, '_blank');
+          }
+        } catch {}
+      },
+    });
   }
 
   async function shareToWeibo() {
@@ -2966,7 +2994,9 @@
     $('confirmText').textContent = options.text || '';
     $('confirmOk').textContent = options.okLabel || '确定';
     $('confirmOk').className = 'btn ' + (options.danger ? 'danger' : 'primary');
+    if ($('confirmCancel')) $('confirmCancel').textContent = options.cancelLabel || '取消';
     state.confirmAction = options.onOk || null;
+    state.confirmCancelAction = options.onCancel || null;
     openSheet('confirmModal');
   }
 
@@ -5078,12 +5108,18 @@
 
     // ---------------------------------------------------------- 确认框
     $('confirmClose').addEventListener('click', () => {
+      const cancelAction = state.confirmCancelAction;
       state.confirmAction = null;
+      state.confirmCancelAction = null;
       closeSheet('confirmModal');
+      if (cancelAction) cancelAction();
     });
     $('confirmCancel').addEventListener('click', () => {
+      const cancelAction = state.confirmCancelAction;
       state.confirmAction = null;
+      state.confirmCancelAction = null;
       closeSheet('confirmModal');
+      if (cancelAction) cancelAction();
     });
     $('confirmOk').addEventListener('click', runConfirm);
 
