@@ -46,7 +46,7 @@ function buildRss2Xml(meta, items) {
     <description>${wrapCdata(meta.description)}</description>
     <language>${escapeXml(language)}</language>
     <lastBuildDate>${buildDate}</lastBuildDate>
-    <generator>LongPost Syndication Engine v2.9.0</generator>
+    <generator>LongPost Syndication Engine v2.9.5</generator>
     <atom:link href="${escapeXml(meta.feedUrl)}" rel="self" type="application/rss+xml" />
 ${itemsXml}
   </channel>
@@ -87,7 +87,7 @@ function buildAtomXml(meta, items) {
   <link rel="self" type="application/atom+xml" href="${escapeXml(meta.feedUrl)}" />
   <id>${escapeXml(meta.feedUrl)}</id>
   <updated>${updated}</updated>
-  <generator uri="https://github.com/yeyanli543-dot/longpost" version="2.9.0">LongPost</generator>
+  <generator uri="https://github.com/yeyanli543-dot/longpost" version="2.9.5">LongPost</generator>
 ${entriesXml}
 </feed>`;
 }
@@ -129,7 +129,7 @@ describe('RSS 2.0 & Atom 1.0 Syndication Suite', () => {
     assert.ok(rssXml.startsWith('<?xml version="1.0" encoding="UTF-8"?>'));
     assert.ok(rssXml.includes('<rss version="2.0"'));
     assert.ok(rssXml.includes('<atom:link href="https://longpost.app/rss.xml" rel="self" type="application/rss+xml" />'));
-    assert.ok(rssXml.includes('<generator>LongPost Syndication Engine v2.9.0</generator>'));
+    assert.ok(rssXml.includes('<generator>LongPost Syndication Engine v2.9.5</generator>'));
 
     // Check item 1
     assert.ok(rssXml.includes('<title><![CDATA[深度解析：零拷贝流式计算在现代系统的应用]]></title>'));

@@ -1575,7 +1575,7 @@ export function AboutSection(): React.ReactElement {
             <Feather className="w-8 h-8 text-primary" />
           </div>
           <CardTitle className="text-2xl">LongPost</CardTitle>
-          <CardDescription>长文发布平台 · 版本 v2.9.0 (Production)</CardDescription>
+          <CardDescription>长文发布平台 · 版本 v2.9.5 (Production)</CardDescription>
         </CardHeader>
         <CardContent className="text-center space-y-3">
           <p className="text-sm text-muted-foreground leading-relaxed max-w-lg mx-auto">

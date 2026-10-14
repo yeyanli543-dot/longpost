@@ -74,7 +74,7 @@ export function buildRss2Xml(meta: RssChannelMeta, items: RssItemData[]): string
     <description>${wrapCdata(meta.description)}</description>
     <language>${escapeXml(language)}</language>
     <lastBuildDate>${buildDate}</lastBuildDate>
-    <generator>LongPost Syndication Engine v2.9.0</generator>
+    <generator>LongPost Syndication Engine v2.9.5</generator>
     <atom:link href="${escapeXml(meta.feedUrl)}" rel="self" type="application/rss+xml" />
 ${itemsXml}
   </channel>
@@ -118,7 +118,7 @@ export function buildAtomXml(meta: RssChannelMeta, items: RssItemData[]): string
   <link rel="self" type="application/atom+xml" href="${escapeXml(meta.feedUrl)}" />
   <id>${escapeXml(meta.feedUrl)}</id>
   <updated>${updated}</updated>
-  <generator uri="https://github.com/yeyanli543-dot/longpost" version="2.9.0">LongPost</generator>
+  <generator uri="https://github.com/yeyanli543-dot/longpost" version="2.9.5">LongPost</generator>
 ${entriesXml}
 </feed>`;
 }

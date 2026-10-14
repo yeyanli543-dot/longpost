@@ -290,7 +290,7 @@ const SettingsPage: React.FC = () => {
       }
 
       const exportData = {
-        version: '2.9.0',
+        version: '2.9.5',
         exportTime: new Date().toISOString(),
         user: {
           id: user.id,
