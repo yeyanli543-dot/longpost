@@ -70,11 +70,13 @@ jobs:
           npm install --legacy-peer-deps --no-audit --no-fund
           npm run build:client
 
-      - name: 装桌面端依赖与准备图标
+      - name: 装桌面端依赖与同步第三方运行库
         working-directory: desktop
         run: |
           npm install --legacy-peer-deps --omit=dev --ignore-scripts --no-audit --no-fund
+          node scripts/sync-vendor.js
           node scripts/make-icon.js
+          node scripts/verify-mobile.js
 
       - name: 逻辑自检
         working-directory: desktop
@@ -95,12 +97,18 @@ jobs:
         working-directory: mobile
         run: npx cap sync android
 
-      - name: 确认 Web 资源真的进去了
-        # Cap 出问题最常见的表现是 assets/public 是空的，最后装出来一个白屏 App。
-        # 这一步就是为了让那种情况在构建期就红掉。
+      - name: 确认 Web 资源与核心运行库真的进去了
+        # Cap 出问题最常见的表现是 assets/public 是空的或缺 vendor，最后装出来白屏或报「渲染层模块没加载起来」。
+        # 这一步严格断言 index.html、platform.js、backend-idb.js 以及 vendor/ 下的核心库都在。
         run: |
           test -f mobile/android/app/src/main/assets/public/index.html
-          ls mobile/android/app/src/main/assets/public/ | head -30
+          test -f mobile/android/app/src/main/assets/public/platform.js
+          test -f mobile/android/app/src/main/assets/public/backend-idb.js
+          test -f mobile/android/app/src/main/assets/public/vendor/repo.js
+          test -f mobile/android/app/src/main/assets/public/vendor/echarts.min.js
+          test -f mobile/android/app/src/main/assets/public/vendor/markdown.js
+          test -f mobile/android/app/src/main/assets/public/vendor/chart.js
+          ls -la mobile/android/app/src/main/assets/public/vendor/ | head -30
 
       - name: 准备固定的 debug 签名密钥
         # 这一步之前是缺的：runner 上没有 $HOME/.android/debug.keystore，AGP 就现场

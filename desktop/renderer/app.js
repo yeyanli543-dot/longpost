@@ -5543,59 +5543,82 @@
   // ==========================================================================
 
   async function boot() {
-    if (!LP) {
-      $('status').textContent = '模块加载失败';
+    const platform = window.LPPlatform || LP;
+    if (!platform) {
+      const err = window.LPPlatformError || '核心数据模块未就绪';
+      $('status').textContent = '模块加载失败 (' + err + ')';
       $('list').innerHTML =
-        '<div class="list-empty">' + icon('alert') + '<p>渲染层模块没加载起来，请重启应用。</p></div>';
+        '<div class="list-empty">' + icon('alert') + '<p>渲染层模块没加载起来（' + esc(err) + '），请重启应用或更新至最新版本。</p></div>';
       return;
     }
-    if (!MD || !CH) {
-      $('status').textContent = '核心模块缺失';
+    const md = window.LPMarkdown || MD;
+    const ch = window.LPChart || CH;
+    if (!md || !ch) {
+      const missing = [];
+      if (!md) missing.push('vendor/markdown.js');
+      if (!ch) missing.push('vendor/chart.js');
+      const err = '核心模块缺失 (' + missing.join(', ') + ')';
+      $('status').textContent = err;
+      $('list').innerHTML =
+        '<div class="list-empty">' + icon('alert') + '<p>渲染层模块没加载起来（' + esc(err) + '），请重启应用。</p></div>';
       return;
     }
 
-    document.documentElement.style.setProperty('--editor-font-size', '16px');
-
     try {
-      state.settings = await LP.getSettings();
-    } catch (err) {
-      /* 用默认值 */
-    }
-    buildFmtbar();
-    applySettingsUi();
-    setupModals();
-    setupSplitter();
-    setupKeyboard();
-    setupHardwareBack();
-    setupSwipePanes();
-    setupPinchZoom();
-    setupMaterialRipple();
+      document.documentElement.style.setProperty('--editor-font-size', '16px');
 
-    bind();
+      try {
+        state.settings = await platform.getSettings();
+      } catch (err) {
+        /* 用默认值 */
+      }
+      buildFmtbar();
+      applySettingsUi();
+      setupModals();
+      setupSplitter();
+      setupKeyboard();
+      setupHardwareBack();
+      setupSwipePanes();
+      setupPinchZoom();
+      setupMaterialRipple();
 
-    await refreshAll();
-    buildSearchIndex(); // 全文检索索引，随列表一起重建（毫秒级）
-    setupPullToRefresh(); // 只在窄屏装
-    // 窗口从宽拖窄、或手机横竖屏切换时，只在手机上装的东西要补上：
-    // 下拉刷新是「init 一次就常驻」，不在这个时机补，启动时是宽屏就永远不会装。
-    const narrowMQ = window.matchMedia('(max-width: 820px)');
-    if (typeof narrowMQ.addEventListener === 'function') {
-      narrowMQ.addEventListener('change', (event) => {
-        if (event.matches) setupPullToRefresh();
-      });
-    }
-    setPaneMode(isNarrow() ? 'write' : 'split');
-    renderPreview();
-    syncTabs();
+      bind();
 
-    ambientWatchTimer = setInterval(tickAmbientWatcher, 3500);
+      await refreshAll();
+      buildSearchIndex(); // 全文检索索引，随列表一起重建（毫秒级）
+      setupPullToRefresh(); // 只在窄屏装
+      // 窗口从宽拖窄、或手机横竖屏切换时，只在手机上装的东西要补上：
+      // 下拉刷新是「init 一次就常驻」，不在这个时机补，启动时是宽屏就永远不会装。
+      const narrowMQ = window.matchMedia('(max-width: 820px)');
+      if (typeof narrowMQ.addEventListener === 'function') {
+        narrowMQ.addEventListener('change', (event) => {
+          if (event.matches) setupPullToRefresh();
+        });
+      }
+      setPaneMode(isNarrow() ? 'write' : 'split');
+      renderPreview();
+      syncTabs();
 
-    try {
-      const info = await LP.appInfo();
-      state.appInfo = info;
-      setStatus('就绪 · 数据目录：' + (info.dataDir || ''));
-    } catch (err) {
-      setStatus('就绪');
+      ambientWatchTimer = setInterval(tickAmbientWatcher, 3500);
+
+      try {
+        const info = await platform.appInfo();
+        state.appInfo = info;
+        setStatus('就绪 · 数据目录：' + (info.dataDir || ''));
+      } catch (err) {
+        setStatus('就绪');
+      }
+    } catch (bootErr) {
+      console.error('[boot error]', bootErr);
+      const msg = String((bootErr && bootErr.message) || bootErr);
+      $('status').textContent = '启动异常: ' + msg;
+      $('list').innerHTML =
+        '<div class="list-empty">' + icon('alert') + '<p>界面初始化遇到异常（' + esc(msg) + '），请尝试重启或刷新。</p></div>';
+      try {
+        bind();
+      } catch (e) {
+        /* 忽略 */
+      }
     }
   }
 

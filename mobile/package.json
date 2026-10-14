@@ -7,7 +7,7 @@
   "scripts": {
     "web": "npm --prefix .. run build:client",
     "add:android": "cap add android",
-    "sync:android": "cap sync android",
+    "sync:android": "node ../desktop/scripts/sync-vendor.js && cap sync android",
     "apk": "cd android && gradlew assembleDebug"
   },
   "dependencies": {

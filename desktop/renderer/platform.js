@@ -19,6 +19,11 @@
   const APP_VERSION = '2.9.5';
 
   if (!window.LPRepo || !window.LPIdbBackend) {
+    const missing = [];
+    if (!window.LPRepo) missing.push('LPRepo (vendor/repo.js)');
+    if (!window.LPIdbBackend) missing.push('LPIdbBackend (backend-idb.js)');
+    window.LPPlatformError = '缺少核心模块: ' + missing.join(', ');
+    console.error('[LPPlatform]', window.LPPlatformError);
     window.LPPlatform = null;
     return;
   }

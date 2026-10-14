@@ -76,10 +76,7 @@ desktop/release/
 # 自检截图
 desktop/.verify/
 
-# 下面这两个是「装依赖时现生成」的，不进仓库：
-#   renderer/vendor/  —— 1.1 MB 的 echarts 打包文件，由 scripts/sync-vendor.js 从 node_modules 复制
-#   package-lock.json —— 桌面版是独立子应用，锁文件随平台生成，不进仓库（依赖版本已在 package.json 里钉死）
-desktop/renderer/vendor/
+# desktop/package-lock.json —— 桌面版是独立子应用，锁文件随平台生成，不进仓库（依赖版本已在 package.json 里钉死）
 desktop/package-lock.json
 
 # 注意：resources/icon.png 和 icon-foreground.png 现在要进仓库。
