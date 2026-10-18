@@ -150,7 +150,8 @@
     "js-yaml": "^4.3.2",
     "qs": "^6.16.1",
     "multer": "^2.4.0",
-    "lodash": "$lodash"
+    "lodash": "$lodash",
+    "raw-body": "3.0.2"
   },
   "engines": {
     "node": ">=20.0.0",
