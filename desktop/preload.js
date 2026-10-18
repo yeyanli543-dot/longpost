@@ -59,6 +59,9 @@ contextBridge.exposeInMainWorld('lp', {
   // WebDAV 跨设备同步网络请求
   webdavRequest: (options) => ipcRenderer.invoke('webdav:request', options),
 
+  // 文件夹导入：选目录并把其中的 Markdown 读回来
+  pickMarkdownFolder: () => ipcRenderer.invoke('import:pickFolder'),
+
   // 应用内更新：检查 / 下载 / 拉起安装程序
   updateCheck: (feed) => ipcRenderer.invoke('update:check', feed),
   updateDownload: (info) => ipcRenderer.invoke('update:download', info),

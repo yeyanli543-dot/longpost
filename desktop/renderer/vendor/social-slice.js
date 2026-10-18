@@ -13,6 +13,8 @@
 
 'use strict';
 
+(function () {
+
 /** 提示词里最多塞多少原文，避免超长文把上下文撑爆 */
 const MAX_CONTENT_CHARS = 6000;
 
@@ -139,3 +141,4 @@ const API = {
 
 if (typeof module !== 'undefined' && module.exports) module.exports = API;
 if (typeof window !== 'undefined') window.LPSocialSlice = API;
+})();

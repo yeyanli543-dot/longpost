@@ -576,6 +576,61 @@ function registerIpc() {
   });
 
 
+
+  // ---------------------------------------------------------------- 文件夹导入
+  // 读完整个目录再一次性回传。限制 500 篇 / 单篇 200KB，防止误选了一个
+  // 巨大的目录把渲染进程卡死（比如整个代码仓库）。
+  ipcMain.handle('import:pickFolder', async () => {
+    const result = await dialog.showOpenDialog({
+      title: '选择包含 Markdown 笔记的文件夹',
+      properties: ['openDirectory'],
+    });
+    if (result.canceled || !result.filePaths[0]) return { canceled: true };
+
+    const rootDir = result.filePaths[0];
+    const files = [];
+    let truncated = false;
+
+    const walk = (dir, depth) => {
+      if (depth > 6 || files.length >= 500) {
+        if (files.length >= 500) truncated = true;
+        return;
+      }
+      let entries;
+      try {
+        entries = fs.readdirSync(dir, { withFileTypes: true });
+      } catch {
+        return;
+      }
+      for (const entry of entries) {
+        if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          walk(full, depth + 1);
+          continue;
+        }
+        if (!entry.name.toLowerCase().endsWith('.md')) continue;
+        try {
+          const stat = fs.statSync(full);
+          if (stat.size > 200 * 1024) continue;
+          files.push({
+            relativePath: path.relative(rootDir, full),
+            text: fs.readFileSync(full, 'utf8'),
+          });
+        } catch {
+          /* 跳过读不了的文件 */
+        }
+        if (files.length >= 500) {
+          truncated = true;
+          return;
+        }
+      }
+    };
+
+    walk(rootDir, 0);
+    return { canceled: false, rootDir, files, truncated };
+  });
+
   // ---------------------------------------------------------------- 应用内更新
   ipcMain.handle('update:check', async (_e, feed) => {
     try {

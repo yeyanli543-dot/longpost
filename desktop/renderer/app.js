@@ -5983,6 +5983,7 @@
     // 折叠是按当前窗口宽度算出来的，所以先按同一套规则刷新一次，再决定菜单内容。
     syncToolsOverflow();
     const need = (id) => isNarrow() || !toolUsable(id);
+    items.push({ label: '导入 Markdown 文件夹…', icon: 'folder', onPick: importMarkdownFolder });
     if (need('btnShare')) {
       items.push({ label: '分享这一篇', icon: 'share', onPick: openShare });
     }
@@ -6285,6 +6286,74 @@
       toast('导入完成', 'ok');
     } catch (err) {
       toast('导入失败：' + String((err && err.message) || err), 'err');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * 选一个文件夹，把里面的 Markdown 批量导入成本地文章。
+   *
+   * 默认跳过同名文章 —— 迁移场景下覆盖是最危险的动作。
+   * 导入前先算好计划再弹确认，让用户知道会进来多少、跳过多少。
+   */
+  async function importMarkdownFolder() {
+    if (!LP || typeof LP.pickMarkdownFolder !== 'function') {
+      toast('手机版暂不支持文件夹导入', 'err');
+      return;
+    }
+
+    const API = window.LPMarkdownImport;
+    if (!API) {
+      toast('导入模块没加载，请重启应用', 'err');
+      return;
+    }
+
+    const picked = await LP.pickMarkdownFolder();
+    if (!picked || picked.canceled) {
+      setStatus('已取消导入');
+      return;
+    }
+
+    const titles = state.articles.map((article) => article.title);
+    const plan = API.planImport(picked.files || [], titles);
+
+    if (!plan.docs.length) {
+      toast(
+        '没有可导入的笔记（' + plan.skipped.length + ' 篇被跳过：同名或为空）',
+        'err',
+      );
+      return;
+    }
+
+    const summary =
+      '将导入 ' + plan.docs.length + ' 篇' +
+      (plan.skipped.length ? '，跳过 ' + plan.skipped.length + ' 篇（同名或为空）' : '') +
+      (picked.truncated ? '\n\n注意：文件过多，只读取了前 500 篇' : '') +
+      '\n\n同名文章不会被覆盖。继续？';
+
+    if (!window.confirm(summary)) {
+      setStatus('已取消导入');
+      return;
+    }
+
+    setBusyLabel();
+    let done = 0;
+    try {
+      for (const doc of plan.docs) {
+        setBusyLabel('导入中 ' + (done + 1) + '/' + plan.docs.length);
+        await LP.saveArticle({
+          title: doc.title,
+          content: doc.content,
+          tags: doc.tags,
+        });
+        done += 1;
+      }
+      await refreshAll();
+      toast('已导入 ' + done + ' 篇', 'ok');
+      setStatus('导入完成：' + done + ' 篇');
+    } catch (err) {
+      toast('导入中断：已完成 ' + done + ' 篇', 'err');
     } finally {
       setBusy(false);
     }
