@@ -16,6 +16,7 @@ const { pathToFileURL } = require('node:url');
 const store = require('./lib/store');
 const buildHtml = require('./lib/export-html');
 const updater = require('./lib/updater');
+const { startBridge } = require('./bridge');
 
 app.setName('LongPost');
 
@@ -713,6 +714,44 @@ function registerIpc() {
     walk(rootDir, 0);
     return { canceled: false, rootDir, files, truncated };
   });
+
+  // ---------------------------------------------------------------- Chrome 剪藏桥
+  let clipBridge = null;
+
+  async function ensureClipBridge() {
+    if (clipBridge) return clipBridge;
+    const settings = await store.getSettings();
+    if (!settings.clipBridgeEnabled) return null;
+
+    clipBridge = await startBridge({
+      token: settings.clipBridgeToken || undefined,
+      onClip: async (clip) => {
+        const saved = await store.saveArticle({
+          title: clip.title,
+          content: clip.content,
+          tags: ['剪藏'],
+        });
+        if (!settings.clipBridgeToken) {
+          await mergeSettings({ clipBridgeToken: clipBridge.token });
+        }
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('bridge:clipped', { id: saved && saved.id, title: clip.title });
+        }
+      },
+    });
+
+    if (!settings.clipBridgeToken) {
+      await mergeSettings({ clipBridgeToken: clipBridge.token });
+    }
+    return clipBridge;
+  }
+
+  ipcMain.handle('bridge:info', async () => {
+    const bridge = await ensureClipBridge();
+    if (!bridge) return { enabled: false };
+    return { enabled: true, port: bridge.port, token: bridge.token };
+  });
+
 
   // ---------------------------------------------------------------- 应用内更新
   ipcMain.handle('update:check', async (_e, feed) => {
