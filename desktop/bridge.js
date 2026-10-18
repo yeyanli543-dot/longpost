@@ -22,13 +22,21 @@ const MAX_BODY = 512 * 1024;
 const WINDOW_MS = 60000;
 const MAX_REQUESTS = 40;
 
-function corsHeaders() {
-  return {
+function corsHeaders(extraPrivateNetwork) {
+  const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-LongPost-Token',
     'Access-Control-Max-Age': '600',
   };
+
+  // Chrome 的 Private Network Access：https 页面要访问 127.0.0.1，
+  // 预检会带 Access-Control-Request-Private-Network，必须回允许头，
+  // 否则请求在预检阶段就被拒 —— 书签小工具会"点了没反应"。
+  if (extraPrivateNetwork) {
+    headers['Access-Control-Allow-Private-Network'] = 'true';
+  }
+  return headers;
 }
 
 /**
@@ -43,13 +51,19 @@ function startBridge(options) {
   let count = 0;
 
   const server = http.createServer((req, res) => {
+    const wantsPrivate =
+      String(req.headers['access-control-request-private-network'] || '').toLowerCase() === 'true';
+
     const reply = (status, body) => {
-      res.writeHead(status, Object.assign({ 'Content-Type': 'application/json; charset=utf-8' }, corsHeaders()));
+      res.writeHead(
+        status,
+        Object.assign({ 'Content-Type': 'application/json; charset=utf-8' }, corsHeaders(wantsPrivate)),
+      );
       res.end(JSON.stringify(body));
     };
 
     if (req.method === 'OPTIONS') {
-      res.writeHead(204, corsHeaders());
+      res.writeHead(204, corsHeaders(wantsPrivate));
       res.end();
       return;
     }
