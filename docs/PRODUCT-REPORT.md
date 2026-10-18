@@ -102,7 +102,7 @@ LongPost 是一套**长文创作与社交发布**系统：短帖引流、长文�
 ```
 longpost/
 ├── client/      React 19 前端（@ → client/src）
-├── server/      NestJS 10 后端（sourceRoot = server）
+├── server/      NestJS 12 后端（Express 5，sourceRoot = server）
 ├── shared/      前后端共享的纯逻辑与类型（无 DOM / 无 Nest 依赖）
 ├── desktop/     Electron 独立子应用（自带 renderer 与 vendor）
 ├── mobile/      Capacitor 安卓壳（webDir 指向 desktop/renderer）
@@ -157,7 +157,7 @@ Nginx（TLS / Upgrade 透传）
 | v2.9.0 | 生态互通 | 微信公众号排版、RSS/Atom、Obsidian 导出、PWA Share Target |
 | v2.9.5 | 分享修复 | 微信多场景分享、QQ 扫码、直达二维码 |
 | v2.9.7 | 工程治理 | 三套影子目录归档、测试直连生产代码（74→91）、SSRF 修复、首屏 −86% |
-| **v2.9.8** | 安全与体验 | 桌面/安卓接入 AI、AI 三级取用、依赖漏洞 17→2、登录节流、设置面板重构、设计令牌收敛、滚动揭示、应用内更新 |
+| **v2.9.8** | 安全与体验 | 桌面/安卓接入 AI、AI 三级取用、**依赖漏洞 17 → 0**、登录节流、设置面板重构、设计令牌收敛、滚动揭示、应用内更新；框架升级 Nest 10 → 12（Express 5） |
 
 ---
 
@@ -207,15 +207,14 @@ cd desktop && npm test && node scripts/verify-mobile.js
 | **弱密钥兜底** | 生产环境未配 secret 时**拒绝托管**，不再用固定常量加密 | ✅ |
 | **上传攻击** | 文件名完全随机化（免疫路径穿越）、后缀白名单、**刻意不收 SVG**、图片统一 Sharp 重编码 | ✅ |
 | **富文本注入** | 公众号导出前清理 `<script>` / `onerror=` / `javascript:` | ✅ |
-| **依赖漏洞** | `npm audit` 从 17（3 critical）降到 2（0 critical） | ✅ |
+| **依赖漏洞** | `npm audit` 从 17（3 critical）降到 **0**（生产依赖）；Nest 10 → 12、Express 5、file-type 22 一并升级 | ✅ |
 | **登录 CSRF / XSS** | JWT 走 Authorization 头，不落 Cookie；React 默认转义 | ✅ |
 
 ### 6.2 残余风险
 
 | 项 | 说明 | 建议 |
 | :--- | :--- | :--- |
-| `@nestjs/core` ≤ 11.1.17 | 需升级 Nest 12 才能修 | 下一个大版本统一升级 |
-| `file-type` 20.x | 由 `@nestjs/common` 钉住 | 随 Nest 升级一起解决 |
+| 开发依赖漏洞（18 项） | 集中在构建工具链（webpack / @swc/cli / postcss 等），**不进入运行时产物** | 随工具链升级逐步消化 |
 | 登录节流是进程内 | 多实例部署时各算各的 | 上多实例前换 Redis |
 | 无代码签名 | macOS 首次打开需右键放行；Windows 可能触发 SmartScreen | 购买证书后接入签名 |
 | 安卓 debug 签名 | 换版本需先卸载 | 正式发布前配置 release keystore |
@@ -248,7 +247,7 @@ cd desktop && npm test && node scripts/verify-mobile.js
 2. **多实例需 Redis adapter** —— Socket.IO 的房间广播在无 adapter 时跨实例割裂，PM2 配置已锁单实例。
 3. **应用内更新从 v2.9.9 起生效** —— v2.9.8 的安装包里还没有更新器。
 4. **Web 端 UI 无自动化测试** —— 目前靠桌面/移动端自检与人工截图，React 组件层缺测试。
-5. **依赖大版本落后** —— Nest 10、React 19 之外的框架升级尚未排期。
+5. **开发依赖仍有 18 项告警** —— 均在构建工具链，`npm audit --omit=dev` 为 0。
 
 ---
 
@@ -256,7 +255,7 @@ cd desktop && npm test && node scripts/verify-mobile.js
 
 | 优先级 | 事项 | 理由 |
 | :--- | :--- | :--- |
-| P0 | 升级 Nest 10 → 12 | 清掉最后 2 个依赖漏洞 |
+| ~~P0~~ | ~~升级 Nest 10 → 12~~ | ✅ 已完成（v2.9.8） |
 | P1 | 桌面端支持「登录后使用站点额度」 | 补齐三端 AI 体验差距 |
 | P1 | 多实例部署接入 Redis adapter | 支持水平扩容 |
 | P2 | 加 `.gitattributes` 统一行尾 | 避免 CRLF/LF 混用造成巨型伪 diff |

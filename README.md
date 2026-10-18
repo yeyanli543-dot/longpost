@@ -299,7 +299,7 @@ npm run apk
 | 维度 | 技术栈方案 |
 | :--- | :--- |
 | **前端开发** | React 19 · TypeScript 5.9 · Vite 8 · Tailwind CSS 4 · Radix UI · Framer Motion · Lucide Icons |
-| **后端开发** | NestJS 10 · TypeScript · Drizzle ORM · PostgreSQL · Socket.IO · SWC 编译器 |
+| **后端开发** | NestJS 12 · TypeScript · Drizzle ORM · PostgreSQL · Socket.IO · SWC 编译器 |
 | **图表引擎** | Apache ECharts 6 · 自适应莫兰迪色盘 · 同构 DSL 卡片解析器 |
 | **桌面客户端** | Electron 44 · 独立本地文件存储与数据隔离 · electron-builder |
 | **移动客户端** | Capacitor 8 (Android) · 挖孔屏自适应安全边距 · 独立离线密钥签名 |
@@ -317,7 +317,7 @@ npm run apk
 │   │   ├── hooks/       # 鉴权状态、工作区模式切换、主题切换 hooks
 │   │   └── api/         # Axios 封装与后端 API 契约层
 │   └── index.html       # 单页应用入口
-├── server/              # 后端 NestJS 10 核心服务
+├── server/              # 后端 NestJS 12 核心服务（Express 5）
 │   ├── modules/         # 业务模块 (auth / articles / posts / meetings / admin ...)
 │   ├── database/        # Drizzle ORM 数据模型 (schema.ts) 与迁移脚本
 │   └── common/          # 安全过滤器、Markdown 与 XSS 防护解析器
