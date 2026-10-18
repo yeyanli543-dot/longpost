@@ -1,6 +1,6 @@
 # LongPost 使用说明
 
-> 适用版本：**v2.10.0** · 更新日期：2026-10-18
+> 适用版本：**v3.0.0** · 更新日期：2026-10-18
 > 配套文档：[产品报告](./PRODUCT-REPORT.md) · [README](../README.md)
 
 ---
@@ -35,23 +35,23 @@ LongPost 有两条产品线，功能不完全一样，先对照下表选：
 ## 1. 安装
 
 ### 1.1 Windows
-下载 `LongPost.Setup.2.10.0.exe`（安装版）或 `LongPost.2.10.0.exe`（免安装便携版，双击即用）。
+下载 `LongPost.Setup.3.0.0.exe`（安装版）或 `LongPost.3.0.0.exe`（免安装便携版，双击即用）。
 
 首次运行若被 SmartScreen 拦下，点「更多信息 → 仍要运行」。
 
 ### 1.2 macOS
-下载 `LongPost-2.10.0-arm64.dmg`，拖进「应用程序」。因为还没有代码签名，首次打开需要**右键 →「打开」**放行一次。
+下载 `LongPost-3.0.0-arm64.dmg`，拖进「应用程序」。因为还没有代码签名，首次打开需要**右键 →「打开」**放行一次。
 
 ### 1.3 Linux
-下载 `LongPost-2.10.0.AppImage`：
+下载 `LongPost-3.0.0.AppImage`：
 
 ```bash
-chmod +x LongPost-2.10.0.AppImage
-./LongPost-2.10.0.AppImage
+chmod +x LongPost-3.0.0.AppImage
+./LongPost-3.0.0.AppImage
 ```
 
 ### 1.4 安卓
-下载 `LongPost-v2.10.0-android.apk` 直接安装。注意是 **debug 签名**，换版本时需要先卸载旧版。
+下载 `LongPost-v3.0.0-android.apk` 直接安装。注意是 **debug 签名**，换版本时需要先卸载旧版。
 
 ### 1.5 Web（自建）
 见本文第 9 节「自建部署」。
@@ -367,3 +367,38 @@ docker run --rm -v longpost_uploads:/data -v "$PWD":/backup alpine tar czf /back
 | 换设备继续写 | WebDAV 全量备份 → 新设备恢复 |
 | 换风格 | `Alt + M` |
 | 查快捷键 | `Ctrl + /`（Web） |
+
+
+---
+
+## 11. 订阅与推送（部署者）
+
+要让读者能订阅，服务端需要：
+
+```ini
+NEWSLETTER_ENABLED=true
+MAIL_PROVIDER=resend        # console 只打日志，适合先验证链路
+MAIL_FROM="LongPost <no-reply@你的域名>"
+RESEND_API_KEY=re_...       # 或 SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS
+SITE_URL=https://你的域名
+```
+
+流程：读者在文章页填邮箱 → 收到确认信 → 点确认 → 之后每篇新文章都会推送。
+
+- **发布才推送**：草稿改多少次都不发信；已发布文章改错别字也不会重复发。
+- **退订**：每封信底部都有专属链接，点一下即退订。
+- **导出订阅者**：`GET /api/newsletter/export`（管理员，CSV）。
+
+## 12. 迁移：导入与导出
+
+**导入**（桌面端）：菜单「更多」→ 导入 Markdown 文件夹 → 选目录。
+
+- 支持 frontmatter 的 `title` / `tags` / `date`；
+- 没有 frontmatter 时，用正文第一个 `# 标题`，再退回文件名；
+- 所在文件夹名会变成一个标签；
+- **同名文章一律跳过，不覆盖**。
+
+**导出**（桌面端）：菜单「更多」→ 导出静态站点 → 选目录。
+
+产出 `static-site/`，包含首页、每篇正文、`feed.xml`、`sitemap.xml`。
+全部相对链接，直接上传到 GitHub Pages / Cloudflare Pages 即可访问。
