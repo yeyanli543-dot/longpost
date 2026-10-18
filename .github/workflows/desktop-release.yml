@@ -145,8 +145,10 @@ jobs:
       - name: 创建 / 更新 Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'v2.9.7' }}
-          name: ${{ startsWith(github.ref, 'refs/tags/v') && format('LongPost {0}', github.ref_name) || 'LongPost v2.9.7' }}
+          # 打标签 -> 版本化 Release（v2.9.8 这种固定地址）
+          # 推 main  -> 滚动更新 desktop-latest，避免每次提交都把已发布的版本说明冲掉
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'desktop-latest' }}
+          name: ${{ startsWith(github.ref, 'refs/tags/v') && format('LongPost {0}', github.ref_name) || 'LongPost 最新构建（滚动更新）' }}
           body: |
             本地写作台：Markdown + 图表 + 附件 + 一码一空间独立文章库（通行码 / Google 身份隔离），一键导出成可以随手转发的网页。
             数据全部保存在自己电脑上，不联网、不上传。
@@ -161,7 +163,8 @@ jobs:
             首次在 Windows 运行如果被 SmartScreen 拦下，点「更多信息 → 仍要运行」。
           draft: false
           prerelease: false
-          generate_release_notes: false
+          # 让 GitHub 依据提交记录自动生成「本次变更」，不需要手工维护版本说明
+          generate_release_notes: true
           files: |
             dist/**/*.exe
             dist/**/*.dmg

@@ -256,7 +256,7 @@ jobs:
         run: |
           mkdir -p out
           cp mobile/android/app/build/outputs/apk/debug/app-debug.apk out/LongPost-android.apk
-          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk out/LongPost-v2.9.7-android.apk
+          cp mobile/android/app/build/outputs/apk/debug/app-debug.apk out/LongPost-v2.9.8-android.apk
           ls -lh out/
           echo "--- 文件头（确认是真正的 APK：PK 开头）---"
           head -c 4 out/LongPost-android.apk | xxd
@@ -270,12 +270,14 @@ jobs:
       - name: 发布到 Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'v2.9.7' }}
-          name: ${{ startsWith(github.ref, 'refs/tags/v') && format('LongPost {0}', github.ref_name) || 'LongPost v2.9.7' }}
+          # 打标签 -> 版本化 Release；推 main -> 滚动更新 android-latest
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || 'android-latest' }}
+          name: ${{ startsWith(github.ref, 'refs/tags/v') && format('LongPost {0}', github.ref_name) || 'LongPost Android 最新构建（滚动更新）' }}
           body: |
             LongPost 全功能本地运行工作台（双模式旗舰版：Apple 极简禅意 / Google M3 专业工坊，已内置一码一空间独立文章库与 Google 身份空间隔离）。
             
-            **Android 手机版**：下载 `LongPost-v2.9.7-android.apk`，在安卓手机上打开直接安装体验。
+            **Android 手机版**：下载 `LongPost-v2.9.8-android.apk`，在安卓手机上打开直接安装体验。
             
             数据全部存在设备本地（IndexedDB），不联网、不上传、断网即用。
+          generate_release_notes: true
           files: out/*.apk

@@ -142,7 +142,7 @@ $$\\text{Efficiency} = \\frac{K \\cdot \\text{Features}}{N_{\\text{Platforms}} \
     if (postCount[0].count < 3) {
       await sql`
         INSERT INTO posts (content, author, app_user_id, moderation_status) VALUES
-        ('LongPost v2.9.7 正式发布！已全面引入【苹果禅意】与【谷歌专业】双工作区切换机制，全局快捷键 Alt+M 即时换肤。#LongPost #架构设计', ${adminId}, ${adminId}, 'approved'),
+        ('LongPost v2.9.8 正式发布！已全面引入【苹果禅意】与【谷歌专业】双工作区切换机制，全局快捷键 Alt+M 即时换肤。#LongPost #架构设计', ${adminId}, ${adminId}, 'approved'),
         ('现在长文内的所有 Mermaid 流程图与时序图，都已支持一键导出为 2x 视网膜超清 PNG，粘贴进公众号与排版工具零毛边！#性能优化', ${architectId}, ${architectId}, 'approved'),
         ('移动端挖孔屏动态安全区已调通，打孔屏/刘海屏均享受像素级贴边避让与平滑留白。#体验升级', ${adminId}, ${adminId}, 'approved');
       `;
