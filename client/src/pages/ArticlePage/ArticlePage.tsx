@@ -18,6 +18,7 @@ import ArticleContent from './ArticleContent';
 import ReadingToolbar from './ReadingToolbar';
 import ShareMenu from './ShareMenu';
 import ShareDialog from '@/components/share/ShareDialog';
+import { Reveal } from '@/components/ui/reveal';
 
 type FontSize = 'small' | 'medium' | 'large';
 type Theme = 'dark' | 'light';
@@ -170,8 +171,12 @@ export default function ArticlePage() {
 
       {/* Article body */}
       <article className="max-w-[700px] mx-auto px-4 py-8 sm:px-4">
-        <ArticleHeader article={article} />
-        <ArticleContent article={article} fontSize={fontSize} />
+        <Reveal y={10} duration={420}>
+          <ArticleHeader article={article} />
+        </Reveal>
+        <Reveal delay={80} y={16}>
+          <ArticleContent article={article} fontSize={fontSize} />
+        </Reveal>
 
         {/* Action bar */}
         <div className="py-4 border-y border-[#2f3336]">
@@ -196,7 +201,9 @@ export default function ArticlePage() {
 
         {/* Comments */}
         <section id="comments-section" className="pt-2 pb-8">
-          <CommentsSection contentType="article" contentId={article.id} />
+          <Reveal y={20} rootMargin="0px 0px -12% 0px">
+            <CommentsSection contentType="article" contentId={article.id} />
+          </Reveal>
         </section>
 
         {/* Linked posts */}

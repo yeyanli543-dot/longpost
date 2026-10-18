@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Reveal } from '@/components/ui/reveal';
 
 const LegalPageLayout: React.FC<{
   title: string;
@@ -41,10 +42,12 @@ const Section: React.FC<{ heading: string; children: React.ReactNode }> = ({
   children,
 }) => (
   <section className="mb-10">
-    <h2 className="text-2xl font-bold text-gray-100 mb-4">{heading}</h2>
-    <div className="space-y-4 text-base leading-relaxed text-gray-300">
-      {children}
-    </div>
+    <Reveal y={22}>
+      <h2 className="text-2xl font-bold text-gray-100 mb-4">{heading}</h2>
+      <div className="space-y-4 text-base leading-relaxed text-gray-300">
+        {children}
+      </div>
+    </Reveal>
   </section>
 );
 
