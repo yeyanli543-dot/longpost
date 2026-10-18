@@ -22,6 +22,7 @@ import { PwaModule } from './modules/pwa/pwa.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { SyncModule } from './modules/sync/sync.module';
 import { AiModule } from './modules/ai/ai.module';
+import { NewsletterModule } from './modules/newsletter/newsletter.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { AiModule } from './modules/ai/ai.module';
     UploadsModule,
     SyncModule,
     AiModule,
+    NewsletterModule,
     // ====== @route-section: business-modules END ======
 
     // ⚠️ @route-order: last

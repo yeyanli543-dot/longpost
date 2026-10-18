@@ -940,3 +940,26 @@ export const userAiSettings = pgTable("user_ai_settings", {
   // System field: Update time (auto-filled, do not modify)
   updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
 });
+
+export const newsletterSubscribers = pgTable("newsletter_subscribers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  confirmToken: varchar("confirm_token", { length: 64 }).notNull(),
+  unsubscribeToken: varchar("unsubscribe_token", { length: 64 }).notNull(),
+  source: varchar("source", { length: 50 }),
+  createdAt: customTimestamptz("created_at", { precision: 6 }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  confirmedAt: customTimestamptz("confirmed_at", { precision: 6 }),
+  unsubscribedAt: customTimestamptz("unsubscribed_at", { precision: 6 }),
+});
+
+export const newsletterIssues = pgTable("newsletter_issues", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  articleId: uuid("article_id").notNull().unique(),
+  subject: varchar("subject", { length: 255 }).notNull(),
+  sentCount: integer("sent_count").notNull().default(0),
+  failedCount: integer("failed_count").notNull().default(0),
+  status: varchar("status", { length: 20 }).notNull().default("sending"),
+  createdAt: customTimestamptz("created_at", { precision: 6 }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  finishedAt: customTimestamptz("finished_at", { precision: 6 }),
+});

@@ -452,5 +452,38 @@ export async function initDatabaseSchema(sql: postgres.Sql): Promise<void> {
   await sql`
     ALTER TABLE access_code_logs ADD COLUMN IF NOT EXISTS attempted_code VARCHAR(64);
   `.simple().catch(() => {});
+
+  // 10. Newsletter（订阅与推送）
+  await sql`
+    CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      email VARCHAR(255) NOT NULL UNIQUE,
+      status VARCHAR(20) NOT NULL DEFAULT 'pending',
+      confirm_token VARCHAR(64) NOT NULL,
+      unsubscribe_token VARCHAR(64) NOT NULL,
+      source VARCHAR(50),
+      created_at TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      confirmed_at TIMESTAMPTZ(6),
+      unsubscribed_at TIMESTAMPTZ(6)
+    );
+  `.simple().catch(() => {});
+
+  await sql`
+    CREATE INDEX IF NOT EXISTS newsletter_subscribers_status_idx
+      ON newsletter_subscribers (status);
+  `.simple().catch(() => {});
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS newsletter_issues (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      article_id UUID NOT NULL UNIQUE,
+      subject VARCHAR(255) NOT NULL,
+      sent_count INTEGER NOT NULL DEFAULT 0,
+      failed_count INTEGER NOT NULL DEFAULT 0,
+      status VARCHAR(20) NOT NULL DEFAULT 'sending',
+      created_at TIMESTAMPTZ(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      finished_at TIMESTAMPTZ(6)
+    );
+  `.simple().catch(() => {});
 }
 
