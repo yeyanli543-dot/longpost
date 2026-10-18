@@ -1,0 +1,49 @@
+# LongPost 一键起（Postgres + 应用）
+#
+#   cp .env.example .env    # 填 JWT_SECRET / OWNER_EMAIL 等
+#   docker compose up -d --build
+#   open http://localhost:3000
+#
+# 说明：数据库密码通过 .env 的 POSTGRES_PASSWORD 传入，
+# 应用侧连接串由 compose 拼好，不需要你手写 DATABASE_URL。
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: longpost
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?请在 .env 里设置 POSTGRES_PASSWORD}
+      POSTGRES_DB: longpost
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U longpost -d longpost"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 3000
+      DATABASE_URL: postgres://longpost:${POSTGRES_PASSWORD}@db:5432/longpost
+      UPLOAD_DIR: /data/uploads
+      # 反向代理在同一 compose 网络外时，把外部地址填进来（逗号分隔）
+      CORS_ORIGIN: ${CORS_ORIGIN:-}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - uploads:/data/uploads
+
+volumes:
+  pgdata:
+  uploads:

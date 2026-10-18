@@ -336,6 +336,118 @@ npm run apk
 
 ---
 
+## 🚀 部署（Web 端）
+
+三种路子，按省事程度排序。**桌面端 / 安卓不需要部署**——它们是本地应用，装完就能用。
+
+### 前置：必须先配的几项
+
+```bash
+cp .env.example .env
+```
+
+| 变量 | 为什么必须 |
+| :--- | :--- |
+| `JWT_SECRET` | 不填就用默认值，等于谁都能伪造登录态 |
+| `OWNER_EMAIL` | 不填会创建 `admin@longpost.com / admin123` 的默认管理员 |
+| `DATABASE_URL`（或 `SUDA_DATABASE_URL`） | PostgreSQL 连接串 |
+| `UPLOAD_DIR` | 必须是**持久化目录**，否则重新部署会丢图片和附件 |
+
+AI 助手是可选功能：不配 `AI_SITE_KEY` 就只允许用户自带 Key。
+
+---
+
+### 方式一：直接跑（最快验证）
+
+```bash
+npm ci --legacy-peer-deps
+npm run build
+NODE_ENV=production node dist/server/main.js
+```
+
+适合本机试跑。**不适合长期跑**：进程挂了不会自动重启。
+
+---
+
+### 方式二：PM2（单机长期运行）
+
+```bash
+npm i -g pm2
+npm ci --legacy-peer-deps && npm run build
+pm2 start ecosystem.config.cjs
+pm2 save && pm2 startup     # 开机自启
+```
+
+> ⚠️ **必须单实例**。站内私信和会议信令走 Socket.IO，项目没有装 Redis adapter，
+> 多实例会导致「消息有时收不到」「会议里看不到人」。真要用多核，
+> 先接 `@socket.io/redis-adapter`，再把 `ecosystem.config.cjs` 里的 `instances` 改成 `max`。
+
+常用命令：
+
+```bash
+pm2 logs longpost      # 看日志
+pm2 restart longpost   # 发版后重启
+pm2 monit              # 资源占用
+```
+
+---
+
+### 方式三：Docker Compose（推荐，连数据库一起起）
+
+```bash
+# 先在 .env 里补一行数据库密码
+echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)" >> .env
+
+docker compose up -d --build
+docker compose logs -f app
+```
+
+起来之后访问 `http://localhost:3000`（端口可用 `APP_PORT` 改）。
+
+| 卷 | 内容 |
+| :--- | :--- |
+| `pgdata` | PostgreSQL 数据 |
+| `uploads` | 用户上传的图片与附件 |
+
+备份就备份这两个卷：
+
+```bash
+docker compose exec db pg_dump -U longpost longpost > backup-$(date +%F).sql
+docker run --rm -v longpost_uploads:/data -v "$PWD":/backup alpine tar czf /backup/uploads.tar.gz -C /data .
+```
+
+镜像内置 `HEALTHCHECK`，会打 `/api/site-settings` 探活；`docker compose ps` 看到 `healthy` 即代表数据库连接与路由都正常。
+
+---
+
+### 反向代理（Nginx 片段）
+
+```nginx
+server {
+  listen 80;
+  server_name your-domain.com;
+  client_max_body_size 30m;
+
+  location / {
+    proxy_pass http://127.0.0.1:3000;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # Socket.IO 必须放行 Upgrade
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_read_timeout 600s;
+  }
+}
+```
+
+配上反向代理后，记得在 `.env` 里设置 `CORS_ORIGIN=https://your-domain.com`。
+
+---
+
 ## 📜 开源协议
 
 本项目基于 [MIT 许可证](LICENSE) 开源。欢迎提交 Issue、Fork 并发起 Pull Request！
