@@ -360,7 +360,7 @@ const ArticleComposer = ({
         <div className="flex items-center gap-2.5">
           <WorkspaceModeSwitcher />
           <span className="text-xs text-muted-foreground hidden sm:inline">
-            {isLite ? '🍏 Apple 极简禅意模式 · 专注核心写作' : '🔷 Google M3 专业工坊 · 全功能生产力'}
+            {isLite ? '🍏 极简模式 · 专注核心写作' : '🔷 专业版 专业工坊 · 全功能生产力'}
           </span>
         </div>
         {isLite && (

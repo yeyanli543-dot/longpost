@@ -102,13 +102,13 @@
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-io: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Apple 官方微物理弹簧曲线 */
+  /* 极简版 官方微物理弹簧曲线 */
   --apple-spring-press: cubic-bezier(0.28, 0.11, 0.32, 1);
   --apple-spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --apple-spring-dialog: cubic-bezier(0.32, 0.72, 0, 1);
   --apple-ease: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Google Material 3 官方微物理动效曲线 */
+  /* Material 3 官方微物理动效曲线 */
   --m3-ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
   --m3-ease-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
   --m3-ease-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
@@ -1110,7 +1110,7 @@ kbd {
   min-height: 24px;
 }
 
-/* 🍎 苹果极简版：macOS 浮动通知药丸形态 */
+/* 🍎 极简版：macOS 浮动通知药丸形态 */
 .mode-apple .ambient-bar {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
@@ -1122,7 +1122,7 @@ kbd {
   background: rgba(30, 30, 32, 0.85);
 }
 
-/* 🎨 谷歌专业版：Material 3 悬浮辅助 Banner */
+/* 🎨 专业版：Material 3 悬浮辅助 Banner */
 .mode-google .ambient-bar {
   background: var(--surface-2);
   border: 1px solid rgba(196, 199, 197, 0.5);
@@ -2152,7 +2152,7 @@ html[data-theme='light'] .preview pre.code-block {
   border-color: var(--accent);
 }
 
-/* 🍎 Apple 极简模式：拟态磨砂质感 */
+/* 🍎 极简版 极简模式：拟态磨砂质感 */
 .mode-apple .chart-copy-btn {
   border-radius: var(--r-sm);
   background: rgba(255, 255, 255, 0.85);
@@ -2168,7 +2168,7 @@ html[data-theme='light'] .preview pre.code-block {
   color: #f5f5f7;
 }
 
-/* 🎨 Google 专业模式：M3 Tonal 风格 */
+/* 🎨 专业版 专业模式：M3 Tonal 风格 */
 .mode-google .chart-copy-btn {
   border-radius: var(--r-sm);
   background: var(--surface-2, #edf2fc);
@@ -2490,10 +2490,10 @@ body.reading-mode .preview {
 }
 
 /* ============================================================================
-   8. 双模式工作区系统：🍎 苹果极简版 (Apple Zen) vs 🎨 谷歌专业版 (Google Pro)
+   8. 双模式工作区系统：🍎 极简版 (极简版) vs 🎨 专业版 (专业版)
    ========================================================================= */
 
-/* 模式切换药丸按钮（Apple 拟物胶囊 vs Google M3 药丸） */
+/* 模式切换药丸按钮（极简版 拟物胶囊 vs 专业版 药丸） */
 .mode-pill-btn {
   display: inline-flex;
   align-items: center;
@@ -2536,7 +2536,7 @@ body.reading-mode .preview {
 }
 
 /* ============================================================================
-   Google Material 3 官方墨水涟漪系统 (M3 Ink Ripple)
+   Material 3 官方墨水涟漪系统 (M3 Ink Ripple)
    ========================================================================= */
 .m3-ripple-container {
   position: relative;
@@ -2571,8 +2571,8 @@ body.reading-mode .preview {
 }
 
 /* ============================================================================
-   🍏 苹果极简模式 (Apple Zen · Lite)
-   1:1 深度还原 Apple HIG · macOS Sequoia & iOS 备忘录 (Notes.app) / Pages 官方美学
+   🍏 极简模式 (极简版 · Lite)
+   1:1 深度还原 极简设计规范 · macOS Sequoia & iOS 备忘录 (Notes.app) / Pages 官方美学
    ========================================================================= */
 .mode-apple {
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Helvetica Neue", sans-serif;
@@ -2585,25 +2585,25 @@ body.reading-mode .preview {
   --r-pill: 999px;
 }
 
-/* 浅色模式：经典 Apple 灰白底 (#f5f5f7)、纯白稿纸、macOS 毛玻璃与系统蓝 */
+/* 浅色模式：经典 极简版 灰白底 (#f5f5f7)、纯白稿纸、macOS 毛玻璃与系统蓝 */
 [data-theme='light'].mode-apple,
 [data-theme='light'] .mode-apple {
-  --bg: #f5f5f7;              /* Apple 官网标志性极简灰白画布 */
+  --bg: #f5f5f7;              /* 参考站标志性极简灰白画布 */
   --bg-2: #ffffff;            /* 纯白稿纸卡片 */
   --surface: rgba(255, 255, 255, 0.85); /* macOS 经典毛玻璃 */
   --surface-2: #f2f2f4;
   --surface-3: #e5e5ea;
   --border: rgba(0, 0, 0, 0.08); /* 发丝级边框 */
   --border-strong: rgba(0, 0, 0, 0.14);
-  --text: #1d1d1f;            /* Apple 官网炭黑主文本 */
-  --text-2: #6e6e73;          /* Apple 副标题中灰 */
-  --text-3: #86868b;          /* Apple 辅助说明灰 */
-  --accent: #0071e3;          /* Apple 官网经典交互蓝 */
+  --text: #1d1d1f;            /* 参考站炭黑主文本 */
+  --text-2: #6e6e73;          /* 极简版 副标题中灰 */
+  --text-3: #86868b;          /* 极简版 辅助说明灰 */
+  --accent: #0071e3;          /* 参考站经典交互蓝 */
   --accent-hover: #0077ed;
   --accent-soft: rgba(0, 113, 227, 0.08);
   --accent-line: rgba(0, 113, 227, 0.32);
   --on-accent: #ffffff;
-  --pin: #ff9500;             /* Apple 暖橙置顶色 */
+  --pin: #ff9500;             /* 极简版 暖橙置顶色 */
   --sh-1: 0 1px 2px rgba(0, 0, 0, 0.04);
   --sh-2: 0 4px 16px rgba(0, 0, 0, 0.06);
   --sh-3: 0 16px 36px rgba(0, 0, 0, 0.1);
@@ -2612,7 +2612,7 @@ body.reading-mode .preview {
 /* 深色模式：macOS Sequoia 深空纯黑与灵动蓝 */
 [data-theme='dark'].mode-apple,
 [data-theme='dark'] .mode-apple {
-  --bg: #000000;              /* Apple 深空纯黑 (True OLED Black) */
+  --bg: #000000;              /* 极简版 深空纯黑 (True OLED Black) */
   --bg-2: #161617;
   --surface: rgba(28, 28, 30, 0.85);
   --surface-2: #242426;
@@ -2622,7 +2622,7 @@ body.reading-mode .preview {
   --text: #f5f5f7;
   --text-2: #a1a1a6;
   --text-3: #86868b;
-  --accent: #2997ff;          /* Apple 夜间灵动蓝 */
+  --accent: #2997ff;          /* 极简版 夜间灵动蓝 */
   --accent-hover: #40a9ff;
   --accent-soft: rgba(41, 151, 255, 0.15);
   --accent-line: rgba(41, 151, 255, 0.4);
@@ -2633,7 +2633,7 @@ body.reading-mode .preview {
   --sh-3: 0 20px 48px rgba(0, 0, 0, 0.6);
 }
 
-/* 🍎 0. Apple 物理弹性动效系统 (Apple Fluid Spring Physics) */
+/* 🍎 0. 极简版 物理弹性动效系统 (极简版 Fluid Spring Physics) */
 .mode-apple .btn,
 .mode-apple .mode-pill-btn,
 .mode-apple .seg,
@@ -2752,7 +2752,7 @@ body.reading-mode .preview {
   color: #ffffff;
 }
 
-/* 🍎 3. 备忘录式纯净文章列表行 (Apple Notes Row) */
+/* 🍎 3. 备忘录式纯净文章列表行 (备忘录 Row) */
 .mode-apple .list {
   padding: 6px 8px;
 }
@@ -2861,12 +2861,12 @@ body.reading-mode .preview {
   margin: 0 4px;
 }
 
-/* 🍎 5. 隐藏底栏：消除程序员 IDE 违和感，回归 Apple Notes 纯净心流 */
+/* 🍎 5. 隐藏底栏：消除程序员 IDE 违和感，回归 备忘录 纯净心流 */
 .mode-apple .statusbar {
   display: none !important;
 }
 
-/* 🍎 6. Apple Notes / Pages 纯净稿纸画卷 */
+/* 🍎 6. 备忘录 / 文稿 纯净稿纸画卷 */
 .mode-apple .panes {
   background: var(--bg);
   padding: 16px 24px 32px;
@@ -2948,7 +2948,7 @@ body.reading-mode .preview {
   }
 }
 
-/* 🍎 8. Apple 官网 1:1 镜面扫光微交互 (Apple Card Specular Sheen Sweep) */
+/* 🍎 8. 参考站 1:1 镜面扫光微交互 (极简版 Card Specular Sheen Sweep) */
 .mode-apple .btn,
 .mode-apple .mode-pill-btn,
 .mode-apple .seg,
@@ -2997,7 +2997,7 @@ body.reading-mode .preview {
   transform: translateX(120%);
 }
 
-/* 🍎 9. Apple 官网 1:1 钛金属光泽字与首屏迎宾画卷 (Hero Showcase) */
+/* 🍎 9. 参考站 1:1 钛金属光泽字与首屏迎宾画卷 (Hero Showcase) */
 .mode-apple .brand-name::before {
   content: ' ';
   font-size: 1.08em;
@@ -3131,8 +3131,8 @@ body.reading-mode .preview {
 
 
 /* ============================================================================
-   🎨 谷歌专业模式 (Google Pro Studio)
-   1:1 深度还原 Google Material Design 3 (M3) · Google Workspace / Docs / Keep
+   🎨 专业模式 (专业版)
+   1:1 深度还原 Material Design 3 (M3) · 办公套件
    ========================================================================= */
 .mode-google {
   --font-sans: "Google Sans", "Product Sans", "Roboto", "Segoe UI", sans-serif;
@@ -3145,11 +3145,11 @@ body.reading-mode .preview {
   --r-pill: 9999px;
 }
 
-/* 浅色模式：Google Workspace M3 经典蓝调与 Tonal 表面系统 */
+/* 浅色模式：办公套件 M3 经典蓝调与 Tonal 表面系统 */
 [data-theme='light'].mode-google,
 [data-theme='light'] .mode-google {
   --bg: #f8fafd;
-  --bg-2: #f0f4f9;            /* Google Docs Canvas 标志性冷灰画布 */
+  --bg-2: #f0f4f9;            /* 文档 Canvas 标志性冷灰画布 */
   --surface: #ffffff;         /* 浮空白色纸张 */
   --surface-2: #edf2fc;       /* Workspace Tonal Ribbon 胶囊 */
   --surface-3: #e1e3e1;
@@ -3158,9 +3158,9 @@ body.reading-mode .preview {
   --text: #1f1f1f;
   --text-2: #444746;
   --text-3: #74777f;
-  --accent: #0b57d0;          /* Google 蓝 */
+  --accent: #0b57d0;          /* 专业版 蓝 */
   --accent-hover: #0842a0;
-  --accent-soft: #d3e3fd;     /* Google Primary Container */
+  --accent-soft: #d3e3fd;     /* 专业版 Primary Container */
   --accent-line: #0b57d0;
   --on-accent: #ffffff;
   --on-accent-container: #041e49;
@@ -3169,7 +3169,7 @@ body.reading-mode .preview {
   --sh-3: 0 4px 12px 3px rgba(60, 64, 67, 0.15), 0 2px 4px 0 rgba(60, 64, 67, 0.3);
 }
 
-/* 深色模式：Google Material You 暗夜蓝灰 */
+/* 深色模式：Material You 暗夜蓝灰 */
 [data-theme='dark'].mode-google,
 [data-theme='dark'] .mode-google {
   --bg: #131314;
@@ -3193,7 +3193,7 @@ body.reading-mode .preview {
   --sh-3: 0 12px 32px rgba(0, 0, 0, 0.65);
 }
 
-/* 🎨 1. Google 标志性四色徽光与流光动效 (Google 4-Color Accent Flow) */
+/* 🎨 1. 专业版 标志性四色徽光与流光动效 (专业版 4-Color Accent Flow) */
 .mode-google .side-head::before {
   content: '';
   display: block;
@@ -3213,7 +3213,7 @@ body.reading-mode .preview {
   100% { background-position: 0% 50%; }
 }
 
-/* 🎨 2. Google Workspace 48px 大药丸搜索栏 */
+/* 🎨 2. 办公套件 48px 大药丸搜索栏 */
 .mode-google .search-wrap {
   height: 46px;
   border-radius: var(--r-pill);
@@ -3248,7 +3248,7 @@ body.reading-mode .preview {
   box-shadow: 0 1px 3px 1px rgba(60, 64, 67, 0.15);
 }
 
-/* 🎨 3. Google M3 Extended FAB (浮动操作大按钮与进阶光影) */
+/* 🎨 3. 专业版 Extended FAB (浮动操作大按钮与进阶光影) */
 .mode-google #btnNew {
   height: 48px;
   border-radius: var(--r-lg);
@@ -3274,7 +3274,7 @@ body.reading-mode .preview {
   box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.2);
 }
 
-/* 🎨 4. Google Keep M3 Elevated Cards (卡片流) */
+/* 🎨 4. 卡片流 M3 Elevated Cards (卡片流) */
 .mode-google .list {
   padding: 8px 10px;
 }
@@ -3315,7 +3315,7 @@ body.reading-mode .preview {
   font-family: 'Google Sans', Roboto, sans-serif;
 }
 
-/* 🎨 5. Google Docs 专业排版与浮空文档纸张 (Workspace Paged Canvas) */
+/* 🎨 5. 文档 专业排版与浮空文档纸张 (Workspace Paged Canvas) */
 .mode-google .pro-tool-item {
   display: inline-flex !important;
   font-weight: 600;
@@ -3429,7 +3429,7 @@ body.reading-mode .preview {
   color: var(--text);
 }
 
-/* 🎨 6. Google M3 28px 超大圆角对话框 (Material 3 Dialog 与 Emphasized Decelerate 动效) */
+/* 🎨 6. 专业版 28px 超大圆角对话框 (Material 3 Dialog 与 Emphasized Decelerate 动效) */
 .mode-google .dialog {
   border-radius: var(--r-pill);
   background: var(--surface-2);
@@ -3464,7 +3464,7 @@ body.reading-mode .preview {
   box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.15), 0 1px 2px 0 rgba(0, 0, 0, 0.3);
 }
 
-/* 🎨 7. Google Docs 风格状态栏 */
+/* 🎨 7. 文档 风格状态栏 */
 .mode-google .statusbar {
   background: var(--surface-2);
   border-top: 1px solid var(--border);
@@ -3474,7 +3474,7 @@ body.reading-mode .preview {
   padding: 4px 16px;
 }
 
-/* 🎨 8. Google 官网 1:1 贯穿顶栏 4 色呼吸流光条与 Gemini 渐变大标题 */
+/* 🎨 8. 专业版 官网 1:1 贯穿顶栏 4 色呼吸流光条与 Gemini 渐变大标题 */
 .mode-google::before {
   content: '';
   position: fixed;
@@ -3787,7 +3787,7 @@ body.reading-mode .preview {
   cursor: crosshair;
 }
 
-/* 🔑 通行码与 Google 登录中心样式 */
+/* 🔑 通行码与 专业版 登录中心样式 */
 .empty-actions {
   display: flex;
   align-items: center;
@@ -4119,4 +4119,54 @@ body.reading-mode .preview {
 
 .sc-body > .field:first-child {
   padding-top: var(--sp-1);
+}
+
+/* ---------------------------------------------------------------- 更新横幅 */
+.update-banner {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: calc(var(--z-toast) + 2);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: min(720px, calc(100vw - 32px));
+  padding: 8px 10px 8px var(--sp-4);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: var(--sh-2);
+  animation: update-drop var(--dur-3) var(--ease);
+}
+
+@keyframes update-drop {
+  from { opacity: 0; transform: translate(-50%, -12px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.update-banner-text {
+  font-size: var(--fs-sm);
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.update-banner .btn {
+  flex: none;
+}
+
+@media (max-width: 720px) {
+  .update-banner {
+    top: auto;
+    bottom: calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
+    left: 8px;
+    right: 8px;
+    max-width: none;
+    transform: none;
+    flex-wrap: wrap;
+    border-radius: var(--r-lg);
+  }
+  .update-banner-text { white-space: normal; }
 }

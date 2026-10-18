@@ -20,7 +20,7 @@ LongPost 手机版是一个**完全本地离线运行**的长文写作与阅读�
 ## 🛠️ 技术实现
 
 - **外壳框架**：基于 [Capacitor 8](https://capacitorjs.com/) 深度定制；
-- **渲染内核**：复用现代 React 19 + Tailwind CSS 4 构建产物 `dist/client`，完美支持 🍏 Apple 极简与 🔷 Google 专业双工作区切换；
+- **渲染内核**：复用现代 React 19 + Tailwind CSS 4 构建产物 `dist/client`，完美支持 🍏 极简版与 🔷 专业版双工作区切换；
 - **本地存储**：数据持久化于手机本地（IndexedDB/SQLite），无需网络请求；
 - **异形屏适配**：深度集成 Punch-hole / Dynamic Island 前摄挖孔避让算法与横竖屏安全区（`viewport-fit=cover`）；
 - **自适应设计**：

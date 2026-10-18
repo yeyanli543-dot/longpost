@@ -64,6 +64,8 @@
       aiBaseUrl: 'https://api.deepseek.com/v1',
       aiModel: 'deepseek-chat',
       aiApiKey: '',
+      // 自定义更新清单地址；留空用 GitHub Releases
+      updateFeed: '',
     };
   }
 

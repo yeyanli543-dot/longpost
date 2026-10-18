@@ -142,10 +142,10 @@ input, textarea, button, select {
 }
 
 /* ==========================================================================
-   苹果风格 (Apple Lite) 与 谷歌风格 (Google Pro) 设计系统注入
+   极简版与专业版两套设计系统注入
    ========================================================================== */
 
-/* 🍏 苹果极简模式 (Apple HIG / macOS Zen) */
+/* 🍏 极简模式 (极简设计规范 / macOS Zen) */
 .mode-apple {
   --app-radius-lg: 1.5rem;
   --app-radius-md: 1rem;
@@ -162,7 +162,7 @@ input, textarea, button, select {
   --app-glass-border: rgba(255, 255, 255, 0.08);
 }
 
-/* 🔷 谷歌专业模式 (Google Material Design 3 / Material You) */
+/* 🔷 专业模式 (Material Design 3 / Material You) */
 .mode-google {
   --m3-primary: #1a73e8;
   --m3-primary-hover: #1557b0;
@@ -192,7 +192,7 @@ input, textarea, button, select {
   --m3-chip-text: #a8c7fa;
 }
 
-/* 苹果质感毛玻璃类 */
+/* 毛玻璃类 */
 .apple-glass {
   background: var(--app-glass-bg);
   backdrop-filter: blur(24px) saturate(180%);
@@ -200,7 +200,7 @@ input, textarea, button, select {
   border: 1px solid var(--app-glass-border);
 }
 
-/* 苹果 macOS / iOS 灵动悬浮胶囊 Dock */
+/* 灵动悬浮胶囊 Dock */
 .apple-dock {
   background: var(--app-glass-bg);
   backdrop-filter: blur(32px) saturate(220%);
@@ -211,21 +211,21 @@ input, textarea, button, select {
     0 0 0 1px rgba(255, 255, 255, 0.12) inset;
 }
 
-/* 谷歌 M3 容器卡片类 */
+/* 专业版容器卡片类 */
 .google-surface {
   background-color: var(--m3-surface-container-low);
   border: 1px solid var(--m3-outline-variant);
   border-radius: 1.25rem;
 }
 
-/* 谷歌 Material You 导航药丸指示器 */
+/* 专业版导航药丸指示器 */
 .google-nav-pill-active {
   background-color: var(--m3-chip-bg) !important;
   color: var(--m3-chip-text) !important;
   font-weight: 600;
 }
 
-/* 谷歌 M3 浮动操作按钮 (FAB) */
+/* 专业版浮动操作按钮 (FAB) */
 .google-fab {
   background-color: var(--m3-chip-bg);
   color: var(--m3-chip-text);

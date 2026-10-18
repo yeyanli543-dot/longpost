@@ -15,6 +15,7 @@ const { pathToFileURL } = require('node:url');
 
 const store = require('./lib/store');
 const buildHtml = require('./lib/export-html');
+const updater = require('./lib/updater');
 
 app.setName('LongPost');
 
@@ -572,6 +573,42 @@ function registerIpc() {
     const controller = aiControllers.get(String(requestId));
     if (controller) controller.abort();
     return true;
+  });
+
+
+  // ---------------------------------------------------------------- 应用内更新
+  ipcMain.handle('update:check', async (_e, feed) => {
+    try {
+      const settings = await store.getSettings();
+      const info = await updater.checkForUpdates({ feed: feed || settings.updateFeed || undefined });
+      return { ok: true, info };
+    } catch (err) {
+      return { ok: false, error: (err && err.message) || String(err) };
+    }
+  });
+
+  ipcMain.handle('update:download', async (event, info) => {
+    const sender = event.sender;
+    try {
+      const res = await updater.downloadUpdate(info, {
+        onProgress: (received, total) => {
+          if (sender.isDestroyed()) return;
+          sender.send('update:progress', { received, total });
+        },
+      });
+      return { ok: true, ...res };
+    } catch (err) {
+      return { ok: false, error: (err && err.message) || String(err) };
+    }
+  });
+
+  ipcMain.handle('update:install', async (_e, filePath) => {
+    try {
+      await updater.installUpdate(filePath);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: (err && err.message) || String(err) };
+    }
   });
 
   // 系统剪贴板图片写入

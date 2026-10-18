@@ -139,6 +139,18 @@ jobs:
         with:
           path: dist
 
+      # 应用内更新会拉取这份校验和，下载完先比对 sha256 再执行安装包。
+      # 只保留文件名（去掉 artifact 目录前缀），更新器按文件名匹配。
+      - name: 生成安装包校验和
+        run: |
+          cd dist
+          : > checksums.txt
+          find . -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.AppImage' \) -print0 |
+            while IFS= read -r -d '' f; do
+              sha256sum "$f" | sed 's|  \./.*/|  |'
+            done | sort -k2 > checksums.txt
+          cat checksums.txt
+
       # 推 v* 标签 -> 正式版本号 Release
       # 推 main    -> 更新到长期存在的 desktop-latest 标签上，给一个固定的下载地址，
       #               不需要登录 GitHub 就能下载安装包
@@ -161,6 +173,8 @@ jobs:
             **Linux**：下载 `.AppImage`，`chmod +x` 后直接运行。
 
             首次在 Windows 运行如果被 SmartScreen 拦下，点「更多信息 → 仍要运行」。
+
+            **应用内更新**：桌面端启动后会自动检查新版本，发现有更新会在顶部提示，点一下即可下载、校验并安装，不需要自己来 GitHub 找包。
           draft: false
           prerelease: false
           # 让 GitHub 依据提交记录自动生成「本次变更」，不需要手工维护版本说明
@@ -172,4 +186,5 @@ jobs:
             dist/**/*.exe
             dist/**/*.dmg
             dist/**/*.zip
+            dist/**/checksums.txt
             dist/**/*.AppImage

@@ -239,7 +239,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
           </div>
         </>
       ) : (
-        /* 专业模式 (Google Pro M3) 下的多功能工作站 */
+        /* 专业模式 (专业版 M3) 下的多功能工作站 */
         <>
           <div className="flex items-center gap-1 overflow-x-auto py-0.5">
             <WorkspaceModeSwitcher compact />
@@ -314,7 +314,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
 
             <div className="w-[1px] h-4 bg-gray-300 dark:bg-gray-700 mx-1" />
 
-            {/* 谷歌专业工具组 Chip 药丸 */}
+            {/* 专业工具组 Chip 药丸 */}
             {onOpenWhiteboard && (
               <button
                 onClick={onOpenWhiteboard}

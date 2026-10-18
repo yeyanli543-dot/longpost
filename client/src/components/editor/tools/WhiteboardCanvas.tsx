@@ -256,7 +256,7 @@ export const WhiteboardCanvas: FC<WhiteboardCanvasProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="relative w-full max-w-4xl bg-white dark:bg-[#1f2023] rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        {/* 顶部工具栏 (Google M3 风格) */}
+        {/* 顶部工具栏 (专业版 风格) */}
         <div className="flex items-center justify-between px-6 py-3.5 border-b border-gray-100 dark:border-gray-800/80 bg-[#f8fafd] dark:bg-[#18191b]">
           <div className="flex items-center gap-3">
             <span className="p-2 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">
@@ -361,7 +361,7 @@ export const WhiteboardCanvas: FC<WhiteboardCanvasProps> = ({
             </button>
           </div>
 
-          {/* 谷歌色板 */}
+          {/* 配色方案 */}
           <div className="flex items-center gap-2">
             <span className="text-gray-400 font-medium">颜色:</span>
             <div className="flex items-center gap-1.5">

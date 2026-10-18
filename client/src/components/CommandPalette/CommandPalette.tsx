@@ -111,8 +111,8 @@ export const CommandPalette: React.FC = () => {
     },
     {
       id: 'workspace-mode-toggle',
-      title: `切换工作区风格 (当前: ${isLite ? '🍏 Apple 极简版' : '🔷 Google M3 专业版'})`,
-      subtitle: '一键无缝在苹果极简禅意与谷歌专业生产力之间切换 (Alt+M)',
+      title: `切换工作区风格 (当前: ${isLite ? '🍏 Apple 极简版' : '🔷 专业版 专业版'})`,
+      subtitle: '一键无缝在极简与专业生产力之间切换 (Alt+M)',
       icon: <Sparkles className="w-4 h-4 text-purple-400" />,
       category: '系统设置',
       perform: () => toggleMode(),

@@ -38,7 +38,7 @@ export const ShortcutsModal: React.FC<ShortcutsModalProps> = ({ isOpen, onClose 
     {
       category: '系统与工作区特权',
       items: [
-        { label: '双工作区秒切', key: 'Alt + M', syntax: '苹果禅意 ⇄ 谷歌专业' },
+        { label: '双工作区秒切', key: 'Alt + M', syntax: '极简 ⇄ 专业' },
         { label: '全局指令面板', key: 'Ctrl + K', syntax: '快速跳转与全站检索' },
         { label: '本快捷键指南', key: 'Ctrl + /', syntax: '随用随开' },
         { label: '选中文本气泡', key: '划选文字', syntax: '浮动快捷润色菜单' },

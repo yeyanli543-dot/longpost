@@ -102,7 +102,7 @@
       mdEngine: 'auto',
       highlight: true,
       math: true,
-      /** 工作区模式：lite (苹果极简版) | pro (谷歌专业版) */
+      /** 工作区模式：lite (极简版) | pro (专业版) */
       workspaceMode: 'lite',
     },
     /** 每篇文章的滚动位置，切来切去不用重新找地方。 */
@@ -3046,10 +3046,10 @@
     document.body.classList.toggle('mode-pro', !isLite);
 
     const badge = isLite ? '' : '';
-    const label = isLite ? '苹果极简' : '谷歌专业';
+    const label = isLite ? '极简' : '专业';
     const title = isLite
-      ? '当前：苹果极简版（点击切换至 谷歌专业版，快捷键 Alt+M）'
-      : '当前：谷歌专业版（点击切换至 苹果极简版，快捷键 Alt+M）';
+      ? '当前：极简版（点击切换至 专业版，快捷键 Alt+M）'
+      : '当前：专业版（点击切换至 极简版，快捷键 Alt+M）';
 
     const btn1 = $('btnModeSwitch');
     if (btn1) {
@@ -3065,8 +3065,8 @@
     }
     $('modeSwitch') && syncSegmentedActive('modeSwitch', actual);
     $('modeSwitchHelp') && ($('modeSwitchHelp').textContent = isLite
-      ? '当前生效：苹果极简版（Apple Zen · Notes/Pages 深度还原）—— 纯净留白、毛玻璃材质、macOS 红绿灯、沉浸式心流写作。'
-      : '当前生效：谷歌专业版（Google Pro · Workspace/M3 深度还原）—— Material 3 工坊、大药丸搜索、Extended FAB、全功能专业工具。');
+      ? '当前生效：极简版 —— 纯净留白、毛玻璃材质、细腻的窗口质感、沉浸式心流写作。'
+      : '当前生效：专业版 —— 全局工具带、大药丸搜索、浮动主按钮、全功能专业工具。');
   }
 
   function setupMaterialRipple() {
@@ -3112,7 +3112,7 @@
     setTimeout(() => {
       document.documentElement.classList.remove('mode-morphing');
     }, 400);
-    toast(next === 'lite' ? '已切换至 苹果极简版 (Apple Zen)' : '已切换至 谷歌专业版 (Google Pro Studio)');
+    toast(next === 'lite' ? '已切换至 极简版' : '已切换至 专业版');
   }
 
   function applyFontSize() {
@@ -3162,8 +3162,8 @@
     buildSegmented(
       'modeSwitch',
       [
-        { key: 'lite', label: '苹果极简版' },
-        { key: 'pro', label: '谷歌专业版' },
+        { key: 'lite', label: '极简版' },
+        { key: 'pro', label: '专业版' },
       ],
       state.settings.workspaceMode || 'lite',
       async (key) => {
@@ -3173,7 +3173,7 @@
         setTimeout(() => {
           document.documentElement.classList.remove('mode-morphing');
         }, 400);
-        toast(key === 'lite' ? '已切换为 苹果极简版 (Apple Zen)' : '已切换为 谷歌专业版 (Google Studio)');
+        toast(key === 'lite' ? '已切换为 极简版' : '已切换为 专业版');
       },
     );
 
@@ -3324,6 +3324,125 @@
     const el = $(id);
     if (!el) return;
     el.setAttribute('aria-checked', on ? 'true' : 'false');
+  }
+
+  // ---------------------------------------------------------------- 应用内更新
+
+  const updateState = { info: null, busy: false };
+
+  function updateStatusText(text) {
+    const el = $('updateStatus');
+    if (el) el.textContent = text || '';
+  }
+
+  function showUpdateBanner(info) {
+    const bar = $('updateBanner');
+    if (!bar) return;
+    $('updateBannerText').textContent = '发现新版本 ' + info.latest + '（当前 ' + info.current + '）';
+    bar.hidden = false;
+  }
+
+  /**
+   * 检查更新。
+   * silent = true 时只在有更新时提示，不打扰用户。
+   */
+  async function checkForAppUpdate(silent) {
+    if (!LP || typeof LP.updateCheck !== 'function') {
+      if (!silent) updateStatusText('当前环境不支持在线更新');
+      return;
+    }
+    if (!silent) updateStatusText('检查中…');
+
+    let res;
+    try {
+      res = await LP.updateCheck();
+    } catch (err) {
+      if (!silent) updateStatusText('检查失败：' + String((err && err.message) || err));
+      return;
+    }
+
+    if (!res || !res.ok) {
+      if (!silent) updateStatusText('检查失败：' + ((res && res.error) || '未知错误'));
+      return;
+    }
+
+    const info = res.info;
+    if (!info || !info.hasUpdate) {
+      if (!silent) updateStatusText('已是最新版本（' + ((info && info.current) || '') + '）');
+      return;
+    }
+
+    updateState.info = info;
+    showUpdateBanner(info);
+    if (!silent) updateStatusText('发现新版本 ' + info.latest);
+  }
+
+  async function downloadAndInstallUpdate() {
+    if (updateState.busy || !updateState.info) return;
+    updateState.busy = true;
+
+    const btn = $('updateDownloadBtn');
+    const label = $('updateBannerText');
+    btn.disabled = true;
+    btn.textContent = '下载 0%';
+
+    let off = null;
+    if (typeof LP.onUpdateProgress === 'function') {
+      off = LP.onUpdateProgress(({ received, total }) => {
+        const pct = total ? Math.round((received / total) * 100) : 0;
+        btn.textContent = '下载 ' + pct + '%';
+        label.textContent = '正在下载安装包… ' + pct + '%';
+      });
+    }
+
+    let res;
+    try {
+      res = await LP.updateDownload(updateState.info);
+    } catch (err) {
+      res = { ok: false, error: String((err && err.message) || err) };
+    } finally {
+      if (typeof off === 'function') off();
+    }
+
+    if (!res || !res.ok) {
+      btn.disabled = false;
+      btn.textContent = '重试下载';
+      label.textContent = '下载失败：' + ((res && res.error) || '未知错误');
+      updateState.busy = false;
+      return;
+    }
+
+    label.textContent = res.verified ? '安装包已校验，正在启动安装…' : '安装包已下载（发布方未提供校验和）';
+    btn.textContent = '安装并重启';
+    btn.disabled = true;
+
+    try {
+      await LP.updateInstall(res.filePath);
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = '重新安装';
+      label.textContent = '启动安装程序失败：' + String((err && err.message) || err);
+    } finally {
+      updateState.busy = false;
+    }
+  }
+
+  function bindUpdates() {
+    $('updateDownloadBtn').addEventListener('click', downloadAndInstallUpdate);
+    $('updateLaterBtn').addEventListener('click', () => {
+      $('updateBanner').hidden = true;
+    });
+    $('updateCloseBtn').addEventListener('click', () => {
+      $('updateBanner').hidden = true;
+    });
+    $('updateCheckBtn').addEventListener('click', () => checkForAppUpdate(false));
+
+    // 启动后延迟检查：别和首屏渲染抢带宽
+    if (LP && typeof LP.updateCheck === 'function') {
+      setTimeout(() => {
+        checkForAppUpdate(true);
+      }, 6000);
+    }
   }
 
   // ---------------------------------------------------------------- AI 助手
@@ -5236,6 +5355,7 @@
     editor.addEventListener('mouseup', refreshFmtState);
     bindAiEditor();
     bindAiSettingsOnce();
+    bindUpdates();
     $('preview').addEventListener('scroll', () => {
       if (state.current) {
         const mem = state.scrollMem.get(state.current.id) || {};

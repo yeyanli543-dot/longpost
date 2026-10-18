@@ -89,7 +89,17 @@
       <symbol id="i-key" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></symbol>
     </svg>
 
-    <div class="app" id="app" data-view="list" data-pane="write">
+    <!-- 应用内更新：有新版本时出现，下载与安装都在应用里完成 -->
+  <div class="update-banner" id="updateBanner" hidden>
+    <span class="update-banner-text" id="updateBannerText"></span>
+    <button class="btn primary sm" id="updateDownloadBtn" type="button">下载并安装</button>
+    <button class="btn ghost sm" id="updateLaterBtn" type="button">稍后</button>
+    <button class="icon-btn" id="updateCloseBtn" aria-label="关闭">
+      <svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>
+    </button>
+  </div>
+
+  <div class="app" id="app" data-view="list" data-pane="write">
       <!-- 全局忙碌条：导入 / 导出 / 分享 / 打开文章时给一条进度反馈 -->
       <div class="busy" id="busyBar" hidden><span class="busy-fill"></span></div>
 
@@ -102,8 +112,8 @@
               <div class="brand-name">LongPost</div>
               <div class="brand-sub">本地写作台 · 离线</div>
             </div>
-            <button class="btn mode-pill-btn" id="btnModeSwitch" title="一键切换工作区风格（Alt+M）：苹果极简版 ↔ 谷歌专业版">
-              <span class="mode-badge" id="modeBadge"></span><span class="mode-label" id="modeLabel">苹果极简</span>
+            <button class="btn mode-pill-btn" id="btnModeSwitch" title="一键切换工作区风格（Alt+M）：极简版 ↔ 专业版">
+              <span class="mode-badge" id="modeBadge"></span><span class="mode-label" id="modeLabel">极简</span>
             </button>
           </div>
 
@@ -166,7 +176,7 @@
         <section class="empty" id="empty">
           <div class="empty-inner">
             <div class="empty-mark"><svg class="icon" aria-hidden="true"><use href="#i-feather"></use></svg></div>
-            <div class="empty-hero-badge"><span class="hero-badge-apple"> Apple Zen · 官网极简美学</span><span class="hero-badge-google">Google Studio · M3 官方工坊</span></div>
+            <div class="empty-hero-badge"><span class="hero-badge-apple"> 极简版 · 官网极简美学</span><span class="hero-badge-google">专业版 · 全功能工作台</span></div>
             <h2>开始写点什么</h2>
             <p>
               正文用 Markdown 写，右边实时预览。<br />
@@ -221,7 +231,7 @@
             </button>
             <input class="title-input" id="title" placeholder="无标题" aria-label="文章标题" />
             <button class="btn mode-pill-btn only-mobile" id="btnModeSwitchMobile" title="一键切换工作区风格 (Alt+M)">
-              <span class="mode-badge" id="modeBadgeMobile"></span><span class="mode-label" id="modeLabelMobile">苹果极简</span>
+              <span class="mode-badge" id="modeBadgeMobile"></span><span class="mode-label" id="modeLabelMobile">极简</span>
             </button>
             <div class="tools">
               <!-- 元数据管理组 -->
@@ -258,7 +268,7 @@
                 <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg><span class="btn-label">查找</span>
               </button>
               <span class="sep pro-tool-item"></span>
-              <!-- Google M3 专业工坊组 -->
+              <!-- 专业版 专业工坊组 -->
               <button class="btn pro-tool-item" id="btnProGraph" title="全库知识图谱关系网络">
                 <svg class="icon" aria-hidden="true"><use href="#i-grid"></use></svg><span class="btn-label">图谱</span>
               </button>
@@ -493,7 +503,7 @@
               <div class="field">
                 <label>工作区风格模式</label>
                 <div class="segmented" id="modeSwitch"></div>
-                <p class="field-help" id="modeSwitchHelp">简洁版：极简留白、毛玻璃、沉浸写作；专业版：Material 3 工坊、全功能工具条、图谱与实验室</p>
+                <p class="field-help" id="modeSwitchHelp">简洁版：极简留白、毛玻璃、沉浸写作；专业版：专业工作台、全功能工具条、图谱与实验室</p>
               </div>
               <div class="field">
                 <label>主题</label>
@@ -618,6 +628,11 @@
               <div class="field">
                 <label>关于</label>
                 <p class="about" id="aboutText"></p>
+              </div>
+              <div class="field">
+                <label>版本更新</label>
+                <button class="btn ghost sm" id="updateCheckBtn" type="button">检查更新</button>
+                <span class="hint" id="updateStatus"></span>
               </div>
             </div>
           </details>

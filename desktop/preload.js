@@ -59,6 +59,16 @@ contextBridge.exposeInMainWorld('lp', {
   // WebDAV 跨设备同步网络请求
   webdavRequest: (options) => ipcRenderer.invoke('webdav:request', options),
 
+  // 应用内更新：检查 / 下载 / 拉起安装程序
+  updateCheck: (feed) => ipcRenderer.invoke('update:check', feed),
+  updateDownload: (info) => ipcRenderer.invoke('update:download', info),
+  updateInstall: (filePath) => ipcRenderer.invoke('update:install', filePath),
+  onUpdateProgress: (handler) => {
+    const listener = (_event, data) => handler(data);
+    ipcRenderer.on('update:progress', listener);
+    return () => ipcRenderer.removeListener('update:progress', listener);
+  },
+
   // AI 助手：请求由主进程代发（绕开 file:// 页面的 CORS），逐段流式回传
   aiChat: (payload) => ipcRenderer.invoke('ai:chat', payload),
   aiAbort: (requestId) => ipcRenderer.invoke('ai:abort', requestId),

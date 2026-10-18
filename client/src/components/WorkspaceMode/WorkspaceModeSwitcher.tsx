@@ -25,7 +25,7 @@ export const WorkspaceModeSwitcher: FC<WorkspaceModeSwitcherProps> = ({
       role="group"
       aria-label="工作区风格模式切换"
     >
-      {/* 极简版 (Apple Zen) */}
+      {/* 极简版 (极简版) */}
       <button
         type="button"
         onClick={() => setMode('lite')}
@@ -36,7 +36,7 @@ export const WorkspaceModeSwitcher: FC<WorkspaceModeSwitcherProps> = ({
         } ${compact ? 'px-2.5 py-0.5' : ''}`}
       >
         <span className="text-sm leading-none">🍏</span>
-        <span className={compact ? 'hidden sm:inline' : ''}>极简 Apple</span>
+        <span className={compact ? 'hidden sm:inline' : ''}>极简版</span>
         {mode === 'lite' && (
           <motion.div
             layoutId="mode-pill-active"
@@ -46,7 +46,7 @@ export const WorkspaceModeSwitcher: FC<WorkspaceModeSwitcherProps> = ({
         )}
       </button>
 
-      {/* 专业版 (Google M3) */}
+      {/* 专业版 (专业版) */}
       <button
         type="button"
         onClick={() => setMode('pro')}
@@ -57,7 +57,7 @@ export const WorkspaceModeSwitcher: FC<WorkspaceModeSwitcherProps> = ({
         } ${compact ? 'px-2.5 py-0.5' : ''}`}
       >
         <span className="text-sm leading-none">🔷</span>
-        <span className={compact ? 'hidden sm:inline' : ''}>专业 Google M3</span>
+        <span className={compact ? 'hidden sm:inline' : ''}>专业版</span>
         {mode === 'pro' && (
           <motion.div
             layoutId="mode-pill-active"

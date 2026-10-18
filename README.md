@@ -2,7 +2,7 @@
 
 # 🪶 LongPost
 
-**下一代长文创作与社交平台 · 🍏 Apple 极简 ↔ 🔷 Google 专业双工作区 · 交互式活数据图表 · 免登录公开阅读 · 零服务器离线工作台**
+**下一代长文创作与社交平台 · 极简版 ↔ 专业版双工作区 · 交互式活数据图表 · 免登录公开阅读 · 零服务器离线工作台**
 
 [![Version](https://img.shields.io/badge/version-2.9.8-blue.svg)](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.9.8)
 [![Build Desktop](https://github.com/yeyanli543-dot/longpost/actions/workflows/desktop-release.yml/badge.svg)](https://github.com/yeyanli543-dot/longpost/actions/workflows/desktop-release.yml)
@@ -37,7 +37,7 @@
 **LongPost 采用现代全平台架构与双轨制设计**：
 1. **🌐 全功能 Web 社交平台**：发短帖引流挂长文，每篇长文生成独立短码免登录分享页（如 `/p/abc12345`）。**链接转发到微信、X/Twitter 等任意平台，外部访客无需注册、无需登录，点开即可阅读全文与交互式图表**；
 2. **💻 桌面工作台 & 📱 移动端**：**完全不依赖任何外部服务器**，数据 100% 留存在你的本机设备中（Local-First）。支持正文内嵌交互式图表（ECharts），一键导出自包含单文件 HTML，发出去双击就能看；
-3. **☯️ 深度场景化双工作区**：首创 **🍏 Apple 极简版（HIG 纯净心流）** 与 **🔷 Google 专业版（Material 3 知识工程）**，一键瞬切，满足不同心智状态下的创作与阅读需求。
+3. **☯️ 深度场景化双工作区**：首创 **🍏 极简版（HIG 纯净心流）** 与 **🔷 专业版（知识工程）**，一键瞬切，满足不同心智状态下的创作与阅读需求。
 
 ---
 
@@ -55,39 +55,37 @@
 
 ---
 
-## ☯️ 双模式工作区：Apple 极简 ↔ Google 专业
+## ☯️ 双模式工作区：极简版 ↔ 专业版
 
-LongPost 拒绝粗暴的“换皮换色”，而是从 **apple.com 官方原始 CSS 声明** 与 **Google Material Design 3 (M3) 规范** 出发，在同一套底层代码中重构出两套并存的独立骨架，支持一键瞬切（快捷键 `Alt + M` 或点击底部切换器）：
+LongPost 拒绝粗暴的「换皮换色」：两套工作区是同一套底层代码上的两副独立骨架，各自有完整的间距、排版与层级规则，支持一键瞬切（快捷键 `Alt + M` 或点击底部切换器）：
 
 ```
 ┌───────────────────────────┬───────────────────────────────────┬───────────────────────────────────┐
-│ 维度                      │ 🍏 简洁版 (对标 apple.com / HIG)   │ 🎨 专业版 (对标 google.com / M3)   │
+│ 维度                      │ 极简版                             │ 专业版                            │
 ├───────────────────────────┼───────────────────────────────────┼───────────────────────────────────┤
-│ 布局形态 (Layout)         │ 零侧栏大留白 · 880px 居中画卷      │ M3 侧边抽屉栏 + 右侧探索与热帖栏    │
-│ 导航中枢 (Navigation)     │ 底部悬浮毛玻璃灵动 Dock 独占导航   │ 顶部/侧边 M3 功能带 + 扩展 FAB 浮动 │
-│ 字体栈 (Font Family)      │ SF Pro Display / Text, 苹方, 无衬线 │ Google Sans, Product Sans, Roboto │
-│ 杂志排版 (Typography)     │ 首字下沉 (Drop Caps) + 标点挤压连字│ 严谨等宽字符 + 标点常规间隔        │
-│ 大标题字距 (Tracking)     │ -.022em (负字距，紧凑有力)         │ 0 (标准字距)                      │
-│ 正文字距 (Body Tracking)  │ -0.015em (OpenType palt/kern)     │ +0.03125em (+0.5px，透气易读)     │
+│ 布局形态 (Layout)         │ 零侧栏大留白 · 880px 居中画卷      │ 侧边抽屉栏 + 右侧探索与热帖栏      │
+│ 导航中枢 (Navigation)     │ 底部悬浮毛玻璃 Dock 独占导航       │ 顶部功能带 + 浮动主按钮 (FAB)      │
+│ 排版气质 (Typography)     │ 首字下沉 + 标点挤压连字            │ 严谨等宽字符 + 标点常规间隔        │
+│ 大标题字距 (Tracking)     │ -.022em（紧凑有力）                │ 0（标准字距）                     │
+│ 正文字距 (Body Tracking)  │ -0.015em（OpenType palt/kern）    │ +0.03125em（透气易读）            │
 │ 行高节奏 (Line Height)    │ 精密小数 (1.2352 / 1.2857 / 1.7)  │ 黄金比例 (1.4 / 1.6 / 1.8)        │
-│ 容器层级表现              │ 背景色色阶台阶 (Tonal step)，不描边 │ 1px 细线描边 + 海拔双阴影 (Elevation)│
-│ 圆角阶梯 (Border Radius)  │ 6 / 10 / 12 / 18 / 980px (大胶囊) │ 4 / 8 / 12 / 16 / 28 / 9999px (固定)│
-│ 数据图表 (ECharts)        │ 莫兰迪高雅调色 · 顶部 6px 圆角柱体 │ 活力主题色阶 · 结构化双轴对比     │
-│ 特殊质感 (Paper Texture)  │ 宣纸暖阳微噪点 (warm-paper 护眼纹理)│ 纯净冷色/深灰卡片 (M3 Surface)    │
-│ 开关控件 (Switch)         │ iOS 系统绿 #34c759 (透明本体+白滑块)│ M3 Primary 轨道 + On-Primary 滑块 │
-│ 对话框形态 (Modal)        │ 18px-20px 毛玻璃抽屉 (带抓手 Handle)│ 28px 超大圆角 M3 Tonal 卡片       │
-│ 品牌徽记                  │ macOS 红黄绿交通灯 (Red/Yellow/Green)│ Google 4-Color 蓝红黄绿经典渐变光带│
+│ 容器层级表现              │ 背景色阶台阶，不描边               │ 1px 细线描边 + 双层阴影            │
+│ 圆角阶梯 (Border Radius)  │ 6 / 10 / 14 / 20 / 胶囊            │ 6 / 10 / 14 / 20 / 胶囊            │
+│ 数据图表 (ECharts)        │ 低饱和配色 · 顶部圆角柱体          │ 主题色阶 · 结构化双轴对比          │
+│ 特殊质感 (Paper Texture)  │ 宣纸暖阳微噪点 (warm-paper)        │ 纯净冷色 / 深灰卡片               │
+│ 开关控件 (Switch)         │ 系统绿 #34c759（透明本体+白滑块）  │ 主色轨道 + 对比色滑块              │
+│ 对话框形态 (Modal)        │ 18–20px 毛玻璃抽屉（带抓手）       │ 28px 大圆角 Tonal 卡片            │
 └───────────────────────────┴───────────────────────────────────┴───────────────────────────────────┘
 ```
 
-### 1. 🍏 Apple 极简版（Apple Zen）
+### 1. 极简版
 - **大留白居中专注阅读**：隐藏左右全部侧边栏，取消主列右侧边框，正文单列 `max-w-[880px]` 居中展布，界面主动“退让隐形”，还原纸质书般纯粹心流；
 - **macOS / iPadOS 悬浮毛玻璃灵动 Dock**：位于屏幕底部的胶囊 Dock 独占全局导航，集成首页、搜索、快速撰写、通知、私信以及**微型用户账户快捷菜单**；
 - **排版质感**：集成杂志级首字下沉（Drop Caps）、标点挤压与连字（`palt`/`kern`）、以及宣纸暖阳（`warm-paper`）护眼微噪点底纹。
 
-### 2. 🔷 Google 专业版（Google Pro Studio）
+### 2. 专业版
 - **完整 Material 3 空间**：标准的 M3 侧边抽屉导航栏、右下角 Material You 扩展 FAB 浮动动作按钮（“撰写”）、右侧实时热榜与探索栏；
-- **全功能格式工具带（Formatting Ribbon）**：Google Docs 风格的富文本编辑带与 LaTeX 数学公式即敲即显；
+- **全功能格式工具带（Formatting Ribbon）**：文档编辑器风格的富文本工具带与 LaTeX 数学公式即敲即显；
 - **4 大本地离线杀手级生产力工具**：
   1. 🌐 **全库知识图谱（Knowledge Graph）**：基于 ECharts 力导向拓扑引擎，扫描全库标签网络与双向引用，点击节点无缝漫游；
   2. 🔬 **写作体检实验室（Writing Lab）**：10 维文本诊断，实时字数/词频透视与 5 项排版规范自检（标题跨级、代码块未闭合、冗余空行、超长段落预警、图片缺少 Alt）；
@@ -315,7 +313,7 @@ npm run apk
 ├── client/              # 前端 React 19 应用
 │   ├── src/
 │   │   ├── pages/       # 发现流、长文阅读、编辑器、搜索、设置、视频会议室等页面
-│   │   ├── components/  # Layout 布局（Apple Dock / Google M3 Drawer）、ActionButtons、图表等
+│   │   ├── components/  # Layout 布局（极简悬浮 Dock / 专业侧边抽屉）、ActionButtons、图表等
 │   │   ├── hooks/       # 鉴权状态、工作区模式切换、主题切换 hooks
 │   │   └── api/         # Axios 封装与后端 API 契约层
 │   └── index.html       # 单页应用入口
