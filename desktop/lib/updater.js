@@ -26,7 +26,7 @@ const CHECK_TIMEOUT_MS = 15000;
 
 // ---------------------------------------------------------------- 版本比较
 
-/** 把 "v2.9.8" 拆成 [2,9,8]，非数字段按 0 处理 */
+/** 把 "v2.9.9" 拆成 [2,9,8]，非数字段按 0 处理 */
 function parseVersion(input) {
   const cleaned = String(input || '').trim().replace(/^v/i, '').split('-')[0];
   return cleaned.split('.').map((n) => {
@@ -53,7 +53,7 @@ function compareVersions(a, b) {
 
 /**
  * 按当前平台挑安装包。
- * 优先挑版本化命名的资源（LongPost.Setup.2.9.8.exe），避免误拿滚动构建。
+ * 优先挑版本化命名的资源（LongPost.Setup.2.9.9.exe），避免误拿滚动构建。
  */
 function pickAsset(assets, platform = process.platform) {
   const list = Array.isArray(assets) ? assets : [];
