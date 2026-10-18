@@ -69,6 +69,21 @@ describe('应用内更新：校验和解析', () => {
     assert.equal(updater.findChecksum(sha, 'anything.exe'), sha);
   });
 
+  it('GitHub 把空格换成点之后仍能匹配（真实踩过的坑）', () => {
+    // CI 里算出来是空格，Release 上资产名是点
+    const text = sha + '  LongPost Setup 2.9.9.exe\n';
+    assert.equal(updater.findChecksum(text, 'LongPost.Setup.2.9.9.exe'), sha);
+    // 反过来也要成立
+    const text2 = sha + '  LongPost.Setup.2.9.9.exe\n';
+    assert.equal(updater.findChecksum(text2, 'LongPost Setup 2.9.9.exe'), sha);
+  });
+
+  it('便携版与安装版不会被混淆', () => {
+    const text = sha + '  LongPost Setup 2.9.9.exe\n' + 'c'.repeat(64) + '  LongPost 2.9.9.exe\n';
+    assert.equal(updater.findChecksum(text, 'LongPost.2.9.9.exe'), 'c'.repeat(64));
+    assert.equal(updater.findChecksum(text, 'LongPost.Setup.2.9.9.exe'), sha);
+  });
+
   it('找不到对应文件时返回 null（调用方据此决定是否放行）', () => {
     assert.equal(updater.findChecksum(sha + '  a.exe\n', 'b.exe'), null);
     assert.equal(updater.findChecksum('', 'a.exe'), null);

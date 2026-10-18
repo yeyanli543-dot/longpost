@@ -145,9 +145,12 @@ jobs:
         run: |
           cd dist
           : > checksums.txt
+          # GitHub 上传资源时会把文件名里的空格换成点，这里提前按同样规则命名
           find . -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.AppImage' \) -print0 |
             while IFS= read -r -d '' f; do
-              sha256sum "$f" | sed 's|  \./.*/|  |'
+              base=$(basename "$f")
+              safe=$(printf '%s' "$base" | tr ' ' '.')
+              printf '%s  %s\n' "$(sha256sum "$f" | cut -d' ' -f1)" "$safe"
             done | sort -k2 > checksums.txt
           cat checksums.txt
 

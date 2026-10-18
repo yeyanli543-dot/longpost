@@ -26,7 +26,7 @@ const CHECK_TIMEOUT_MS = 15000;
 
 // ---------------------------------------------------------------- 版本比较
 
-/** 把 "v2.9.9" 拆成 [2,9,8]，非数字段按 0 处理 */
+/** 把 "v2.10.0" 拆成 [2,9,8]，非数字段按 0 处理 */
 function parseVersion(input) {
   const cleaned = String(input || '').trim().replace(/^v/i, '').split('-')[0];
   return cleaned.split('.').map((n) => {
@@ -53,7 +53,7 @@ function compareVersions(a, b) {
 
 /**
  * 按当前平台挑安装包。
- * 优先挑版本化命名的资源（LongPost.Setup.2.9.9.exe），避免误拿滚动构建。
+ * 优先挑版本化命名的资源（LongPost.Setup.2.10.0.exe），避免误拿滚动构建。
  */
 function pickAsset(assets, platform = process.platform) {
   const list = Array.isArray(assets) ? assets : [];
@@ -158,14 +158,33 @@ function downloadFile(url, dest, onProgress) {
   });
 }
 
+/**
+ * 文件名归一化。
+ *
+ * GitHub 上传资源时会把空格换成点：CI 里算出来的是
+ * "LongPost Setup 2.10.0.exe"，Release 上却叫 "LongPost.Setup.2.10.0.exe"。
+ * 直接字符串相等会永远匹配不上，导致明明提供了校验和却被判定为"未校验"。
+ */
+function normalizeName(name) {
+  return String(name || '')
+    .trim()
+    .replace(/^.*[\\/]/, '')
+    .replace(/^\*/, '')
+    .toLowerCase()
+    .replace(/[\s.]+/g, '.');
+}
+
 /** 从 checksums 文本里取出指定文件名的 sha256 */
 function findChecksum(text, fileName) {
   const lines = String(text || '').split(/\r?\n/);
+  const want = normalizeName(fileName);
+
   for (const line of lines) {
-    const parts = line.trim().split(/\s+/);
-    if (parts.length >= 2 && parts[parts.length - 1].replace(/^\*/, '') === fileName) {
-      return parts[0].toLowerCase();
-    }
+    // 文件名本身可能带空格（"LongPost Setup 2.10.0.exe"），
+    // 所以只按第一段空白切成「哈希 / 文件名」，不能把整行 split 完再取最后一段。
+    const match = line.trim().match(/^([0-9a-fA-F]{64})\s+\*?(.+)$/);
+    if (!match) continue;
+    if (normalizeName(match[2]) === want) return match[1].toLowerCase();
   }
   // 只有一个哈希、没有文件名时，也接受
   const only = lines.map((l) => l.trim()).filter(Boolean);
@@ -284,6 +303,7 @@ module.exports = {
   pickAsset,
   pickChecksumAsset,
   findChecksum,
+  normalizeName,
   checkForUpdates,
   downloadUpdate,
   installUpdate,
