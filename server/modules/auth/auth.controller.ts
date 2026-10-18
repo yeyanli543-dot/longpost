@@ -10,8 +10,16 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  HttpException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import {
+  evaluateThrottle,
+  registerFailure,
+  registerSuccess,
+  InMemoryThrottleStore,
+} from '@server/common/security/login-throttle';
 import { validateUUIDParam } from '@server/common/utils/validation';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard, OptionalJwtAuthGuard, type AuthRequest } from './jwt-auth.guard';
@@ -31,6 +39,9 @@ import type {
 
 @Controller('api/auth')
 export class AuthController {
+  /** 登录失败计数（进程内）。多实例部署时换成 Redis 即可，判定逻辑不变。 */
+  private readonly loginThrottle = new InMemoryThrottleStore();
+
   constructor(
     private readonly authService: AuthService,
     private readonly oauthService: OAuthService,
@@ -42,10 +53,40 @@ export class AuthController {
     return this.authService.register(dto.email, dto.password, dto.nickname);
   }
 
+  /**
+   * 登录。
+   *
+   * 按「IP + 邮箱」做失败节流：同一组合连续失败 5 次锁 15 分钟。
+   * 目的是挡掉密码爆破脚本，同时不误伤同一出口 IP 的其他用户
+   * （所以 key 里带邮箱，而不是只按 IP）。
+   */
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() dto: LoginDto): Promise<AuthResponse> {
-    return this.authService.login(dto.email, dto.password);
+  async login(@Body() dto: LoginDto, @Req() req: Request): Promise<AuthResponse> {
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    const key = ip + '|' + String(dto.email || '').toLowerCase();
+    const now = Date.now();
+
+    const decision = evaluateThrottle(this.loginThrottle.get(key), now);
+    if (!decision.allowed) {
+      const minutes = Math.max(1, Math.ceil(decision.retryAfterMs / 60000));
+      throw new HttpException(
+        { message: `登录失败次数过多，请 ${minutes} 分钟后再试`, retryAfterMs: decision.retryAfterMs },
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    try {
+      const result = await this.authService.login(dto.email, dto.password);
+      this.loginThrottle.set(key, registerSuccess());
+      return result;
+    } catch (err) {
+      // 只有「密码错」才计数；账号停用/封禁属于确定状态，不计
+      if (err instanceof UnauthorizedException) {
+        this.loginThrottle.set(key, registerFailure(decision.record, now));
+      }
+      throw err;
+    }
   }
 
   @Get('me')

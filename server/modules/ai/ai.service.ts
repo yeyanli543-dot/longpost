@@ -47,8 +47,17 @@ export class AiService {
 
   // ------------------------------------------------------------ 站点配置
 
-  private get secret(): string {
-    return process.env.AI_KEY_SECRET || process.env.JWT_SECRET || 'longpost-dev-secret';
+  /**
+   * 加密用户 Key 用的 secret。
+   *
+   * 生产环境没有配置时返回 null —— 宁可「不支持托管」，
+   * 也不能用一个人人皆知的常量去加密别人的 API Key。
+   */
+  private get secret(): string | null {
+    const configured = (process.env.AI_KEY_SECRET || process.env.JWT_SECRET || '').trim();
+    if (configured) return configured;
+    if (process.env.NODE_ENV === 'production') return null;
+    return 'longpost-dev-secret';
   }
 
   private get siteProvider(): LlmProvider {
@@ -106,7 +115,8 @@ export class AiService {
 
   async getStatus(userId: string): Promise<AiStatus> {
     const row = await this.getRow(userId);
-    const ownKey = decryptSecret(row?.keyCipher, this.secret);
+    const secret = this.secret;
+    const ownKey = secret ? decryptSecret(row?.keyCipher, secret) : null;
     const today = toDateKey();
     const decision = evaluateQuota(
       row?.quotaDate ? { date: row.quotaDate, count: row.quotaCount } : null,
@@ -150,7 +160,17 @@ export class AiService {
 
     if (typeof input.apiKey === 'string') {
       const trimmed = input.apiKey.trim();
-      patch.keyCipher = trimmed ? encryptSecret(trimmed, this.secret) : null;
+      if (trimmed) {
+        const secret = this.secret;
+        if (!secret) {
+          throw new BadRequestException(
+            '服务端未配置 AI_KEY_SECRET（或 JWT_SECRET），暂时无法安全托管个人 Key',
+          );
+        }
+        patch.keyCipher = encryptSecret(trimmed, secret);
+      } else {
+        patch.keyCipher = null;
+      }
     }
 
     await this.upsertRow(userId, patch);
@@ -162,7 +182,8 @@ export class AiService {
   /** 决定这次请求走谁的 Key；没有可用配置时返回 null */
   async resolveCredentials(userId: string): Promise<AiCredentials | null> {
     const row = await this.getRow(userId);
-    const ownKey = decryptSecret(row?.keyCipher, this.secret);
+    const secret = this.secret;
+    const ownKey = secret ? decryptSecret(row?.keyCipher, secret) : null;
 
     if (ownKey) {
       const provider = (row?.provider as LlmProvider) || 'openai';

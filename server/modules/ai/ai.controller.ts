@@ -69,6 +69,16 @@ export class AiController {
       return fail(400, '还没有可用的 AI 配置：请在设置里填写自己的 API Key，或让站长配置站点额度');
     }
 
+    // 请求体上限：单条消息已由 DTO 限到 2 万字符，但条数没上限，
+    // 不设总量的话可以用几千条空消息把上游 token 与本站带宽一起打满。
+    const totalChars = dto.messages.reduce((sum, m) => sum + (m.content?.length || 0), 0);
+    if (dto.messages.length > 40) {
+      return fail(400, '一次对话最多 40 条消息');
+    }
+    if (totalChars > 60000) {
+      return fail(413, '内容过长（上限 6 万字符），请分段处理');
+    }
+
     let charge;
     try {
       charge = await this.ai.chargeQuota(userId, creds);
