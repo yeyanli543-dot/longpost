@@ -3554,6 +3554,63 @@
     $('socialSliceRun').addEventListener('click', runSocialSlice);
   }
 
+  // ---------------------------------------------------------------- Chrome 剪藏桥
+
+  async function refreshClipBridge() {
+    if (!LP || typeof LP.bridgeInfo !== 'function') return;
+    const info = await LP.bridgeInfo();
+    const sw = $('clipBridgeSwitch');
+    if (sw) sw.setAttribute('aria-checked', info.enabled ? 'true' : 'false');
+    const status = $('clipBridgeStatus');
+    if (status) {
+      status.textContent = info.enabled
+        ? '运行中 · 127.0.0.1:' + info.port
+        : '未开启';
+    }
+  }
+
+  async function toggleClipBridge() {
+    const sw = $('clipBridgeSwitch');
+    const next = sw.getAttribute('aria-checked') !== 'true';
+    await LP.setSettings({ clipBridgeEnabled: next });
+    state.settings.clipBridgeEnabled = next;
+    await refreshClipBridge();
+    toast(next ? '已开启本地桥，复制书签代码即可使用' : '已关闭本地桥', next ? 'ok' : undefined);
+  }
+
+  async function copyBookmarklet() {
+    const API = window.LPBookmarklet;
+    if (!API) {
+      toast('书签模块没加载，请重启应用', 'err');
+      return;
+    }
+    const info = await LP.bridgeInfo();
+    if (!info || !info.enabled) {
+      toast('先打开上面的开关', 'err');
+      return;
+    }
+    const code = API.buildBookmarklet({ port: info.port, token: info.token });
+    if (!code) {
+      toast('生成书签失败', 'err');
+      return;
+    }
+    copyToClipboard(code);
+  }
+
+  function bindClipBridge() {
+    // 设置卡片没插进来时直接跳过，不能让整个启动流程挂在 null 上
+    if (!$('clipBridgeSwitch') || !$('clipBookmarkBtn')) return;
+    $('clipBridgeSwitch').addEventListener('click', toggleClipBridge);
+    $('clipBookmarkBtn').addEventListener('click', copyBookmarklet);
+    if (LP && typeof LP.onClipped === 'function') {
+      LP.onClipped(() => {
+        refreshAll();
+        toast('已从浏览器剪藏一篇', 'ok');
+      });
+    }
+    refreshClipBridge();
+  }
+
   // ---------------------------------------------------------------- 应用内更新
 
   const updateState = { info: null, busy: false };
@@ -5599,6 +5656,7 @@
     bindAiEditor();
     bindAiSettingsOnce();
     bindUpdates();
+    bindClipBridge();
     bindSocialSlice();
     $('preview').addEventListener('scroll', () => {
       if (state.current) {

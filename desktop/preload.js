@@ -59,6 +59,14 @@ contextBridge.exposeInMainWorld('lp', {
   // WebDAV 跨设备同步网络请求
   webdavRequest: (options) => ipcRenderer.invoke('webdav:request', options),
 
+  // Chrome 剪藏桥：端口与令牌（只在开启后返回）
+  bridgeInfo: () => ipcRenderer.invoke('bridge:info'),
+  onClipped: (handler) => {
+    const listener = (_e, data) => handler(data);
+    ipcRenderer.on('bridge:clipped', listener);
+    return () => ipcRenderer.removeListener('bridge:clipped', listener);
+  },
+
   // 在应用内开一个受控窗口（分享用），不跳系统浏览器
   openInApp: (payload) => ipcRenderer.invoke('window:openInApp', payload),
 

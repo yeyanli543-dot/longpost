@@ -432,6 +432,8 @@
   window.LPPlatform = Object.assign({}, repo, {
     isDesktop: false,
     platformLabel: '手机版',
+    bridgeInfo: async () => ({ enabled: false }),
+    onClipped: () => () => {},
     aiChat: aiChat,
     onAiChunk: onAiChunk,
     aiAbort: aiAbort,
