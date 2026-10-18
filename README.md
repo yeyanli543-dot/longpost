@@ -4,7 +4,7 @@
 
 **下一代长文创作与社交平台 · 极简版 ↔ 专业版双工作区 · 交互式活数据图表 · 免登录公开阅读 · 零服务器离线工作台**
 
-[![Version](https://img.shields.io/badge/version-2.9.9-blue.svg)](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.9.9)
+[![Version](https://img.shields.io/badge/version-2.10.0-blue.svg)](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.10.0)
 [![Build Desktop](https://github.com/yeyanli543-dot/longpost/actions/workflows/desktop-release.yml/badge.svg)](https://github.com/yeyanli543-dot/longpost/actions/workflows/desktop-release.yml)
 [![Build Android](https://github.com/yeyanli543-dot/longpost/actions/workflows/android-release.yml/badge.svg)](https://github.com/yeyanli543-dot/longpost/actions/workflows/android-release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -30,6 +30,18 @@
 
 </div>
 
+## 📸 界面一览
+
+| 写作台（专业版） | 设置面板 |
+| :---: | :---: |
+| ![写作台](docs/screenshots/main.png) | ![设置](docs/screenshots/settings.png) |
+
+**长文换短帖**：写完一篇长文，直接生成三个标题、一条短帖和一组 Thread，逐块复制到 X / 即刻 / 小红书。
+
+![引流短帖](docs/screenshots/social-slice.png)
+
+---
+
 ## 💡 为什么选择 LongPost？
 
 在传统内容平台上，长文阅读通常受限于繁琐的强制登录门槛、单一静态的图文表现形式以及平台对私域流量的拦截；而在去中心化环境中，又常常面临依赖云服务宕机、数据隐私不受控的痛点。
@@ -41,17 +53,17 @@
 
 ---
 
-## <a id="-多端下载"></a>📥 多端下载 (v2.9.9 最新全平台安装包)
+## <a id="-多端下载"></a>📥 多端下载 (v2.10.0 最新全平台安装包)
 
 所有安装包均通过 GitHub Actions 自动化 CI 构建并带有防篡改校验，即下即用：
 
 | 平台 | 安装包格式 | 下载渠道 | 说明 |
 | :--- | :--- | :--- | :--- |
-| **🪟 Windows** | `.exe` 安装版 / 便携版 | [**下载安装版**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.9/LongPost.Setup.2.9.9.exe) · [**免安装便携版**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.9/LongPost.2.9.9.exe) | 支持 Windows 10/11，便携免安装版解压双击直接运行 |
-| **🤖 Android** | `.apk` 手机安装包 | [**下载 LongPost-v2.9.9-android.apk**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.9/LongPost-v2.9.9-android.apk) | 手机端离线写作，固定签名密钥支持无缝覆盖升级 |
-| **🍎 macOS** | `.dmg` 镜像 | [**下载 LongPost-2.9.9-arm64.dmg**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.9/LongPost-2.9.9-arm64.dmg) | 支持 Apple Silicon & Intel，首次打开右键放行 |
-| **🐧 Linux** | `.AppImage` | [**下载 LongPost-2.9.9.AppImage**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.9/LongPost-2.9.9.AppImage) | 赋予执行权限 `chmod +x` 后直接运行 |
-| **📦 全部版本** | 全部 5 端安装产物 | [**GitHub Releases v2.9.9 (最新发布页)**](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.9.9) | 包含所有平台的安装包、源码与校验哈希 |
+| **🪟 Windows** | `.exe` 安装版 / 便携版 | [**下载安装版**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.10.0/LongPost.Setup.2.10.0.exe) · [**免安装便携版**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.10.0/LongPost.2.10.0.exe) | 支持 Windows 10/11，便携免安装版解压双击直接运行 |
+| **🤖 Android** | `.apk` 手机安装包 | [**下载 LongPost-v2.10.0-android.apk**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.10.0/LongPost-v2.10.0-android.apk) | 手机端离线写作，固定签名密钥支持无缝覆盖升级 |
+| **🍎 macOS** | `.dmg` 镜像 | [**下载 LongPost-2.10.0-arm64.dmg**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.10.0/LongPost-2.10.0-arm64.dmg) | 支持 Apple Silicon & Intel，首次打开右键放行 |
+| **🐧 Linux** | `.AppImage` | [**下载 LongPost-2.10.0.AppImage**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.10.0/LongPost-2.10.0.AppImage) | 赋予执行权限 `chmod +x` 后直接运行 |
+| **📦 全部版本** | 全部 5 端安装产物 | [**GitHub Releases v2.10.0 (最新发布页)**](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.10.0) | 包含所有平台的安装包、源码与校验哈希 |
 
 ---
 
@@ -127,6 +139,16 @@ LongPost 拒绝粗暴的「换皮换色」：两套工作区是同一套底层�
 
 ---
 
+### 长文换短帖
+
+写完一篇几千字的长文，工具条上点「短帖」，模型读完全篇后给出：
+
+1. **三个标题**：信息密度高 / 带悬念 / 口语社群风，供不同平台挑；
+2. **一条短帖**：140 字以内，可直接发 X / 即刻；
+3. **一组 Thread 切片**：5 条以内，每条不超过 100 字。
+
+每块都带复制按钮。原文超长时按「开头 + 结尾」截取 6000 字送入模型，既避免上下文溢出，又保住通常位于后半段的结论。
+
 ## 🔐 站点开启 AI 公共额度（部署者看这里）
 
 在 `.env` 里配四行即可，不配则公共额度自动关闭、只允许用户自带 Key：
@@ -163,13 +185,13 @@ AI_DAILY_QUOTA=20                    # 每个登录用户每天可用次数，0 
 ```
 ```
 
-### v2.9.9 视觉与交互升级亮点：
+### v2.10.0 视觉与交互升级亮点：
 - **自适应现代调色板**：浅色模式采用高雅莫兰迪色系（`#2563eb`, `#7c3aed`, `#db2777`, `#059669`），深色模式采用柔和微光色系（`#38bdf8`, `#818cf8`, `#c084fc`, `#34d399`）；
 - **柱状图现代圆角**：柱体顶部统一增加 `borderRadius: [6, 6, 0, 0]`，告别生硬切角；
 - **环形图优雅间隙**：饼图与环形图引入 `borderRadius: 6` 及主题自适应微隙描边；
 - **双端同构还原**：React 网页端渲染、服务端直出与导出的自包含单文件离线 HTML 完全一致，悬浮探针可实时读取数值。
 
-### 🆕 v2.9.9 工程与数据安全增强
+### 🆕 v2.10.0 工程与数据安全增强
 - **WebDAV 全量备份 / 一键恢复**：同步设置面板新增「全量备份」与「从备份恢复」，把全库文章打成单个 `longpost-backup.json` 存进你的 WebDAV；恢复采用 **合并式** 策略，本地已有的文章绝不覆盖，换机或误删时可安全找回；
 - **桌面端长图落盘打通**：`platform.saveExportImage()` 补齐了「preload 通道已通、平台层未接」的断点，桌面端点「保存长图」现在会真正弹出系统保存对话框；
 - **草稿防抖竞态锁**：`LocalFirstStore` 引入 `pendingDraftSnapshot` + `flushPendingSave()`，在切换草稿、读取草稿、删除草稿前强制冲刷挂起写入，彻底消除"跨文档内容互相覆盖"这一类丢稿事故；

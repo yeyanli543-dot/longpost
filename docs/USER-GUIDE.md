@@ -1,6 +1,6 @@
 # LongPost 使用说明
 
-> 适用版本：**v2.9.9** · 更新日期：2026-10-18
+> 适用版本：**v2.10.0** · 更新日期：2026-10-18
 > 配套文档：[产品报告](./PRODUCT-REPORT.md) · [README](../README.md)
 
 ---
@@ -35,23 +35,23 @@ LongPost 有两条产品线，功能不完全一样，先对照下表选：
 ## 1. 安装
 
 ### 1.1 Windows
-下载 `LongPost.Setup.2.9.9.exe`（安装版）或 `LongPost.2.9.9.exe`（免安装便携版，双击即用）。
+下载 `LongPost.Setup.2.10.0.exe`（安装版）或 `LongPost.2.10.0.exe`（免安装便携版，双击即用）。
 
 首次运行若被 SmartScreen 拦下，点「更多信息 → 仍要运行」。
 
 ### 1.2 macOS
-下载 `LongPost-2.9.9-arm64.dmg`，拖进「应用程序」。因为还没有代码签名，首次打开需要**右键 →「打开」**放行一次。
+下载 `LongPost-2.10.0-arm64.dmg`，拖进「应用程序」。因为还没有代码签名，首次打开需要**右键 →「打开」**放行一次。
 
 ### 1.3 Linux
-下载 `LongPost-2.9.9.AppImage`：
+下载 `LongPost-2.10.0.AppImage`：
 
 ```bash
-chmod +x LongPost-2.9.9.AppImage
-./LongPost-2.9.9.AppImage
+chmod +x LongPost-2.10.0.AppImage
+./LongPost-2.10.0.AppImage
 ```
 
 ### 1.4 安卓
-下载 `LongPost-v2.9.9-android.apk` 直接安装。注意是 **debug 签名**，换版本时需要先卸载旧版。
+下载 `LongPost-v2.10.0-android.apk` 直接安装。注意是 **debug 签名**，换版本时需要先卸载旧版。
 
 ### 1.5 Web（自建）
 见本文第 9 节「自建部署」。
