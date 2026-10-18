@@ -171,3 +171,19 @@
 - 任何"由服务端替用户发请求"的能力都必须经过
   `server/common/security/outbound-host-guard.ts`
   （协议白名单 + 主机名黑名单 + DNS 解析期内网拦截 + 连接期 lookup 复核）
+
+
+### AI 助手（v2.9.8 起三端可用）
+请求链路刻意分成两条，改动时不要混：
+
+| 端 | 渲染层 | 请求由谁发出 | 入口 |
+| :--- | :--- | :--- | :--- |
+| Web | `client/`（React） | 浏览器 `fetch` | 编辑器划词工具条 → 齿轮 |
+| 桌面 | `desktop/renderer/`（原生 JS） | **Electron 主进程** `ai:chat` IPC | 设置 → AI 助手 / 划词工具条 |
+| 安卓 | `desktop/renderer/`（Capacitor） | 浏览器 `fetch`（跨域受限，失败会提示） | 同桌面 |
+
+- 主进程实现：`desktop/main.js` 的 `runAiChat`（OpenAI 兼容 / Gemini / Ollama 三种协议的流式解析）
+- 渲染层桥接：`desktop/preload.js` 暴露 `aiChat / aiAbort / onAiChunk`
+- 浏览器兜底：`desktop/renderer/platform.js` 里的 `aiChat`
+- 默认配置在 `desktop/lib/repo.js` 的 `defaultSettings()`，**API Key 只写本机，不进仓库**
+- 自检：`desktop/scripts/smoke-test.js` 的 `[10] AI 助手接线` 会校验上述接线是否还在

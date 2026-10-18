@@ -4,7 +4,7 @@
 
 **下一代长文创作与社交平台 · 🍏 Apple 极简 ↔ 🔷 Google 专业双工作区 · 交互式活数据图表 · 免登录公开阅读 · 零服务器离线工作台**
 
-[![Version](https://img.shields.io/badge/version-2.9.7-blue.svg)](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.9.7)
+[![Version](https://img.shields.io/badge/version-2.9.8-blue.svg)](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.9.8)
 [![Build Desktop](https://github.com/yeyanli543-dot/longpost/actions/workflows/desktop-release.yml/badge.svg)](https://github.com/yeyanli543-dot/longpost/actions/workflows/desktop-release.yml)
 [![Build Android](https://github.com/yeyanli543-dot/longpost/actions/workflows/android-release.yml/badge.svg)](https://github.com/yeyanli543-dot/longpost/actions/workflows/android-release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -41,17 +41,17 @@
 
 ---
 
-## <a id="-多端下载"></a>📥 多端下载 (v2.9.7 最新全平台安装包)
+## <a id="-多端下载"></a>📥 多端下载 (v2.9.8 最新全平台安装包)
 
 所有安装包均通过 GitHub Actions 自动化 CI 构建并带有防篡改校验，即下即用：
 
 | 平台 | 安装包格式 | 下载渠道 | 说明 |
 | :--- | :--- | :--- | :--- |
-| **🪟 Windows** | `.exe` 安装版 / 便携版 | [**下载安装版**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.7/LongPost.Setup.2.9.7.exe) · [**免安装便携版**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.7/LongPost.2.9.7.exe) | 支持 Windows 10/11，便携免安装版解压双击直接运行 |
-| **🤖 Android** | `.apk` 手机安装包 | [**下载 LongPost-v2.9.7-android.apk**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.7/LongPost-v2.9.7-android.apk) | 手机端离线写作，固定签名密钥支持无缝覆盖升级 |
-| **🍎 macOS** | `.dmg` 镜像 | [**下载 LongPost-2.9.7-arm64.dmg**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.7/LongPost-2.9.7-arm64.dmg) | 支持 Apple Silicon & Intel，首次打开右键放行 |
-| **🐧 Linux** | `.AppImage` | [**下载 LongPost-2.9.7.AppImage**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.7/LongPost-2.9.7.AppImage) | 赋予执行权限 `chmod +x` 后直接运行 |
-| **📦 全部版本** | 全部 5 端安装产物 | [**GitHub Releases v2.9.7 (最新发布页)**](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.9.7) | 包含所有平台的安装包、源码与校验哈希 |
+| **🪟 Windows** | `.exe` 安装版 / 便携版 | [**下载安装版**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.8/LongPost.Setup.2.9.8.exe) · [**免安装便携版**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.8/LongPost.2.9.8.exe) | 支持 Windows 10/11，便携免安装版解压双击直接运行 |
+| **🤖 Android** | `.apk` 手机安装包 | [**下载 LongPost-v2.9.8-android.apk**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.8/LongPost-v2.9.8-android.apk) | 手机端离线写作，固定签名密钥支持无缝覆盖升级 |
+| **🍎 macOS** | `.dmg` 镜像 | [**下载 LongPost-2.9.8-arm64.dmg**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.8/LongPost-2.9.8-arm64.dmg) | 支持 Apple Silicon & Intel，首次打开右键放行 |
+| **🐧 Linux** | `.AppImage` | [**下载 LongPost-2.9.8.AppImage**](https://github.com/yeyanli543-dot/longpost/releases/download/v2.9.8/LongPost-2.9.8.AppImage) | 赋予执行权限 `chmod +x` 后直接运行 |
+| **📦 全部版本** | 全部 5 端安装产物 | [**GitHub Releases v2.9.8 (最新发布页)**](https://github.com/yeyanli543-dot/longpost/releases/tag/v2.9.8) | 包含所有平台的安装包、源码与校验哈希 |
 
 ---
 
@@ -98,6 +98,24 @@ LongPost 拒绝粗暴的“换皮换色”，而是从 **apple.com 官方原始 
 
 ---
 
+## 🤖 AI 写作助手（Web / 桌面 / 安卓三端可用）
+
+选中一段正文，工具条就会浮出来——**润色、精简、排版、续写**四个动作，边生成边显示，随时可以停。
+
+| 能力 | 说明 |
+| :--- | :--- |
+| **划词即用** | 选中 ≥ 2 个字自动浮现，中文输入法拼写过程中不会打断 |
+| **流式输出** | 逐字回传，可随时中止；写完再决定「替换选中」还是「插入下方」 |
+| **三家模型** | OpenAI 兼容（DeepSeek / Moonshot / 自建网关）、Google Gemini、本机 Ollama |
+| **本地知识库** | Web 端内置 BM25 倒排检索：写作时自动从你自己的历史长文里找相关片段作为参考上下文 |
+| **密钥不出本机** | API Key 只写进本机设置文件（桌面端）或 localStorage（Web），不上传服务端 |
+
+> 桌面端与安卓端的请求由 **Electron 主进程代发**（`desktop/main.js` 的 `ai:chat` 通道），
+> 渲染层跑在 `file://` 下也不受跨域限制；Web 端则直接走浏览器 fetch。
+> 配置位置：**设置 → AI 助手**（桌面 / 安卓）或编辑器划词工具条右侧的齿轮（Web）。
+
+---
+
 ## 📊 交互式图表卡片（活数据可视化）
 
 在 Markdown 正文中使用 ````chart` 围栏，即可内嵌 **柱状图 / 折线图 / 面积图 / 饼图**。图表不仅是截图，更是活生生的可交互数据：
@@ -117,13 +135,13 @@ LongPost 拒绝粗暴的“换皮换色”，而是从 **apple.com 官方原始 
 ```
 ```
 
-### v2.9.7 视觉与交互升级亮点：
+### v2.9.8 视觉与交互升级亮点：
 - **自适应现代调色板**：浅色模式采用高雅莫兰迪色系（`#2563eb`, `#7c3aed`, `#db2777`, `#059669`），深色模式采用柔和微光色系（`#38bdf8`, `#818cf8`, `#c084fc`, `#34d399`）；
 - **柱状图现代圆角**：柱体顶部统一增加 `borderRadius: [6, 6, 0, 0]`，告别生硬切角；
 - **环形图优雅间隙**：饼图与环形图引入 `borderRadius: 6` 及主题自适应微隙描边；
 - **双端同构还原**：React 网页端渲染、服务端直出与导出的自包含单文件离线 HTML 完全一致，悬浮探针可实时读取数值。
 
-### 🆕 v2.9.7 工程与数据安全增强
+### 🆕 v2.9.8 工程与数据安全增强
 - **WebDAV 全量备份 / 一键恢复**：同步设置面板新增「全量备份」与「从备份恢复」，把全库文章打成单个 `longpost-backup.json` 存进你的 WebDAV；恢复采用 **合并式** 策略，本地已有的文章绝不覆盖，换机或误删时可安全找回；
 - **桌面端长图落盘打通**：`platform.saveExportImage()` 补齐了「preload 通道已通、平台层未接」的断点，桌面端点「保存长图」现在会真正弹出系统保存对话框；
 - **草稿防抖竞态锁**：`LocalFirstStore` 引入 `pendingDraftSnapshot` + `flushPendingSave()`，在切换草稿、读取草稿、删除草稿前强制冲刷挂起写入，彻底消除"跨文档内容互相覆盖"这一类丢稿事故；
@@ -154,14 +172,17 @@ LongPost 拒绝粗暴的“换皮换色”，而是从 **apple.com 官方原始 
 │    💻 桌面版 (desktop/)   │      📱 手机版 (mobile/)    │    🌐 Web版 (client+server)  │
 ├─────────────────────┼───────────────────────────┼──────────────────────┤
 │ 运行时: Electron 44   │ 运行时: Capacitor 8 Android│ 运行时: Node 22 + React 19 │
-│ 渲染层: dist/client   │ 渲染层: dist/client       │ 渲染层: dist/client (SSR)  │
+│ 渲染层: desktop/renderer │ 渲染层: desktop/renderer │ 渲染层: client/ → dist/client │
 │ 存储: 本地 JSON + 附件  │ 存储: 本地 IndexedDB       │ 存储: PostgreSQL + Drizzle │
 │ 网络: 纯离线零联网    │ 网络: 纯离线零联网        │ 网络: JWT鉴权 + Socket.IO  │
 │ 适用: 个人深度写作/归档 │ 适用: 随身速记/无障碍阅读 │ 适用: 团队社区/公网分发推广│
 └─────────────────────┴───────────────────────────┴──────────────────────┘
 ```
 
-- **单一前端真理源 (`dist/client`)**：桌面端 Electron 与移动端 Capacitor 直接复用现代 React 19 + Tailwind CSS 4 前端构建产物，**彻底移除了旧版冗余的 11,000+ 行独立模板代码**，实现多端能力 100% 同步；
+- **双轨渲染层，各司其职**：
+  - **Web 社交平台**：`client/`（React 19 + Tailwind CSS 4）构建到 `dist/client`，由 NestJS 托管并做阅读页直出；
+  - **桌面 / 手机写作台**：共用 `desktop/renderer/` 这套零依赖原生 JS 渲染层（沙箱化、纯离线，数据只进本机磁盘或 IndexedDB），Capacitor 的 `webDir` 也指向它。
+  - 两条轨道共享 `shared/` 里的类型、图表 DSL 与同步协议，但**不共享 UI 代码** —— 前者要联网做社区，后者要求断网可用，混成一份反而两边都做不好。
 - **极致轻量打包**：移动端通过 Capacitor 编译为原生 APK，桌面端由 electron-builder 产出自包含安装包与免安装便携版。
 
 ---
@@ -273,13 +294,13 @@ npm run apk
 │   ├── database/        # Drizzle ORM 数据模型 (schema.ts) 与迁移脚本
 │   └── common/          # 安全过滤器、Markdown 与 XSS 防护解析器
 ├── desktop/             # Electron 桌面应用 (独立无后端写作端)
-│   ├── main.js          # Electron 主进程入口（优先加载 dist/client 产物）
+│   ├── main.js          # Electron 主进程入口（加载 renderer/index.html，并代理 AI / WebDAV 出站请求）
 │   ├── preload.js       # 安全隔离的 Preload 桥接脚本
 │   └── lib/             # 本地数据仓库、HTML 导出引擎
 ├── mobile/              # Capacitor 8 移动端安卓工程
-│   └── capacitor.config.json # WebDir 指向 ../dist/client
+│   └── capacitor.config.json # WebDir 指向 ../desktop/renderer
 ├── shared/              # 前后端共享类型与图表卡片 DSL 规范 (chart-card.ts)
-├── test/                # 9 个套件 37 项原生极速单元安全与算法测试
+├── test/                # 21 个套件 107 项原生单元测试（直连生产代码，不经编译）
 └── .github/workflows/   # 云端自动化 CI/CD (多端编译与 Release 发布)
 ```
 
