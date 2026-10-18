@@ -23,6 +23,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
 import { SyncModule } from './modules/sync/sync.module';
 import { AiModule } from './modules/ai/ai.module';
 import { NewsletterModule } from './modules/newsletter/newsletter.module';
+import { OgModule } from './modules/og/og.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { NewsletterModule } from './modules/newsletter/newsletter.module';
     SyncModule,
     AiModule,
     NewsletterModule,
+    OgModule,
     // ====== @route-section: business-modules END ======
 
     // ⚠️ @route-order: last

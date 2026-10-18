@@ -151,9 +151,11 @@ export class ViewController {
           );
         });
 
+      // 没有封面图时用动态生成的分享图兜底：
+      // 分享出去至少是一张带标题的卡片，而不是一条灰链接。
       const absoluteCover = article.coverUrl
         ? toAbsoluteUrl(article.coverUrl, fullUrl, req.path)
-        : '';
+        : getRequestBaseUrl(req) + '/api/og/article/' + article.id + '.png';
       const absoluteImages = article.images.map((img) =>
         toAbsoluteUrl(img, fullUrl, req.path),
       );
