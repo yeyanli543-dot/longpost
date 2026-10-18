@@ -425,6 +425,21 @@ export async function initDatabaseSchema(sql: postgres.Sql): Promise<void> {
     );
   `.simple().catch(() => {});
 
+  // 8.5 AI 助手：用户自填 Key 的加密托管 + 站点公共额度的每日计数
+  await sql`
+    CREATE TABLE IF NOT EXISTS user_ai_settings (
+      user_id UUID PRIMARY KEY REFERENCES app_users(id) ON DELETE CASCADE,
+      provider VARCHAR(20) NOT NULL DEFAULT 'openai',
+      base_url VARCHAR(500),
+      model VARCHAR(120),
+      key_cipher TEXT,
+      quota_date VARCHAR(10),
+      quota_count INTEGER NOT NULL DEFAULT 0,
+      _created_at TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      _updated_at TIMESTAMPTZ(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `.simple().catch(() => {});
+
   // 9. 渐进式架构升级补丁 (Idempotent schema migrations)
   await sql`
     ALTER TABLE app_users ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAULT 1;

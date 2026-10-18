@@ -926,3 +926,17 @@ export const postsTable = posts;
 export const reportsTable = reports;
 export const repostsTable = reposts;
 export const siteSettingsTable = siteSettings;
+
+export const userAiSettings = pgTable("user_ai_settings", {
+  userId: uuid("user_id").primaryKey(),
+  provider: varchar("provider", { length: 20 }).notNull().default('openai'),
+  baseUrl: varchar("base_url", { length: 500 }),
+  model: varchar("model", { length: 120 }),
+  keyCipher: text("key_cipher"),
+  quotaDate: varchar("quota_date", { length: 10 }),
+  quotaCount: integer("quota_count").notNull().default(0),
+  // System field: Creation time (auto-filled, do not modify)
+  createdAt: customTimestamptz("_created_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  // System field: Update time (auto-filled, do not modify)
+  updatedAt: customTimestamptz("_updated_at", { precision: 3 }).notNull().default(sql`CURRENT_TIMESTAMP`),
+});

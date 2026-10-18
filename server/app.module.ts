@@ -21,6 +21,7 @@ import { AccessCodesModule } from './modules/access-codes/access-codes.module';
 import { PwaModule } from './modules/pwa/pwa.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { SyncModule } from './modules/sync/sync.module';
+import { AiModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { SyncModule } from './modules/sync/sync.module';
     PwaModule,
     UploadsModule,
     SyncModule,
+    AiModule,
     // ====== @route-section: business-modules END ======
 
     // ⚠️ @route-order: last

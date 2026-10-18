@@ -187,3 +187,17 @@
 - 浏览器兜底：`desktop/renderer/platform.js` 里的 `aiChat`
 - 默认配置在 `desktop/lib/repo.js` 的 `defaultSettings()`，**API Key 只写本机，不进仓库**
 - 自检：`desktop/scripts/smoke-test.js` 的 `[10] AI 助手接线` 会校验上述接线是否还在
+
+
+### AI 网关（v2.9.8 起）
+- 服务端：`server/modules/ai/`，三个接口：
+  - `GET /api/ai/status` — 当前用户可用什么、站点额度还剩几次
+  - `PUT /api/ai/key` / `DELETE /api/ai/key` — 托管 / 清除个人 Key
+  - `POST /api/ai/chat` — SSE 流式对话（**手动接管 Response**，错误走事件体而非 HTTP 状态）
+- 取用优先级：本机 Key → 账号托管 Key → 站点公共额度（见 `client/src/lib/ai/ai-router.ts`）
+- 个人 Key 加密：`server/common/utils/ai-crypto.ts`（AES-256-GCM，密钥来自 `AI_KEY_SECRET`，缺省回退 `JWT_SECRET`）
+- 额度：`server/common/utils/ai-quota.ts`（纯函数，按用户 + 自然日）
+- 流式解析：`server/common/utils/llm-stream.ts`（OpenAI/Gemini SSE + Ollama NDJSON）
+- 表：`user_ai_settings`（DDL 在 `server/database/init-schema.ts`，drizzle 定义在 `schema.ts` 末尾）
+- 站点公共额度默认**关闭**：不填 `AI_SITE_KEY` 就只有用户自带 Key 一条路
+- 测试：`test/ai-gateway.test.mjs`（加密往返/篡改、额度跨天、SSE 拆包）

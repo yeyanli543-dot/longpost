@@ -13,7 +13,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { streamChatCompletion } from '@/lib/ai/universal-llm-client';
+import { runAiCompletion } from '@/lib/ai/ai-router';
 import { searchLocalKnowledge, formatRAGContextPrompt } from '@/lib/ai/local-rag';
 
 export type AiActionType = 'polish' | 'condense' | 'pangu' | 'continue';
@@ -117,8 +117,8 @@ export const FloatingAiToolbar: React.FC<FloatingAiToolbarProps> = ({
           break;
       }
 
-      // 3. 发起统一流式推理
-      await streamChatCompletion({
+      // 3. 发起流式推理：本机 Key 优先，其次站点额度 / 账号托管 Key
+      await runAiCompletion({
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },

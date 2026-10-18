@@ -19,6 +19,7 @@ import {
   type LLMProviderType,
   streamChatCompletion,
 } from '@/lib/ai/universal-llm-client';
+import { fetchServerAiStatus, saveServerAiKey, isLoggedIn, type ServerAiStatus } from '@/lib/ai/server-ai';
 
 interface AiSettingsModalProps {
   isOpen: boolean;
@@ -29,15 +30,64 @@ export const AiSettingsModal: React.FC<AiSettingsModalProps> = ({ isOpen, onClos
   const [config, setConfig] = useState<UniversalLLMConfig>(getLLMConfig());
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
+  const [serverStatus, setServerStatus] = useState<ServerAiStatus | null>(null);
+  const [serverBusy, setServerBusy] = useState(false);
+  const [serverMsg, setServerMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       setConfig(getLLMConfig());
       setTestResult(null);
+      setServerMsg(null);
+      fetchServerAiStatus().then(setServerStatus).catch(() => setServerStatus(null));
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  // 把当前面板里填的配置加密托管到账号（换设备登录即可用）
+  const handleHostKey = async () => {
+    const provider = config.provider;
+    const apiKey =
+      provider === 'gemini' ? config.gemini.apiKey : provider === 'openai' ? config.openai.apiKey : '';
+    const baseUrl =
+      provider === 'gemini' ? config.gemini.customBaseUrl || '' : provider === 'openai' ? config.openai.baseUrl : config.ollama.baseUrl;
+    const model =
+      provider === 'gemini' ? config.gemini.model : provider === 'openai' ? config.openai.model : config.ollama.model;
+
+    if (provider !== 'ollama' && !apiKey) {
+      setServerMsg('先在下面把 API Key 填上，再点托管');
+      return;
+    }
+    if (provider === 'ollama') {
+      setServerMsg('本地模型跑在你自己的机器上，无法托管到账号；换设备请各自配置');
+      return;
+    }
+
+    setServerBusy(true);
+    try {
+      const next = await saveServerAiKey({ provider, baseUrl, model, apiKey });
+      setServerStatus(next);
+      setServerMsg('已托管：以后换设备登录就能直接用，不用重填 Key');
+    } catch (err) {
+      setServerMsg('托管失败：' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setServerBusy(false);
+    }
+  };
+
+  const handleUnhostKey = async () => {
+    setServerBusy(true);
+    try {
+      const next = await saveServerAiKey({ apiKey: '' });
+      setServerStatus(next);
+      setServerMsg('已清除托管。之后只使用本机 Key 或站点额度');
+    } catch (err) {
+      setServerMsg('清除失败：' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setServerBusy(false);
+    }
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -342,6 +392,47 @@ export const AiSettingsModal: React.FC<AiSettingsModalProps> = ({ isOpen, onClos
               {testResult}
             </div>
           )}
+
+          {/* 账号托管：换设备登录即用 */}
+          <div className="p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-900/40 space-y-2">
+            <div className="flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300">
+              <Globe className="w-3.5 h-3.5" /> 账号托管 / 站点额度
+            </div>
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed">
+              {!isLoggedIn()
+                ? '登录后可使用站点公共额度；也可以把本机 Key 托管到账号，换设备不用重填。'
+                : serverStatus
+                  ? serverStatus.hasOwnKey
+                    ? `已托管自己的 Key（${serverStatus.keyMask}），换设备登录即可用。`
+                    : serverStatus.siteAvailable
+                      ? `未托管 Key，正在使用站点额度：今日剩余 ${serverStatus.remaining} / ${serverStatus.quota} 次。`
+                      : '站点未开启公共额度，请填写自己的 Key 或托管到账号。'
+                  : '无法连接服务端 AI 接口（可能未登录或服务端未启用）。'}
+            </p>
+            {isLoggedIn() && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={serverBusy || config.provider === 'ollama'}
+                  onClick={handleHostKey}
+                  className="px-3 py-1 rounded-full border border-gray-300 dark:border-gray-700 text-[11px] text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
+                >
+                  把当前 Key 托管到账号
+                </button>
+                {serverStatus?.hasOwnKey && (
+                  <button
+                    type="button"
+                    disabled={serverBusy}
+                    onClick={handleUnhostKey}
+                    className="px-3 py-1 rounded-full text-[11px] text-red-600 dark:text-red-400 hover:bg-red-500/10 disabled:opacity-50"
+                  >
+                    取消托管
+                  </button>
+                )}
+              </div>
+            )}
+            {serverMsg && <p className="text-[11px] text-purple-600 dark:text-purple-400">{serverMsg}</p>}
+          </div>
 
           <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-800">
             <button
