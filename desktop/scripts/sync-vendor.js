@@ -40,7 +40,7 @@ const destDir = path.join(root, 'renderer', 'vendor');
 const pkgJsonPath = path.join(root, 'package.json');
 
 /** 必须一起搬进 renderer/vendor/ 的共享模块（renderer 与 lib 逐字节一致）。 */
-const SHARED = ['markdown.js', 'chart.js', 'repo.js', 'page-style.js', 'outline.js', 'social-slice.js', 'markdown-import.js', 'static-site.js', 'bookmarklet.js'];
+const SHARED = ['markdown.js', 'chart.js', 'repo.js', 'page-style.js', 'outline.js', 'social-slice.js', 'markdown-import.js', 'static-site.js', 'bookmarklet.js', 'pairing.js'];
 
 /**
  * 随包分发的第三方声明文件（面向接收方，合规用）。

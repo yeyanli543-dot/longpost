@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "LongPost 剪藏",
+  "version": "1.0.0",
+  "description": "把网页正文、选区一键保存到本机 LongPost 写作台",
+  "permissions": [
+    "contextMenus",
+    "activeTab",
+    "scripting",
+    "storage",
+    "notifications"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "保存到 LongPost"
+  },
+  "options_page": "options.html"
+}

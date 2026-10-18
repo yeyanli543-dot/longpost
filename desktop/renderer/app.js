@@ -3597,11 +3597,26 @@
     copyToClipboard(code);
   }
 
+  async function copyPairingCode() {
+    const info = await LP.bridgeInfo();
+    if (!info || !info.enabled) {
+      toast('先打开上面的开关', 'err');
+      return;
+    }
+    const code = window.LPPairing.buildPairingCode({ port: info.port, token: info.token });
+    if (!code) {
+      toast('生成配对码失败', 'err');
+      return;
+    }
+    copyToClipboard(code);
+  }
+
   function bindClipBridge() {
     // 设置卡片没插进来时直接跳过，不能让整个启动流程挂在 null 上
-    if (!$('clipBridgeSwitch') || !$('clipBookmarkBtn')) return;
+    if (!$('clipBridgeSwitch') || !$('clipBookmarkBtn') || !$('clipPairBtn')) return;
     $('clipBridgeSwitch').addEventListener('click', toggleClipBridge);
     $('clipBookmarkBtn').addEventListener('click', copyBookmarklet);
+    $('clipPairBtn').addEventListener('click', copyPairingCode);
     if (LP && typeof LP.onClipped === 'function') {
       LP.onClipped(() => {
         refreshAll();
