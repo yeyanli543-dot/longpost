@@ -67,7 +67,7 @@
       // 自定义更新清单地址；留空用 GitHub Releases
       updateFeed: '',
       // Chrome 剪藏本地桥：默认关闭，设置里手动开启
-      clipBridgeEnabled: false,
+      clipBridgeEnabled: true,
       clipBridgeToken: '',
     };
   }
