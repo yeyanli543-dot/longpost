@@ -283,6 +283,9 @@
               </button>
               <span class="sep keep-in-reading"></span>
               <!-- 交付与更多动作组 -->
+              <button class="btn keep-in-reading" id="btnSocialSlice" title="把这篇长文变成引流用的标题 / 短帖 / Thread">
+                <svg class="icon" aria-hidden="true"><use href="#i-quote"></use></svg><span class="btn-label">短帖</span>
+              </button>
               <button class="btn keep-in-reading btn-share-cta" id="btnShare" title="复制成 Markdown / 网页，或调用系统分享">
                 <svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg><span class="btn-label">分享</span>
               </button>
@@ -486,7 +489,28 @@
     </div>
 
     <!-- 设置 -->
-    <div class="modal" id="settingsModal" hidden data-dismiss="1">
+    <!-- 引流短帖：长文 -> 标题 / 短帖 / Thread -->
+  <div class="modal" id="socialSliceModal" hidden data-dismiss="1">
+    <div class="dialog" role="dialog" aria-label="生成引流短帖">
+      <div class="sheet-grip" aria-hidden="true"></div>
+      <div class="dialog-head">
+        <h3>引流短帖</h3>
+        <button class="icon-btn" id="socialSliceClose" aria-label="关闭">
+          <svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>
+        </button>
+      </div>
+      <div class="dialog-body">
+        <p class="hint" id="socialSliceStatus">根据当前文章生成三个标题、一条短帖和一组 Thread，可直接复制到各平台。</p>
+        <div id="socialSliceResult" class="social-slice-result" hidden></div>
+      </div>
+      <div class="dialog-foot">
+        <button class="btn ghost" id="socialSliceCloseFoot" type="button">关闭</button>
+        <button class="btn primary" id="socialSliceRun" type="button">开始生成</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="settingsModal" hidden data-dismiss="1">
       <div class="dialog" role="dialog" aria-label="设置">
         <div class="sheet-grip" aria-hidden="true"></div>
         <div class="dialog-head">
@@ -1013,6 +1037,7 @@
     <script src="vendor/page-style.js"></script>
     <script src="vendor/outline.js"></script>
     <script src="vendor/repo.js"></script>
+    <script src="vendor/social-slice.js"></script>
 
     <!-- ===================== 第三方库（本地文件，无 CDN、无内联脚本） =====================
          加库 / 删库一律走 desktop/VENDOR.md：先改 desktop/package.json 与

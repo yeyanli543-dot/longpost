@@ -2909,7 +2909,7 @@
       }
       const settings = (await LP.getSettings()) || {};
       const backupData = {
-        version: '2.9.9',
+        version: '2.10.0',
         exportedAt: new Date().toISOString(),
         appName: 'LongPost',
         stats: {
@@ -3324,6 +3324,219 @@
     const el = $(id);
     if (!el) return;
     el.setAttribute('aria-checked', on ? 'true' : 'false');
+  }
+
+  // ---------------------------------------------------------------- 引流短帖
+
+  const sliceState = { busy: false, text: '', parsed: null, unsubscribe: null };
+
+  /** 流式输出阶段：先把原始文本铺进一个可滚动的 pre */
+  function renderSocialSliceStreaming(text) {
+    const box = $('socialSliceResult');
+    box.hidden = false;
+    box.innerHTML = '';
+    const pre = document.createElement('pre');
+    pre.className = 'social-slice-stream';
+    pre.textContent = text;
+    box.appendChild(pre);
+  }
+
+  function copyToClipboard(text) {
+    if (!text) return;
+    const done = () => toast('已复制');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+    } else {
+      fallbackCopy(text, done);
+    }
+  }
+
+  function fallbackCopy(text, done) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      done();
+    } catch {
+      toast('复制失败，请手动选中', 'err');
+    }
+    document.body.removeChild(ta);
+  }
+
+  function renderSocialSliceResult(parsed) {
+    const box = $('socialSliceResult');
+    box.innerHTML = '';
+
+    function block(title, text) {
+      if (!text) return;
+      const wrap = document.createElement('section');
+      wrap.className = 'social-slice-block';
+
+      const head = document.createElement('div');
+      head.className = 'social-slice-head';
+
+      const label = document.createElement('span');
+      label.textContent = title;
+
+      const btn = document.createElement('button');
+      btn.className = 'btn ghost sm';
+      btn.type = 'button';
+      btn.textContent = '复制';
+      btn.addEventListener('click', () => copyToClipboard(text));
+
+      head.appendChild(label);
+      head.appendChild(btn);
+
+      const body = document.createElement('div');
+      body.className = 'social-slice-body';
+      body.textContent = text;
+
+      wrap.appendChild(head);
+      wrap.appendChild(body);
+      box.appendChild(wrap);
+    }
+
+    block('标题', parsed.titles.map((x, i) => i + 1 + '. ' + x).join('\n'));
+    block('短帖', parsed.post);
+    block('Thread', parsed.thread.join('\n'));
+
+    if (!parsed.titles.length && !parsed.post && !parsed.thread.length) {
+      block('结果', '模型没有返回可解析的内容');
+    }
+    box.hidden = false;
+  }
+
+  function openSocialSlice() {
+    if (!state.current) {
+      toast('先打开一篇文章', 'err');
+      return;
+    }
+    sliceState.text = '';
+    sliceState.parsed = null;
+    $('socialSliceResult').hidden = true;
+    $('socialSliceResult').innerHTML = '';
+    $('socialSliceStatus').textContent = '根据当前文章生成三个标题、一条短帖和一组 Thread，可直接复制到各平台。';
+    $('socialSliceRun').textContent = '开始生成';
+    $('socialSliceRun').disabled = false;
+    $('socialSliceModal').hidden = false;
+  }
+
+  function closeSocialSlice() {
+    $('socialSliceModal').hidden = true;
+    if (sliceState.unsubscribe) {
+      try {
+        sliceState.unsubscribe();
+      } catch {
+        /* 忽略 */
+      }
+      sliceState.unsubscribe = null;
+    }
+    sliceState.busy = false;
+  }
+
+  async function runSocialSlice() {
+    if (sliceState.busy) return;
+    if (!aiConfigured()) {
+      $('socialSliceStatus').textContent = '还没配置 AI：设置 → AI 助手';
+      openSettings();
+      return;
+    }
+
+    const API = window.LPSocialSlice;
+    if (!API) {
+      $('socialSliceStatus').textContent = '短帖模块没加载，请重启应用';
+      return;
+    }
+
+    const article = state.current;
+    const title = article.title || '';
+    const content = els.editor.value || '';
+    if (content.trim().length < 50) {
+      $('socialSliceStatus').textContent = '正文太短，至少写几段再来生成';
+      return;
+    }
+
+    sliceState.busy = true;
+    sliceState.text = '';
+    $('socialSliceRun').disabled = true;
+    $('socialSliceRun').textContent = '生成中…';
+    $('socialSliceStatus').textContent = '模型正在阅读全文…';
+    renderSocialSliceStreaming('');
+
+    const cfg = aiSettings();
+    const requestId = 'lp-slice-' + Date.now().toString(36);
+
+    if (sliceState.unsubscribe) {
+      try {
+        sliceState.unsubscribe();
+      } catch {
+        /* 忽略 */
+      }
+    }
+    sliceState.unsubscribe = LP.onAiChunk((data) => {
+      if (!data || data.requestId !== requestId) return;
+      sliceState.text += data.delta || '';
+      const pre = document.querySelector('#socialSliceResult .social-slice-stream');
+      if (pre) {
+        pre.textContent = sliceState.text;
+        pre.scrollTop = pre.scrollHeight;
+      }
+    });
+
+    try {
+      const res = await LP.aiChat({
+        requestId,
+        provider: cfg.provider,
+        baseUrl: cfg.baseUrl,
+        model: cfg.model,
+        apiKey: cfg.apiKey,
+        messages: API.buildSocialSliceMessages(title, content),
+      });
+
+      if (sliceState.unsubscribe) {
+        try {
+          sliceState.unsubscribe();
+        } catch {
+          /* 忽略 */
+        }
+        sliceState.unsubscribe = null;
+      }
+
+      if (!res || !res.ok) {
+        $('socialSliceStatus').textContent = '生成失败：' + ((res && res.error) || '未知错误');
+        $('socialSliceRun').disabled = false;
+        $('socialSliceRun').textContent = '重试';
+        sliceState.busy = false;
+        return;
+      }
+
+      const text = sliceState.text || (res.text || '');
+      sliceState.parsed = API.parseSocialSlice(text);
+      renderSocialSliceResult(sliceState.parsed);
+      $('socialSliceStatus').textContent = '生成完成，逐块复制即可';
+      $('socialSliceRun').textContent = '重新生成';
+      $('socialSliceRun').disabled = false;
+    } catch (err) {
+      $('socialSliceStatus').textContent = '生成失败：' + String((err && err.message) || err);
+      $('socialSliceRun').disabled = false;
+      $('socialSliceRun').textContent = '重试';
+    } finally {
+      sliceState.busy = false;
+    }
+  }
+
+  // 截图/调试钩子：让外部脚本能把解析结果直接渲染出来
+  window.__lpRenderSlice = renderSocialSliceResult;
+
+  function bindSocialSlice() {
+    $('btnSocialSlice').addEventListener('click', openSocialSlice);
+    $('socialSliceClose').addEventListener('click', closeSocialSlice);
+    $('socialSliceCloseFoot').addEventListener('click', closeSocialSlice);
+    $('socialSliceRun').addEventListener('click', runSocialSlice);
   }
 
   // ---------------------------------------------------------------- 应用内更新
@@ -5355,7 +5568,8 @@
     editor.addEventListener('mouseup', refreshFmtState);
     bindAiEditor();
     bindAiSettingsOnce();
-    bindUpdates();
+    bindUpdates();
+    bindSocialSlice();
     $('preview').addEventListener('scroll', () => {
       if (state.current) {
         const mem = state.scrollMem.get(state.current.id) || {};

@@ -3431,7 +3431,9 @@ body.reading-mode .preview {
 
 /* 🎨 6. 专业版 28px 超大圆角对话框 (Material 3 Dialog 与 Emphasized Decelerate 动效) */
 .mode-google .dialog {
-  border-radius: var(--r-pill);
+  /* 原来这里是 --r-pill(999px)：对话框一高就变成椭圆，底部的
+     按钮会被圆弧切掉。M3 的大对话框规范是 28dp，取 --r-xl 即可。 */
+  border-radius: var(--r-xl);
   background: var(--surface-2);
   border: none;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.22);
@@ -4169,4 +4171,52 @@ body.reading-mode .preview {
     border-radius: var(--r-lg);
   }
   .update-banner-text { white-space: normal; }
+}
+
+/* ---------------------------------------------------------------- 引流短帖 */
+.social-slice-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+
+.social-slice-block {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.social-slice-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px var(--sp-3);
+  background: var(--surface-2);
+  font-size: var(--fs-sm);
+  color: var(--text-2);
+}
+
+.social-slice-body {
+  padding: var(--sp-3);
+  font-size: var(--fs-md);
+  line-height: 1.7;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.social-slice-stream {
+  margin: 0;
+  padding: var(--sp-3);
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
