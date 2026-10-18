@@ -4,7 +4,8 @@
  * LongPost 桌面版 —— Electron 主进程
  *
  * 职责：建窗口、读写本机数据、附件导入、导出。
- * 这里没有任何网络请求，没有账号体系，所有数据都落在 app.getPath('userData') 下。
+ * 除 WebDAV 同步与 AI 助手的出站请求外，不主动联网；没有账号体系，
+ * 所有数据都落在 app.getPath('userData') 下。
  */
 
 const { app, BrowserWindow, ipcMain, dialog, shell, protocol, net, Menu, clipboard, nativeImage } = require('electron');
@@ -237,6 +238,202 @@ function buildMenu() {
 // IPC
 // ---------------------------------------------------------------------------
 
+
+// ============================================================================
+// AI 助手：在主进程发起请求
+// ============================================================================
+//
+// 为什么不在渲染层直接 fetch：渲染层是 file:// 页面，跨域请求会被 CORS 拦掉，
+// 而各家大模型的响应头并不统一（有的根本不让浏览器直连）。放在主进程里发，
+// 既绕开 CORS，也不会把 API Key 暴露给页面上下文之外的任何地方。
+
+/**
+ * 把响应体转成一句话错误信息（最多带 300 字上游原文，够定位问题又不刷屏）。
+ */
+async function aiHttpError(res) {
+  let detail = '';
+  try {
+    detail = (await res.text()).slice(0, 300);
+  } catch {
+    detail = '';
+  }
+  return 'HTTP ' + res.status + (detail ? '：' + detail : '');
+}
+
+/** 按行读取 body，逐行交给 onLine（Ollama 的 NDJSON 用它）。 */
+async function aiConsumeLines(res, onLine) {
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let idx;
+    while ((idx = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, idx).trim();
+      buf = buf.slice(idx + 1);
+      if (line) onLine(line);
+    }
+  }
+  const tail = buf.trim();
+  if (tail) onLine(tail);
+}
+
+/** 按 SSE 事件读取 body，把每个 data: 负载交给 onData（OpenAI / Gemini 用它）。 */
+async function aiConsumeSse(res, onData) {
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let idx;
+    while ((idx = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, idx).replace(/\r$/, '').trim();
+      buf = buf.slice(idx + 1);
+      if (!line || line.startsWith(':') || line.startsWith('event:')) continue;
+      if (!line.startsWith('data:')) continue;
+      onData(line.slice(5).trim());
+    }
+  }
+}
+
+/**
+ * 执行一次流式对话，边收边通过 onDelta 回调。
+ * 支持三种协议：
+ *   - openai：任何 OpenAI 兼容网关（DeepSeek、Moonshot、自建 one-api 等）
+ *   - gemini：Google Generative Language API
+ *   - ollama：本机 Ollama（http://127.0.0.1:11434）
+ */
+async function runAiChat(payload, onDelta, signal) {
+  const provider = payload.provider || 'openai';
+  const baseUrl = String(payload.baseUrl || '').trim().replace(/\/+$/, '');
+  const apiKey = String(payload.apiKey || '').trim();
+  const model = String(payload.model || '').trim();
+  const messages = Array.isArray(payload.messages) ? payload.messages : [];
+
+  if (!baseUrl) throw new Error('还没有配置服务地址');
+  if (!model) throw new Error('还没有配置模型名称');
+  if (!messages.length) throw new Error('没有要发送的内容');
+
+  // ---------------------------------------------------------------- Gemini
+  if (provider === 'gemini') {
+    if (!apiKey) throw new Error('Gemini 需要填写 API Key');
+    const systemText = messages
+      .filter((m) => m.role === 'system')
+      .map((m) => m.content)
+      .join('\n');
+    const contents = messages
+      .filter((m) => m.role !== 'system')
+      .map((m) => ({
+        role: m.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: m.content }],
+      }));
+
+    const url =
+      baseUrl +
+      '/v1beta/models/' +
+      encodeURIComponent(model) +
+      ':streamGenerateContent?alt=sse';
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+      body: JSON.stringify({
+        contents,
+        ...(systemText ? { systemInstruction: { parts: [{ text: systemText }] } } : {}),
+      }),
+      signal,
+    });
+    if (!res.ok) throw new Error(await aiHttpError(res));
+
+    let full = '';
+    await aiConsumeSse(res, (data) => {
+      let json;
+      try {
+        json = JSON.parse(data);
+      } catch {
+        return;
+      }
+      const parts =
+        json && json.candidates && json.candidates[0] && json.candidates[0].content
+          ? json.candidates[0].content.parts || []
+          : [];
+      const text = parts.map((p) => p.text || '').join('');
+      if (text) {
+        full += text;
+        onDelta(text);
+      }
+    });
+    return full;
+  }
+
+  // ---------------------------------------------------------------- Ollama
+  if (provider === 'ollama') {
+    const res = await fetch(baseUrl + '/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, messages, stream: true }),
+      signal,
+    });
+    if (!res.ok) throw new Error(await aiHttpError(res));
+
+    let full = '';
+    await aiConsumeLines(res, (line) => {
+      let json;
+      try {
+        json = JSON.parse(line);
+      } catch {
+        return;
+      }
+      const text = json && json.message && json.message.content;
+      if (text) {
+        full += text;
+        onDelta(text);
+      }
+    });
+    return full;
+  }
+
+  // ------------------------------------------------------- OpenAI 兼容协议
+  const headers = { 'Content-Type': 'application/json' };
+  if (apiKey) headers.Authorization = 'Bearer ' + apiKey;
+
+  const res = await fetch(baseUrl + '/chat/completions', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model,
+      messages,
+      stream: true,
+      temperature: typeof payload.temperature === 'number' ? payload.temperature : 0.7,
+    }),
+    signal,
+  });
+  if (!res.ok) throw new Error(await aiHttpError(res));
+
+  let full = '';
+  await aiConsumeSse(res, (data) => {
+    if (data === '[DONE]') return;
+    let json;
+    try {
+      json = JSON.parse(data);
+    } catch {
+      return;
+    }
+    const text =
+      json && json.choices && json.choices[0] && json.choices[0].delta
+        ? json.choices[0].delta.content
+        : '';
+    if (text) {
+      full += text;
+      onDelta(text);
+    }
+  });
+  return full;
+}
+
 function registerIpc() {
   // 排序方式由界面传进来（最近修改 / 创建时间 / 标题 / 字数），
   // 排序规则本身在 lib/repo.js 的 sortList 里，只有一个来源
@@ -338,6 +535,43 @@ function registerIpc() {
         });
       }
     });
+  });
+
+
+  // ---------------------------------------------------------------- AI 助手
+  // 流式回传：每收到一段就发 ai:chunk 给渲染层，渲染层边收边渲染。
+  const aiControllers = new Map();
+
+  ipcMain.handle('ai:chat', async (event, payload = {}) => {
+    const requestId = String(payload.requestId || Date.now());
+    const controller = new AbortController();
+    aiControllers.set(requestId, controller);
+
+    const sender = event.sender;
+    const send = (delta) => {
+      if (sender.isDestroyed()) return;
+      try {
+        sender.send('ai:chunk', { requestId, delta });
+      } catch {
+        // 窗口已关，忽略
+      }
+    };
+
+    try {
+      const text = await runAiChat(payload, send, controller.signal);
+      return { ok: true, requestId, text };
+    } catch (err) {
+      if (controller.signal.aborted) return { ok: false, requestId, aborted: true, error: '已取消' };
+      return { ok: false, requestId, error: (err && err.message) || String(err) };
+    } finally {
+      aiControllers.delete(requestId);
+    }
+  });
+
+  ipcMain.handle('ai:abort', (_e, requestId) => {
+    const controller = aiControllers.get(String(requestId));
+    if (controller) controller.abort();
+    return true;
   });
 
   // 系统剪贴板图片写入

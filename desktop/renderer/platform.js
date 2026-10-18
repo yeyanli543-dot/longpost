@@ -16,7 +16,7 @@
   'use strict';
 
   /** 跟 desktop/package.json 的 version 保持一致，自检里有断言盯着。 */
-  const APP_VERSION = '2.9.7';
+  const APP_VERSION = '2.9.8';
 
   if (!window.LPRepo || !window.LPIdbBackend) {
     const missing = [];
@@ -251,9 +251,190 @@
     return String(name || '未命名').replace(/[\\/:*?"<>|]/g, '_').slice(0, 60) || '未命名';
   }
 
+  // ------------------------------------------------------------ AI（网页 / 手机）
+  //
+  // 桌面版由主进程代发请求（见 desktop/main.js 的 ai:chat），这里只处理
+  // 网页 / 手机：没有 IPC 代理，只能自己 fetch。云端大模型多数会放行跨域，
+  // 万一被浏览器拦下，错误信息会直接告诉用户改用桌面版，而不是静默失败。
+
+  const aiAborters = new Map();
+  const aiListeners = new Set();
+
+  function aiEmit(data) {
+    aiListeners.forEach((fn) => {
+      try {
+        fn(data);
+      } catch {
+        /* 单个监听器出错不影响其它 */
+      }
+    });
+  }
+
+  async function aiReadSse(res, onData) {
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let idx;
+      while ((idx = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, idx).replace(/\r$/, '').trim();
+        buf = buf.slice(idx + 1);
+        if (!line || line.startsWith(':') || line.startsWith('event:')) continue;
+        if (!line.startsWith('data:')) continue;
+        onData(line.slice(5).trim());
+      }
+    }
+  }
+
+  async function aiReadLines(res, onLine) {
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let idx;
+      while ((idx = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, idx).trim();
+        buf = buf.slice(idx + 1);
+        if (line) onLine(line);
+      }
+    }
+    const tail = buf.trim();
+    if (tail) onLine(tail);
+  }
+
+  async function aiChat(payload) {
+    const requestId = String(payload.requestId || Date.now());
+    const controller = new AbortController();
+    aiAborters.set(requestId, controller);
+    const delta = (text) => aiEmit({ requestId, delta: text });
+
+    try {
+      const baseUrl = String(payload.baseUrl || '').trim().replace(/\/+$/, '');
+      const apiKey = String(payload.apiKey || '').trim();
+      const model = String(payload.model || '').trim();
+      const messages = Array.isArray(payload.messages) ? payload.messages : [];
+      if (!baseUrl) throw new Error('还没有配置服务地址');
+      if (!model) throw new Error('还没有配置模型名称');
+
+      const provider = payload.provider || 'openai';
+      let full = '';
+
+      if (provider === 'gemini') {
+        if (!apiKey) throw new Error('Gemini 需要填写 API Key');
+        const systemText = messages.filter((m) => m.role === 'system').map((m) => m.content).join('\n');
+        const contents = messages
+          .filter((m) => m.role !== 'system')
+          .map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
+        const res = await fetch(
+          baseUrl + '/v1beta/models/' + encodeURIComponent(model) + ':streamGenerateContent?alt=sse',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+            body: JSON.stringify({ contents, ...(systemText ? { systemInstruction: { parts: [{ text: systemText }] } } : {}) }),
+            signal: controller.signal,
+          },
+        );
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        await aiReadSse(res, (data) => {
+          let json;
+          try {
+            json = JSON.parse(data);
+          } catch {
+            return;
+          }
+          const parts = (json && json.candidates && json.candidates[0] && json.candidates[0].content && json.candidates[0].content.parts) || [];
+          const text = parts.map((p) => p.text || '').join('');
+          if (text) {
+            full += text;
+            delta(text);
+          }
+        });
+        return { ok: true, requestId, text: full };
+      }
+
+      if (provider === 'ollama') {
+        const res = await fetch(baseUrl + '/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model, messages, stream: true }),
+          signal: controller.signal,
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        await aiReadLines(res, (line) => {
+          let json;
+          try {
+            json = JSON.parse(line);
+          } catch {
+            return;
+          }
+          const text = json && json.message && json.message.content;
+          if (text) {
+            full += text;
+            delta(text);
+          }
+        });
+        return { ok: true, requestId, text: full };
+      }
+
+      const headers = { 'Content-Type': 'application/json' };
+      if (apiKey) headers.Authorization = 'Bearer ' + apiKey;
+      const res = await fetch(baseUrl + '/chat/completions', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ model, messages, stream: true, temperature: 0.7 }),
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      await aiReadSse(res, (data) => {
+        if (data === '[DONE]') return;
+        let json;
+        try {
+          json = JSON.parse(data);
+        } catch {
+          return;
+        }
+        const text = json && json.choices && json.choices[0] && json.choices[0].delta ? json.choices[0].delta.content : '';
+        if (text) {
+          full += text;
+          delta(text);
+        }
+      });
+      return { ok: true, requestId, text: full };
+    } catch (err) {
+      if (controller.signal.aborted) return { ok: false, requestId, aborted: true, error: '已取消' };
+      const msg = String((err && err.message) || err);
+      const hint = /Failed to fetch|NetworkError|Load failed/i.test(msg)
+        ? '（浏览器跨域限制，建议改用桌面版）'
+        : '';
+      return { ok: false, requestId, error: msg + hint };
+    } finally {
+      aiAborters.delete(requestId);
+    }
+  }
+
+  function onAiChunk(handler) {
+    aiListeners.add(handler);
+    return () => aiListeners.delete(handler);
+  }
+
+  function aiAbort(requestId) {
+    const controller = aiAborters.get(String(requestId));
+    if (controller) controller.abort();
+    return true;
+  }
+
   window.LPPlatform = Object.assign({}, repo, {
     isDesktop: false,
     platformLabel: '手机版',
+    aiChat: aiChat,
+    onAiChunk: onAiChunk,
+    aiAbort: aiAbort,
     capabilities: {
       pickFiles: true,
       openDataDir: false,

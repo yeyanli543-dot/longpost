@@ -337,6 +337,31 @@
           </div>
 
           <!-- 查找与替换：只在需要时展开，不占常驻空间 -->
+          <!-- AI 划词工具条：选中正文后浮现在选区上方 -->
+          <div class="ai-toolbar" id="aiToolbar" hidden role="toolbar" aria-label="AI 助手">
+            <button class="ai-act" type="button" data-ai="polish"><svg class="icon" aria-hidden="true"><use href="#i-feather"></use></svg>润色</button>
+            <button class="ai-act" type="button" data-ai="condense"><svg class="icon" aria-hidden="true"><use href="#i-sigma"></use></svg>精简</button>
+            <button class="ai-act" type="button" data-ai="pangu"><svg class="icon" aria-hidden="true"><use href="#i-align-left"></use></svg>排版</button>
+            <button class="ai-act" type="button" data-ai="continue"><svg class="icon" aria-hidden="true"><use href="#i-edit"></use></svg>续写</button>
+            <button class="ai-act icon-only" type="button" data-ai="__settings" title="AI 设置" aria-label="AI 设置"><svg class="icon" aria-hidden="true"><use href="#i-settings"></use></svg></button>
+          </div>
+
+          <!-- AI 结果面板：流式输出后由用户决定替换还是插入 -->
+          <div class="ai-panel" id="aiPanel" hidden>
+            <div class="ai-panel-head">
+              <span class="ai-panel-title" id="aiPanelTitle">AI 助手</span>
+              <span class="ai-panel-status" id="aiPanelStatus"></span>
+              <button class="icon-btn" id="aiPanelClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
+            </div>
+            <div class="ai-panel-body" id="aiPanelBody"></div>
+            <div class="ai-panel-foot">
+              <button class="btn ghost sm" id="aiStopBtn">停止</button>
+              <span class="ai-panel-grow"></span>
+              <button class="btn ghost sm" id="aiDiscardBtn">丢弃</button>
+              <button class="btn primary sm" id="aiApplyBtn">替换选中</button>
+            </div>
+          </div>
+
           <div class="findbar" id="findBar" hidden>
             <div class="find-row">
               <svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg>
@@ -508,6 +533,31 @@
               <span class="hint">KaTeX，支持 $…$ 与 $$…$$</span>
             </div>
             <button class="switch" id="mathSwitch" role="switch" aria-checked="true" aria-label="数学公式"></button>
+          </div>
+
+          <div class="group-title">AI 助手</div>
+          <div class="field">
+            <label>服务商 <span class="hint" id="aiProviderHint">OpenAI 兼容</span></label>
+            <div class="segmented" id="aiProviderSwitch"></div>
+            <p class="field-help">OpenAI 兼容可对接 DeepSeek / Moonshot / 自建网关；Ollama 走本机 11434 端口，不需要 Key。</p>
+          </div>
+          <div class="field">
+            <label for="aiBaseUrl">服务地址</label>
+            <input class="input" id="aiBaseUrl" type="text" placeholder="https://api.deepseek.com/v1" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="field">
+            <label for="aiModel">模型名称</label>
+            <input class="input" id="aiModel" type="text" placeholder="deepseek-chat" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="field">
+            <label for="aiApiKey">API Key</label>
+            <input class="input" id="aiApiKey" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false" />
+            <p class="field-help">只写进本机设置文件，不会上传；Ollama 可留空。</p>
+          </div>
+          <div class="field">
+            <label>连通性</label>
+            <button class="btn ghost sm" id="aiTestBtn">测试连接</button>
+            <span class="hint" id="aiTestResult"></span>
           </div>
 
           <div class="field switch-field">

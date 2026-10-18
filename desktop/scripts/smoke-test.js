@@ -280,6 +280,37 @@ console.log('\n[9] 移动端 Capacitor 与主干产物映射');
     );
   }
 }
+
+console.log('\n[10] AI 助手接线');
+{
+  const mainSrc = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
+  const preloadSrc = fs.readFileSync(path.join(__dirname, '..', 'preload.js'), 'utf8');
+  const platformSrc = fs.readFileSync(path.join(__dirname, '..', 'renderer', 'platform.js'), 'utf8');
+  const appSrc = fs.readFileSync(path.join(__dirname, '..', 'renderer', 'app.js'), 'utf8');
+  const htmlSrc = fs.readFileSync(path.join(__dirname, '..', 'renderer', 'index.html'), 'utf8');
+
+  check('main.js 注册了 ai:chat 通道', mainSrc.includes("ipcMain.handle('ai:chat'"));
+  check('main.js 提供 ai:abort 通道', mainSrc.includes("ipcMain.handle('ai:abort'"));
+  check('main.js 支持三种协议', ['gemini', 'ollama', '/chat/completions'].every((k) => mainSrc.includes(k)));
+  check('preload 暴露 aiChat', preloadSrc.includes("aiChat: (payload) => ipcRenderer.invoke('ai:chat'"));
+  check('preload 暴露 onAiChunk', preloadSrc.includes('onAiChunk'));
+  check('渲染层有划词工具条', htmlSrc.includes('id="aiToolbar"'));
+  check('渲染层有结果面板', htmlSrc.includes('id="aiPanel"'));
+  check('设置里有 AI 服务商选择', htmlSrc.includes('id="aiProviderSwitch"'));
+  check('app.js 调用 LP.aiChat', appSrc.includes('LP.aiChat('));
+  check('app.js 覆盖四个动作', ['polish', 'condense', 'pangu', 'continue'].every((k) => appSrc.includes(k + ':')));
+  check('网页/手机端有 aiChat 兜底', platformSrc.includes('async function aiChat(payload)'));
+
+  const repo = require('../lib/repo');
+  const settings = repo && typeof repo.defaultSettings === 'function' ? repo.defaultSettings() : null;
+  check(
+    '设置默认值包含 AI 配置',
+    !settings || (Object.prototype.hasOwnProperty.call(settings, 'aiProvider') &&
+      Object.prototype.hasOwnProperty.call(settings, 'aiBaseUrl') &&
+      Object.prototype.hasOwnProperty.call(settings, 'aiModel')),
+  );
+}
+
 console.log('\n———————————————————————————————');
 console.log(`通过 ${passed} 项，失败 ${failures.length} 项`);
 if (failures.length) {

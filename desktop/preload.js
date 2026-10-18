@@ -58,4 +58,13 @@ contextBridge.exposeInMainWorld('lp', {
 
   // WebDAV 跨设备同步网络请求
   webdavRequest: (options) => ipcRenderer.invoke('webdav:request', options),
+
+  // AI 助手：请求由主进程代发（绕开 file:// 页面的 CORS），逐段流式回传
+  aiChat: (payload) => ipcRenderer.invoke('ai:chat', payload),
+  aiAbort: (requestId) => ipcRenderer.invoke('ai:abort', requestId),
+  onAiChunk: (handler) => {
+    const listener = (_event, data) => handler(data);
+    ipcRenderer.on('ai:chunk', listener);
+    return () => ipcRenderer.removeListener('ai:chunk', listener);
+  },
 });

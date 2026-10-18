@@ -2909,7 +2909,7 @@
       }
       const settings = (await LP.getSettings()) || {};
       const backupData = {
-        version: '2.9.7',
+        version: '2.9.8',
         exportedAt: new Date().toISOString(),
         appName: 'LongPost',
         stats: {
@@ -3326,6 +3326,393 @@
     el.setAttribute('aria-checked', on ? 'true' : 'false');
   }
 
+  // ---------------------------------------------------------------- AI 助手
+
+  /**
+   * 三家可选：OpenAI 兼容（DeepSeek / Moonshot / 自建网关）、Gemini、本机 Ollama。
+   * 只有 provider 这一项需要用户理解，其余字段都按预设自动填好。
+   */
+  const AI_PROVIDERS = {
+    openai: { label: 'OpenAI 兼容', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
+    gemini: { label: 'Gemini', baseUrl: 'https://generativelanguage.googleapis.com', model: 'gemini-2.5-flash' },
+    ollama: { label: 'Ollama 本地', baseUrl: 'http://127.0.0.1:11434', model: 'qwen2.5:7b' },
+  };
+
+  const AI_ACTIONS = {
+    polish: {
+      title: 'AI 润色',
+      applyLabel: '替换选中',
+      mode: 'replace',
+      prompt: (text) =>
+        '请对以下选中文本进行深度润色：提升语言表现力与文采，理顺逻辑节奏，保持原有核心事实与语意。直接输出改写后的正文，不要任何解释：\n\n' +
+        text,
+    },
+    condense: {
+      title: 'AI 精简',
+      applyLabel: '替换选中',
+      mode: 'replace',
+      prompt: (text) =>
+        '请对以下选中文本做精简提炼：删掉冗词赘字，保留主干与关键信息，语言凝练有力。直接输出结果，不要解释：\n\n' +
+        text,
+    },
+    pangu: {
+      title: 'AI 排版',
+      applyLabel: '替换选中',
+      mode: 'replace',
+      prompt: (text) =>
+        '请对以下文本做中英文混排规范化：中文与英文、数字之间加空格，统一全角中文标点，修正明显语病，保持原意。直接输出处理后的正文，不要解释：\n\n' +
+        text,
+    },
+    continue: {
+      title: 'AI 续写',
+      applyLabel: '插入到下方',
+      mode: 'insert',
+      prompt: (text) =>
+        '请顺着下面这段文字的语境与行文脉络，自然续写两段。只输出续写的正文，不要重复原文，也不要解释：\n\n' +
+        text,
+    },
+  };
+
+  const aiState = {
+    composing: false,
+    pointer: null,
+    range: null,
+    action: '',
+    text: '',
+    busy: false,
+    requestId: '',
+    unsubscribe: null,
+  };
+
+  function aiSettings() {
+    const s = state.settings || {};
+    const key = AI_PROVIDERS[s.aiProvider] ? s.aiProvider : 'openai';
+    const preset = AI_PROVIDERS[key];
+    return {
+      provider: key,
+      baseUrl: String(s.aiBaseUrl || preset.baseUrl || '').trim(),
+      model: String(s.aiModel || preset.model || '').trim(),
+      apiKey: String(s.aiApiKey || ''),
+    };
+  }
+
+  /** 配置是否足以发起一次请求（Ollama 允许没有 Key）。 */
+  function aiConfigured() {
+    const cfg = aiSettings();
+    if (!cfg.baseUrl || !cfg.model) return false;
+    if (cfg.provider !== 'ollama' && !cfg.apiKey) return false;
+    return true;
+  }
+
+  function aiHideToolbar() {
+    const el = $('aiToolbar');
+    if (el) el.hidden = true;
+  }
+
+  function aiShowToolbar(x, y) {
+    const el = $('aiToolbar');
+    if (!el) return;
+    el.hidden = false;
+    const half = 132;
+    const left = Math.min(Math.max(x, half), window.innerWidth - half);
+    const top = Math.min(Math.max(y - 8, 56), window.innerHeight - 20);
+    el.style.left = left + 'px';
+    el.style.top = top + 'px';
+  }
+
+  /** 读取当前选区（textarea 的 selectionStart 在失焦后依然有效）。 */
+  function aiReadSelection() {
+    const editor = $('editor');
+    if (!editor) return null;
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    if (start === end) return null;
+    return { start: start, end: end, text: editor.value.slice(start, end) };
+  }
+
+  function aiAnchorPoint() {
+    if (aiState.pointer) return aiState.pointer;
+    const editor = $('editor');
+    const rect = editor.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + 56 };
+  }
+
+  function aiSyncToolbar() {
+    if (aiState.busy) return;
+    if (aiState.composing) {
+      aiHideToolbar();
+      return;
+    }
+    const sel = aiReadSelection();
+    if (!sel || sel.text.trim().length < 2) {
+      aiState.range = null;
+      aiHideToolbar();
+      return;
+    }
+    aiState.range = sel;
+    const point = aiAnchorPoint();
+    aiShowToolbar(point.x, point.y);
+  }
+
+  function aiSetStatus(text) {
+    const el = $('aiPanelStatus');
+    if (el) el.textContent = text || '';
+  }
+
+  function aiOpenPanel(title, applyLabel) {
+    $('aiPanelTitle').textContent = title;
+    $('aiApplyBtn').textContent = applyLabel;
+    $('aiApplyBtn').disabled = true;
+    $('aiStopBtn').hidden = false;
+    $('aiPanelBody').textContent = '';
+    $('aiPanel').hidden = false;
+    aiSetStatus('生成中…');
+  }
+
+  function aiClosePanel() {
+    $('aiPanel').hidden = true;
+    if (aiState.unsubscribe) {
+      try {
+        aiState.unsubscribe();
+      } catch {
+        /* 忽略 */
+      }
+      aiState.unsubscribe = null;
+    }
+  }
+
+  function aiStop() {
+    if (aiState.requestId && LP.aiAbort) {
+      try {
+        LP.aiAbort(aiState.requestId);
+      } catch {
+        /* 忽略 */
+      }
+    }
+    aiSetStatus('已停止');
+  }
+
+  async function aiRun(action) {
+    const act = AI_ACTIONS[action];
+    if (!act) return;
+    const sel = aiState.range || aiReadSelection();
+    if (!sel || !sel.text.trim()) {
+      toast('先在正文里选中一段文字');
+      return;
+    }
+    if (!aiConfigured()) {
+      aiHideToolbar();
+      toast('还没配置 AI：设置 → AI 助手', 'err');
+      openSettings();
+      return;
+    }
+
+    const cfg = aiSettings();
+    aiHideToolbar();
+    aiState.range = sel;
+    aiState.action = action;
+    aiState.text = '';
+    aiState.busy = true;
+    aiOpenPanel(act.title, act.applyLabel);
+
+    aiState.requestId = 'lp-ai-' + Date.now().toString(36);
+    if (aiState.unsubscribe) {
+      try {
+        aiState.unsubscribe();
+      } catch {
+        /* 忽略 */
+      }
+    }
+    aiState.unsubscribe = LP.onAiChunk((data) => {
+      if (!data || data.requestId !== aiState.requestId) return;
+      aiState.text += data.delta || '';
+      const body = $('aiPanelBody');
+      body.textContent = aiState.text;
+      body.scrollTop = body.scrollHeight;
+      $('aiApplyBtn').disabled = aiState.text.trim().length === 0;
+    });
+
+    try {
+      const res = await LP.aiChat({
+        requestId: aiState.requestId,
+        provider: cfg.provider,
+        baseUrl: cfg.baseUrl,
+        model: cfg.model,
+        apiKey: cfg.apiKey,
+        messages: [
+          {
+            role: 'system',
+            content:
+              '你是一名精通现代中文写作与 Markdown 排版的资深编辑。只输出处理后的正文本身，不要开场白、解释、引号或代码块包裹。',
+          },
+          { role: 'user', content: act.prompt(sel.text) },
+        ],
+      });
+
+      if (res && res.ok) {
+        if (!aiState.text && res.text) {
+          aiState.text = res.text;
+          $('aiPanelBody').textContent = aiState.text;
+        }
+        aiSetStatus(aiState.text.trim() ? '生成完成' : '模型没有返回内容');
+        $('aiApplyBtn').disabled = aiState.text.trim().length === 0;
+      } else {
+        aiSetStatus('失败');
+        toast((res && res.error) || 'AI 请求失败', 'err');
+        if (res && res.aborted) $('aiPanelBody').textContent = aiState.text;
+      }
+    } catch (err) {
+      aiSetStatus('失败');
+      toast('AI 请求失败：' + String((err && err.message) || err), 'err');
+    } finally {
+      aiState.busy = false;
+      $('aiStopBtn').hidden = true;
+    }
+  }
+
+  function aiApply() {
+    const text = aiState.text.trim();
+    const range = aiState.range;
+    if (!text || !range) return;
+
+    const editor = $('editor');
+    const value = editor.value;
+    const before = value.slice(0, range.start);
+    const after = value.slice(range.end);
+    // 续写是"接在选区之后"，其余动作是"替换选区"
+    const inserted = aiState.action === 'continue' ? '\n\n' + text : text;
+    const caretSource = aiState.action === 'continue' ? before + range.text + inserted : before + inserted;
+    const caret = caretSource.length;
+
+    editor.value = aiState.action === 'continue' ? before + range.text + inserted + after : before + inserted + after;
+    editor.focus();
+    editor.setSelectionRange(caret, caret);
+    afterEdit();
+    aiClosePanel();
+    aiState.range = null;
+    toast('已应用 AI 结果', 'ok');
+  }
+
+  function aiTestConnection() {
+    const cfg = aiSettings();
+    const out = $('aiTestResult');
+    if (!cfg.baseUrl || !cfg.model) {
+      out.textContent = '先填服务地址和模型';
+      return;
+    }
+    if (cfg.provider !== 'ollama' && !cfg.apiKey) {
+      out.textContent = '先填 API Key';
+      return;
+    }
+    out.textContent = '测试中…';
+    const requestId = 'lp-ai-test-' + Date.now().toString(36);
+    LP.aiChat({
+      requestId: requestId,
+      provider: cfg.provider,
+      baseUrl: cfg.baseUrl,
+      model: cfg.model,
+      apiKey: cfg.apiKey,
+      messages: [{ role: 'user', content: '只回复两个字：可用' }],
+    }).then((res) => {
+      out.textContent = res && res.ok ? '✓ 连通（' + (res.text || '').slice(0, 20) + '）' : '✗ ' + ((res && res.error) || '失败');
+    }).catch((err) => {
+      out.textContent = '✗ ' + String((err && err.message) || err);
+    });
+  }
+
+  /** 设置面板里的 AI 区块：绑定一次，之后只做回填。 */
+  function bindAiSettings() {
+    const cfg = aiSettings();
+    buildSegmented(
+      'aiProviderSwitch',
+      Object.keys(AI_PROVIDERS).map((key) => ({ key: key, label: AI_PROVIDERS[key].label })),
+      cfg.provider,
+      async (key) => {
+        const preset = AI_PROVIDERS[key];
+        state.settings = await LP.setSettings({
+          aiProvider: key,
+          aiBaseUrl: preset.baseUrl,
+          aiModel: preset.model,
+        });
+        $('aiBaseUrl').value = preset.baseUrl;
+        $('aiModel').value = preset.model;
+        $('aiProviderHint').textContent = preset.label;
+        $('aiTestResult').textContent = '';
+      },
+    );
+    $('aiProviderHint').textContent = AI_PROVIDERS[cfg.provider].label;
+    $('aiBaseUrl').value = cfg.baseUrl;
+    $('aiModel').value = cfg.model;
+    $('aiApiKey').value = cfg.apiKey;
+    $('aiTestResult').textContent = '';
+
+    $('aiBaseUrl').onchange = async function () {
+      state.settings = await LP.setSettings({ aiBaseUrl: this.value.trim() });
+    };
+    $('aiModel').onchange = async function () {
+      state.settings = await LP.setSettings({ aiModel: this.value.trim() });
+    };
+    $('aiApiKey').onchange = async function () {
+      state.settings = await LP.setSettings({ aiApiKey: this.value.trim() });
+    };
+    $('aiTestBtn').onclick = aiTestConnection;
+  }
+
+  /** 编辑器上的 AI 交互：划词出工具条，点动作跑推理。 */
+  function bindAiEditor() {
+    const editor = $('editor');
+
+    editor.addEventListener('mouseup', (event) => {
+      aiState.pointer = { x: event.clientX, y: event.clientY };
+      setTimeout(aiSyncToolbar, 0);
+    });
+    editor.addEventListener('keyup', (event) => {
+      if (event.shiftKey || event.key === 'Shift' || event.key === 'a' || event.key === 'A') {
+        aiState.pointer = null;
+      }
+      aiSyncToolbar();
+    });
+    editor.addEventListener('compositionstart', () => {
+      aiState.composing = true;
+      aiHideToolbar();
+    });
+    editor.addEventListener('compositionend', () => {
+      aiState.composing = false;
+    });
+    editor.addEventListener('scroll', aiHideToolbar);
+    editor.addEventListener('blur', () => {
+      // 点了工具条本身也会触发 blur，延迟一拍再判断
+      setTimeout(() => {
+        const bar = $('aiToolbar');
+        if (bar && bar.matches(':hover')) return;
+        aiHideToolbar();
+      }, 160);
+    });
+
+    $('aiToolbar').addEventListener('mousedown', (event) => {
+      // 阻止默认行为，避免点按钮时 textarea 失焦把选区弄丢
+      event.preventDefault();
+    });
+    $('aiToolbar').addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-ai]');
+      if (!btn) return;
+      const action = btn.getAttribute('data-ai');
+      if (action === '__settings') {
+        aiHideToolbar();
+        openSettings();
+        return;
+      }
+      aiRun(action);
+    });
+
+    $('aiPanelClose').addEventListener('click', aiClosePanel);
+    $('aiDiscardBtn').addEventListener('click', aiClosePanel);
+    $('aiStopBtn').addEventListener('click', aiStop);
+    $('aiApplyBtn').addEventListener('click', aiApply);
+
+    window.addEventListener('resize', aiHideToolbar);
+  }
+
   async function openSettings() {
     buildSegmented(
       'themeSwitch',
@@ -3341,6 +3728,7 @@
         renderPreview();
       },
     );
+    bindAiSettings();
     if (!state.appInfo) {
       try {
         state.appInfo = await LP.appInfo();
@@ -4841,6 +5229,7 @@
     editor.addEventListener('paste', onPaste);
     editor.addEventListener('keyup', refreshFmtState);
     editor.addEventListener('mouseup', refreshFmtState);
+    bindAiEditor();
     $('preview').addEventListener('scroll', () => {
       if (state.current) {
         const mem = state.scrollMem.get(state.current.id) || {};
