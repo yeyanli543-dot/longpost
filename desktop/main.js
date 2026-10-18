@@ -578,6 +578,57 @@ function registerIpc() {
 
 
 
+
+  // ---------------------------------------------------------------- 应用内分享窗口
+  // 分享到 X / 微博 / QQ 时，不跳系统浏览器，而是开一个受控的子窗口。
+  // 安全约定：只加载这一条 URL，禁止弹窗、禁止 node 集成，页面内跳转也不放行。
+  ipcMain.handle('window:openInApp', async (event, payload) => {
+    const url = String((payload && payload.url) || '');
+    const title = String((payload && payload.title) || '分享');
+
+    let parsed;
+    try {
+      parsed = new URL(url);
+    } catch {
+      return { ok: false, error: '链接不合法' };
+    }
+    if (parsed.protocol !== 'https:') return { ok: false, error: '只允许 https 链接' };
+
+    const parent = BrowserWindow.fromWebContents(event.sender);
+    const win = new BrowserWindow({
+      parent: parent || undefined,
+      modal: Boolean(parent),
+      width: 560,
+      height: 720,
+      title,
+      autoHideMenuBar: true,
+      backgroundColor: '#ffffff',
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        sandbox: true,
+        preload: undefined,
+      },
+    });
+
+    win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+    win.webContents.on('will-navigate', (e, target) => {
+      try {
+        const next = new URL(target);
+        if (next.origin !== parsed.origin) e.preventDefault();
+      } catch {
+        e.preventDefault();
+      }
+    });
+
+    try {
+      await win.loadURL(url);
+    } catch (err) {
+      return { ok: false, error: String((err && err.message) || err) };
+    }
+    return { ok: true };
+  });
+
   // ---------------------------------------------------------------- 静态站导出
   // 渲染层把每篇文章的 HTML 算好传进来，主进程只负责建目录、写文件。
   // 这样导出逻辑（模板、slug、RSS）能纯函数化，也就测得住。

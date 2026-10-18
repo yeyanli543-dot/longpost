@@ -2814,6 +2814,22 @@
     }
   }
 
+  /** 打开分享页：桌面端走应用内受控窗口，其它环境退回新标签页 */
+  async function openShareWindow(url, title) {
+    if (LP && typeof LP.openInApp === 'function') {
+      const res = await LP.openInApp({ url, title: title || '分享' });
+      if (res && res.ok) return true;
+      if (res && res.error) toast('打开分享页失败：' + res.error, 'err');
+      return false;
+    }
+    try {
+      window.open(url, '_blank');
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async function shareToQQ() {
     if (!state.current) {
       toast('请先选择一篇文章');
@@ -2828,7 +2844,7 @@
     await sharePayload(qqText, 'QQ 推荐卡片文案');
     askConfirm({
       title: 'QQ 专属长文分享',
-      text: '已生成并复制 QQ 推荐卡片文案！\n\n· 聊天发送：在电脑 QQ 或讨论组按 Ctrl+V 即可直接发送；\n· QQ 动态分享：推荐导出精美排版长图，免去第三方网页扫码打不开的问题；\n· 网页窗口：是否仍要打开 QQ 官方网页分享窗口？',
+      text: '已生成并复制 QQ 推荐卡片文案！\n\n· 聊天发送：在电脑 QQ 或讨论组按 Ctrl+V 即可直接发送；\n· QQ 动态分享：推荐导出精美排版长图，免去第三方网页扫码打不开的问题；\n· 网页窗口：浏览器版可打开 QQ 分享页；桌面版没有公开链接，二维码扫了打不开。',
       okLabel: '导出 QQ 长图',
       cancelLabel: '打开网页窗口',
       onOk: () => {
@@ -2836,13 +2852,16 @@
         exportLongImage();
       },
       onCancel: () => {
-        const fullUrl = typeof window !== 'undefined' && window.location.href ? window.location.href : 'https://github.com/yeyanli543-dot/longpost';
-        const qqUrl = 'https://connect.qq.com/widget/shareqq/index.html?url=' + encodeURIComponent(fullUrl) + '&title=' + encodeURIComponent(title) + '&summary=' + encodeURIComponent(excerpt) + '&desc=' + encodeURIComponent(excerpt) + '&site=LongPost';
-        try {
-          if (typeof window !== 'undefined' && window.open) {
-            window.open(qqUrl, '_blank');
-          }
-        } catch {}
+        // 桌面版运行在 file:// 下，没有任何公开链接。
+        // 把 file:// 塞给 QQ 的分享页，它生成的二维码手机扫了必然打不开 ——
+        // 与其给一个死码，不如直接说清楚：复制文案，粘贴到 QQ 就行。
+        const href = typeof window !== 'undefined' && window.location.href ? window.location.href : '';
+        if (!/^https?:/i.test(href)) {
+          toast('桌面版没有公开链接，扫码打不开；文案已复制，直接粘贴到 QQ', 'err');
+          return;
+        }
+        const qqUrl = 'https://connect.qq.com/widget/shareqq/index.html?url=' + encodeURIComponent(href) + '&title=' + encodeURIComponent(title) + '&summary=' + encodeURIComponent(excerpt) + '&desc=' + encodeURIComponent(excerpt) + '&site=LongPost';
+        openShareWindow(qqUrl, '分享到 QQ');
       },
     });
   }
@@ -2856,12 +2875,9 @@
     const weiboText = '【' + title + '】' + (excerpt ? ' ' + excerpt : '') + ' #LongPost#';
     const weiboUrl = 'https://service.weibo.com/share/share.php?title=' + encodeURIComponent(weiboText);
     try {
-      if (typeof window !== 'undefined' && window.open) {
-        window.open(weiboUrl, '_blank');
-        toast('已打开新浪微博发帖窗口', 'ok');
-      } else {
-        await sharePayload(weiboText, '微博分享文案');
-      }
+      const opened = await openShareWindow(weiboUrl, '分享到微博');
+      if (opened) toast('已打开新浪微博发帖窗口', 'ok');
+      else await sharePayload(weiboText, '微博分享文案');
     } catch {
       await sharePayload(weiboText, '微博分享文案');
     }
@@ -2886,7 +2902,7 @@
     const tweetUrl = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(tweetText);
     try {
       if (typeof window !== 'undefined' && window.open) {
-        window.open(tweetUrl, '_blank');
+        await openShareWindow(tweetUrl, '分享到 X');
         toast('已打开 X / Twitter 发推窗口', 'ok');
       } else {
         await sharePayload(tweetText, '推文内容');
@@ -2909,7 +2925,7 @@
       }
       const settings = (await LP.getSettings()) || {};
       const backupData = {
-        version: '3.0.1',
+        version: '3.0.2',
         exportedAt: new Date().toISOString(),
         appName: 'LongPost',
         stats: {

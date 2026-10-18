@@ -59,6 +59,9 @@ contextBridge.exposeInMainWorld('lp', {
   // WebDAV 跨设备同步网络请求
   webdavRequest: (options) => ipcRenderer.invoke('webdav:request', options),
 
+  // 在应用内开一个受控窗口（分享用），不跳系统浏览器
+  openInApp: (payload) => ipcRenderer.invoke('window:openInApp', payload),
+
   // 静态站导出：渲染层算好 HTML，主进程写盘
   exportStaticSite: (payload) => ipcRenderer.invoke('site:export', payload),
 
