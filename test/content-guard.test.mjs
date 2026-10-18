@@ -1,114 +1,12 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-// DFA Trie 纯逻辑验证（保持与 content-guard.ts 一致）
-const NOISE_CHAR_REGEX = /[\s\-_*~`!@#$%^&*()+=|\\\[\]{};:'",.<>?/·~！@#￥%……&*（）——+【】{}；：‘“”，。、《》？]/;
+// 直接 import 生产 DFA 实现，不再在测试里复制一份 ContentGuard
+import { ContentGuard } from '../server/common/utils/content-guard.ts';
 
-class ContentGuard {
-  constructor(initialWords = []) {
-    this.root = { children: new Map(), isEnd: false };
-    this.initDefaultWords();
-    if (initialWords.length > 0) {
-      this.addWords(initialWords);
-    }
-  }
-
-  initDefaultWords() {
-    this.addWords([
-      '兼职刷单',
-      '刷单返现',
-      '办理假证',
-      '代开增值税发票',
-      '裸聊敲诈',
-      '炸金花外挂',
-      '网络赌博平台',
-      '枪支弹药',
-    ]);
-  }
-
-  normalizeChar(char) {
-    let code = char.charCodeAt(0);
-    if (code === 12288) return ' ';
-    if (code >= 65281 && code <= 65374) {
-      code -= 65248;
-    }
-    return String.fromCharCode(code).toLowerCase();
-  }
-
-  addWord(word) {
-    const cleanWord = word.trim();
-    if (!cleanWord) return;
-    let current = this.root;
-    for (let i = 0; i < cleanWord.length; i += 1) {
-      const char = this.normalizeChar(cleanWord[i]);
-      if (!current.children.has(char)) {
-        current.children.set(char, { children: new Map(), isEnd: false });
-      }
-      current = current.children.get(char);
-    }
-    current.isEnd = true;
-  }
-
-  addWords(words) {
-    for (const w of words) this.addWord(w);
-  }
-
-  containsSensitive(text) {
-    if (!text) return false;
-    const len = text.length;
-    for (let i = 0; i < len; i += 1) {
-      let current = this.root;
-      for (let j = i; j < len; j += 1) {
-        const rawChar = text[j];
-        if (j > i && NOISE_CHAR_REGEX.test(rawChar)) continue;
-        const char = this.normalizeChar(rawChar);
-        if (!current.children.has(char)) break;
-        current = current.children.get(char);
-        if (current.isEnd) return true;
-      }
-    }
-    return false;
-  }
-
-  findSensitiveWords(text) {
-    if (!text) return [];
-    const len = text.length;
-    const matched = new Set();
-    for (let i = 0; i < len; i += 1) {
-      let current = this.root;
-      let matchedSegment = '';
-      for (let j = i; j < len; j += 1) {
-        const rawChar = text[j];
-        if (j > i && NOISE_CHAR_REGEX.test(rawChar)) {
-          matchedSegment += rawChar;
-          continue;
-        }
-        const char = this.normalizeChar(rawChar);
-        if (!current.children.has(char)) break;
-        matchedSegment += rawChar;
-        current = current.children.get(char);
-        if (current.isEnd) matched.add(matchedSegment);
-      }
-    }
-    return Array.from(matched);
-  }
-
-  maskSensitive(text, mask = '***') {
-    if (!text) return '';
-    const words = this.findSensitiveWords(text);
-    if (words.length === 0) return text;
-    let sanitized = text;
-    words.sort((a, b) => b.length - a.length);
-    for (const word of words) {
-      const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      sanitized = sanitized.replace(new RegExp(escaped, 'gi'), mask);
-    }
-    return sanitized;
-  }
-}
+const guard = new ContentGuard();
 
 describe('Content Guard & Idempotency Resilience Suite', () => {
-  const guard = new ContentGuard();
 
   it('should detect standard sensitive keywords', () => {
     assert.equal(guard.containsSensitive('高薪兼职刷单，日结五百'), true);

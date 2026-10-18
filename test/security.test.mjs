@@ -2,55 +2,48 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import bcrypt from 'bcryptjs';
 
+// 直接 import 生产实现
+import {
+  ACCESS_CODE_CHARS,
+  ACCESS_CODE_LENGTH,
+  generateAccessCode,
+  isValidAccessCode,
+} from '../server/common/utils/access-code.ts';
+import { isTokenVersionMismatched } from '../server/common/utils/token-version.ts';
+
 describe('Security Architecture & Token Version Suite', () => {
   it('should generate high-entropy 16-char access code without ambiguous characters', () => {
-    const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    const generateCode = () => {
-      let result = '';
-      for (let i = 0; i < 16; i++) {
-        const idx = Math.floor(Math.random() * CODE_CHARS.length);
-        result += CODE_CHARS[idx];
-      }
-      return result;
-    };
+    const code = generateAccessCode();
+    assert.equal(code.length, ACCESS_CODE_LENGTH);
+    assert.equal(isValidAccessCode(code), true);
+    assert.doesNotMatch(code, /[01IO]/, '不得包含易混淆字符 0/1/I/O');
+    for (const ch of code) {
+      assert.ok(ACCESS_CODE_CHARS.includes(ch), `字符 ${ch} 不在允许的字符集内`);
+    }
 
-    const code = generateCode();
-    assert.equal(code.length, 16);
-    assert.match(code, /^[A-Z2-9]{16}$/);
-    assert.doesNotMatch(code, /[01IO]/); // Excludes ambiguous digits/letters
+    // 连续生成的通行码不应重复（32^16 空间下重复即视为随机源异常）
+    const batch = new Set(Array.from({ length: 200 }, () => generateAccessCode()));
+    assert.equal(batch.size, 200);
+  });
+
+  it('自定义长度与非法输入必须被正确处理', () => {
+    assert.equal(generateAccessCode(8).length, 8);
+    assert.equal(isValidAccessCode('ABC', 16), false);
+    assert.equal(isValidAccessCode('ABCDEFGH00000000'), false, '含 0 必须判定为非法');
   });
 
   it('should correctly reject mismatched tokenVersion (JWT Instant Revocation)', () => {
-    const activeUser = {
-      id: 'user-uuid-1',
-      tokenVersion: 2, // Password was changed, incrementing version to 2
-      isActive: true,
-      isBanned: false,
-    };
+    const activeUser = { id: 'user-uuid-1', tokenVersion: 2, isActive: true, isBanned: false };
+    const staleToken = { sub: 'user-uuid-1', tokenVersion: 1 };
+    const freshToken = { sub: 'user-uuid-1', tokenVersion: 2 };
 
-    const staleTokenPayload = {
-      sub: 'user-uuid-1',
-      tokenVersion: 1, // Issued before password change
-    };
+    assert.equal(isTokenVersionMismatched(staleToken, activeUser), true, '旧 token 必须被吊销');
+    assert.equal(isTokenVersionMismatched(freshToken, activeUser), false, '当前 token 必须放行');
 
-    const isTokenRevoked = (payload, user) => {
-      if (
-        payload.tokenVersion !== undefined &&
-        user.tokenVersion !== undefined &&
-        payload.tokenVersion !== user.tokenVersion
-      ) {
-        return true;
-      }
-      return false;
-    };
-
-    assert.equal(isTokenRevoked(staleTokenPayload, activeUser), true);
-
-    const freshTokenPayload = {
-      sub: 'user-uuid-1',
-      tokenVersion: 2,
-    };
-    assert.equal(isTokenRevoked(freshTokenPayload, activeUser), false);
+    // 兼容历史数据：任一端没有 tokenVersion 时不做判定
+    assert.equal(isTokenVersionMismatched({ sub: 'x' }, activeUser), false);
+    assert.equal(isTokenVersionMismatched(freshToken, { id: 'x' }), false);
+    assert.equal(isTokenVersionMismatched(null, activeUser), false);
   });
 
   it('should compute brute-force window and respect latest successful login timestamp', () => {

@@ -1,22 +1,14 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-/**
- * CSV 导出防注入转义算法（与 admin.service.ts 保持完全一致）
- */
-function escapeCsv(value) {
-  if (value === null || value === undefined) return '';
-  let str = String(value);
-  if (/^[=+\-@\t\r]/.test(str)) {
-    str = `'${str}`;
-  }
-  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
+// 直接 import 生产实现，不再复制一份转义函数
+import { escapeCsvValue as escapeCsv, toCsvRow } from '../server/common/utils/csv.ts';
 
 describe('CSV Export Formula Injection Protection Suite', () => {
+  it('should join a row with commas after escaping each cell', () => {
+    assert.equal(toCsvRow(['张三', 'a,b', null]), `张三,"a,b",`);
+  });
+
   it('should return empty string for null and undefined', () => {
     assert.equal(escapeCsv(null), '');
     assert.equal(escapeCsv(undefined), '');

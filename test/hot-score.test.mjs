@@ -1,43 +1,13 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-/**
- * 热门时间线加权得分算法与复合游标拆解逻辑（与 posts.service.ts 保持一致）
- */
-function computeHotScore(data) {
-  return (
-    (data.likeCount ?? 0) * 3 +
-    (data.commentCount ?? 0) * 5 +
-    (data.repostCount ?? 0) * 4 +
-    (data.bookmarkCount ?? 0) * 2
-  );
-}
-
-function encodeHotCursor(score, date) {
-  return `hot:${score}:${date.toISOString()}`;
-}
-
-function parseHotCursor(cursor) {
-  if (!cursor || !cursor.startsWith('hot:')) return null;
-  const parts = cursor.split(':');
-  const score = Number(parts[1]);
-  const isoStr = parts.slice(2).join(':');
-  if (isNaN(score) || !isoStr) return null;
-  const date = new Date(isoStr);
-  if (isNaN(date.getTime())) return null;
-  return { score, date };
-}
-
-function filterByHotCursor(items, cursor) {
-  const parsed = parseHotCursor(cursor);
-  if (!parsed) return items;
-  return items.filter((item) => {
-    const itemScore = computeHotScore(item);
-    if (itemScore < parsed.score) return true;
-    if (itemScore === parsed.score && item.createdAt < parsed.date) return true;
-    return false;
-  });
-}
+// 直接 import 生产实现（服务端热门排序与前端游标过滤共用同一份逻辑）
+import {
+  computeHotScore,
+  encodeHotCursor,
+  parseHotCursor,
+  filterByHotCursor,
+} from '../server/common/utils/hot-score.ts';
 
 describe('Hot Score & Keyset Cursor Pagination Suite', () => {
   it('should accurately compute weighted engagement score', () => {

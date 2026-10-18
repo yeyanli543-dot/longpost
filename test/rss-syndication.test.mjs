@@ -1,96 +1,10 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-function escapeXml(unsafe) {
-  return String(unsafe || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
-function wrapCdata(content) {
-  const safe = String(content || '').replace(/\]\]>/g, ']]]]><![CDATA[>');
-  return `<![CDATA[${safe}]]>`;
-}
-
-function buildRss2Xml(meta, items) {
-  const language = meta.language || 'zh-CN';
-  const buildDate = (meta.lastBuildDate || new Date()).toUTCString();
-
-  const itemsXml = items
-    .map((item) => {
-      const pubDate = new Date(item.publishedAt).toUTCString();
-      const author = item.authorName || meta.authorName || 'LongPost Author';
-      const desc = item.excerpt || item.title;
-      const body = item.content || item.excerpt || '';
-
-      return `    <item>
-      <title>${wrapCdata(item.title)}</title>
-      <link>${escapeXml(item.link)}</link>
-      <guid isPermaLink="true">${escapeXml(item.link)}</guid>
-      <pubDate>${pubDate}</pubDate>
-      <dc:creator xmlns:dc="http://purl.org/dc/elements/1.1/">${wrapCdata(author)}</dc:creator>
-      <description>${wrapCdata(desc)}</description>
-      <content:encoded xmlns:content="http://purl.org/rss/1.0/modules/content/">${wrapCdata(body)}</content:encoded>
-    </item>`;
-    })
-    .join('\n');
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
-  <channel>
-    <title>${wrapCdata(meta.title)}</title>
-    <link>${escapeXml(meta.link)}</link>
-    <description>${wrapCdata(meta.description)}</description>
-    <language>${escapeXml(language)}</language>
-    <lastBuildDate>${buildDate}</lastBuildDate>
-    <generator>LongPost Syndication Engine v2.9.5</generator>
-    <atom:link href="${escapeXml(meta.feedUrl)}" rel="self" type="application/rss+xml" />
-${itemsXml}
-  </channel>
-</rss>`;
-}
-
-function buildAtomXml(meta, items) {
-  const updated = (meta.lastBuildDate || new Date()).toISOString();
-
-  const entriesXml = items
-    .map((item) => {
-      const published = new Date(item.publishedAt).toISOString();
-      const itemUpdated = (item.updatedAt ? new Date(item.updatedAt) : new Date(item.publishedAt)).toISOString();
-      const author = item.authorName || meta.authorName || 'LongPost Author';
-      const summary = item.excerpt || item.title;
-      const body = item.content || item.excerpt || '';
-
-      return `  <entry>
-    <title type="html">${wrapCdata(item.title)}</title>
-    <link rel="alternate" type="text/html" href="${escapeXml(item.link)}" />
-    <id>${escapeXml(item.link)}</id>
-    <published>${published}</published>
-    <updated>${itemUpdated}</updated>
-    <author>
-      <name>${escapeXml(author)}</name>
-    </author>
-    <summary type="html">${wrapCdata(summary)}</summary>
-    <content type="html">${wrapCdata(body)}</content>
-  </entry>`;
-    })
-    .join('\n');
-
-  return `<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
-  <title>${wrapCdata(meta.title)}</title>
-  <subtitle>${wrapCdata(meta.description)}</subtitle>
-  <link rel="alternate" type="text/html" href="${escapeXml(meta.link)}" />
-  <link rel="self" type="application/atom+xml" href="${escapeXml(meta.feedUrl)}" />
-  <id>${escapeXml(meta.feedUrl)}</id>
-  <updated>${updated}</updated>
-  <generator uri="https://github.com/yeyanli543-dot/longpost" version="2.9.5">LongPost</generator>
-${entriesXml}
-</feed>`;
-}
+// 直接 import 生产实现：以前这里把 escapeXml / wrapCdata / 整个 XML 模板抄了一份，
+// 导致改坏了线上生成器测试也照样绿。
+import { buildAtomXml, buildRss2Xml } from '../server/common/utils/rss-builder.ts';
+import { APP_VERSION } from '../shared/version.ts';
 
 describe('RSS 2.0 & Atom 1.0 Syndication Suite', () => {
   const mockMeta = {
@@ -129,7 +43,10 @@ describe('RSS 2.0 & Atom 1.0 Syndication Suite', () => {
     assert.ok(rssXml.startsWith('<?xml version="1.0" encoding="UTF-8"?>'));
     assert.ok(rssXml.includes('<rss version="2.0"'));
     assert.ok(rssXml.includes('<atom:link href="https://longpost.app/rss.xml" rel="self" type="application/rss+xml" />'));
-    assert.ok(rssXml.includes('<generator>LongPost Syndication Engine v2.9.5</generator>'));
+    assert.ok(
+      rssXml.includes(`<generator>LongPost Syndication Engine v${APP_VERSION}</generator>`),
+      'RSS generator 必须带上当前版本号',
+    );
 
     // Check item 1
     assert.ok(rssXml.includes('<title><![CDATA[深度解析：零拷贝流式计算在现代系统的应用]]></title>'));
@@ -153,6 +70,10 @@ describe('RSS 2.0 & Atom 1.0 Syndication Suite', () => {
     assert.ok(atomXml.includes('<feed xmlns="http://www.w3.org/2005/Atom">'));
     assert.ok(atomXml.includes('<link rel="self" type="application/atom+xml" href="https://longpost.app/atom.xml" />'));
     assert.ok(atomXml.includes('<updated>2026-10-14T08:00:00.000Z</updated>'));
+    assert.ok(
+      atomXml.includes(`version="${APP_VERSION}">LongPost</generator>`),
+      'Atom generator 必须带上当前版本号',
+    );
 
     // Check entry 1
     assert.ok(atomXml.includes('<entry>'));

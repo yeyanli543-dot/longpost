@@ -1,50 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-/**
- * 盘古之白中英文智能排版算法（与 WritingLab.tsx 保持完全一致）
- */
-function panguFormat(text) {
-  const placeholders = [];
-  const stash = (match) => {
-    const idx = placeholders.length;
-    placeholders.push(match);
-    return `\u0000PANGU_PH_${idx}\u0000`;
-  };
-
-  let result = text;
-  // 1. 保护多行代码块 ```...```
-  result = result.replace(/```[\s\S]*?```/g, stash);
-  // 2. 保护行内代码 `...`
-  result = result.replace(/`[^`\n]+`/g, stash);
-  // 3. 保护 Markdown 图片与链接 ![...](...) / [...](...)
-  result = result.replace(/!?\[[^\]]*\]\([^)]*\)/g, stash);
-
-  // 4. 逐行处理正文，保留行首缩进 ^[ \t]+
-  result = result
-    .split('\n')
-    .map((line) => {
-      const indentMatch = line.match(/^([ \t]+)(.*)$/);
-      const indent = indentMatch ? indentMatch[1] : '';
-      let body = indentMatch ? indentMatch[2] : line;
-
-      // 中文与英文/数字之间加空格
-      body = body.replace(/([\u4e00-\u9fa5])([a-zA-Z0-9])/g, '$1 $2');
-      body = body.replace(/([a-zA-Z0-9])([\u4e00-\u9fa5])/g, '$1 $2');
-      // 中文与百分号/数字
-      body = body.replace(/([\u4e00-\u9fa5])([0-9]+%?)/g, '$1 $2');
-      body = body.replace(/([0-9]+%?)([\u4e00-\u9fa5])/g, '$1 $2');
-      // 修正多余水平空格（不影响行首缩进）
-      body = body.replace(/[ \t]{2,}/g, ' ');
-
-      return indent + body;
-    })
-    .join('\n');
-
-  // 5. 还原受保护片段
-  result = result.replace(/\u0000PANGU_PH_(\d+)\u0000/g, (_, idx) => placeholders[Number(idx)] ?? '');
-  return result;
-}
+// 直接测生产实现（shared/text/pangu.ts），不再抄一份到测试文件里
+import { panguFormat } from '../shared/text/pangu.ts';
 
 describe('Pangu Text Formatting (盘古之白排版算法) Suite', () => {
   it('should insert space between Chinese and English words', () => {

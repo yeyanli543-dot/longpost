@@ -1,74 +1,9 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 
-function escapeHtml(text) {
-  return String(text || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function buildObsidianMarkdown(article) {
-  const title = article.title || '未命名长文';
-  const author = article.authorName || 'LongPost 创作者';
-  const publishedDate = article.publishedAt
-    ? new Date(article.publishedAt).toISOString()
-    : new Date().toISOString();
-  const updatedDate = article.updatedAt
-    ? new Date(article.updatedAt).toISOString()
-    : publishedDate;
-
-  const rawTags = article.tags || [];
-  const tagList = Array.from(
-    new Set(['longpost', ...rawTags.map((t) => t.replace(/^#/, '').trim())]),
-  ).filter(Boolean);
-
-  const tagsYaml = tagList.map((t) => `  - ${t}`).join('\n');
-  const safeTitle = title.replace(/"/g, '\\"');
-  const safeExcerpt = (article.excerpt || '').replace(/"/g, '\\"');
-  const sourceUrl = article.url || '';
-
-  const frontmatter = [
-    '---',
-    `title: "${safeTitle}"`,
-    `author: "${author}"`,
-    `date: ${publishedDate}`,
-    `updated: ${updatedDate}`,
-    'tags:',
-    tagsYaml,
-    ...(sourceUrl ? [`source: "${sourceUrl}"`] : []),
-    ...(article.slug ? [`slug: "${article.slug}"`] : []),
-    ...(safeExcerpt ? [`excerpt: "${safeExcerpt}"`] : []),
-    'generator: "LongPost Second Brain Exporter"',
-    '---',
-    '',
-    `# ${title}`,
-    '',
-    article.content,
-    '',
-    ...(sourceUrl
-      ? [
-          '---',
-          `*原文链接: [${sourceUrl}](${sourceUrl}) · 导出自 LongPost 深度长文知识库*`,
-          '',
-        ]
-      : []),
-  ].join('\n');
-
-  return frontmatter;
-}
-
-function buildWechatMpInlineHtml(title, content) {
-  const safeTitle = escapeHtml(title || '未命名长文');
-  let bodyHtml = escapeHtml(content || '').replace(/\n/g, '<br/>');
-
-  const header = '<section style="background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: 12px; padding: 22px 18px; margin-bottom: 24px; color: #ffffff;"><h1 style="margin: 0 0 8px 0; font-size: 21px; font-weight: 700; color: #ffffff;">' + safeTitle + '</h1><div style="font-size: 12px; color: #94a3b8;">LongPost 深度长文 · ' + new Date().toLocaleDateString('zh-CN') + '</div></section>';
-  const footer = '<section style="margin-top: 36px; padding: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 13px; color: #64748b; text-align: center;"><p style="margin: 0; font-weight: 600; color: #1e293b;">✨ 本文由 LongPost 排版生成 · 粘贴即成文</p></section>';
-
-  return '<section style="max-width: 677px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 15px; line-height: 1.85; color: #334155;">' + header + bodyHtml + footer + '</section>';
-}
+// 直接 import 生产实现，不再在测试文件里复制一份导出器
+import { buildObsidianMarkdown } from '../client/src/lib/obsidian-exporter.ts';
+import { buildWeChatHtml } from '../client/src/lib/wechat-formatter.ts';
 
 describe('Ecosystem Syndication & Second Brain Suite', () => {
   const mockArticle = {
@@ -94,16 +29,36 @@ describe('Ecosystem Syndication & Second Brain Suite', () => {
     assert.ok(md.includes('tags:\n  - longpost\n  - pkm\n  - obsidian\n  - knowledge-base'));
     assert.ok(md.includes('source: "https://longpost.app/p/second-brain-2026"'));
     assert.ok(md.includes('slug: "second-brain-2026"'));
+    assert.ok(md.includes('generator: "LongPost Second Brain Exporter"'));
     assert.ok(md.includes('# 知识图谱与第二大脑集成实战'));
-    assert.ok(md.includes('*原文链接: [https://longpost.app/p/second-brain-2026](https://longpost.app/p/second-brain-2026) · 导出自 LongPost 深度长文知识库*'));
+    assert.ok(
+      md.includes(
+        '*原文链接: [https://longpost.app/p/second-brain-2026](https://longpost.app/p/second-brain-2026) · 导出自 LongPost 深度长文知识库*',
+      ),
+    );
+  });
+
+  it('Obsidian 导出必须转义标题里的双引号，避免 YAML 断裂', () => {
+    const md = buildObsidianMarkdown({ ...mockArticle, title: '中文 "引号" 测试' });
+    assert.ok(md.includes('title: "中文 \\"引号\\" 测试"'), '双引号必须被转义');
   });
 
   it('should generate WeChat Official Account inline CSS rich text HTML', () => {
-    const html = buildWechatMpInlineHtml(mockArticle.title, mockArticle.content);
+    const html = buildWeChatHtml(mockArticle);
 
-    assert.ok(html.includes('style="max-width: 677px; margin: 0 auto;'));
-    assert.ok(html.includes('LongPost 深度长文'));
-    assert.ok(html.includes('知识图谱与第二大脑集成实战'));
-    assert.ok(html.includes('✨ 本文由 LongPost 排版生成 · 粘贴即成文'));
+    assert.ok(html.includes('max-width: 677px'), '必须使用公众号正文最大宽度容器');
+    assert.ok(html.includes('知识图谱与第二大脑集成实战'), '标题必须出现在正文里');
+    assert.ok(html.includes('LongPost 深度长文'), '必须带品牌署名');
+    assert.ok(html.includes('架构总览'), '正文标题必须保留');
+  });
+
+  it('公众号 HTML 必须对恶意内容做转义，不能原样注入', () => {
+    const html = buildWeChatHtml({
+      ...mockArticle,
+      title: '<script>alert(1)</script>标题',
+      content: '正文 <img src=x onerror=alert(1)> 结束',
+    });
+    assert.ok(!html.includes('<script>alert(1)</script>'), '标题中的 script 必须被转义');
+    assert.ok(!html.includes('onerror=alert(1)'), '正文中的事件属性必须被转义');
   });
 });
