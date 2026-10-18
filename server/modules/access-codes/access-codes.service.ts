@@ -22,9 +22,9 @@ import type {
 } from '@shared/api.interface';
 import { AuthService } from '../auth/auth.service';
 import { accessCodeLogs } from '../../database/schema';
+import { generateAccessCode } from '@server/common/utils/access-code';
 
-const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const CODE_LENGTH = 16;
+// 通行码字符集与长度见 @server/common/utils/access-code（含易混淆字符剔除与安全随机）
 
 @Injectable()
 export class AccessCodesService {
@@ -34,12 +34,7 @@ export class AccessCodesService {
   ) {}
 
   private generateRandomCode(): string {
-    let result = '';
-    for (let i = 0; i < CODE_LENGTH; i += 1) {
-      const idx = crypto.randomInt(0, CODE_CHARS.length);
-      result += CODE_CHARS[idx];
-    }
-    return result;
+    return generateAccessCode();
   }
 
   async generateCode(): Promise<string> {

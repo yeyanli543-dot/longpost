@@ -47,10 +47,15 @@ contextBridge.exposeInMainWorld('lp', {
   // 导出
   exportHtml: (id) => ipcRenderer.invoke('export:html', id),
   exportMarkdown: (id) => ipcRenderer.invoke('export:markdown', id),
+  exportPdf: (payload) => ipcRenderer.invoke('export:pdf', payload),
+  saveExportImage: (payload) => ipcRenderer.invoke('export:save-image', payload),
 
   // 应用
   appInfo: () => ipcRenderer.invoke('app:info'),
   openDataDir: () => ipcRenderer.invoke('app:openDataDir'),
   getSettings: () => ipcRenderer.invoke('settings:get'),
   setSettings: (patch) => ipcRenderer.invoke('settings:set', patch),
+
+  // WebDAV 跨设备同步网络请求
+  webdavRequest: (options) => ipcRenderer.invoke('webdav:request', options),
 });

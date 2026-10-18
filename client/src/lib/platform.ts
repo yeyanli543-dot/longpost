@@ -6,6 +6,8 @@
  * 又能在 Electron 桌面端和 Capacitor 移动端中直接调用本机原生特权能力。
  */
 
+import { logger } from './logger';
+
 export interface DesktopArticlePayload {
   id?: string;
   title: string;
@@ -28,11 +30,35 @@ export interface PlatformAdapter {
   deleteArticleLocal(id: string): Promise<{ success: boolean }>;
   exportHtml(id: string): Promise<{ success: boolean; filePath?: string }>;
   exportMarkdown(id: string): Promise<{ success: boolean; filePath?: string }>;
+  /** 把导出的长图 dataUrl 落盘（桌面端弹保存框，Web 端由调用方自行下载） */
+  saveExportImage(payload: {
+    dataUrl: string;
+    defaultName?: string;
+  }): Promise<{ success: boolean; filePath?: string; canceled?: boolean }>;
   openDataDir(): Promise<{ success: boolean; dir?: string }>;
   pickImages(): Promise<{ canceled: boolean; filePaths: string[] }>;
   pickFiles(): Promise<{ canceled: boolean; filePaths: string[] }>;
   getSettings(): Promise<Record<string, unknown>>;
   setSettings(patch: Record<string, unknown>): Promise<Record<string, unknown>>;
+
+  // WebDAV 跨设备同步网络请求代理
+  webdavRequest(options: WebdavRequestOptions): Promise<WebdavResponse>;
+}
+
+export interface WebdavResponse<T = string> {
+  ok: boolean;
+  status: number;
+  statusText: string;
+  headers: Record<string, string>;
+  data: T;
+  error?: string;
+}
+
+export interface WebdavRequestOptions {
+  url: string;
+  method?: string;
+  headers?: Record<string, string>;
+  body?: string | null;
 }
 
 class UniversalPlatformAdapter implements PlatformAdapter {
@@ -140,6 +166,31 @@ class UniversalPlatformAdapter implements PlatformAdapter {
     }
   }
 
+  async listRevisionsLocal(id: string): Promise<Array<{ index: number; at: number; title: string; content: string }>> {
+    if (this.bridge?.listRevisions) {
+      try {
+        const revs = await this.bridge.listRevisions(id);
+        if (Array.isArray(revs)) return revs;
+      } catch (e) {
+        logger.warn('获取历史版本快照失败', e);
+      }
+    }
+    try {
+      const art = await this.getArticleLocal(id);
+      if (art && (art as any).history && Array.isArray((art as any).history)) {
+        return (art as any).history.map((h: any, i: number) => ({
+          index: i,
+          at: h.at || 0,
+          title: h.title || art.title,
+          content: String(h.content || ''),
+        }));
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  }
+
   async exportHtml(id: string): Promise<{ success: boolean; filePath?: string }> {
     if (this.bridge?.exportHtml) {
       return this.bridge.exportHtml(id);
@@ -150,6 +201,41 @@ class UniversalPlatformAdapter implements PlatformAdapter {
   async exportMarkdown(id: string): Promise<{ success: boolean; filePath?: string }> {
     if (this.bridge?.exportMarkdown) {
       return this.bridge.exportMarkdown(id);
+    }
+    return { success: false };
+  }
+
+  async exportPdf(payload: { title: string; html: string; options?: any }): Promise<{ success: boolean; filePath?: string }> {
+    if (this.bridge?.exportPdf) {
+      const res = await this.bridge.exportPdf(payload);
+      return { success: !!res?.ok, filePath: res?.path };
+    }
+    return { success: false };
+  }
+
+  /**
+   * 导出长图落盘。
+   *
+   * preload.js 早已暴露 `saveExportImage` → 主进程 `export:save-image` 的通道，
+   * 但平台层一直没接上，等于这条链路断了半截：桌面端点"保存长图"没有任何反应。
+   * 这里把最后一段补齐。
+   */
+  async saveExportImage(payload: {
+    dataUrl: string;
+    defaultName?: string;
+  }): Promise<{ success: boolean; filePath?: string; canceled?: boolean }> {
+    if (this.bridge?.saveExportImage) {
+      try {
+        const res = await this.bridge.saveExportImage(payload);
+        return {
+          success: Boolean(res?.ok),
+          filePath: res?.path,
+          canceled: Boolean(res?.canceled),
+        };
+      } catch (e) {
+        logger.warn('导出长图落盘失败', e);
+        return { success: false };
+      }
     }
     return { success: false };
   }
@@ -187,6 +273,57 @@ class UniversalPlatformAdapter implements PlatformAdapter {
       return this.bridge.setSettings(patch);
     }
     return patch;
+  }
+
+  async webdavRequest(options: WebdavRequestOptions): Promise<WebdavResponse> {
+    if (this.bridge?.webdavRequest) {
+      return this.bridge.webdavRequest(options);
+    }
+
+    // 浏览器端：优先尝试通过后端中继代理 /api/sync/webdav-proxy 规避 CORS
+    try {
+      const res = await fetch('/api/sync/webdav-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(options),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // 后端代理未启动或离线时降级
+    }
+
+    // 降级尝试直连（如果远端服务器已支持 CORS）
+    try {
+      const resp = await fetch(options.url, {
+        method: options.method || 'GET',
+        headers: options.headers,
+        body: options.body,
+      });
+      const data = await resp.text();
+      const headersMap: Record<string, string> = {};
+      resp.headers.forEach((v, k) => {
+        headersMap[k.toLowerCase()] = v;
+      });
+      return {
+        ok: resp.ok,
+        status: resp.status,
+        statusText: resp.statusText,
+        headers: headersMap,
+        data,
+      };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return {
+        ok: false,
+        status: 0,
+        statusText: msg,
+        headers: {},
+        data: '',
+        error: msg,
+      };
+    }
   }
 }
 

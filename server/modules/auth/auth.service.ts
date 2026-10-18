@@ -89,30 +89,39 @@ export class AuthService {
     const isFirstUser = Number(countRow.count) === 0;
     const role = isFirstUser || isOwnerEmail(email) ? 'admin' : 'user';
 
-    const [inserted] = await this.db
-      .insert(appUsers)
-      .values({
-        email: email.toLowerCase(),
-        passwordHash,
-        nickname: nickname.trim(),
-        provider: 'email',
-        role,
-      })
-      .returning({
-        id: appUsers.id,
-        email: appUsers.email,
-        nickname: appUsers.nickname,
-        avatarUrl: appUsers.avatarUrl,
-        provider: appUsers.provider,
-        role: appUsers.role,
-        bio: appUsers.bio,
-        notifyOnRead: appUsers.notifyOnRead,
-        notifyOnDelete: appUsers.notifyOnDelete,
-        theme: appUsers.theme,
-        fontSize: appUsers.fontSize,
-        tokenVersion: appUsers.tokenVersion,
-        createdAt: appUsers.createdAt,
-      });
+    let inserted: any;
+    try {
+      const [res] = await this.db
+        .insert(appUsers)
+        .values({
+          email: email.toLowerCase(),
+          passwordHash,
+          nickname: nickname.trim(),
+          provider: 'email',
+          role,
+        })
+        .returning({
+          id: appUsers.id,
+          email: appUsers.email,
+          nickname: appUsers.nickname,
+          avatarUrl: appUsers.avatarUrl,
+          provider: appUsers.provider,
+          role: appUsers.role,
+          bio: appUsers.bio,
+          notifyOnRead: appUsers.notifyOnRead,
+          notifyOnDelete: appUsers.notifyOnDelete,
+          theme: appUsers.theme,
+          fontSize: appUsers.fontSize,
+          tokenVersion: appUsers.tokenVersion,
+          createdAt: appUsers.createdAt,
+        });
+      inserted = res;
+    } catch (err: any) {
+      if (err?.code === '23505' || err?.message?.includes('duplicate key') || err?.message?.includes('unique constraint')) {
+        throw new ConflictException('该邮箱已被注册');
+      }
+      throw err;
+    }
 
     if (!inserted) {
       throw new BadRequestException('注册失败');
@@ -665,11 +674,23 @@ export class AuthService {
     role?: string,
     tokenVersion?: number,
   ): string {
-    const payload: JwtPayload = { sub: userId, email };
+    const payload: JwtPayload & { type?: string } = { sub: userId, email, type: 'access' };
     if (nickname) payload.username = nickname;
     if (role) payload.role = role;
     if (typeof tokenVersion === 'number') payload.tokenVersion = tokenVersion;
     return this.jwtService.sign(payload);
+  }
+
+  issueTokens(userId: string, email: string) {
+    const accessToken = this.jwtService.sign(
+      { sub: userId, email, type: 'access' },
+      { expiresIn: '1h' },
+    );
+    const refreshToken = this.jwtService.sign(
+      { sub: userId, email, type: 'refresh' },
+      { expiresIn: '7d' },
+    );
+    return { accessToken, refreshToken };
   }
 
   async validateUserActive(userId: string): Promise<{

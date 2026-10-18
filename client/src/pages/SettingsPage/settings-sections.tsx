@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { getFriendlyErrorMessage } from '@client/src/utils/error-message';
+import { APP_VERSION } from '@shared/version';
 import {
   Upload,
   Sun,
@@ -1575,7 +1576,7 @@ export function AboutSection(): React.ReactElement {
             <Feather className="w-8 h-8 text-primary" />
           </div>
           <CardTitle className="text-2xl">LongPost</CardTitle>
-          <CardDescription>长文发布平台 · 版本 v2.9.5 (Production)</CardDescription>
+          <CardDescription>长文发布平台 · 版本 v{APP_VERSION} (Production)</CardDescription>
         </CardHeader>
         <CardContent className="text-center space-y-3">
           <p className="text-sm text-muted-foreground leading-relaxed max-w-lg mx-auto">

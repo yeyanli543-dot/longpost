@@ -3,6 +3,7 @@ import { EditorToolbar, type EditorViewMode } from './EditorToolbar';
 import { SlashCommandMenu, type SlashCommandItem } from './SlashCommandMenu';
 import { BubbleMenu } from './BubbleMenu';
 import { ExportModal } from './ExportModal';
+import { SlidePresenterModal } from './presentation/SlidePresenterModal';
 import { MermaidRenderer } from './MermaidRenderer';
 import { Markdown } from '@client/src/components/ui/markdown';
 import { splitChartCards } from '@shared/chart-card';
@@ -12,8 +13,17 @@ import { DiffInspector } from './tools/DiffInspector';
 import { KnowledgeGraphView } from './tools/KnowledgeGraphView';
 import { WritingLab } from './tools/WritingLab';
 import { ShortcutsModal } from './ShortcutsModal';
+import { AssetManagerModal } from './tools/AssetManagerModal';
+import { TableGridEditor } from './tools/TableGridEditor';
+import { OutlineDrawer } from './tools/OutlineDrawer';
+import { FloatingAiToolbar } from './ai/FloatingAiToolbar';
+import { AiSettingsModal } from './ai/AiSettingsModal';
+import { SyncSettingsModal } from '@client/src/components/sync/SyncSettingsModal';
 import { useWorkspaceMode } from '@client/src/hooks/useWorkspaceMode';
 import { uploadsApi } from '@client/src/api';
+import { compressImageToWebp, extractImagesFromEvent } from '@/lib/image/webp-compressor';
+import { uploadImageSmart } from '@/lib/image/s3-uploader';
+import { logger } from '@/lib/logger';
 import { toast } from 'sonner';
 
 interface SmartEditorProps {
@@ -48,6 +58,25 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
   const [showDiff, setShowDiff] = useState(false);
   const [showGraph, setShowGraph] = useState(false);
   const [showWritingLab, setShowWritingLab] = useState(false);
+  const [showAssetManager, setShowAssetManager] = useState(false);
+  const [showOutline, setShowOutline] = useState(false);
+  const [showTableEditor, setShowTableEditor] = useState(false);
+  const [activeTableSnippet, setActiveTableSnippet] = useState<{
+    text: string;
+    start: number;
+    end: number;
+  } | null>(null);
+  const [showAiSettings, setShowAiSettings] = useState(false);
+  const [showSyncModal, setShowSyncModal] = useState(false);
+  const [showSlidePresenter, setShowSlidePresenter] = useState(false);
+  const [floatingAiOpen, setFloatingAiOpen] = useState(false);
+  const [floatingAiPosition, setFloatingAiPosition] = useState({ top: 0, left: 0 });
+  const [selectedRange, setSelectedRange] = useState<{
+    start: number;
+    end: number;
+    text: string;
+  } | null>(null);
+  const isComposingRef = useRef(false);
   const [initialSnapshot] = useState<string>(value);
 
   // 斜杠菜单状态
@@ -239,8 +268,83 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
     [value, updateContent],
   );
 
-  // 监听划词事件（弹出 BubbleMenu）
+  // 剪贴板/拖拽图片智能压缩与上传处理逻辑
+  const processAndUploadImages = useCallback(
+    async (files: File[]) => {
+      const textarea = textareaRef.current;
+      let currentVal = value;
+      const start = textarea?.selectionStart ?? currentVal.length;
+
+      for (const rawFile of files) {
+        const placeholder = `\n\n![正在压缩上传 ${rawFile.name}...]()\n\n`;
+        // 插入占位符
+        currentVal = currentVal.slice(0, start) + placeholder + currentVal.slice(start);
+        updateContent(currentVal);
+
+        try {
+          toast.info(`正在处理图片: ${rawFile.name}`);
+          // 1. WebP 智能压缩流水线（自适应阶梯压缩，长边 <= 1920px）
+          const compResult = await compressImageToWebp(rawFile);
+          if (compResult.wasCompressed) {
+            const origKb = (compResult.originalSize / 1024).toFixed(1);
+            const compKb = (compResult.compressedSize / 1024).toFixed(1);
+            logger.info(
+              `WebP 压缩完成: ${origKb}KB -> ${compKb}KB (${compResult.width}x${compResult.height})`,
+            );
+          }
+
+          // 2. 双模式直传（优先 S3/R2 原生直传，降级本地存储，并自动登记资产台账）
+          const uploadRes = await uploadImageSmart(compResult.file);
+
+          // 3. 替换占位符为最终 Markdown 语法
+          const finalImageMd = `\n\n![${compResult.file.name}](${uploadRes.url})\n\n`;
+          currentVal = currentVal.replace(placeholder, finalImageMd);
+          updateContent(currentVal);
+
+          toast.success(
+            compResult.wasCompressed
+              ? `图片已转 WebP (${(compResult.compressedSize / 1024).toFixed(1)} KB) 并成功上传`
+              : `图片已上传: ${rawFile.name}`,
+          );
+        } catch (err: unknown) {
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          logger.error('压缩或上传图片失败', err);
+          toast.error(`图片上传失败: ${errorMsg}`);
+          currentVal = currentVal.replace(placeholder, '');
+          updateContent(currentVal);
+        }
+      }
+    },
+    [value, updateContent],
+  );
+
+  // 监听粘贴事件 (Paste)
+  const handlePaste = useCallback(
+    async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+      const images = extractImagesFromEvent(e);
+      if (images.length > 0) {
+        e.preventDefault();
+        await processAndUploadImages(images);
+      }
+    },
+    [processAndUploadImages],
+  );
+
+  // 监听拖拽放入事件 (Drop)
+  const handleDrop = useCallback(
+    async (e: React.DragEvent<HTMLTextAreaElement>) => {
+      const images = extractImagesFromEvent(e);
+      if (images.length > 0) {
+        e.preventDefault();
+        await processAndUploadImages(images);
+      }
+    },
+    [processAndUploadImages],
+  );
+
+  // 监听划词事件（弹出 BubbleMenu 与 FloatingAiToolbar，防中文输入法 IME 打断）
   const handleSelectText = () => {
+    if (isComposingRef.current) return;
     const textarea = textareaRef.current;
     if (!textarea) return;
 
@@ -248,16 +352,87 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
     const end = textarea.selectionEnd;
 
     if (start !== end && end - start > 0) {
+      const selected = value.slice(start, end);
       const rect = textarea.getBoundingClientRect();
-      // 近似计算选区位置
-      setBubblePosition({
+      const pos = {
         top: Math.max(10, rect.top + 20),
         left: rect.left + rect.width / 2,
-      });
+      };
+
+      setBubblePosition(pos);
       setBubbleMenuOpen(true);
+
+      // 仅当选中文本大于等于 2 个字符时触发 AI 工具条
+      if (selected.trim().length >= 2) {
+        setSelectedRange({ start, end, text: selected });
+        setFloatingAiPosition({
+          top: Math.max(10, rect.top + 30),
+          left: Math.max(10, Math.min(window.innerWidth - 380, rect.left + 40)),
+        });
+        setFloatingAiOpen(true);
+      } else {
+        setFloatingAiOpen(false);
+        setSelectedRange(null);
+      }
     } else {
       setBubbleMenuOpen(false);
+      setFloatingAiOpen(false);
+      setSelectedRange(null);
     }
+  };
+
+  // 打开表格可视化编辑器：优先提取光标处 Markdown 表格
+  const handleOpenTableEditor = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) {
+      setActiveTableSnippet(null);
+      setShowTableEditor(true);
+      return;
+    }
+
+    const cursor = textarea.selectionStart;
+    const lines = value.split(/\r?\n/);
+    let charCount = 0;
+    let targetLineIdx = -1;
+
+    for (let i = 0; i < lines.length; i++) {
+      const lineLen = lines[i].length + 1;
+      if (cursor >= charCount && cursor <= charCount + lineLen) {
+        targetLineIdx = i;
+        break;
+      }
+      charCount += lineLen;
+    }
+
+    if (targetLineIdx !== -1 && lines[targetLineIdx].trim().startsWith('|')) {
+      let startLine = targetLineIdx;
+      while (startLine > 0 && lines[startLine - 1].trim().startsWith('|')) {
+        startLine--;
+      }
+      let endLine = targetLineIdx;
+      while (endLine < lines.length - 1 && lines[endLine + 1].trim().startsWith('|')) {
+        endLine++;
+      }
+
+      let startChar = 0;
+      for (let i = 0; i < startLine; i++) {
+        startChar += lines[i].length + 1;
+      }
+      let tableContent = '';
+      for (let i = startLine; i <= endLine; i++) {
+        tableContent += (i > startLine ? '\n' : '') + lines[i];
+      }
+      const endChar = startChar + tableContent.length;
+
+      setActiveTableSnippet({
+        text: tableContent,
+        start: startChar,
+        end: endChar,
+      });
+    } else {
+      setActiveTableSnippet(null);
+    }
+    setShowTableEditor(true);
   };
 
   // 监听键盘按键：处理 "/" 斜杠命令与快捷键
@@ -484,6 +659,12 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
         onOpenGraph={() => setShowGraph(true)}
         onOpenWritingLab={() => setShowWritingLab(true)}
         onOpenShortcuts={() => setShowShortcuts(true)}
+        onOpenAssetManager={() => setShowAssetManager(true)}
+        onOpenOutline={() => setShowOutline(true)}
+        onOpenTableEditor={handleOpenTableEditor}
+        onOpenAiSettings={() => setShowAiSettings(true)}
+        onOpenSync={() => setShowSyncModal(true)}
+        onOpenSlidePresenter={() => setShowSlidePresenter(true)}
       />
 
       {/* 飞行记录仪崩溃数据自救横幅 */}
@@ -531,6 +712,15 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
               onChange={handleChange}
               onSelect={handleSelectText}
               onKeyDown={handleKeyDown}
+              onPaste={handlePaste}
+              onDrop={handleDrop}
+              onCompositionStart={() => {
+                isComposingRef.current = true;
+              }}
+              onCompositionEnd={() => {
+                isComposingRef.current = false;
+                handleSelectText();
+              }}
               placeholder={placeholder}
               style={{ minHeight }}
               className={`w-full h-full bg-transparent text-base text-foreground placeholder:text-muted-foreground/50 resize-none outline-none border-none leading-relaxed ${
@@ -585,6 +775,15 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
         content={value}
         isOpen={showExportModal}
         onClose={() => setShowExportModal(false)}
+        onOpenSlidePresenter={() => setShowSlidePresenter(true)}
+      />
+
+      {/* Marp 风格全屏演说投影模式 */}
+      <SlidePresenterModal
+        isOpen={showSlidePresenter}
+        onClose={() => setShowSlidePresenter(false)}
+        title={title}
+        content={value}
       />
 
       {/* 专业版 4 大本地功能弹窗 */}
@@ -619,6 +818,90 @@ export const SmartEditor: React.FC<SmartEditorProps> = ({
       <ShortcutsModal
         isOpen={showShortcuts}
         onClose={() => setShowShortcuts(false)}
+      />
+
+      {/* 资产管家与智能图床弹窗 */}
+      <AssetManagerModal
+        isOpen={showAssetManager}
+        onClose={() => setShowAssetManager(false)}
+        currentContent={value}
+        onInsertImage={(snippet) => insertText(snippet)}
+      />
+
+      {/* 划词悬浮 AI 写作助手 */}
+      {floatingAiOpen && selectedRange && (
+        <FloatingAiToolbar
+          position={floatingAiPosition}
+          selectedText={selectedRange.text}
+          onReplaceSelection={(newText) => {
+            if (!selectedRange) return;
+            const nextVal =
+              value.slice(0, selectedRange.start) + newText + value.slice(selectedRange.end);
+            updateContent(nextVal);
+            setFloatingAiOpen(false);
+          }}
+          onInsertBelow={(text) => {
+            if (!selectedRange) return;
+            const nextVal =
+              value.slice(0, selectedRange.end) + '\n\n' + text + '\n\n' + value.slice(selectedRange.end);
+            updateContent(nextVal);
+            setFloatingAiOpen(false);
+          }}
+          onClose={() => setFloatingAiOpen(false)}
+          onOpenSettings={() => setShowAiSettings(true)}
+        />
+      )}
+
+      {/* 章节大纲导航抽屉 */}
+      <OutlineDrawer
+        isOpen={showOutline}
+        onClose={() => setShowOutline(false)}
+        content={value}
+        onJumpToHeading={(charIndex) => {
+          const textarea = textareaRef.current;
+          if (!textarea) return;
+          textarea.focus();
+          textarea.setSelectionRange(charIndex, charIndex);
+          const linesBefore = value.slice(0, charIndex).split('\n');
+          const targetScroll = Math.max(0, (linesBefore.length - 2) * 24);
+          textarea.scrollTo({ top: targetScroll, behavior: 'smooth' });
+        }}
+      />
+
+      {/* 可视化表格工坊 */}
+      <TableGridEditor
+        isOpen={showTableEditor}
+        onClose={() => {
+          setShowTableEditor(false);
+          setActiveTableSnippet(null);
+        }}
+        rawTableMarkdown={activeTableSnippet?.text}
+        onApplyTable={(newTableMd) => {
+          if (activeTableSnippet) {
+            const nextVal =
+              value.slice(0, activeTableSnippet.start) +
+              newTableMd +
+              value.slice(activeTableSnippet.end);
+            updateContent(nextVal);
+          } else {
+            insertText(`\n\n${newTableMd}\n\n`);
+          }
+          setShowTableEditor(false);
+          setActiveTableSnippet(null);
+        }}
+      />
+
+      {/* AI 模型 BYOK 设置面板 */}
+      <AiSettingsModal
+        isOpen={showAiSettings}
+        onClose={() => setShowAiSettings(false)}
+      />
+
+      {/* WebDAV 跨设备数据同步中枢 */}
+      <SyncSettingsModal
+        isOpen={showSyncModal}
+        onClose={() => setShowSyncModal(false)}
+        activeDraft={{ title, content: value }}
       />
     </div>
   );

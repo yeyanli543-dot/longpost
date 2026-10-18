@@ -40,6 +40,7 @@ import type {
   ArticleSummary,
 } from '@shared/api.interface';
 import { appUsers, posts, articles, comments, likes, bookmarks, reposts, reports, siteSettings } from '@server/database/schema';
+import { escapeCsvValue } from '@server/common/utils/csv';
 import { AuthService } from '../auth/auth.service';
 import { ArticlesService } from '../articles/articles.service';
 import { CommentsService } from '../comments/comments.service';
@@ -1064,15 +1065,8 @@ export class AdminService {
   // ========== CSV Export ==========
 
   private escapeCsv(value: unknown): string {
-    if (value === null || value === undefined) return '';
-    let str = String(value);
-    if (/^[=+\-@\t\r]/.test(str)) {
-      str = `'${str}`;
-    }
-    if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
+    // 实现见 server/common/utils/csv.ts（公式注入防护，可被单测直接覆盖）
+    return escapeCsvValue(value);
   }
 
   async exportUsers(): Promise<string> {

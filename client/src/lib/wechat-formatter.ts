@@ -219,7 +219,29 @@ export function buildWeChatHtml(article: WeChatArticleData): string {
 </section>`;
 
   // Wrap all in outer section with clean typography defaults
-  return `<section style="max-width: 677px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; font-size: 15px; line-height: 1.85; color: #334155; word-wrap: break-word;">${headerCard}${coverHtml}${bodyBlocks.join('\n')}${footerCard}</section>`;
+  const assembled = `<section style="max-width: 677px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif; font-size: 15px; line-height: 1.85; color: #334155; word-wrap: break-word;">${headerCard}${coverHtml}${bodyBlocks.join('\n')}${footerCard}</section>`;
+
+  return stripDangerousHtml(assembled);
+}
+
+/**
+ * 剔除危险 HTML（脚本、内嵌框架、事件属性、javascript: 协议）。
+ *
+ * 公众号排版允许作者在正文里写少量原生 HTML（<img>、<div> 等），
+ * 所以不能整段转义；但 <script>/onerror=/javascript: 这类必须清掉，
+ * 否则从别人文章复制过来再粘贴到公众号编辑器时，等于把对方的脚本一起带进去。
+ */
+export function stripDangerousHtml(html: string): string {
+  if (!html) return '';
+  return html
+    // 成对出现的危险标签，连内容一起删
+    .replace(/<\s*(script|style|iframe|object|embed|noscript)\b[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
+    // 自闭合 / 未闭合的危险标签
+    .replace(/<\s*(script|style|iframe|object|embed|link|meta|base)\b[^>]*\/?>/gi, '')
+    // 内联事件处理器 on*=
+    .replace(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+    // javascript: / vbscript: / data:text/html 协议
+    .replace(/(href|src)\s*=\s*(["'])\s*(javascript|vbscript|data:text\/html)[^"']*\2/gi, '$1=$2#$2');
 }
 
 /**

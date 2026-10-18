@@ -20,6 +20,7 @@ import { MeetingsModule } from './modules/meetings/meetings.module';
 import { AccessCodesModule } from './modules/access-codes/access-codes.module';
 import { PwaModule } from './modules/pwa/pwa.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { SyncModule } from './modules/sync/sync.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
     AccessCodesModule,
     PwaModule,
     UploadsModule,
+    SyncModule,
     // ====== @route-section: business-modules END ======
 
     // ⚠️ @route-order: last

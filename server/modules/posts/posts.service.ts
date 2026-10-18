@@ -7,6 +7,7 @@ import { HashtagsService } from '../hashtags/hashtags.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SiteSettingsService } from '../site-settings/site-settings.service';
 import { contentGuard } from '@server/common/utils/content-guard';
+import { computeHotScore, encodeHotCursor, parseHotCursor } from '@server/common/utils/hot-score';
 import type { PostItem, ArticleSummary, TimelineResponse, TimelineItem, TimelineView } from '@shared/api.interface';
 
 @Injectable()
@@ -322,12 +323,11 @@ export class PostsService {
     let hotCursorScore: number | null = null;
     if (cursor) {
       if (view === 'hot' && cursor.startsWith('hot:')) {
-        const parts = cursor.split(':');
-        const parsedScore = Number(parts[1]);
-        const isoStr = parts.slice(2).join(':');
-        if (!Number.isNaN(parsedScore) && isoStr) {
-          hotCursorScore = parsedScore;
-          cursorDate = new Date(isoStr);
+        // 与前端 filterByHotCursor 共用同一套解析规则，避免两端口径漂移
+        const parsed = parseHotCursor(cursor);
+        if (parsed) {
+          hotCursorScore = parsed.score;
+          cursorDate = parsed.date;
         }
       } else {
         cursorDate = new Date(cursor);
@@ -420,16 +420,10 @@ export class PostsService {
       }),
     );
 
-    const computeHotScore = (item: { data: typeof posts.$inferSelect | typeof articles.$inferSelect }) =>
-      (item.data.likeCount ?? 0) * 3 +
-      (item.data.commentCount ?? 0) * 5 +
-      (item.data.repostCount ?? 0) * 4 +
-      ('bookmarkCount' in item.data ? (item.data.bookmarkCount ?? 0) * 2 : 0);
-
     const merged = [...postItems, ...articleItems].sort((a, b) => {
       if (view === 'hot') {
-        const aScore = computeHotScore(a);
-        const bScore = computeHotScore(b);
+        const aScore = computeHotScore(a.data);
+        const bScore = computeHotScore(b.data);
         if (bScore !== aScore) return bScore - aScore;
         return b.createdAt.getTime() - a.createdAt.getTime();
       }
@@ -593,7 +587,7 @@ export class PostsService {
       const lastItem = pageItems[pageItems.length - 1];
       nextCursor =
         view === 'hot'
-          ? `hot:${computeHotScore(lastItem)}:${lastItem.createdAt.toISOString()}`
+          ? encodeHotCursor(computeHotScore(lastItem.data), lastItem.createdAt)
           : lastItem.createdAt.toISOString();
     }
 

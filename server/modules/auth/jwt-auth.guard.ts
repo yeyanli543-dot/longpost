@@ -6,6 +6,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { isTokenVersionMismatched } from '@server/common/utils/token-version';
+import { isAccessTokenPayloadUsable } from '@server/common/utils/jwt-payload';
 
 export interface AuthRequest extends Request {
   user?: {
@@ -35,8 +37,8 @@ export class JwtAuthGuard implements CanActivate {
     const token = authHeader.slice(7);
     const payload = this.authService.verifyToken(token);
 
-    if (!payload) {
-      throw new UnauthorizedException('登录已过期，请重新登录');
+    if (!isAccessTokenPayloadUsable(payload)) {
+      throw new UnauthorizedException('无效的访问令牌类型或载荷');
     }
 
     const user = await this.authService.validateUserActive(payload.sub);
@@ -46,11 +48,8 @@ export class JwtAuthGuard implements CanActivate {
     if (user.isBanned) {
       throw new UnauthorizedException('账号已被封禁');
     }
-    if (
-      payload.tokenVersion !== undefined &&
-      user.tokenVersion !== undefined &&
-      payload.tokenVersion !== user.tokenVersion
-    ) {
+    // 改密码/踢下线后 tokenVersion 会 +1，旧 token 立即失效
+    if (isTokenVersionMismatched(payload, user)) {
       throw new UnauthorizedException('登录凭证已失效，请重新登录');
     }
 
@@ -85,7 +84,7 @@ export class OptionalJwtAuthGuard implements CanActivate {
     const token = authHeader.slice(7);
     try {
       const payload = this.authService.verifyToken(token);
-      if (payload) {
+      if (payload && (payload as any).type !== 'refresh') {
         const user = await this.authService.validateUserActive(payload.sub);
         if (
           user &&

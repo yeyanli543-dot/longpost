@@ -25,6 +25,7 @@ import type {
   ChangePasswordRequest,
   UpdatePreferencesRequest,
 } from '@shared/api.interface';
+import { APP_VERSION } from '@shared/version';
 import {
   ProfileSection,
   SecuritySection,
@@ -290,7 +291,7 @@ const SettingsPage: React.FC = () => {
       }
 
       const exportData = {
-        version: '2.9.5',
+        version: APP_VERSION,
         exportTime: new Date().toISOString(),
         user: {
           id: user.id,

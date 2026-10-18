@@ -96,6 +96,13 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.on('closed', () => { mainWindow = null; });
 
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('https://') || url.startsWith('http://')) {
+      shell.openExternal(url);
+    }
+    return { action: 'deny' };
+  });
+
   // F12 开 DevTools（排查问题用）
   mainWindow.webContents.on('before-input-event', (event, input) => {
     if (input.type === 'keyDown' && input.key === 'F12') {
@@ -258,6 +265,81 @@ function registerIpc() {
   ipcMain.handle('proposals:save', (_e, id, proposals) => store.saveProposals(id, proposals));
   ipcMain.handle('proposals:listUnresolved', () => store.listUnresolvedProposals());
 
+  // WebDAV 跨设备同步通道（在主进程发起免除浏览器 CORS 限制）
+  ipcMain.handle('webdav:request', async (_e, { url, method = 'GET', headers = {}, body = null }) => {
+    return new Promise((resolve) => {
+      try {
+        const parsed = new URL(url);
+        const isHttps = parsed.protocol === 'https:';
+        const client = isHttps ? require('node:https') : require('node:http');
+
+        const reqHeaders = { ...headers };
+        let payload = null;
+        if (body !== null && body !== undefined) {
+          payload = typeof body === 'string' ? Buffer.from(body, 'utf8') : Buffer.from(body);
+          if (!reqHeaders['content-length'] && !reqHeaders['Content-Length']) {
+            reqHeaders['Content-Length'] = payload.length;
+          }
+        }
+
+        const options = {
+          protocol: parsed.protocol,
+          hostname: parsed.hostname,
+          port: parsed.port || (isHttps ? 443 : 80),
+          path: parsed.pathname + parsed.search,
+          method: method.toUpperCase(),
+          headers: reqHeaders,
+          timeout: 25000,
+        };
+
+        const req = client.request(options, (res) => {
+          const chunks = [];
+          res.on('data', (chunk) => chunks.push(chunk));
+          res.on('end', () => {
+            const buf = Buffer.concat(chunks);
+            const text = buf.toString('utf8');
+            resolve({
+              ok: res.statusCode >= 200 && res.statusCode < 300,
+              status: res.statusCode,
+              statusText: res.statusMessage || '',
+              headers: res.headers,
+              data: text,
+            });
+          });
+        });
+
+        req.on('timeout', () => {
+          req.destroy(new Error('请求超时'));
+        });
+
+        req.on('error', (err) => {
+          resolve({
+            ok: false,
+            status: 0,
+            statusText: err.message,
+            headers: {},
+            data: '',
+            error: err.message,
+          });
+        });
+
+        if (payload) {
+          req.write(payload);
+        }
+        req.end();
+      } catch (err) {
+        resolve({
+          ok: false,
+          status: 0,
+          statusText: err.message,
+          headers: {},
+          data: '',
+          error: err.message,
+        });
+      }
+    });
+  });
+
   // 系统剪贴板图片写入
   ipcMain.handle('clipboard:writeImage', (_e, dataUrl) => {
     try {
@@ -373,6 +455,69 @@ function registerIpc() {
       return { ok: true, path: res.filePath };
     } catch (err) {
       return { ok: false, error: String(err && err.message ? err.message : err) };
+    }
+  });
+
+  ipcMain.handle('export:pdf', async (_e, { title, html, options = {} }) => {
+    const suggested = (title || '未命名').replace(/[\\/:*?"<>|]/g, '_').slice(0, 60);
+    const res = await dialog.showSaveDialog(mainWindow, {
+      title: '导出为学术 PDF',
+      defaultPath: `${suggested}.pdf`,
+      filters: [{ name: 'PDF 文档', extensions: ['pdf'] }],
+    });
+    if (res.canceled || !res.filePath) return { ok: false, canceled: true };
+
+    let printWindow = null;
+    try {
+      printWindow = new BrowserWindow({
+        show: false,
+        webPreferences: {
+          nodeIntegration: false,
+          contextIsolation: true,
+        },
+      });
+      await printWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+      await new Promise((r) => setTimeout(r, 600));
+
+      const pdfData = await printWindow.webContents.printToPDF({
+        displayHeaderFooter: true,
+        headerTemplate: `<div style="font-size:9px;color:#888;width:100%;text-align:right;padding-right:20mm;"><span>${title || 'LongPost'}</span></div>`,
+        footerTemplate: `<div style="font-size:9px;color:#888;width:100%;text-align:center;"><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>`,
+        printBackground: true,
+        margins: {
+          top: 1.2,
+          bottom: 1.2,
+          left: 1,
+          right: 1,
+        },
+        ...options,
+      });
+
+      fs.writeFileSync(res.filePath, pdfData);
+      return { ok: true, path: res.filePath };
+    } catch (err) {
+      return { ok: false, error: String(err && err.message ? err.message : err) };
+    } finally {
+      if (printWindow) {
+        printWindow.destroy();
+      }
+    }
+  });
+
+  ipcMain.handle('export:save-image', async (_e, payload = {}) => {
+    const defaultName = path.basename(String(payload.defaultName || 'longpost-export.png')).replace(/[<>:"/\\|?*\x00-\x1F]/g, '_');
+    const res = await dialog.showSaveDialog(mainWindow, {
+      title: '保存长图',
+      defaultPath: defaultName,
+      filters: [{ name: 'PNG 图片', extensions: ['png'] }],
+    });
+    if (res.canceled || !res.filePath) return { ok: false, canceled: true };
+    try {
+      const base64Data = (payload.dataUrl || '').replace(/^data:image\/\w+;base64,/, '');
+      fs.writeFileSync(res.filePath, Buffer.from(base64Data, 'base64'));
+      return { ok: true, path: res.filePath };
+    } catch (err) {
+      return { ok: false, error: String((err && err.message) || err) };
     }
   });
 

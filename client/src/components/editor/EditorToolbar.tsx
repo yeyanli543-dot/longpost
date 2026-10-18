@@ -26,6 +26,11 @@ import {
   Network,
   Sparkles,
   HelpCircle,
+  FolderArchive,
+  ListTree,
+  Bot,
+  Cloud,
+  Presentation,
 } from 'lucide-react';
 import { useWorkspaceMode } from '@client/src/hooks/useWorkspaceMode';
 import { WorkspaceModeSwitcher } from '@client/src/components/WorkspaceMode/WorkspaceModeSwitcher';
@@ -51,6 +56,12 @@ interface EditorToolbarProps {
   onOpenGraph?: () => void;
   onOpenWritingLab?: () => void;
   onOpenShortcuts?: () => void;
+  onOpenAssetManager?: () => void;
+  onOpenOutline?: () => void;
+  onOpenTableEditor?: () => void;
+  onOpenAiSettings?: () => void;
+  onOpenSync?: () => void;
+  onOpenSlidePresenter?: () => void;
 }
 
 export const EditorToolbar: React.FC<EditorToolbarProps> = ({
@@ -72,6 +83,12 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   onOpenGraph,
   onOpenWritingLab,
   onOpenShortcuts,
+  onOpenAssetManager,
+  onOpenOutline,
+  onOpenTableEditor,
+  onOpenAiSettings,
+  onOpenSync,
+  onOpenSlidePresenter,
 }) => {
   const { isLite, isPro } = useWorkspaceMode();
 
@@ -154,6 +171,52 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 <Eye className="w-3.5 h-3.5" />
               </button>
             </div>
+
+            {/* 章节大纲 */}
+            {onOpenOutline && (
+              <button
+                onClick={onOpenOutline}
+                className="p-1.5 rounded-full text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                title="章节大纲导航"
+              >
+                <ListTree className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {/* AI 助手设置 */}
+            {onOpenAiSettings && (
+              <button
+                onClick={onOpenAiSettings}
+                className="p-1.5 rounded-full text-zinc-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                title="AI 写作协同配置"
+              >
+                <Bot className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {/* 资产管家 */}
+            {onOpenAssetManager && (
+              <button
+                onClick={onOpenAssetManager}
+                className="flex items-center gap-1 px-3 py-1 bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 rounded-full text-xs font-medium text-zinc-700 dark:text-zinc-200 transition-colors"
+                title="资产管家 (图片压缩与直传)"
+              >
+                <FolderArchive className="w-3.5 h-3.5 text-purple-500" />
+                <span>资产</span>
+              </button>
+            )}
+
+            {/* WebDAV 跨设备同步 */}
+            {onOpenSync && (
+              <button
+                onClick={onOpenSync}
+                className="flex items-center gap-1 px-3 py-1 bg-indigo-500/10 hover:bg-indigo-500/20 rounded-full text-xs font-medium text-indigo-600 dark:text-indigo-400 transition-colors"
+                title="WebDAV 跨设备同步中枢"
+              >
+                <Cloud className="w-3.5 h-3.5" />
+                <span>同步</span>
+              </button>
+            )}
 
             {/* 导出 */}
             <button
@@ -239,9 +302,12 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
               <CheckSquare className="w-4 h-4" />
             </button>
             <button
-              onClick={() => onInsertText('| 列 1 | 列 2 |\n| --- | --- |\n| 内容 | 内容 |\n')}
+              onClick={
+                onOpenTableEditor ||
+                (() => onInsertText('| 列 1 | 列 2 |\n| --- | --- |\n| 内容 | 内容 |\n'))
+              }
               className="p-1.5 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-              title="表格"
+              title="可视化表格工坊 (Table Grid Editor)"
             >
               <Table className="w-4 h-4" />
             </button>
@@ -290,6 +356,50 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
               >
                 <Sparkles className="w-3.5 h-3.5" />
                 <span>写作实验室</span>
+              </button>
+            )}
+
+            {onOpenAssetManager && (
+              <button
+                onClick={onOpenAssetManager}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#f3e8fd] dark:bg-[#321e4b] text-[#7b1fa2] dark:text-[#d7aefb] hover:bg-purple-100 dark:hover:bg-purple-900/60 transition-colors shadow-2xs"
+                title="打开资产管家与孤立图片清理"
+              >
+                <FolderArchive className="w-3.5 h-3.5" />
+                <span>资产管家</span>
+              </button>
+            )}
+
+            {onOpenOutline && (
+              <button
+                onClick={onOpenOutline}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#e0f2fe] dark:bg-[#082f49] text-[#0369a1] dark:text-[#7dd3fc] hover:bg-sky-100 dark:hover:bg-sky-900/60 transition-colors shadow-2xs"
+                title="打开章节大纲导航"
+              >
+                <ListTree className="w-3.5 h-3.5" />
+                <span>大纲</span>
+              </button>
+            )}
+
+            {onOpenAiSettings && (
+              <button
+                onClick={onOpenAiSettings}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#fae8ff] dark:bg-[#3b0764] text-[#a21caf] dark:text-[#f0abfc] hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/60 transition-colors shadow-2xs"
+                title="打开 AI 深度写作协同配置"
+              >
+                <Bot className="w-3.5 h-3.5" />
+                <span>AI 协同</span>
+              </button>
+            )}
+
+            {onOpenSync && (
+              <button
+                onClick={onOpenSync}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#eef2ff] dark:bg-[#1e1b4b] text-[#4f46e5] dark:text-[#a5b4fc] hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors shadow-2xs"
+                title="打开 WebDAV 跨设备同步中枢"
+              >
+                <Cloud className="w-3.5 h-3.5" />
+                <span>云同步</span>
               </button>
             )}
 
@@ -372,6 +482,18 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
               <Download className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
               <span>导出</span>
             </button>
+
+            {/* 演说模式 */}
+            {onOpenSlidePresenter && (
+              <button
+                onClick={onOpenSlidePresenter}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white dark:bg-[#1a1b1e] border border-gray-300 dark:border-gray-700 text-xs font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors shadow-2xs"
+                title="进入 Marp 风格全屏演说投影模式"
+              >
+                <Presentation className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                <span>演说</span>
+              </button>
+            )}
 
             {/* 全屏 */}
             <button

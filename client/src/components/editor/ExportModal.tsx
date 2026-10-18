@@ -9,11 +9,15 @@ import {
   Check,
   Sparkles,
   Globe,
+  BookOpen,
+  Presentation,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { platform } from '@/lib/platform';
 import { copyWeChatFormatted } from '@/lib/wechat-formatter';
 import { exportObsidianMarkdown } from '@/lib/obsidian-exporter';
+import { buildEpub, downloadEpubFile } from '@/lib/export/epub-builder';
+import { exportAcademicPdf } from '@/lib/export/paged-pdf';
 
 interface ExportModalProps {
   title: string;
@@ -21,6 +25,7 @@ interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onExportLongImage?: () => void;
+  onOpenSlidePresenter?: () => void;
 }
 
 function escapeHtml(raw: string): string {
@@ -195,6 +200,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
   isOpen,
   onClose,
   onExportLongImage,
+  onOpenSlidePresenter,
 }) => {
   const [exporting, setExporting] = useState<string | null>(null);
 
@@ -409,7 +415,49 @@ generator: "LongPost"
     }
   };
 
-  // 3. 打印 / PDF 导出
+  // 5. 导出为 IDPF 标准 EPUB 3.0 电子书
+  const handleExportEpub = async () => {
+    setExporting('epub');
+    try {
+      const renderedContentHtml = markdownToSafeHtml(content);
+      const epubBlob = await buildEpub({
+        metadata: {
+          title: title || '未命名长文',
+          author: 'LongPost Author',
+        },
+        contentHtml: renderedContentHtml,
+      });
+      const fileName = `${(title || '未命名长文').replace(/[\/\\:*?"<>|]/g, '_')}.epub`;
+      downloadEpubFile(epubBlob, fileName);
+      toast.success('已成功导出标准 EPUB 3.0 电子书');
+      onClose();
+    } catch (e: any) {
+      toast.error('导出 EPUB 失败: ' + (e?.message || e));
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  // 6. 出版级学术分页 PDF 导出（支持 Electron 原生渲染与 Web 打印）
+  const handleExportAcademicPdf = async () => {
+    setExporting('pdf');
+    try {
+      const renderedContentHtml = markdownToSafeHtml(content);
+      const res = await exportAcademicPdf({
+        title: title || '未命名长文',
+        contentHtml: renderedContentHtml,
+      });
+      if (res.success) {
+        onClose();
+      }
+    } catch (e: any) {
+      toast.error('导出学术 PDF 失败: ' + (e?.message || e));
+    } finally {
+      setExporting(null);
+    }
+  };
+
+  // 7. 打印 / PDF 导出
   const handlePrint = () => {
     window.print();
     onClose();
@@ -539,6 +587,68 @@ generator: "LongPost"
             </button>
           )}
 
+          {/* EPUB 3.0 标准电子书 */}
+          <button
+            onClick={handleExportEpub}
+            disabled={exporting === 'epub'}
+            className="w-full flex items-center gap-3.5 p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 text-left transition-all group disabled:opacity-50"
+          >
+            <div className="p-2.5 rounded-lg bg-emerald-500/15 text-emerald-500 group-hover:scale-105 transition-transform">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <div className="text-sm font-semibold text-foreground">
+                  {exporting === 'epub' ? '正在打包 EPUB 3.0...' : '导出 EPUB 3.0 电子书'}
+                </div>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-medium">EPUB 3</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5">IDPF 国际规范，支持 Apple Books、Kindle、微信读书与图表内嵌</div>
+            </div>
+          </button>
+
+          {/* 出版级学术分页 PDF */}
+          <button
+            onClick={handleExportAcademicPdf}
+            disabled={exporting === 'pdf'}
+            className="w-full flex items-center gap-3.5 p-3 rounded-xl border border-rose-500/30 bg-rose-500/5 hover:bg-rose-500/10 text-left transition-all group disabled:opacity-50"
+          >
+            <div className="p-2.5 rounded-lg bg-rose-500/15 text-rose-400 group-hover:scale-105 transition-transform">
+              <Printer className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <div className="text-sm font-semibold text-foreground">
+                  {exporting === 'pdf' ? '正在渲染学术 PDF...' : '导出出版级学术 PDF'}
+                </div>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-400 font-medium">A4 学术排版</span>
+              </div>
+              <div className="text-xs text-muted-foreground mt-0.5">防代码图表切页截断，带统一页眉页码与优雅排版</div>
+            </div>
+          </button>
+
+          {/* 全屏演说模式 */}
+          {onOpenSlidePresenter && (
+            <button
+              onClick={() => {
+                onOpenSlidePresenter();
+                onClose();
+              }}
+              className="w-full flex items-center gap-3.5 p-3 rounded-xl border border-amber-500/30 bg-amber-500/5 hover:bg-amber-500/10 text-left transition-all group"
+            >
+              <div className="p-2.5 rounded-lg bg-amber-500/15 text-amber-500 group-hover:scale-105 transition-transform">
+                <Presentation className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <div className="text-sm font-semibold text-foreground">进入全屏演说投影模式</div>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 font-medium">Marp 风格</span>
+                </div>
+                <div className="text-xs text-muted-foreground mt-0.5">按 --- 分页，带演讲计时器、全屏投影与键盘快捷控制</div>
+              </div>
+            </button>
+          )}
+
           {/* 打印 / PDF */}
           <button
             onClick={handlePrint}
@@ -548,8 +658,8 @@ generator: "LongPost"
               <Printer className="w-5 h-5" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-foreground">打印 / 另存为 PDF</div>
-              <div className="text-xs text-muted-foreground">调用系统无损排版打印机生成 PDF 电子书</div>
+              <div className="text-sm font-semibold text-foreground">调用系统打印机</div>
+              <div className="text-xs text-muted-foreground">调起操作系统标准打印对话框</div>
             </div>
           </button>
         </div>
