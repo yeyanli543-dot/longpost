@@ -33,7 +33,7 @@
   <script>
     try {
       var rawPlatform = '{{{__platform__}}}';
-      if (rawPlatform && !rawPlatform.startsWith('{{')) {
+      if (rawPlatform && !rawPlatform.startsWith('{' + '{')) {
         window.__platform__ = JSON.parse(rawPlatform);
       }
     } catch (e) {

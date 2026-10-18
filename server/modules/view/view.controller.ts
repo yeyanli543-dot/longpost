@@ -412,7 +412,7 @@ export class ViewController {
     return rows[0] || null;
   }
 
-  @Get(['/', '*'])
+  @Get(['/', '*splat'])
   @Render('index')
   async render(@Req() req: Request): Promise<OgRenderData> {
     const platformData = (req as any).__platform_data__ ?? {};
