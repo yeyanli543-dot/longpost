@@ -1,21 +1,21 @@
 /**
- * 渲染层的平台门面�?
+ * 渲染层的平台门面。
  *
- * 界面代码只认 window.LPPlatform，不关心自己跑在 Electron 里还是手�?WebView 里：
- *   - 桌面：包一�?preload 暴露�?window.lp（数据在磁盘上）
- *   - 网页 / 手机：用 lib/repo.js + IndexedDB 后端就地实现同一套方�?
+ * 界面代码只认 window.LPPlatform，不关心自己跑在 Electron 里还是手机 WebView 里：
+ *   - 桌面：包一层 preload 暴露的 window.lp（数据在磁盘上）
+ *   - 网页 / 手机：用 lib/repo.js + IndexedDB 后端就地实现同一套方法
  *
- * 两边的规则来自同一�?repo.js，所以排序、回收站、历史版本这些行为天然一致，
- * 不会出现「桌面能搜到、手机搜不到」这种分叉�?
+ * 两边的规则来自同一份 repo.js，所以排序、回收站、历史版本这些行为天然一致，
+ * 不会出现「桌面能搜到、手机搜不到」这种分叉。
  *
  * 另外补了两个平台差异点：
- *   assetUrl(url)  把正文里�?lp://files/xxx 变成浏览器能显示的东�?
+ *   assetUrl(url)  把正文里的 lp://files/xxx 变成浏览器能显示的东西
  *   capabilities   告诉界面哪些功能这台设备上做不了（比如「打开数据目录」）
  */
 (function () {
   'use strict';
 
-  /** �?desktop/package.json �?version 保持一致，自检里有断言盯着�?*/
+  /** 跟 desktop/package.json 的 version 保持一致，自检里有断言盯着。 */
   const APP_VERSION = '3.0.4';
 
   if (!window.LPRepo || !window.LPIdbBackend) {
@@ -30,17 +30,17 @@
 
   // ------------------------------------------------------------ 分享 / 复制
 
-  /** 有没有可用的系统分享面板（手机上才有）�?*/
+  /** 有没有可用的系统分享面板（手机上才有）。 */
   function nativeShare() {
     const plugins = window.Capacitor && window.Capacitor.Plugins;
     return plugins && plugins.Share ? plugins.Share : null;
   }
 
   /**
-   * 复制到剪贴板�?
+   * 复制到剪贴板。
    *
-   * navigator.clipboard �?Electron �?file:// 页面里可用（file: 属于可信来源），
-   * 但某�?WebView / 非聚焦窗口会被拒绝，所以留一�?textarea + execCommand 的老路�?
+   * navigator.clipboard 在 Electron 的 file:// 页面里可用（file: 属于可信来源），
+   * 但某些 WebView / 非聚焦窗口会被拒绝，所以留一条 textarea + execCommand 的老路。
    */
   function copyToClipboard(text) {
     const value = String(text == null ? '' : text);
@@ -73,10 +73,10 @@
   }
 
   /**
-   * 分享一段文字�?
+   * 分享一段文字。
    *   - 手机（有 Capacitor Share 插件）：唤起系统分享面板，能直接发到微信 / 备忘录等
    *   - 桌面 / 网页：写进剪贴板
-   * 两边返回同一种结构，界面代码不用分平台写两套�?
+   * 两边返回同一种结构，界面代码不用分平台写两套。
    *
    * @param {{title?:string, text:string, dialogTitle?:string}} payload
    * @returns {Promise<{ok:boolean, mode?:'share'|'clipboard', canceled?:boolean, error?:string}>}
@@ -105,7 +105,7 @@
     const desktop = window.lp;
     window.LPPlatform = Object.assign({}, desktop, {
       isDesktop: true,
-      platformLabel: '桌面�?,
+      platformLabel: '桌面版',
       capabilities: {
         pickFiles: true,
         openDataDir: true,
@@ -118,7 +118,7 @@
       assetUrl: (url) => Promise.resolve(url),
       releaseAsset: () => {},
       releaseAllAssets: () => {},
-      // 桌面版没有系统分享面板，但也没这个必要：剪贴板是更快的路�?
+      // 桌面版没有系统分享面板，但也没这个必要：剪贴板是更快的路径
       shareText: shareText,
       copyText: (text) => copyToClipboard(text),
       copyImage: (dataUrl) => desktop.writeImage(dataUrl),
@@ -158,7 +158,7 @@
       input.addEventListener('change', () => {
         finish(Array.prototype.slice.call(input.files || []));
       });
-      // 用户点「取消」时不会触发 change，靠焦点回到窗口兜一�?
+      // 用户点「取消」时不会触发 change，靠焦点回到窗口兜一下
       window.addEventListener(
         'focus',
         () => {
@@ -197,12 +197,12 @@
   }
 
   /**
-   * 把导出的文件交到用户手上�?
+   * 把导出的文件交到用户手上。
    *
-   * Android WebView �?<a download> 是不生效的（没有下载管理器接管）�?
-   * 所以在手机上改�?Capacitor �?Filesystem + Share：先写进缓存目录�?
-   * 再唤起系统分享面板，用户存下来或直接发出去都行�?
-   * 桌面浏览器没�?Capacitor，就走原来的 blob 下载�?
+   * Android WebView 里 <a download> 是不生效的（没有下载管理器接管），
+   * 所以在手机上改用 Capacitor 的 Filesystem + Share：先写进缓存目录，
+   * 再唤起系统分享面板，用户存下来或直接发出去都行。
+   * 桌面浏览器没有 Capacitor，就走原来的 blob 下载。
    */
   async function saveFile(filename, blob) {
     const plugins = window.Capacitor && window.Capacitor.Plugins;
@@ -220,7 +220,7 @@
           url: written.uri,
           files: [written.uri],
         });
-        return { ok: true, path: filename + '（已交给系统分享�? };
+        return { ok: true, path: filename + '（已交给系统分享）' };
       } catch (err) {
         // 分享被取消或插件不可用时，继续往下走 blob 下载
         if (String((err && err.message) || err).indexOf('cancel') !== -1) {
@@ -248,14 +248,14 @@
   }
 
   function safeFileName(name) {
-    return String(name || '未命�?).replace(/[\\/:*?"<>|]/g, '_').slice(0, 60) || '未命�?;
+    return String(name || '未命名').replace(/[\\/:*?"<>|]/g, '_').slice(0, 60) || '未命名';
   }
 
-  // ------------------------------------------------------------ AI（网�?/ 手机�?
+  // ------------------------------------------------------------ AI（网页 / 手机）
   //
-  // 桌面版由主进程代发请求（�?desktop/main.js �?ai:chat），这里只处�?
-  // 网页 / 手机：没�?IPC 代理，只能自�?fetch。云端大模型多数会放行跨域，
-  // 万一被浏览器拦下，错误信息会直接告诉用户改用桌面版，而不是静默失败�?
+  // 桌面版由主进程代发请求（见 desktop/main.js 的 ai:chat），这里只处理
+  // 网页 / 手机：没有 IPC 代理，只能自己 fetch。云端大模型多数会放行跨域，
+  // 万一被浏览器拦下，错误信息会直接告诉用户改用桌面版，而不是静默失败。
 
   const aiAborters = new Map();
   const aiListeners = new Set();
@@ -320,13 +320,13 @@
       const model = String(payload.model || '').trim();
       const messages = Array.isArray(payload.messages) ? payload.messages : [];
       if (!baseUrl) throw new Error('还没有配置服务地址');
-      if (!model) throw new Error('还没有配置模型名�?);
+      if (!model) throw new Error('还没有配置模型名称');
 
       const provider = payload.provider || 'openai';
       let full = '';
 
       if (provider === 'gemini') {
-        if (!apiKey) throw new Error('Gemini 需要填�?API Key');
+        if (!apiKey) throw new Error('Gemini 需要填写 API Key');
         const systemText = messages.filter((m) => m.role === 'system').map((m) => m.content).join('\n');
         const contents = messages
           .filter((m) => m.role !== 'system')
@@ -407,10 +407,10 @@
       });
       return { ok: true, requestId, text: full };
     } catch (err) {
-      if (controller.signal.aborted) return { ok: false, requestId, aborted: true, error: '已取�? };
+      if (controller.signal.aborted) return { ok: false, requestId, aborted: true, error: '已取消' };
       const msg = String((err && err.message) || err);
       const hint = /Failed to fetch|NetworkError|Load failed/i.test(msg)
-        ? '（浏览器跨域限制，建议改用桌面版�?
+        ? '（浏览器跨域限制，建议改用桌面版）'
         : '';
       return { ok: false, requestId, error: msg + hint };
     } finally {
@@ -431,7 +431,7 @@
 
   window.LPPlatform = Object.assign({}, repo, {
     isDesktop: false,
-    platformLabel: '手机�?,
+    platformLabel: '手机版',
     aiChat: aiChat,
     onAiChunk: onAiChunk,
     aiAbort: aiAbort,
@@ -440,7 +440,7 @@
       openDataDir: false,
       nativeSaveDialog: false,
       folderExport: false,
-      // 装没�?@capacitor/share 决定了「分享」是唤起系统面板还是复制到剪贴板
+      // 装没装 @capacitor/share 决定了「分享」是唤起系统面板还是复制到剪贴板
       share: !!nativeShare(),
       clipboard: true,
     },
@@ -477,9 +477,9 @@
     },
 
     /**
-     * 导入正文：手�?/ 网页上没有系统「打开文件」对话框，用 <input type="file">
-     * 选一�?Markdown / 文本文件，把文字读出来当新文章的正文�?
-     * 返回结构和桌面版保持一致，界面代码就不用分平台写两套�?
+     * 导入正文：手机 / 网页上没有系统「打开文件」对话框，用 <input type="file">
+     * 选一个 Markdown / 文本文件，把文字读出来当新文章的正文。
+     * 返回结构和桌面版保持一致，界面代码就不用分平台写两套。
      */
     async importArticle() {
       const files = await pickWithInput('.md,.markdown,.txt,text/markdown,text/plain', false);
@@ -489,13 +489,13 @@
       try {
         const text = await f.text();
         const base = String(f.name || '').replace(/\.[^.]+$/, '');
-        return { title: base || '导入的文�?, content: String(text).replace(/^\uFEFF/, '') };
+        return { title: base || '导入的文章', content: String(text).replace(/^\uFEFF/, '') };
       } catch (err) {
         return { error: String((err && err.message) || err) };
       }
     },
 
-    /** 拖放进来的文件直接收下，跟点按钮选文件等价�?*/
+    /** 拖放进来的文件直接收下，跟点按钮选文件等价。 */
     importDropped(files) {
       return importPicked(Array.prototype.slice.call(files || []));
     },
@@ -541,7 +541,7 @@
 
     async exportHtml(id) {
       const article = await repo.getArticle(id);
-      if (!article) return { ok: false, error: '文章不存�? };
+      if (!article) return { ok: false, error: '文章不存在' };
       const built = await window.LPExportWeb.buildSelfContained(article, {
         readFileBlob: (stored) => backend.readFileBlob(stored),
         listFiles: () => backend.listFiles(),
@@ -555,21 +555,21 @@
       if (!saved.ok) return saved;
       const note =
         built.skipped && built.skipped.length
-          ? '，另�?' + built.skipped.length + ' 个较大的附件未打�?
+          ? '，另有 ' + built.skipped.length + ' 个较大的附件未打包'
           : '';
       return { ok: true, path: saved.path + note };
     },
 
     async exportMarkdown(id) {
       const article = await repo.getArticle(id);
-      if (!article) return { ok: false, error: '文章不存�? };
-      const body = '# ' + (article.title || '未命�?) + '\n\n' + (article.content || '') + '\n';
+      if (!article) return { ok: false, error: '文章不存在' };
+      const body = '# ' + (article.title || '未命名') + '\n\n' + (article.content || '') + '\n';
       return saveFile(safeFileName(article.title) + '.md', new Blob([body], { type: 'text/markdown' }));
     },
 
     async exportJson(id) {
       const article = await repo.getArticle(id);
-      if (!article) return { ok: false, error: '文章不存�? };
+      if (!article) return { ok: false, error: '文章不存在' };
       const payload = { kind: 'longpost-article', version: 1, exportedAt: Date.now(), article };
       return saveFile(
         safeFileName(article.title) + '.longpost.json',

@@ -1,7 +1,7 @@
 {
   "name": "longpost-desktop",
   "version": "3.0.4",
-  "description": "LongPost 桌面�?—�?本地写作与内容工作台，全部数据保存在你自己的电脑�?,
+  "description": "LongPost 桌面版 —— 本地写作与内容工作台，全部数据保存在你自己的电脑上",
   "main": "main.js",
   "author": "yeyanli543-dot",
   "license": "MIT",
@@ -66,8 +66,18 @@
     },
     "win": {
       "target": [
-        { "target": "nsis", "arch": ["x64"] },
-        { "target": "portable", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
       ],
       "icon": "resources/icon.png"
     },
@@ -80,12 +90,16 @@
       "shortcutName": "LongPost"
     },
     "mac": {
-      "target": ["dmg"],
+      "target": [
+        "dmg"
+      ],
       "category": "public.app-category.productivity",
       "icon": "resources/icon.png"
     },
     "linux": {
-      "target": ["AppImage"],
+      "target": [
+        "AppImage"
+      ],
       "category": "Office",
       "icon": "resources/icon.png"
     }
