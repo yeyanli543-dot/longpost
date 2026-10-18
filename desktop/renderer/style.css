@@ -4224,3 +4224,16 @@ body.reading-mode .preview {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* ---------------------------------------------------------------- 工具条紧凑模式 */
+/* 空间不够时先隐藏按钮文字，只留图标 —— 比直接把按钮收进「更多」友好得多：
+   用户仍然一眼看到全部功能，只是少了标签。 */
+.tools.condensed .btn {
+  padding-left: 9px;
+  padding-right: 9px;
+  gap: 0;
+}
+
+.tools.condensed .btn-label {
+  display: none;
+}

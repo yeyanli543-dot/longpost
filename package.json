@@ -1,6 +1,6 @@
 {
   "name": "longpost",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "private": true,
   "description": "Modern full-stack open-source platform for long-form content, articles and knowledge sharing",
   "scripts": {
@@ -35,7 +35,7 @@
     "@types/compression": "^1.8.1",
     "@types/qrcode": "^1.5.6",
     "axios": "^1.12.2",
-    "bcryptjs": "^3.0.3",
+    "bcryptjs": "^3.0.4",
     "cache-manager": "^6.4.3",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
@@ -104,7 +104,7 @@
     "concurrently": "^9.2.1",
     "date-fns": "^4.1.0",
     "echarts": "^6.1.0",
-    "echarts-for-react": "~3.0.3",
+    "echarts-for-react": "~3.0.4",
     "embla-carousel-react": "^8.6.0",
     "eslint": "^9.35.0",
     "framer-motion": "^12.38.0",

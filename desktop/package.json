@@ -1,7 +1,7 @@
 {
   "name": "longpost-desktop",
-  "version": "3.0.3",
-  "description": "LongPost 桌面版 —— 本地写作与内容工作台，全部数据保存在你自己的电脑上",
+  "version": "3.0.4",
+  "description": "LongPost 桌面�?—�?本地写作与内容工作台，全部数据保存在你自己的电脑�?,
   "main": "main.js",
   "author": "yeyanli543-dot",
   "license": "MIT",
