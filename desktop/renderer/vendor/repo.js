@@ -59,6 +59,11 @@
       readingMode: false,
       showOutline: false,
       fontSize: 16,
+      // AI 助手：默认不填 Key，等于关闭；填了才会联网请求
+      aiProvider: 'openai',
+      aiBaseUrl: 'https://api.deepseek.com/v1',
+      aiModel: 'deepseek-chat',
+      aiApiKey: '',
     };
   }
 

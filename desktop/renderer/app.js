@@ -3620,7 +3620,21 @@
     });
   }
 
-  /** 设置面板里的 AI 区块：绑定一次，之后只做回填。 */
+  /** 设置面板里 AI 输入框的事件：只在启动时绑一次，避免反复打开设置时叠加监听。 */
+  function bindAiSettingsOnce() {
+    $('aiBaseUrl').addEventListener('change', async function () {
+      state.settings = await LP.setSettings({ aiBaseUrl: this.value.trim() });
+    });
+    $('aiModel').addEventListener('change', async function () {
+      state.settings = await LP.setSettings({ aiModel: this.value.trim() });
+    });
+    $('aiApiKey').addEventListener('change', async function () {
+      state.settings = await LP.setSettings({ aiApiKey: this.value.trim() });
+    });
+    $('aiTestBtn').addEventListener('click', aiTestConnection);
+  }
+
+  /** 设置面板里的 AI 区块：每次打开只回填，不重复绑事件。 */
   function bindAiSettings() {
     const cfg = aiSettings();
     buildSegmented(
@@ -3646,16 +3660,7 @@
     $('aiApiKey').value = cfg.apiKey;
     $('aiTestResult').textContent = '';
 
-    $('aiBaseUrl').onchange = async function () {
-      state.settings = await LP.setSettings({ aiBaseUrl: this.value.trim() });
-    };
-    $('aiModel').onchange = async function () {
-      state.settings = await LP.setSettings({ aiModel: this.value.trim() });
-    };
-    $('aiApiKey').onchange = async function () {
-      state.settings = await LP.setSettings({ aiApiKey: this.value.trim() });
-    };
-    $('aiTestBtn').onclick = aiTestConnection;
+    // 输入框的事件只在首次绑定（见 bindAiSettingsOnce），这里只负责回填值
   }
 
   /** 编辑器上的 AI 交互：划词出工具条，点动作跑推理。 */
@@ -5230,6 +5235,7 @@
     editor.addEventListener('keyup', refreshFmtState);
     editor.addEventListener('mouseup', refreshFmtState);
     bindAiEditor();
+    bindAiSettingsOnce();
     $('preview').addEventListener('scroll', () => {
       if (state.current) {
         const mem = state.scrollMem.get(state.current.id) || {};
