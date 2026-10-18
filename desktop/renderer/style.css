@@ -59,7 +59,7 @@
   --fs-lg: 15px;
   --fs-xl: 17px;
   --fs-2xl: 20px;
-  --editor-font-size: 14px;
+  --editor-font-size: var(--fs-md);
   /* 正文可读宽度，跟着「阅读行宽」设置走 */
   --measure: 42rem;
   --lh-read: 1.9;
@@ -267,7 +267,7 @@ body {
   border-radius: var(--r-md);
   background: linear-gradient(145deg, var(--accent), #35b96f);
   color: #fff;
-  font-size: 18px;
+  font-size: var(--fs-xl);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -297,7 +297,7 @@ body {
 .search-wrap .search-icon {
   position: absolute;
   left: 10px;
-  font-size: 15px;
+  font-size: var(--fs-lg);
   color: var(--text-3);
   pointer-events: none;
 }
@@ -331,7 +331,7 @@ body {
 .search-clear {
   position: absolute;
   right: 4px;
-  font-size: 14px;
+  font-size: var(--fs-md);
 }
 
 /* 原生 select 的统一皮肤 */
@@ -351,7 +351,7 @@ body {
 .select-wrap > .icon:first-child {
   position: absolute;
   left: 9px;
-  font-size: 14px;
+  font-size: var(--fs-md);
   color: var(--text-3);
   pointer-events: none;
 }
@@ -359,7 +359,7 @@ body {
 .select-caret {
   position: absolute;
   right: 8px;
-  font-size: 14px;
+  font-size: var(--fs-md);
   color: var(--text-3);
   pointer-events: none;
 }
@@ -469,7 +469,7 @@ body {
 .item-pin {
   flex: none;
   color: var(--pin);
-  font-size: 14px;
+  font-size: var(--fs-md);
   line-height: 1;
   display: inline-flex;
 }
@@ -526,7 +526,7 @@ body {
 }
 
 .item-meta .icon {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   margin-right: 2px;
   vertical-align: -0.1em;
 }
@@ -540,7 +540,7 @@ body {
 mark.hit {
   background: var(--warn-soft);
   color: inherit;
-  border-radius: 3px;
+  border-radius: var(--r-xs);
   padding: 0 1px;
   box-shadow: inset 0 -0.5em 0 var(--warn-soft);
 }
@@ -557,7 +557,7 @@ mark.hit {
 .list-empty .icon {
   display: block;
   margin: 0 auto var(--sp-2);
-  font-size: 22px;
+  font-size: var(--fs-2xl);
   color: var(--text-3);
 }
 
@@ -622,7 +622,7 @@ mark.hit {
 }
 
 .btn .icon {
-  font-size: 15px;
+  font-size: var(--fs-lg);
 }
 
 .btn:hover {
@@ -660,7 +660,7 @@ mark.hit {
 }
 
 .btn.sm .icon {
-  font-size: 14px;
+  font-size: var(--fs-md);
 }
 
 .btn.danger {
@@ -711,7 +711,7 @@ mark.hit {
   background: none;
   border: none;
   color: var(--text-2);
-  font-size: 16px;
+  font-size: var(--fs-xl);
   cursor: pointer;
   padding: 6px;
   border-radius: var(--r-sm);
@@ -853,7 +853,7 @@ kbd {
   border: 1px solid var(--border);
   background: var(--surface-2);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-2);
 }
 
@@ -1020,7 +1020,7 @@ kbd {
   background: none;
   color: var(--text-2);
   border-radius: var(--r-sm);
-  font-size: 15px;
+  font-size: var(--fs-lg);
   cursor: pointer;
   transition: background var(--dur-1) var(--ease), color var(--dur-1) var(--ease);
 }
@@ -1078,7 +1078,7 @@ kbd {
 }
 
 .ambient-icon {
-  font-size: 14px;
+  font-size: var(--fs-md);
   flex-shrink: 0;
 }
 
@@ -1100,7 +1100,7 @@ kbd {
 .ambient-actions .btn {
   height: 26px;
   padding: 0 10px;
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
 }
 
 .ambient-actions .icon-btn {
@@ -1126,7 +1126,7 @@ kbd {
 .mode-google .ambient-bar {
   background: var(--surface-2);
   border: 1px solid rgba(196, 199, 197, 0.5);
-  border-radius: 12px;
+  border-radius: var(--r-md);
   margin: 4px 14px 6px;
   padding: 6px 14px;
   box-shadow: 0 1px 3px rgba(60, 64, 67, 0.08);
@@ -1231,7 +1231,7 @@ kbd {
 
 .status .icon,
 .status-text .icon {
-  font-size: 13px;
+  font-size: var(--fs-md);
   margin-right: 4px;
 }
 
@@ -1252,7 +1252,7 @@ kbd {
 }
 
 .find-row > .icon {
-  font-size: 15px;
+  font-size: var(--fs-lg);
   color: var(--text-3);
   margin: 0 2px;
 }
@@ -1333,7 +1333,7 @@ kbd {
 }
 
 .menu-item .icon {
-  font-size: 15px;
+  font-size: var(--fs-lg);
   color: var(--text-2);
 }
 
@@ -1347,7 +1347,7 @@ kbd {
 
 .menu-item .menu-key {
   margin-left: auto;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-3);
   font-family: var(--font-mono);
 }
@@ -1698,7 +1698,7 @@ kbd {
 }
 
 .share-item > .icon {
-  font-size: 19px;
+  font-size: var(--fs-2xl);
   color: var(--accent);
   margin-bottom: var(--sp-1);
 }
@@ -1915,27 +1915,27 @@ kbd {
 }
 
 .preview h2 {
-  font-size: 22px;
+  font-size: var(--fs-2xl);
 }
 
 .preview h3 {
-  font-size: 18px;
+  font-size: var(--fs-xl);
 }
 
 .preview h4 {
-  font-size: 16px;
+  font-size: var(--fs-xl);
 }
 
 .preview h5,
 .preview h6 {
-  font-size: 14.5px;
+  font-size: var(--fs-lg);
   color: var(--text-2);
 }
 
 .preview p {
   margin: 1em auto;
   line-height: var(--lh-read);
-  font-size: 15px;
+  font-size: var(--fs-lg);
   text-align: justify;
   text-justify: inter-ideograph;
   word-break: break-word;
@@ -1968,7 +1968,7 @@ kbd {
   padding-left: 1.6em;
   margin: 1em auto;
   line-height: var(--lh-read);
-  font-size: 15px;
+  font-size: var(--fs-lg);
 }
 
 .preview li {
@@ -1998,7 +1998,7 @@ kbd {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   line-height: 1;
 }
 
@@ -2022,7 +2022,7 @@ kbd {
   color: var(--text-2);
   border-radius: 0 var(--r-md) var(--r-md) 0;
   line-height: var(--lh-read);
-  font-size: 14.5px;
+  font-size: var(--fs-lg);
 }
 
 .preview blockquote p {
@@ -2062,7 +2062,7 @@ kbd {
   position: absolute;
   top: 6px;
   right: 10px;
-  font-size: 10.5px;
+  font-size: var(--fs-xs);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #6b7686;
@@ -2076,7 +2076,7 @@ html[data-theme='light'] .preview pre.code-block {
 .preview pre.code-block code {
   background: none;
   padding: 0;
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1.7;
   color: inherit;
 }
@@ -2086,7 +2086,7 @@ html[data-theme='light'] .preview pre.code-block {
   border-collapse: collapse;
   width: 100%;
   margin: 1.4em auto;
-  font-size: 14px;
+  font-size: var(--fs-md);
   table-layout: auto;
 }
 
@@ -2130,7 +2130,7 @@ html[data-theme='light'] .preview pre.code-block {
   background: var(--surface-1);
   color: var(--text-2);
   border: 1px solid var(--border);
-  border-radius: var(--r-sm, 6px);
+  border-radius: var(--r-sm);
   width: 32px;
   height: 32px;
   display: inline-flex;
@@ -2154,7 +2154,7 @@ html[data-theme='light'] .preview pre.code-block {
 
 /* 🍎 Apple 极简模式：拟态磨砂质感 */
 .mode-apple .chart-copy-btn {
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
@@ -2170,7 +2170,7 @@ html[data-theme='light'] .preview pre.code-block {
 
 /* 🎨 Google 专业模式：M3 Tonal 风格 */
 .mode-google .chart-copy-btn {
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   background: var(--surface-2, #edf2fc);
   border: 1px solid var(--border, #c4c7c5);
   color: var(--text-2, #444746);
@@ -2217,7 +2217,7 @@ html[data-theme='light'] .preview pre.code-block {
 .preview mark.find-hit {
   background: var(--warn-soft);
   box-shadow: inset 0 -0.5em 0 var(--warn-soft);
-  border-radius: 3px;
+  border-radius: var(--r-xs);
   color: inherit;
 }
 
@@ -2501,12 +2501,12 @@ body.reading-mode .preview {
   padding: 4px 12px;
   font-size: var(--fs-xs);
   font-weight: 500;
-  border-radius: 9999px;
+  border-radius: var(--r-pill);
   border: 1px solid var(--border-strong);
   background: var(--surface-2);
   color: var(--text);
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all var(--dur-2) cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
   user-select: none;
 }
@@ -2516,7 +2516,7 @@ body.reading-mode .preview {
   transform: translateY(-1px);
 }
 .mode-badge {
-  font-size: 13px;
+  font-size: var(--fs-md);
   line-height: 1;
 }
 
@@ -2527,12 +2527,12 @@ body.reading-mode .preview {
 .mode-morphing *,
 .mode-morphing *::before,
 .mode-morphing *::after {
-  transition: background-color 0.36s cubic-bezier(0.2, 0, 0, 1),
-              color 0.36s cubic-bezier(0.2, 0, 0, 1),
-              border-color 0.36s cubic-bezier(0.2, 0, 0, 1),
-              border-radius 0.36s cubic-bezier(0.2, 0, 0, 1),
-              box-shadow 0.36s cubic-bezier(0.2, 0, 0, 1),
-              transform 0.36s cubic-bezier(0.2, 0, 0, 1) !important;
+  transition: background-color var(--dur-3) cubic-bezier(0.2, 0, 0, 1),
+              color var(--dur-3) cubic-bezier(0.2, 0, 0, 1),
+              border-color var(--dur-3) cubic-bezier(0.2, 0, 0, 1),
+              border-radius var(--dur-3) cubic-bezier(0.2, 0, 0, 1),
+              box-shadow var(--dur-3) cubic-bezier(0.2, 0, 0, 1),
+              transform var(--dur-3) cubic-bezier(0.2, 0, 0, 1) !important;
 }
 
 /* ============================================================================
@@ -2640,10 +2640,10 @@ body.reading-mode .preview {
 .mode-apple .item,
 .mode-apple .fmt,
 .mode-apple .chart-copy-btn {
-  transition: transform 0.24s var(--apple-ease),
-              background-color 0.2s ease,
-              color 0.2s ease,
-              box-shadow 0.24s ease;
+  transition: transform var(--dur-2) var(--apple-ease),
+              background-color var(--dur-2) ease,
+              color var(--dur-2) ease,
+              box-shadow var(--dur-2) ease;
   will-change: transform;
 }
 
@@ -2668,7 +2668,7 @@ body.reading-mode .preview {
               radial-gradient(circle 5.5px at 26px 6px, #ffbd2e 100%, transparent 0),
               radial-gradient(circle 5.5px at 46px 6px, #27c93f 100%, transparent 0);
   filter: drop-shadow(0 0.5px 0.5px rgba(0, 0, 0, 0.15));
-  transition: transform 0.2s var(--apple-ease);
+  transition: transform var(--dur-2) var(--apple-ease);
 }
 .mode-apple .side-head:hover::before {
   transform: scale(1.04);
@@ -2685,9 +2685,9 @@ body.reading-mode .preview {
 .mode-apple .search-wrap {
   background: rgba(118, 118, 128, 0.12);
   border: 0.5px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   height: 32px;
-  transition: all 0.24s var(--apple-ease);
+  transition: all var(--dur-2) var(--apple-ease);
 }
 .mode-apple .search-wrap:focus-within {
   background: var(--surface);
@@ -2698,10 +2698,10 @@ body.reading-mode .preview {
 .mode-apple .mode-pill-btn {
   border-color: rgba(118, 118, 128, 0.2);
   background: rgba(118, 118, 128, 0.1);
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   height: 28px;
   padding: 0 10px;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   color: var(--text);
 }
@@ -2717,7 +2717,7 @@ body.reading-mode .preview {
 .mode-apple #btnNew {
   background: var(--accent);
   color: var(--on-accent);
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   font-weight: 500;
   height: 36px;
   border: none;
@@ -2730,16 +2730,16 @@ body.reading-mode .preview {
 
 .mode-apple .segmented {
   background: rgba(118, 118, 128, 0.12);
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   padding: 2px;
   border: 0.5px solid var(--border);
 }
 .mode-apple .seg {
   border: none;
   background: transparent;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   color: var(--text-2);
-  transition: all 0.2s var(--apple-ease);
+  transition: all var(--dur-2) var(--apple-ease);
 }
 .mode-apple .seg.on {
   background: #ffffff;
@@ -2758,7 +2758,7 @@ body.reading-mode .preview {
 }
 .mode-apple .item {
   border: none !important;
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   padding: 10px 12px;
   margin-bottom: 2px;
   background: transparent;
@@ -2785,7 +2785,7 @@ body.reading-mode .preview {
   display: none;
 }
 .mode-apple .item-title {
-  font-size: 14px;
+  font-size: var(--fs-md);
   font-weight: 600;
   letter-spacing: -0.015em;
 }
@@ -2793,7 +2793,7 @@ body.reading-mode .preview {
   color: var(--accent);
 }
 .mode-apple .item-sum {
-  font-size: 12.5px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
   line-height: 1.45;
 }
@@ -2813,7 +2813,7 @@ body.reading-mode .preview {
 }
 .mode-apple .title-input {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
-  font-size: 22px;
+  font-size: var(--fs-2xl);
   font-weight: 700;
   letter-spacing: -0.024em;
   border: none;
@@ -2833,7 +2833,7 @@ body.reading-mode .preview {
   height: 32px;
   min-height: 32px;
   padding: 0;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   border: none;
   background: transparent;
   color: var(--text);
@@ -2876,17 +2876,17 @@ body.reading-mode .preview {
 .mode-apple .editor,
 .mode-apple .preview {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Helvetica Neue", sans-serif;
-  font-size: 16px;
+  font-size: var(--fs-xl);
   line-height: 1.82;
   letter-spacing: -0.016em;
   padding: 44px 52px 120px;
   background: #ffffff;
-  border-radius: 14px;
+  border-radius: var(--r-lg);
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
   border: 0.5px solid var(--border);
   color: var(--text);
   caret-color: var(--accent);
-  transition: box-shadow 0.24s var(--apple-ease);
+  transition: box-shadow var(--dur-2) var(--apple-ease);
 }
 [data-theme='dark'] .mode-apple .editor,
 [data-theme='dark'] .mode-apple .preview {
@@ -2897,7 +2897,7 @@ body.reading-mode .preview {
 .mode-apple .splitter {
   width: 1px;
   background: transparent;
-  transition: background 0.2s ease;
+  transition: background var(--dur-2) ease;
 }
 .mode-apple .splitter:hover,
 .mode-apple .splitter.dragging {
@@ -2913,7 +2913,7 @@ body.reading-mode .preview {
 .mode-apple .fmt {
   width: 28px;
   height: 28px;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   color: var(--text-2);
 }
 .mode-apple .fmt:hover {
@@ -2926,7 +2926,7 @@ body.reading-mode .preview {
 
 /* 🍎 7. iOS / macOS Sheet 拟态弹窗与物理弹簧动效 */
 .mode-apple .dialog {
-  border-radius: 18px;
+  border-radius: var(--r-xl);
   backdrop-filter: blur(32px) saturate(190%);
   -webkit-backdrop-filter: blur(32px) saturate(190%);
   background: var(--surface);
@@ -3022,7 +3022,7 @@ body.reading-mode .preview {
 .mode-apple .empty-mark {
   width: 68px;
   height: 68px;
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
@@ -3044,8 +3044,8 @@ body.reading-mode .preview {
   align-items: center;
   gap: 6px;
   padding: 5px 16px;
-  border-radius: 999px;
-  font-size: 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-sm);
   font-weight: 600;
   letter-spacing: -0.01em;
   background: var(--accent-soft);
@@ -3079,11 +3079,11 @@ body.reading-mode .preview {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 0.5px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--r-lg);
   padding: 14px 12px;
   text-align: left;
   box-shadow: var(--sh-1);
-  transition: transform 0.26s var(--apple-ease), box-shadow 0.26s var(--apple-ease), border-color 0.26s ease;
+  transition: transform var(--dur-2) var(--apple-ease), box-shadow var(--dur-2) var(--apple-ease), border-color var(--dur-2) ease;
 }
 
 .mode-apple .feature-card:hover {
@@ -3093,12 +3093,12 @@ body.reading-mode .preview {
 }
 
 .mode-apple .feature-icon {
-  font-size: 20px;
+  font-size: var(--fs-2xl);
   margin-bottom: 6px;
 }
 
 .mode-apple .feature-title {
-  font-size: 13px;
+  font-size: var(--fs-md);
   font-weight: 600;
   color: var(--text);
   margin-bottom: 3px;
@@ -3106,16 +3106,16 @@ body.reading-mode .preview {
 }
 
 .mode-apple .feature-desc {
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
   color: var(--text-2);
   line-height: 1.4;
 }
 
 .mode-apple #btnNew2 {
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   height: 44px;
   padding: 0 30px;
-  font-size: 15px;
+  font-size: var(--fs-lg);
   font-weight: 600;
   letter-spacing: -0.01em;
   background: var(--accent);
@@ -3216,10 +3216,10 @@ body.reading-mode .preview {
 /* 🎨 2. Google Workspace 48px 大药丸搜索栏 */
 .mode-google .search-wrap {
   height: 46px;
-  border-radius: 28px;
+  border-radius: var(--r-pill);
   background: var(--surface-2);
   border: 1px solid transparent;
-  transition: all 0.24s var(--m3-ease-emphasized);
+  transition: all var(--dur-2) var(--m3-ease-emphasized);
 }
 .mode-google .search-wrap:focus-within {
   background: var(--surface);
@@ -3231,15 +3231,15 @@ body.reading-mode .preview {
 .mode-google .mode-pill-btn {
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--r-lg);
   height: 32px;
   padding: 0 12px;
   font-family: 'Google Sans', Roboto, sans-serif;
-  font-size: 12.5px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   color: var(--text-2);
   box-shadow: 0 1px 2px rgba(60, 64, 67, 0.08);
-  transition: all 0.2s var(--m3-ease-emphasized);
+  transition: all var(--dur-2) var(--m3-ease-emphasized);
 }
 .mode-google .mode-pill-btn:hover {
   background: rgba(0, 29, 53, 0.08);
@@ -3251,18 +3251,18 @@ body.reading-mode .preview {
 /* 🎨 3. Google M3 Extended FAB (浮动操作大按钮与进阶光影) */
 .mode-google #btnNew {
   height: 48px;
-  border-radius: 16px;
+  border-radius: var(--r-lg);
   background: var(--accent-soft);
   color: var(--on-accent-container, var(--accent));
   font-weight: 500;
-  font-size: 14px;
+  font-size: var(--fs-md);
   font-family: 'Google Sans', Roboto, sans-serif;
   box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.18), 0 6px 10px 0 rgba(0, 0, 0, 0.12);
   border: none;
   letter-spacing: 0.15px;
-  transition: transform 0.2s var(--m3-ease-emphasized),
-              box-shadow 0.2s var(--m3-ease-emphasized),
-              background-color 0.2s var(--m3-ease-emphasized);
+  transition: transform var(--dur-2) var(--m3-ease-emphasized),
+              box-shadow var(--dur-2) var(--m3-ease-emphasized),
+              background-color var(--dur-2) var(--m3-ease-emphasized);
 }
 .mode-google #btnNew:hover {
   box-shadow: 0 5px 8px -2px rgba(0, 0, 0, 0.22), 0 8px 14px 1px rgba(0, 0, 0, 0.14);
@@ -3279,13 +3279,13 @@ body.reading-mode .preview {
   padding: 8px 10px;
 }
 .mode-google .item {
-  border-radius: 12px;
+  border-radius: var(--r-md);
   margin-bottom: 8px;
   padding: 12px 14px;
   background: var(--surface);
   border: 1px solid var(--border);
   box-shadow: 0 1px 2px rgba(60, 64, 67, 0.08);
-  transition: all 0.2s var(--m3-ease-emphasized);
+  transition: all var(--dur-2) var(--m3-ease-emphasized);
 }
 .mode-google .item + .item {
   border-top: 1px solid var(--border);
@@ -3305,10 +3305,10 @@ body.reading-mode .preview {
   font-weight: 600;
 }
 .mode-google .chip {
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   background: var(--surface-2);
   color: var(--text-2);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   padding: 2px 8px;
   font-weight: 500;
   border: 1px solid var(--border);
@@ -3321,12 +3321,12 @@ body.reading-mode .preview {
   font-weight: 600;
   color: var(--accent);
   background: var(--accent-soft);
-  border-radius: 20px;
+  border-radius: var(--r-xl);
 }
 .mode-google .toolbar {
   background: var(--surface-2);
   border: 1px solid rgba(196, 199, 197, 0.6);
-  border-radius: 28px;
+  border-radius: var(--r-pill);
   margin: 6px 14px 2px;
   padding: 4px 14px;
   box-shadow: 0 1px 3px rgba(60, 64, 67, 0.08);
@@ -3340,12 +3340,12 @@ body.reading-mode .preview {
 .mode-google .editor,
 .mode-google .preview {
   background: var(--surface);
-  border-radius: 4px;
+  border-radius: var(--r-xs);
   box-shadow: 0 1px 3px 1px rgba(60, 64, 67, 0.15), 0 1px 2px 0 rgba(60, 64, 67, 0.3);
   border: 1px solid rgba(0, 0, 0, 0.05);
   padding: 44px 52px 120px;
   font-family: 'Roboto', 'Google Sans', sans-serif;
-  font-size: 15px;
+  font-size: var(--fs-lg);
   line-height: 1.75;
   letter-spacing: 0.015em;
   color: var(--text);
@@ -3364,7 +3364,7 @@ body.reading-mode .preview {
   height: 36px;
   border-radius: 2px;
   background: var(--border-strong);
-  transition: all 0.2s;
+  transition: all var(--dur-2);
 }
 .mode-google .splitter:hover::after,
 .mode-google .splitter.dragging::after {
@@ -3372,16 +3372,16 @@ body.reading-mode .preview {
   height: 48px;
 }
 .mode-google .btn {
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   height: 32px;
   padding: 4px 12px;
   font-weight: 500;
-  font-size: 13px;
+  font-size: var(--fs-md);
   font-family: 'Google Sans', Roboto, sans-serif;
   color: var(--text-2);
   background: transparent;
   border: 1px solid transparent;
-  transition: all 0.2s var(--m3-ease-emphasized);
+  transition: all var(--dur-2) var(--m3-ease-emphasized);
 }
 .mode-google .btn:hover {
   background: rgba(0, 29, 53, 0.08);
@@ -3397,12 +3397,12 @@ body.reading-mode .preview {
 }
 .mode-google .title-input {
   font-family: 'Google Sans', Roboto, sans-serif;
-  font-size: 19px;
+  font-size: var(--fs-2xl);
   font-weight: 500;
   color: var(--text);
-  border-radius: 4px;
+  border-radius: var(--r-xs);
   padding: 3px 8px;
-  transition: background-color 0.2s var(--m3-ease-emphasized);
+  transition: background-color var(--dur-2) var(--m3-ease-emphasized);
 }
 .mode-google .title-input:hover,
 .mode-google .title-input:focus {
@@ -3412,7 +3412,7 @@ body.reading-mode .preview {
 .mode-google .fmtbar {
   background: var(--surface-2);
   border: 1px solid rgba(196, 199, 197, 0.5);
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   margin: 2px 14px 6px;
   padding: 2px 8px;
   box-shadow: 0 1px 2px rgba(60, 64, 67, 0.05);
@@ -3420,9 +3420,9 @@ body.reading-mode .preview {
 .mode-google .fmt {
   width: 28px;
   height: 28px;
-  border-radius: 14px;
+  border-radius: var(--r-lg);
   color: var(--text-2);
-  transition: all 0.2s var(--m3-ease-emphasized);
+  transition: all var(--dur-2) var(--m3-ease-emphasized);
 }
 .mode-google .fmt:hover {
   background: rgba(0, 29, 53, 0.08);
@@ -3431,12 +3431,12 @@ body.reading-mode .preview {
 
 /* 🎨 6. Google M3 28px 超大圆角对话框 (Material 3 Dialog 与 Emphasized Decelerate 动效) */
 .mode-google .dialog {
-  border-radius: 28px;
+  border-radius: var(--r-pill);
   background: var(--surface-2);
   border: none;
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.22);
   padding: 24px;
-  animation: m3-dialog-pop 0.32s var(--m3-ease-decelerate);
+  animation: m3-dialog-pop var(--dur-3) var(--m3-ease-decelerate);
 }
 
 @keyframes m3-dialog-pop {
@@ -3451,14 +3451,14 @@ body.reading-mode .preview {
 }
 
 .mode-google .dialog-foot .btn.primary {
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   height: 40px;
   padding: 0 24px;
   background: var(--accent);
   color: var(--on-accent);
   font-weight: 500;
   font-family: 'Google Sans', Roboto, sans-serif;
-  transition: all 0.2s var(--m3-ease-emphasized);
+  transition: all var(--dur-2) var(--m3-ease-emphasized);
 }
 .mode-google .dialog-foot .btn.primary:hover {
   box-shadow: 0 1px 3px 1px rgba(0, 0, 0, 0.15), 0 1px 2px 0 rgba(0, 0, 0, 0.3);
@@ -3469,7 +3469,7 @@ body.reading-mode .preview {
   background: var(--surface-2);
   border-top: 1px solid var(--border);
   font-family: 'Google Sans', Roboto, sans-serif;
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
   padding: 4px 16px;
 }
@@ -3519,7 +3519,7 @@ body.reading-mode .preview {
 .mode-google .empty-mark {
   width: 68px;
   height: 68px;
-  border-radius: 22px;
+  border-radius: var(--r-xl);
   background: linear-gradient(135deg, #4285f4 0%, #ea4335 32%, #fbbc05 64%, #34a853 100%);
   background-size: 200% 200%;
   animation: google-color-flow 4s ease infinite;
@@ -3537,8 +3537,8 @@ body.reading-mode .preview {
   align-items: center;
   gap: 6px;
   padding: 5px 16px;
-  border-radius: 999px;
-  font-size: 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-sm);
   font-weight: 500;
   font-family: 'Google Sans', Roboto, sans-serif;
   background: var(--accent-soft);
@@ -3564,11 +3564,11 @@ body.reading-mode .preview {
   flex: 1;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--r-xl);
   padding: 14px 12px;
   text-align: left;
   box-shadow: 0 1px 3px rgba(60, 64, 67, 0.12);
-  transition: transform 0.22s var(--m3-ease-emphasized), box-shadow 0.22s var(--m3-ease-emphasized), border-color 0.22s ease;
+  transition: transform var(--dur-2) var(--m3-ease-emphasized), box-shadow var(--dur-2) var(--m3-ease-emphasized), border-color var(--dur-2) ease;
   font-family: 'Google Sans', Roboto, sans-serif;
 }
 
@@ -3579,35 +3579,35 @@ body.reading-mode .preview {
 }
 
 .mode-google .feature-icon {
-  font-size: 20px;
+  font-size: var(--fs-2xl);
   margin-bottom: 6px;
 }
 
 .mode-google .feature-title {
-  font-size: 13.5px;
+  font-size: var(--fs-md);
   font-weight: 600;
   color: var(--text);
   margin-bottom: 3px;
 }
 
 .mode-google .feature-desc {
-  font-size: 11.5px;
+  font-size: var(--fs-xs);
   color: var(--text-2);
   line-height: 1.4;
 }
 
 .mode-google #btnNew2 {
-  border-radius: 24px;
+  border-radius: var(--r-xl);
   height: 48px;
   padding: 0 32px;
-  font-size: 15px;
+  font-size: var(--fs-lg);
   font-weight: 500;
   font-family: 'Google Sans', Roboto, sans-serif;
   background: var(--accent);
   color: var(--on-accent);
   border: none;
   box-shadow: 0 4px 12px 2px rgba(66, 133, 244, 0.3);
-  transition: all 0.22s var(--m3-ease-emphasized);
+  transition: all var(--dur-2) var(--m3-ease-emphasized);
 }
 
 .mode-google #btnNew2:hover {
@@ -3667,7 +3667,7 @@ body.reading-mode .preview {
   padding: 3px 8px;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 9999px;
+  border-radius: var(--r-pill);
   font-size: var(--fs-xs);
   color: var(--text-2);
 }
@@ -3690,7 +3690,7 @@ body.reading-mode .preview {
   gap: 8px;
   color: var(--text-2);
   padding: 3px 6px;
-  border-radius: 4px;
+  border-radius: var(--r-xs);
 }
 .lab-checklist-text {
   display: flex;
@@ -3700,9 +3700,9 @@ body.reading-mode .preview {
 }
 .lab-fix-btn {
   padding: 2px 8px;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 500;
-  border-radius: 4px;
+  border-radius: var(--r-xs);
   background: var(--accent-soft);
   color: var(--accent);
   border: 1px solid transparent;
@@ -3746,7 +3746,7 @@ body.reading-mode .preview {
 }
 .diff-line {
   padding: 2px 4px;
-  border-radius: 3px;
+  border-radius: var(--r-xs);
   line-height: 1.5;
 }
 .diff-line.add {
@@ -3799,8 +3799,8 @@ body.reading-mode .preview {
 #btnEmptyAuth {
   height: 44px;
   padding: 0 22px;
-  border-radius: 999px;
-  font-size: 14px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-md);
   font-weight: 500;
   border: 1px solid var(--border-strong);
   background: var(--surface);
@@ -3814,19 +3814,19 @@ body.reading-mode .preview {
   gap: 12px;
   padding: 12px 14px;
   margin-bottom: 14px;
-  border-radius: 12px;
+  border-radius: var(--r-md);
   background: var(--accent-soft);
   border: 1px solid var(--accent-line);
 }
 
 .auth-user-title {
-  font-size: 14px;
+  font-size: var(--fs-md);
   color: var(--text);
   margin-bottom: 2px;
 }
 
 .auth-user-sub {
-  font-size: 12px;
+  font-size: var(--fs-sm);
   color: var(--text-2);
 }
 
@@ -3853,14 +3853,14 @@ body.reading-mode .preview {
   gap: 10px;
   width: 100%;
   height: 42px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: #ffffff !important;
   color: #1f1f1f !important;
   border: 1px solid #dadce0 !important;
   font-weight: 500 !important;
-  font-size: 14px !important;
+  font-size: var(--fs-md) !important;
   box-shadow: 0 1px 3px rgba(60, 64, 67, 0.16);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  transition: transform var(--dur-2) ease, box-shadow var(--dur-2) ease, background-color var(--dur-2) ease;
 }
 
 .google-auth-btn:hover {
@@ -4031,4 +4031,92 @@ body.reading-mode .preview {
     width: auto;
     max-height: 50vh;
   }
+}
+
+/* ---------------------------------------------------------------- 设置面板
+   原来是一长串「标题 + 分段控件」平铺，八组长得一模一样，像系统设置页。
+   改成可折叠的分组卡片：默认只展开常用两组，其余收起来，降低首屏噪音。
+   用原生 <details>，不依赖 JS，键盘与读屏器都直接可用。 */
+
+.settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.settings-card {
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.settings-card > summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  padding: 12px var(--sp-4);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  transition: background var(--dur-2) var(--ease);
+}
+
+.settings-card > summary::-webkit-details-marker {
+  display: none;
+}
+
+.settings-card > summary:hover {
+  background: var(--surface-2);
+}
+
+.settings-card > summary:focus-visible {
+  outline: 2px solid var(--accent-line);
+  outline-offset: -2px;
+}
+
+.sc-title {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--text);
+  flex: none;
+}
+
+.sc-sub {
+  font-size: var(--fs-xs);
+  color: var(--text-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settings-card > summary::after {
+  content: '';
+  margin-left: auto;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid var(--text-3);
+  border-bottom: 1.5px solid var(--text-3);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform var(--dur-2) var(--ease);
+  flex: none;
+}
+
+.settings-card[open] > summary {
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-card[open] > summary::after {
+  transform: rotate(-135deg) translate(-2px, 2px);
+}
+
+.sc-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  padding: var(--sp-2) var(--sp-4) var(--sp-3);
+}
+
+.sc-body > .field:first-child {
+  padding-top: var(--sp-1);
 }

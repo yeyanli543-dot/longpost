@@ -102,8 +102,8 @@
               <div class="brand-name">LongPost</div>
               <div class="brand-sub">本地写作台 · 离线</div>
             </div>
-            <button class="btn mode-pill-btn" id="btnModeSwitch" title="一键切换工作区风格（Alt+M）：🍎 苹果极简版 ↔ 🎨 谷歌专业版">
-              <span class="mode-badge" id="modeBadge">🍎</span><span class="mode-label" id="modeLabel">苹果极简</span>
+            <button class="btn mode-pill-btn" id="btnModeSwitch" title="一键切换工作区风格（Alt+M）：苹果极简版 ↔ 谷歌专业版">
+              <span class="mode-badge" id="modeBadge"></span><span class="mode-label" id="modeLabel">苹果极简</span>
             </button>
           </div>
 
@@ -166,7 +166,7 @@
         <section class="empty" id="empty">
           <div class="empty-inner">
             <div class="empty-mark"><svg class="icon" aria-hidden="true"><use href="#i-feather"></use></svg></div>
-            <div class="empty-hero-badge"><span class="hero-badge-apple"> Apple Zen · 官网极简美学</span><span class="hero-badge-google">🎨 Google Studio · M3 官方工坊</span></div>
+            <div class="empty-hero-badge"><span class="hero-badge-apple"> Apple Zen · 官网极简美学</span><span class="hero-badge-google">Google Studio · M3 官方工坊</span></div>
             <h2>开始写点什么</h2>
             <p>
               正文用 Markdown 写，右边实时预览。<br />
@@ -175,21 +175,21 @@
             </p>
             <div class="empty-features">
               <div class="feature-card feature-card-1">
-                <div class="feature-icon">⚡</div>
+                <div class="feature-icon"></div>
                 <div class="feature-text">
                   <div class="feature-title">官网 1:1 双形态</div>
                   <div class="feature-desc">Alt+M 瞬间丝滑插值蜕变</div>
                 </div>
               </div>
               <div class="feature-card feature-card-2">
-                <div class="feature-icon">📊</div>
+                <div class="feature-icon"></div>
                 <div class="feature-text">
                   <div class="feature-title">图表卡片复制</div>
                   <div class="feature-desc">一键 PNG 进系统剪贴板</div>
                 </div>
               </div>
               <div class="feature-card feature-card-3">
-                <div class="feature-icon">🔒</div>
+                <div class="feature-icon"></div>
                 <div class="feature-text">
                   <div class="feature-title">全域离线私有</div>
                   <div class="feature-desc">数据零出网 · 本地优先</div>
@@ -221,7 +221,7 @@
             </button>
             <input class="title-input" id="title" placeholder="无标题" aria-label="文章标题" />
             <button class="btn mode-pill-btn only-mobile" id="btnModeSwitchMobile" title="一键切换工作区风格 (Alt+M)">
-              <span class="mode-badge" id="modeBadgeMobile">🍎</span><span class="mode-label" id="modeLabelMobile">苹果极简</span>
+              <span class="mode-badge" id="modeBadgeMobile"></span><span class="mode-label" id="modeLabelMobile">苹果极简</span>
             </button>
             <div class="tools">
               <!-- 元数据管理组 -->
@@ -290,7 +290,7 @@
           <!-- 常驻监视建议条：当后台调度器发现未闭合围栏、多余空行、无Alt插图等问题时，非阻塞静默浮现 -->
           <div class="ambient-bar" id="ambientBar" hidden>
             <div class="ambient-content">
-              <span class="ambient-icon">💡</span>
+              <span class="ambient-icon"></span>
               <span class="ambient-text" id="ambientText">检测到可优化的排版建议</span>
             </div>
             <div class="ambient-actions">
@@ -314,7 +314,7 @@
               class="editor"
               id="editor"
               spellcheck="false"
-              placeholder="用 Markdown 写正文…&#10;&#10;支持 # 标题、**加粗**、- 列表、- [ ] 任务、> 引用、| 表格 |、``` 代码块。&#10;&#10;★ 小技巧：Tab 缩进、Enter 自动续列表、Ctrl/Cmd+B 加粗、Ctrl/Cmd+F 查找替换、直接往这里粘贴或拖入图片 / 文件。"
+              placeholder="用 Markdown 写正文…&#10;&#10;支持 # 标题、**加粗**、- 列表、- [ ] 任务、> 引用、| 表格 |、``` 代码块。&#10;&#10;小技巧：Tab 缩进、Enter 自动续列表、Ctrl/Cmd+B 加粗、Ctrl/Cmd+F 查找替换、直接往这里粘贴或拖入图片 / 文件。"
             ></textarea>
             <div class="splitter" id="splitter" title="拖动调整编辑区与预览的宽度"></div>
             <div class="preview" id="preview"></div>
@@ -483,105 +483,144 @@
           <h3>设置</h3>
           <button class="icon-btn" id="settingsClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
         </div>
-        <div class="dialog-body">
-          <div class="field">
-            <label>工作区风格模式</label>
-            <div class="segmented" id="modeSwitch"></div>
-            <p class="field-help" id="modeSwitchHelp">🍎 苹果简洁版：极简禅意、毛玻璃留白、沉浸写作；🎨 谷歌专业版：M3 工坊、全功能工具条、图谱与实验室</p>
-          </div>
-          <div class="field">
-            <label>主题</label>
-            <div class="segmented" id="themeSwitch"></div>
-          </div>
-          <div class="field">
-            <label>编辑区字号 <span class="hint" id="fontSizeHint">16 px</span></label>
-            <input id="setFontSize" type="range" min="13" max="24" step="1" value="16" />
-          </div>
-          <div class="field">
-            <label>列表排序</label>
-            <div class="segmented" id="sortSwitch"></div>
-          </div>
-          <div class="field">
-            <label>阅读行宽</label>
-            <div class="segmented" id="lineWidthSwitch"></div>
-          </div>
-          <div class="field">
-            <label>沉浸阅读</label>
-            <div class="segmented" id="readingModeSwitch"></div>
-          </div>
-          <div class="field">
-            <label>正文大纲</label>
-            <div class="segmented" id="outlineSwitch"></div>
-          </div>
+        <div class="dialog-body settings-body">
+          <details class="settings-card" open>
+            <summary>
+              <span class="sc-title">外观</span>
+              <span class="sc-sub">工作区风格、主题与正文字号</span>
+            </summary>
+            <div class="sc-body">
+              <div class="field">
+                <label>工作区风格模式</label>
+                <div class="segmented" id="modeSwitch"></div>
+                <p class="field-help" id="modeSwitchHelp">简洁版：极简留白、毛玻璃、沉浸写作；专业版：Material 3 工坊、全功能工具条、图谱与实验室</p>
+              </div>
+              <div class="field">
+                <label>主题</label>
+                <div class="segmented" id="themeSwitch"></div>
+              </div>
+              <div class="field">
+                <label>编辑区字号 <span class="hint" id="fontSizeHint">16 px</span></label>
+                <input id="setFontSize" type="range" min="13" max="24" step="1" value="16" />
+              </div>
+            </div>
+          </details>
 
-          <div class="group-title">渲染增强</div>
-          <div class="field">
-            <label>Markdown 引擎 <span class="hint" id="engineHint">自动</span></label>
-            <div class="segmented" id="engineSwitch"></div>
-            <p class="hint" id="engineNote"></p>
-          </div>
-          <div class="field switch-field">
-            <div class="switch-text">
-              <label for="hlSwitch">代码高亮</label>
-              <span class="hint">Prism，20 种语言，离线</span>
+          <details class="settings-card" open>
+            <summary>
+              <span class="sc-title">写作</span>
+              <span class="sc-sub">列表排序、阅读行宽与保存行为</span>
+            </summary>
+            <div class="sc-body">
+              <div class="field">
+                <label>列表排序</label>
+                <div class="segmented" id="sortSwitch"></div>
+              </div>
+              <div class="field">
+                <label>阅读行宽</label>
+                <div class="segmented" id="lineWidthSwitch"></div>
+              </div>
+              <div class="field">
+                <label>沉浸阅读</label>
+                <div class="segmented" id="readingModeSwitch"></div>
+              </div>
+              <div class="field">
+                <label>正文大纲</label>
+                <div class="segmented" id="outlineSwitch"></div>
+              </div>
+              <div class="field switch-field">
+                <div class="switch-text">
+                  <label for="autoSaveSwitch">自动保存</label>
+                  <span class="hint">关闭后只有 Ctrl/Cmd + S 才会落盘</span>
+                </div>
+                <button class="switch" id="autoSaveSwitch" role="switch" aria-checked="true" aria-label="自动保存"></button>
+              </div>
+              <div class="field switch-field">
+                <div class="switch-text">
+                  <label for="motionSwitch">减少动效</label>
+                  <span class="hint">过渡与动画几乎全部去掉</span>
+                </div>
+                <button class="switch" id="motionSwitch" role="switch" aria-checked="false" aria-label="减少动效"></button>
+              </div>
             </div>
-            <button class="switch" id="hlSwitch" role="switch" aria-checked="true" aria-label="代码高亮"></button>
-          </div>
-          <div class="field switch-field">
-            <div class="switch-text">
-              <label for="mathSwitch">数学公式</label>
-              <span class="hint">KaTeX，支持 $…$ 与 $$…$$</span>
-            </div>
-            <button class="switch" id="mathSwitch" role="switch" aria-checked="true" aria-label="数学公式"></button>
-          </div>
+          </details>
 
-          <div class="group-title">AI 助手</div>
-          <div class="field">
-            <label>服务商 <span class="hint" id="aiProviderHint">OpenAI 兼容</span></label>
-            <div class="segmented" id="aiProviderSwitch"></div>
-            <p class="field-help">OpenAI 兼容可对接 DeepSeek / Moonshot / 自建网关；Ollama 走本机 11434 端口，不需要 Key。</p>
-          </div>
-          <div class="field">
-            <label for="aiBaseUrl">服务地址</label>
-            <input class="input" id="aiBaseUrl" type="text" placeholder="https://api.deepseek.com/v1" autocomplete="off" spellcheck="false" />
-          </div>
-          <div class="field">
-            <label for="aiModel">模型名称</label>
-            <input class="input" id="aiModel" type="text" placeholder="deepseek-chat" autocomplete="off" spellcheck="false" />
-          </div>
-          <div class="field">
-            <label for="aiApiKey">API Key</label>
-            <input class="input" id="aiApiKey" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false" />
-            <p class="field-help">只写进本机设置文件，不会上传；Ollama 可留空。</p>
-          </div>
-          <div class="field">
-            <label>连通性</label>
-            <button class="btn ghost sm" id="aiTestBtn">测试连接</button>
-            <span class="hint" id="aiTestResult"></span>
-          </div>
+          <details class="settings-card">
+            <summary>
+              <span class="sc-title">渲染</span>
+              <span class="sc-sub">Markdown 引擎与两项离线增强</span>
+            </summary>
+            <div class="sc-body">
+              <div class="field">
+                <label>Markdown 引擎 <span class="hint" id="engineHint">自动</span></label>
+                <div class="segmented" id="engineSwitch"></div>
+                <p class="hint" id="engineNote"></p>
+              </div>
+              <div class="field switch-field">
+                <div class="switch-text">
+                  <label for="hlSwitch">代码高亮</label>
+                  <span class="hint">Prism，20 种语言，离线</span>
+                </div>
+                <button class="switch" id="hlSwitch" role="switch" aria-checked="true" aria-label="代码高亮"></button>
+              </div>
+              <div class="field switch-field">
+                <div class="switch-text">
+                  <label for="mathSwitch">数学公式</label>
+                  <span class="hint">KaTeX，支持 $…$ 与 $$…$$</span>
+                </div>
+                <button class="switch" id="mathSwitch" role="switch" aria-checked="true" aria-label="数学公式"></button>
+              </div>
+            </div>
+          </details>
 
-          <div class="field switch-field">
-            <div class="switch-text">
-              <label for="autoSaveSwitch">自动保存</label>
-              <span class="hint">关闭后只有 Ctrl/Cmd + S 才会落盘</span>
+          <details class="settings-card">
+            <summary>
+              <span class="sc-title">AI 助手</span>
+              <span class="sc-sub">选服务商、填 Key，或用本机 Ollama</span>
+            </summary>
+            <div class="sc-body">
+              <div class="field">
+                <label>服务商 <span class="hint" id="aiProviderHint">OpenAI 兼容</span></label>
+                <div class="segmented" id="aiProviderSwitch"></div>
+                <p class="field-help">OpenAI 兼容可对接 DeepSeek / Moonshot / 自建网关；Ollama 走本机 11434 端口，不需要 Key。</p>
+              </div>
+              <div class="field">
+                <label for="aiBaseUrl">服务地址</label>
+                <input class="input" id="aiBaseUrl" type="text" placeholder="https://api.deepseek.com/v1" autocomplete="off" spellcheck="false" />
+              </div>
+              <div class="field">
+                <label for="aiModel">模型名称</label>
+                <input class="input" id="aiModel" type="text" placeholder="deepseek-chat" autocomplete="off" spellcheck="false" />
+              </div>
+              <div class="field">
+                <label for="aiApiKey">API Key</label>
+                <input class="input" id="aiApiKey" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false" />
+                <p class="field-help">只写进本机设置文件，不会上传；Ollama 可留空。</p>
+              </div>
+              <div class="field">
+                <label>连通性</label>
+                <button class="btn ghost sm" id="aiTestBtn">测试连接</button>
+                <span class="hint" id="aiTestResult"></span>
+              </div>
             </div>
-            <button class="switch" id="autoSaveSwitch" role="switch" aria-checked="true" aria-label="自动保存"></button>
-          </div>
-          <div class="field switch-field">
-            <div class="switch-text">
-              <label for="motionSwitch">减少动效</label>
-              <span class="hint">过渡与动画几乎全部去掉</span>
+          </details>
+
+          <details class="settings-card">
+            <summary>
+              <span class="sc-title">数据与关于</span>
+              <span class="sc-sub">文件存在哪、当前版本</span>
+            </summary>
+            <div class="sc-body">
+              <div class="field">
+                <label>数据保存在</label>
+                <div class="path-box" id="dataDirText"></div>
+              </div>
+              <div class="field">
+                <label>关于</label>
+                <p class="about" id="aboutText"></p>
+              </div>
             </div>
-            <button class="switch" id="motionSwitch" role="switch" aria-checked="false" aria-label="减少动效"></button>
-          </div>
-          <div class="field">
-            <label>数据保存在</label>
-            <div class="path-box" id="dataDirText"></div>
-          </div>
-          <div class="field">
-            <label>关于</label>
-            <p class="about" id="aboutText"></p>
-          </div>
+          </details>
         </div>
         <div class="dialog-foot">
           <button class="btn ghost" id="openDataDir">打开数据目录</button>
@@ -793,7 +832,7 @@
       <div class="dialog wide" role="dialog" aria-label="全库知识图谱">
         <div class="sheet-grip" aria-hidden="true"></div>
         <div class="dialog-head">
-          <h3>📊 全库知识图谱关系网络</h3>
+          <h3>全库知识图谱关系网络</h3>
           <button class="icon-btn" id="graphClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
         </div>
         <div class="dialog-body">
@@ -811,7 +850,7 @@
       <div class="dialog" role="dialog" aria-label="写作实验室">
         <div class="sheet-grip" aria-hidden="true"></div>
         <div class="dialog-head">
-          <h3>🧪 写作实验室 · 文本深度洞察</h3>
+          <h3>写作实验室 · 文本深度洞察</h3>
           <button class="icon-btn" id="labClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
         </div>
         <div class="dialog-body">
@@ -836,7 +875,7 @@
       <div class="dialog wide" role="dialog" aria-label="版本差分比对器">
         <div class="sheet-grip" aria-hidden="true"></div>
         <div class="dialog-head">
-          <h3>🔍 版本差分比对器 (Diff Inspector)</h3>
+          <h3>版本差分比对器 (Diff Inspector)</h3>
           <button class="icon-btn" id="diffClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
         </div>
         <div class="dialog-body">
@@ -857,15 +896,15 @@
       <div class="dialog wide" role="dialog" aria-label="灵感白板">
         <div class="sheet-grip" aria-hidden="true"></div>
         <div class="dialog-head">
-          <h3>🎨 灵感白板 (Inspiration Canvas)</h3>
+          <h3>灵感白板 (Inspiration Canvas)</h3>
           <button class="icon-btn" id="boardClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
         </div>
         <div class="dialog-body">
           <div class="board-toolbar" id="boardToolbar">
-            <button class="btn sm" id="boardToolPen" data-tool="pen">✏️ 画笔</button>
+            <button class="btn sm" id="boardToolPen" data-tool="pen">️ 画笔</button>
             <button class="btn sm" id="boardToolRect" data-tool="rect">⬜ 矩形</button>
-            <button class="btn sm" id="boardToolArrow" data-tool="arrow">➡️ 箭头</button>
-            <button class="btn sm" id="boardToolText" data-tool="text">🔤 文本</button>
+            <button class="btn sm" id="boardToolArrow" data-tool="arrow">️ 箭头</button>
+            <button class="btn sm" id="boardToolText" data-tool="text">文本</button>
             <button class="btn sm ghost" id="boardClear">清空白板</button>
           </div>
           <div class="board-canvas-box" id="boardCanvasBox">
@@ -884,7 +923,7 @@
       <div class="dialog" role="dialog" aria-label="登录与通行码认证">
         <div class="sheet-grip" aria-hidden="true"></div>
         <div class="dialog-head">
-          <h3>🔑 通行码与独立文章空间</h3>
+          <h3>通行码与独立文章空间</h3>
           <button class="icon-btn" id="authClose" aria-label="关闭"><svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg></button>
         </div>
         <div class="dialog-body">
@@ -910,7 +949,7 @@
               </div>
               <p class="hint"><strong>一码一空间</strong>：每个通行码对应一个完全独立的本地私密文章空间（含独立文章列表、标签与回收站）。输入不同通行码即可秒级切换不同空间，完全无需联网或服务器。</p>
             </div>
-            <button class="btn primary block" id="btnPasscodeLogin" type="button">🔑 进入该通行码独立空间</button>
+            <button class="btn primary block" id="btnPasscodeLogin" type="button">进入该通行码独立空间</button>
           </div>
 
           <!-- 方式 2：Google 账号登录 -->

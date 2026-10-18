@@ -665,7 +665,7 @@
             '</div>' +
             (article.pinnedAt ? '<span class="item-pin" title="已置顶">' + icon('star') + '</span>' : '') +
             (article.proposalsCount
-              ? '<span class="chip proposal-chip" title="有 ' + article.proposalsCount + ' 条未处理的排版建议">💡 ' + article.proposalsCount + '</span>'
+              ? '<span class="chip proposal-chip" title="有 ' + article.proposalsCount + ' 条未处理的排版建议">' + article.proposalsCount + '</span>'
               : '') +
             '<button class="icon-btn item-more" data-more="' +
             esc(article.id) +
@@ -791,7 +791,7 @@
     // 否则 1320/1280 宽下「更多」还是会跑到视口外（截图里抓到的就是这个）。
     syncToolsOverflow();
 
-    // 💡 提议加载与环境监视条激活
+    // 提议加载与环境监视条激活
     try {
       const savedProposals = await LP.getProposals(id);
       if (Array.isArray(savedProposals)) state.current.proposals = savedProposals;
@@ -2263,7 +2263,7 @@
   }
 
   function iconText(name) {
-    return /\.(png|jpe?g|gif|webp|bmp|svg|avif)$/i.test(name) ? '' : '📎 ';
+    return /\.(png|jpe?g|gif|webp|bmp|svg|avif)$/i.test(name) ? '' : '';
   }
 
   async function insertImages() {
@@ -2714,7 +2714,7 @@
       .replace(/<code>(.*?)<\/code>/gi, '<code style="background-color: #f1f5f9; color: #e11d48; padding: 2px 6px; border-radius: 4px; font-size: 88%; font-family: monospace;">$1</code>');
 
     const header = '<section style="background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: 12px; padding: 22px 18px; margin-bottom: 24px; color: #ffffff;"><h1 style="margin: 0 0 8px 0; font-size: 21px; font-weight: 700; color: #ffffff;">' + safeTitle + '</h1><div style="font-size: 12px; color: #94a3b8;">LongPost 深度长文 · ' + new Date().toLocaleDateString('zh-CN') + '</div></section>';
-    const footer = '<section style="margin-top: 36px; padding: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 13px; color: #64748b; text-align: center;"><p style="margin: 0; font-weight: 600; color: #1e293b;">✨ 本文由 LongPost 排版生成 · 粘贴即成文</p></section>';
+    const footer = '<section style="margin-top: 36px; padding: 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 13px; color: #64748b; text-align: center;"><p style="margin: 0; font-weight: 600; color: #1e293b;">本文由 LongPost 排版生成 · 粘贴即成文</p></section>';
 
     return '<section style="max-width: 677px; margin: 0 auto; font-family: -apple-system, BlinkMacSystemFont, sans-serif; font-size: 15px; line-height: 1.85; color: #334155;">' + header + bodyHtml + footer + '</section>';
   }
@@ -3045,11 +3045,11 @@
     document.body.classList.toggle('mode-google', !isLite);
     document.body.classList.toggle('mode-pro', !isLite);
 
-    const badge = isLite ? '🍎' : '🎨';
+    const badge = isLite ? '' : '';
     const label = isLite ? '苹果极简' : '谷歌专业';
     const title = isLite
-      ? '当前：🍎 苹果极简版（点击切换至 🎨 谷歌专业版，快捷键 Alt+M）'
-      : '当前：🎨 谷歌专业版（点击切换至 🍎 苹果极简版，快捷键 Alt+M）';
+      ? '当前：苹果极简版（点击切换至 谷歌专业版，快捷键 Alt+M）'
+      : '当前：谷歌专业版（点击切换至 苹果极简版，快捷键 Alt+M）';
 
     const btn1 = $('btnModeSwitch');
     if (btn1) {
@@ -3065,8 +3065,8 @@
     }
     $('modeSwitch') && syncSegmentedActive('modeSwitch', actual);
     $('modeSwitchHelp') && ($('modeSwitchHelp').textContent = isLite
-      ? '当前生效：🍎 苹果极简版（Apple Zen · Notes/Pages 深度还原）—— 纯净留白、毛玻璃材质、macOS 红绿灯、沉浸式心流写作。'
-      : '当前生效：🎨 谷歌专业版（Google Pro · Workspace/M3 深度还原）—— Material 3 工坊、大药丸搜索、Extended FAB、全功能专业工具。');
+      ? '当前生效：苹果极简版（Apple Zen · Notes/Pages 深度还原）—— 纯净留白、毛玻璃材质、macOS 红绿灯、沉浸式心流写作。'
+      : '当前生效：谷歌专业版（Google Pro · Workspace/M3 深度还原）—— Material 3 工坊、大药丸搜索、Extended FAB、全功能专业工具。');
   }
 
   function setupMaterialRipple() {
@@ -3112,7 +3112,7 @@
     setTimeout(() => {
       document.documentElement.classList.remove('mode-morphing');
     }, 400);
-    toast(next === 'lite' ? '已切换至 🍎 苹果极简版 (Apple Zen)' : '已切换至 🎨 谷歌专业版 (Google Pro Studio)');
+    toast(next === 'lite' ? '已切换至 苹果极简版 (Apple Zen)' : '已切换至 谷歌专业版 (Google Pro Studio)');
   }
 
   function applyFontSize() {
@@ -3162,8 +3162,8 @@
     buildSegmented(
       'modeSwitch',
       [
-        { key: 'lite', label: '🍎 苹果极简版' },
-        { key: 'pro', label: '🎨 谷歌专业版' },
+        { key: 'lite', label: '苹果极简版' },
+        { key: 'pro', label: '谷歌专业版' },
       ],
       state.settings.workspaceMode || 'lite',
       async (key) => {
@@ -3173,7 +3173,7 @@
         setTimeout(() => {
           document.documentElement.classList.remove('mode-morphing');
         }, 400);
-        toast(key === 'lite' ? '已切换为 🍎 苹果极简版 (Apple Zen)' : '已切换为 🎨 谷歌专业版 (Google Studio)');
+        toast(key === 'lite' ? '已切换为 苹果极简版 (Apple Zen)' : '已切换为 谷歌专业版 (Google Studio)');
       },
     );
 
@@ -4422,7 +4422,7 @@
     $('labChecklist').innerHTML = checklist
       .map(
         (c) =>
-          `<li class="lab-checklist-item ${c.ok ? 'ok' : 'warn'}"><span class="lab-checklist-text">${c.ok ? '✓' : '⚠️'} ${esc(c.text)}</span>${!c.ok && c.canFix ? `<button class="lab-fix-btn" data-fix="${c.id}">${c.fixLabel || '一键修'}</button>` : ''}</li>`,
+          `<li class="lab-checklist-item ${c.ok ? 'ok' : 'warn'}"><span class="lab-checklist-text">${c.ok ? '✓' : ''} ${esc(c.text)}</span>${!c.ok && c.canFix ? `<button class="lab-fix-btn" data-fix="${c.id}">${c.fixLabel || '一键修'}</button>` : ''}</li>`,
       )
       .join('');
 
@@ -4845,7 +4845,7 @@
     const articleCount = Array.isArray(state.articles) ? state.articles.length : 0;
 
     if (user && user.provider) {
-      const badge = user.provider === 'google' ? '🌐 Google 空间' : '🔒 通行码空间';
+      const badge = user.provider === 'google' ? 'Google 空间' : '通行码空间';
       const label = badge + ' · ' + (user.name || '创作者');
       if (btnAuth) {
         btnAuth.textContent = label;
@@ -4870,17 +4870,17 @@
       }
     } else {
       if (btnAuth) {
-        btnAuth.textContent = '🔑 登录 / 切换空间';
+        btnAuth.textContent = '登录 / 切换空间';
         btnAuth.title = '输入通行码或登录 Google 账号，切换独立的私密文章空间';
       }
       if (btnEmptyAuth) {
-        btnEmptyAuth.textContent = '🔑 通行码 / Google 独立空间';
+        btnEmptyAuth.textContent = '通行码 / Google 独立空间';
       }
       if (profileBox && profileInfo) {
         profileBox.hidden = false;
         if (btnLogout) btnLogout.hidden = true;
         profileInfo.innerHTML =
-          '<div class="auth-user-title">🌐 当前处于：<strong>默认公共空间</strong>（共 ' + articleCount + ' 篇文章）</div>' +
+          '<div class="auth-user-title">当前处于：<strong>默认公共空间</strong>（共 ' + articleCount + ' 篇文章）</div>' +
           '<div class="auth-user-sub">下方输入任意通行码或 Google 账号，即可进入与公共空间完全隔离的独立文章空间</div>';
       }
     }
@@ -4915,8 +4915,8 @@
     buildSegmented(
       'authTabSwitch',
       [
-        { key: 'passcode', label: '🔑 通行码独立空间' },
-        { key: 'google', label: '🌐 Google 独立空间' },
+        { key: 'passcode', label: '通行码独立空间' },
+        { key: 'google', label: 'Google 独立空间' },
       ],
       currentAuthTab,
       (key) => switchAuthTab(key),
@@ -4959,7 +4959,7 @@
       loginAt: new Date().toISOString(),
     };
     closeSheet('authModal');
-    await applyAuthSpaceSwitch(authUser, '🔒 已切入通行码独立空间「#' + suffix + '」');
+    await applyAuthSpaceSwitch(authUser, '已切入通行码独立空间「#' + suffix + '」');
   }
 
   async function handleGoogleLogin() {
@@ -4989,12 +4989,12 @@
     };
     if (pinInput) pinInput.value = '';
     closeSheet('authModal');
-    await applyAuthSpaceSwitch(authUser, '🌐 已解锁 Google 加密独立空间「' + name + '」');
+    await applyAuthSpaceSwitch(authUser, '已解锁 Google 加密独立空间「' + name + '」');
   }
 
   async function handleAuthLogout() {
     closeSheet('authModal');
-    await applyAuthSpaceSwitch(null, '🌐 已退出私密空间，切回默认公共空间');
+    await applyAuthSpaceSwitch(null, '已退出私密空间，切回默认公共空间');
   }
 
   // ==========================================================================
