@@ -16,6 +16,7 @@ import { UpdateArticleDto } from './dto/update-article.dto';
 import { AuthService } from '../auth/auth.service';
 import { HashtagsService } from '../hashtags/hashtags.service';
 import { SiteSettingsService } from '../site-settings/site-settings.service';
+import { NewsletterService } from '../newsletter/newsletter.service';
 import { contentGuard } from '@server/common/utils/content-guard';
 import type {
   ArticleSummary,
@@ -40,7 +41,49 @@ export class ArticlesService {
     private readonly authService: AuthService,
     private readonly hashtagsService: HashtagsService,
     private readonly siteSettingsService: SiteSettingsService,
+    private readonly newsletterService: NewsletterService,
   ) {}
+
+
+  /**
+   * 把刚发布的文章推送给订阅者。
+   *
+   * 三条克制：
+   * - 用 void + catch 吞掉异常：推送是附属动作，不能影响发布结果；
+   * - 昵称查不到就留空，不为了一个署名去阻断整条链路；
+   * - 真正发不发（NEWSLETTER_ENABLED）由 NewsletterService 自己判断。
+   */
+  private broadcastToSubscribers(article: {
+    id: string;
+    title: string;
+    excerpt?: string | null;
+    slug?: string | null;
+    authorId: string;
+  }): void {
+    void (async () => {
+      let authorName: string | undefined;
+      try {
+        const rows = await this.db
+          .select({ nickname: appUsers.nickname })
+          .from(appUsers)
+          .where(eq(appUsers.id, article.authorId))
+          .limit(1);
+        authorName = rows[0]?.nickname || undefined;
+      } catch {
+        authorName = undefined;
+      }
+
+      await this.newsletterService.broadcastArticle({
+        id: article.id,
+        title: article.title,
+        excerpt: article.excerpt,
+        slug: article.slug,
+        authorName,
+      });
+    })().catch(() => {
+      /* 推送失败不影响发布，日志由 NewsletterService 负责 */
+    });
+  }
 
   private getAuthorId(row: { author: string; appUserId: string | null }): string {
     return row.appUserId ?? row.author;
@@ -169,6 +212,17 @@ export class ArticlesService {
 
     // Sync hashtags outside transaction
     await this.hashtagsService.syncContentHashtags('article', result.id, content);
+
+    // 发布即推送。fire-and-forget：订阅推送失败不该让作者看到「发布失败」。
+    if (finalStatus === 'published') {
+      this.broadcastToSubscribers({
+        id: result.id,
+        title,
+        excerpt: finalExcerpt,
+        slug: result.slug,
+        authorId,
+      });
+    }
 
     return result;
   }
@@ -899,6 +953,10 @@ export class ArticlesService {
       .select({
         id: articles.id,
         appUserId: articles.appUserId,
+        status: articles.status,
+        title: articles.title,
+        excerpt: articles.excerpt,
+        slug: articles.slug,
       })
       .from(articles)
       .where(eq(articles.id, id));
@@ -972,6 +1030,20 @@ export class ArticlesService {
     if (data.content !== undefined) {
       await this.hashtagsService.syncContentHashtags('article', id, data.content);
     }
+    // 草稿 -> 发布 的跃迁才推送。
+    // 已发布文章再改错别字不应重复发信 —— newsletter_issues 里有幂等锁，
+    // 但这一步能省掉一次无谓的查询。
+    const becamePublished = data.status === 'published' && existing[0].status !== 'published';
+    if (becamePublished) {
+      this.broadcastToSubscribers({
+        id,
+        title: data.title ?? existing[0].title,
+        excerpt: data.excerpt ?? existing[0].excerpt,
+        slug: existing[0].slug,
+        authorId: existing[0].appUserId ?? userId,
+      });
+    }
+
   }
 
   async delete(id: string, userId: string): Promise<void> {

@@ -19,6 +19,7 @@ import ReadingToolbar from './ReadingToolbar';
 import ShareMenu from './ShareMenu';
 import ShareDialog from '@/components/share/ShareDialog';
 import { Reveal } from '@/components/ui/reveal';
+import SubscribeCard from '@/components/newsletter/SubscribeCard';
 
 type FontSize = 'small' | 'medium' | 'large';
 type Theme = 'dark' | 'light';
@@ -207,7 +208,11 @@ export default function ArticlePage() {
         </section>
 
         {/* Linked posts */}
-        {article.linkedPosts && article.linkedPosts.length > 0 && (
+        <Reveal y={16} rootMargin="0px 0px -12% 0px">
+        <SubscribeCard source="article" />
+      </Reveal>
+
+      {article.linkedPosts && article.linkedPosts.length > 0 && (
           <section
             className="pt-6 border-t border-[#2f3336]"
             data-ai-section-type="card-list"
