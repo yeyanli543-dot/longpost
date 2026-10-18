@@ -1,7 +1,7 @@
 # 📐 LongPost 简洁版与专业版设计分工与能力集成白皮书
 
 > **LongPost Workspace Dual-System Specification**  
-> 版本：v2.9.5  
+> 版本：v2.9.7  
 > 适用端：桌面客户端 (Electron) · 移动客户端 (Android Capacitor) · 网页端 (Web)
 
 ---

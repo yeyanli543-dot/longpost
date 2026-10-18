@@ -9,7 +9,9 @@ export default defineConfig({
   publicDir: path.resolve(__dirname, 'client/public'),
   build: {
     outDir: path.resolve(__dirname, 'dist/client'),
-    emptyOutDir: false,
+    // dist/client 是纯产物目录，必须每次清空；
+    // 之前是 false，导致 1381 个历史 chunk、114MB 垃圾一直堆在里面。
+    emptyOutDir: true,
     rollupOptions: {
       input: path.resolve(__dirname, 'client/index.html'),
     },

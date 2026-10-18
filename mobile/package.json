@@ -1,6 +1,6 @@
 {
   "name": "longpost-mobile",
-  "version": "2.9.5",
+  "version": "2.9.7",
   "private": true,
   "description": "LongPost 手机版外壳：前端复用现代 React 产物 dist/client，数据落在设备本地（IndexedDB/SQLite）",
   "license": "MIT",

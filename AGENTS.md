@@ -130,3 +130,44 @@
 - 会议纪要：创建人可编辑，参会人可查看
 - 参会人邀请通知：站内通知类型 meeting_invite
 - 权限：公开会议匿名可浏览详情，创建/加入/聊天需登录
+
+
+## 仓库结构与工程约定（v2.9.7 起）
+
+### 目录职责
+| 目录 | 职责 | 参与构建 |
+| :--- | :--- | :--- |
+| `client/` | React 19 前端；`@` → `client/src` | ✅ Vite |
+| `server/` | NestJS 后端；`sourceRoot` = `server` | ✅ nest build |
+| `shared/` | 前后端共享的纯函数与类型（无 DOM / 无 Nest 依赖） | ✅ 两端 |
+| `desktop/` | Electron 独立子应用（自带 renderer 与 vendor） | ✅ electron-builder |
+| `mobile/` | Capacitor 壳 | ✅ Gradle |
+| `test/` | Node 原生测试 `node --test` | ✅ npm test |
+| `archive/` | 历史原型归档，**不参与任何构建**，见 `archive/README.md` | ❌ |
+
+> 禁止再新增与上表平行的"影子目录"（例如根目录再放一个 `src/` 或 `backend/`）。
+> 2026-10 的 argon 交接就是因为放了 `src/`、`backend/`、`electron/` 三个并行实现，
+> 全部没有被任何构建工具引用，导致改了等于没改。
+
+### 版本号
+- 唯一事实来源：`shared/version.ts` 的 `APP_VERSION`
+- `package.json` / `desktop/package.json` / `mobile/package.json` 需同步
+- 设置页、RSS/Atom 的 `<generator>` 一律从 `APP_VERSION` 读取，不要写死
+- 桌面端渲染层是纯 JS，各自保留常量，发版时同步（`desktop/renderer/platform.js`）
+
+### 测试怎么写
+- 测试必须 **import 生产代码**，不允许把算法抄一遍再断言。
+- Node 24 原生擦除 TS 类型，可直接 `import { x } from '../shared/foo.ts'`。
+- 别名（`@/` `@shared/` `@client/`）由 `test/register-aliases.mjs` 在解析期映射，
+  已通过 `npm test` 的 `--import` 参数自动加载，写测试时直接用别名即可。
+
+### 同步协议
+- 裁决逻辑：`shared/sync/three-way-merge.ts`（纯函数，可单测）
+- 传输与编排：`client/src/lib/sync/sync-coordinator.ts`
+- 协议格式：`shared/sync/sync-protocol.ts`
+- 改动裁决矩阵时，先改纯函数 + 补 `test/sync-protocol-and-coordinator.test.mjs` 场景
+
+### 出站请求安全
+- 任何"由服务端替用户发请求"的能力都必须经过
+  `server/common/security/outbound-host-guard.ts`
+  （协议白名单 + 主机名黑名单 + DNS 解析期内网拦截 + 连接期 lookup 复核）
