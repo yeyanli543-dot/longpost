@@ -577,6 +577,38 @@ function registerIpc() {
 
 
 
+
+  // ---------------------------------------------------------------- 静态站导出
+  // 渲染层把每篇文章的 HTML 算好传进来，主进程只负责建目录、写文件。
+  // 这样导出逻辑（模板、slug、RSS）能纯函数化，也就测得住。
+  ipcMain.handle('site:export', async (_e, payload) => {
+    const data = payload || {};
+    const posts = Array.isArray(data.posts) ? data.posts : [];
+    if (posts.length === 0) return { ok: false, error: '没有可导出的文章' };
+
+    const picked = await dialog.showOpenDialog({
+      title: '选择导出位置（会在其中创建 static-site 目录）',
+      properties: ['openDirectory', 'createDirectory'],
+    });
+    if (picked.canceled || !picked.filePaths[0]) return { canceled: true };
+
+    const outDir = path.join(picked.filePaths[0], 'static-site');
+    try {
+      fs.mkdirSync(path.join(outDir, 'posts'), { recursive: true });
+
+      fs.writeFileSync(path.join(outDir, 'index.html'), data.indexHtml, 'utf8');
+      for (const post of posts) {
+        fs.writeFileSync(path.join(outDir, 'posts', post.slug + '.html'), post.html, 'utf8');
+      }
+      if (data.feed) fs.writeFileSync(path.join(outDir, 'feed.xml'), data.feed, 'utf8');
+      if (data.sitemap) fs.writeFileSync(path.join(outDir, 'sitemap.xml'), data.sitemap, 'utf8');
+
+      return { ok: true, dir: outDir, count: posts.length };
+    } catch (err) {
+      return { ok: false, error: String((err && err.message) || err) };
+    }
+  });
+
   // ---------------------------------------------------------------- 文件夹导入
   // 读完整个目录再一次性回传。限制 500 篇 / 单篇 200KB，防止误选了一个
   // 巨大的目录把渲染进程卡死（比如整个代码仓库）。

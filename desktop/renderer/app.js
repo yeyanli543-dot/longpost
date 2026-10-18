@@ -5984,6 +5984,7 @@
     syncToolsOverflow();
     const need = (id) => isNarrow() || !toolUsable(id);
     items.push({ label: '导入 Markdown 文件夹…', icon: 'folder', onPick: importMarkdownFolder });
+    items.push({ label: '导出静态站点…', icon: 'download', onPick: exportStaticSite });
     if (need('btnShare')) {
       items.push({ label: '分享这一篇', icon: 'share', onPick: openShare });
     }
@@ -6297,6 +6298,78 @@
    * 默认跳过同名文章 —— 迁移场景下覆盖是最危险的动作。
    * 导入前先算好计划再弹确认，让用户知道会进来多少、跳过多少。
    */
+  /**
+   * 导出整站：把本地所有文章写成一个可以直接上传到 GitHub Pages 的静态站。
+   *
+   * 纯逻辑（模板、slug、RSS）在 vendor/static-site.js 里，这里只负责
+   * 把每篇正文渲染成 HTML、算好计划，再交给主进程写盘。
+   */
+  async function exportStaticSite() {
+    if (!LP || typeof LP.exportStaticSite !== 'function') {
+      toast('手机版暂不支持整站导出', 'err');
+      return;
+    }
+    const API = window.LPStaticSite;
+    const MD = window.LPMarkdown;
+    if (!API || !MD) {
+      toast('导出模块没加载，请重启应用', 'err');
+      return;
+    }
+
+    const articles = state.articles || [];
+    if (articles.length === 0) {
+      toast('还没有文章可以导出', 'err');
+      return;
+    }
+
+    const slugs = API.uniqueSlugs(articles);
+    const posts = articles.map((article, index) => {
+      const bodyHtml = MD.render(article.content || '');
+      return {
+        title: article.title || '未命名',
+        slug: slugs[index],
+        date: API.formatDate(article.createdAt || article.updatedAt),
+        excerpt: (article.content || '').replace(/[#*\`>\-\n]/g, ' ').trim().slice(0, 120),
+        authorName: '',
+        html: API.buildPost({
+          title: article.title || '未命名',
+          bodyHtml: bodyHtml,
+          date: API.formatDate(article.createdAt || article.updatedAt),
+          excerpt: '',
+          siteName: 'LongPost',
+        }),
+      };
+    });
+
+    const siteUrl = window.prompt(
+      '站点地址（用于 RSS 与 sitemap，可留空跳过）：',
+      '',
+    );
+
+    const payload = {
+      indexHtml: API.buildIndex({
+        siteName: 'LongPost',
+        description: '用 LongPost 导出的静态站',
+        posts,
+      }),
+      posts,
+      feed: API.buildFeed({ siteName: 'LongPost', description: '用 LongPost 导出的静态站', siteUrl, posts }),
+      sitemap: API.buildSitemap({ siteUrl, posts }),
+    };
+
+    const res = await LP.exportStaticSite(payload);
+    if (res && res.canceled) {
+      setStatus('已取消导出');
+      return;
+    }
+    if (!res || !res.ok) {
+      toast('导出失败：' + ((res && res.error) || '未知原因'), 'err');
+      return;
+    }
+    toast('已导出 ' + res.count + ' 篇到 static-site/', 'ok');
+    setStatus('导出完成：' + res.dir);
+  }
+
   async function importMarkdownFolder() {
     if (!LP || typeof LP.pickMarkdownFolder !== 'function') {
       toast('手机版暂不支持文件夹导入', 'err');
