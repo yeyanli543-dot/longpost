@@ -2925,7 +2925,7 @@
       }
       const settings = (await LP.getSettings()) || {};
       const backupData = {
-        version: '3.0.2',
+        version: '3.0.3',
         exportedAt: new Date().toISOString(),
         appName: 'LongPost',
         stats: {
@@ -3671,6 +3671,12 @@
       setTimeout(() => {
         checkForAppUpdate(true);
       }, 6000);
+
+      // 之后每 30 分钟复查一次。
+      // 只在启动时查一次的话，挂着不关的应用永远收不到当天发布的版本。
+      setInterval(() => {
+        if (!updateState.info) checkForAppUpdate(true);
+      }, 30 * 60 * 1000);
     }
   }
 
