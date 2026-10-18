@@ -4047,6 +4047,10 @@ body.reading-mode .preview {
 }
 
 .settings-card {
+  /* 关键：dialog-body 是 flex 列容器，卡片默认 flex-shrink:1，
+     展开时会和邻居互相挤压（表现为"点了展不开"，其实是内容被压扁，
+     外层永远不产生滚动）。这里禁止收缩，让 body 真正滚动。 */
+  flex: none;
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   background: var(--surface);

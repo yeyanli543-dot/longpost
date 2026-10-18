@@ -2909,7 +2909,7 @@
       }
       const settings = (await LP.getSettings()) || {};
       const backupData = {
-        version: '3.0.0',
+        version: '3.0.1',
         exportedAt: new Date().toISOString(),
         appName: 'LongPost',
         stats: {
