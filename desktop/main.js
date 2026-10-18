@@ -989,6 +989,10 @@ function registerIpc() {
 
 app.whenReady().then(() => {
   store.init(app.getPath('userData'));
+  // 本地桥：开着就随应用启动，用户不必每次先进设置页
+  ensureClipBridge().catch(() => {
+    /* 端口被占或设置未开，静默跳过 */
+  });
   registerLpProtocol();
   buildMenu();
   registerIpc();

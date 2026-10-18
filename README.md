@@ -378,6 +378,14 @@ SITE_URL=https://你的域名     # 影响确认信链接、RSS 与分享图域�
 
 ---
 
+## 🧩 浏览器扩展（Chrome / Edge）
+
+`chrome-extension/` 里是一个 Manifest V3 扩展：右键保存整页、只存选中文字，内容直接进本地 LongPost。
+
+安装：`chrome://extensions` → 开发者模式 → 加载已解压的扩展程序 → 选该目录；然后在 LongPost 设置里打开「Chrome 剪藏」并复制配对码。
+
+---
+
 ## 📚 文档
 
 | 文档 | 内容 |
