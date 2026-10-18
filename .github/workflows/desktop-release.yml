@@ -165,6 +165,9 @@ jobs:
           prerelease: false
           # 让 GitHub 依据提交记录自动生成「本次变更」，不需要手工维护版本说明
           generate_release_notes: true
+          # 只有版本标签才允许占据仓库的 "Latest" 徽章；
+          # 滚动构建（desktop-latest）不该把正式版本挤下去
+          make_latest: ${{ startsWith(github.ref, 'refs/tags/v') && 'true' || 'false' }}
           files: |
             dist/**/*.exe
             dist/**/*.dmg

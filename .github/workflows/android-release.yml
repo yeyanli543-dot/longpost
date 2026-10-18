@@ -280,4 +280,5 @@ jobs:
             
             数据全部存在设备本地（IndexedDB），不联网、不上传、断网即用。
           generate_release_notes: true
+          make_latest: ${{ startsWith(github.ref, 'refs/tags/v') && 'true' || 'false' }}
           files: out/*.apk
