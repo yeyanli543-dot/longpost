@@ -394,6 +394,7 @@ SITE_URL=https://你的域名     # 影响确认信链接、RSS 与分享图域�
 | **[使用说明](docs/USER-GUIDE.md)** | 安装、界面导览、写作与快捷键、AI 助手配置、导出分享、WebDAV 同步、双工作区、自建部署、排错 |
 | **[优化报告](docs/OPTIMIZATION-REPORT-2026-10.md)** | 2026-10 那轮全面体检记录：问题定位、修复内容、验证数据 |
 | **[剪藏 API](docs/CLIP-API.md)** | 本地桥接口：任何脚本/扩展都能把内容送进 LongPost |
+| **[生态接入](docs/ECOSYSTEM.md)** | 命令行、Raycast、Alfred、PowerToys 的接法 |
 | **[设计规范](DESIGN-SPEC.md)** | 两套工作区的设计分工与实现细节 |
 | **[开发约定](AGENTS.md)** | 目录职责、版本号规则、测试写法、同步协议、出站安全 |
 

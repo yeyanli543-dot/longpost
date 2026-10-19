@@ -746,11 +746,26 @@ function registerIpc() {
     });
 
     // 首次生成或令牌轮换后要落盘，否则重启就换新令牌、书签全部失效
-    if (settings.clipBridgeToken !== clipBridge.token) {
-      await store.setSettings({ clipBridgeToken: clipBridge.token });
+    // 令牌与端口都要落盘：外部脚本（Raycast / 终端）靠 settings.json 找过来
+    // 给外部脚本（CLI / Raycast）用：端口随进程变化，单独写一个文件最省事
+    try {
+      fs.writeFileSync(
+        path.join(app.getPath('userData'), 'bridge.json'),
+        JSON.stringify({ port: clipBridge.port, token: clipBridge.token }),
+        'utf8',
+      );
+    } catch (error) {
+      console.warn('[bridge] 写入 bridge.json 失败:', error && error.message);
+    }
+
+    if (settings.clipBridgeToken !== clipBridge.token || settings.clipBridgePort !== clipBridge.port) {
+      await store.setSettings({ clipBridgeToken: clipBridge.token, clipBridgePort: clipBridge.port });
     }
     return clipBridge;
   }
+
+  // 把实现注册到模块级包装（启动时在 app.whenReady 里调用）
+  clipBridgeImpl = ensureClipBridgeImpl;
 
   async function stopClipBridge() {
     if (!clipBridge) return;
@@ -1060,6 +1075,10 @@ function registerIpc() {
 let clipBridgeImpl = null;
 
 async function ensureClipBridge() {
+  // 启动时 IPC 还没注册（impl 为 null），等一小会儿再试，别直接放弃
+  for (let i = 0; i < 5 && !clipBridgeImpl; i += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
   if (!clipBridgeImpl) return null;
   return clipBridgeImpl();
 }

@@ -69,6 +69,7 @@
       // Chrome 剪藏本地桥：默认关闭，设置里手动开启
       clipBridgeEnabled: true,
       clipBridgeToken: '',
+      clipBridgePort: 0,
     };
   }
 
