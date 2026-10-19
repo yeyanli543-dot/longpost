@@ -16,7 +16,7 @@
   'use strict';
 
   /** 跟 desktop/package.json 的 version 保持一致，自检里有断言盯着。 */
-  const APP_VERSION = '3.1.2';
+  const APP_VERSION = '3.1.3';
 
   if (!window.LPRepo || !window.LPIdbBackend) {
     const missing = [];
@@ -433,6 +433,7 @@
     isDesktop: false,
     platformLabel: '手机版',
     bridgeInfo: async () => ({ enabled: false }),
+    openExtensionDir: async () => ({ ok: false }),
     onClipped: () => () => {},
     aiChat: aiChat,
     onAiChunk: onAiChunk,

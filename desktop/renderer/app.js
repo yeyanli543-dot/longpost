@@ -2925,7 +2925,7 @@
       }
       const settings = (await LP.getSettings()) || {};
       const backupData = {
-        version: '3.1.2',
+        version: '3.1.3',
         exportedAt: new Date().toISOString(),
         appName: 'LongPost',
         stats: {
@@ -3611,12 +3611,23 @@
     copyToClipboard(code);
   }
 
+  async function openExtensionDir() {
+    if (!LP || typeof LP.openExtensionDir !== 'function') {
+      toast('当前环境不支持', 'err');
+      return;
+    }
+    const res = await LP.openExtensionDir();
+    if (res && res.ok) toast('已打开扩展目录：在 Chrome 里加载这个文件夹', 'ok');
+    else toast('打不开目录：' + ((res && res.error) || '未知原因'), 'err');
+  }
+
   function bindClipBridge() {
     // 设置卡片没插进来时直接跳过，不能让整个启动流程挂在 null 上
-    if (!$('clipBridgeSwitch') || !$('clipBookmarkBtn') || !$('clipPairBtn')) return;
+    if (!$('clipBridgeSwitch') || !$('clipBookmarkBtn') || !$('clipPairBtn') || !$('clipExtDirBtn')) return;
     $('clipBridgeSwitch').addEventListener('click', toggleClipBridge);
     $('clipBookmarkBtn').addEventListener('click', copyBookmarklet);
     $('clipPairBtn').addEventListener('click', copyPairingCode);
+    $('clipExtDirBtn').addEventListener('click', openExtensionDir);
     if (LP && typeof LP.onClipped === 'function') {
       LP.onClipped(() => {
         refreshAll();

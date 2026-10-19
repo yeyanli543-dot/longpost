@@ -746,6 +746,14 @@ function registerIpc() {
     return clipBridge;
   }
 
+  ipcMain.handle('bridge:openExtensionDir', async () => {
+    const dir = app.isPackaged
+      ? path.join(process.resourcesPath, 'chrome-extension')
+      : path.join(__dirname, '..', 'chrome-extension');
+    const err = await shell.openPath(dir);
+    return err ? { ok: false, error: err } : { ok: true, dir };
+  });
+
   ipcMain.handle('bridge:info', async () => {
     const bridge = await ensureClipBridge();
     if (!bridge) return { enabled: false };

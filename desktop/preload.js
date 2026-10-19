@@ -61,6 +61,7 @@ contextBridge.exposeInMainWorld('lp', {
 
   // Chrome 剪藏桥：端口与令牌（只在开启后返回）
   bridgeInfo: () => ipcRenderer.invoke('bridge:info'),
+  openExtensionDir: () => ipcRenderer.invoke('bridge:openExtensionDir'),
   onClipped: (handler) => {
     const listener = (_e, data) => handler(data);
     ipcRenderer.on('bridge:clipped', listener);
