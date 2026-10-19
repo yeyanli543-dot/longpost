@@ -16,7 +16,13 @@ const { pathToFileURL } = require('node:url');
 const store = require('./lib/store');
 const buildHtml = require('./lib/export-html');
 const updater = require('./lib/updater');
-const { startBridge } = require('./bridge');
+let startBridge = null;
+try {
+  // 剪藏桥是可选功能：万一打包漏了文件，也绝不能让整个应用打不开
+  ({ startBridge } = require('./bridge'));
+} catch (error) {
+  console.warn('[bridge] 本地桥不可用，已跳过:', error && error.message);
+}
 
 app.setName('LongPost');
 
