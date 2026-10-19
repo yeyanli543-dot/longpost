@@ -126,6 +126,24 @@ longpost/
                                    └─ 安卓：IndexedDB + 浏览器 fetch
 ```
 
+### 3.2.1 v3.1 剪藏链路
+
+```
+Chrome 扩展 / 书签小工具
+        │  POST http://127.0.0.1:<随机端口>/clip
+        │  Header: X-LongPost-Token
+        ▼
+桌面端 bridge.js（只绑回环，令牌 + 限流 + 体积上限）
+        ▼
+store.saveArticle()  →  本地文章库（标签「剪藏」+ 来源链接）
+```
+
+关键点：
+
+- 端口由系统分配，写在设置里；令牌持久化，轮换后旧书签立即失效；
+- 预检响应带 `Access-Control-Allow-Private-Network: true`，否则 https 页面访问 127.0.0.1 会被浏览器拦；
+- 桥是可选功能：模块缺失时应用仍能启动（v3.1.4 的教训）。
+
 ### 3.3 关键数据流
 
 **阅读一篇长文（免登录）**

@@ -48,6 +48,9 @@ function startBridge(options) {
   const onClip = (options && options.onClip) || (() => {});
   const onLog = (options && options.onLog) || (() => {});
 
+  /** 最近剪藏摘要，供扩展弹窗展示 */
+  const recent = [];
+
   /** 最近请求记录，供设置页展示（最多 20 条） */
   const log = [];
   function record(entry) {
@@ -83,6 +86,16 @@ function startBridge(options) {
       record({ method: 'OPTIONS', url: req.url, status: 204 });
       res.writeHead(204, corsHeaders(wantsPrivate));
       res.end();
+      return;
+    }
+
+    // 最近剪藏：给扩展弹窗展示用，同样要令牌
+    if (req.method === 'GET' && (req.url || '').split('?')[0] === '/recent') {
+      if (!isValidToken(req.headers['x-longpost-token'], token)) {
+        reply(401, { ok: false, error: '令牌无效' });
+        return;
+      }
+      reply(200, { ok: true, items: recent.slice(-5).reverse() });
       return;
     }
 
@@ -136,9 +149,18 @@ function startBridge(options) {
       }
 
       try {
+        recent.push({
+          title: normalized.clip.title,
+          url: normalized.clip.url,
+          tags: normalized.clip.tags,
+          at: new Date().toISOString(),
+        });
+        if (recent.length > 20) recent.shift();
+
         await onClip({
           title: normalized.clip.title,
           content: buildClipMarkdown(normalized.clip),
+          tags: normalized.clip.tags,
           sourceUrl: normalized.clip.url,
           capturedAt: normalized.clip.capturedAt,
         });

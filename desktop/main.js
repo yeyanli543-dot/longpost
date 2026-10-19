@@ -737,7 +737,7 @@ function registerIpc() {
         await store.saveArticle({
           title: clip.title,
           content: clip.content,
-          tags: ['剪藏'],
+          tags: ['剪藏'].concat(Array.isArray(clip.tags) ? clip.tags : []),
         });
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('bridge:clipped', { title: clip.title });

@@ -79,9 +79,23 @@
         url: url || '',
         content: content,
         selection: selection,
+        tags: normalizeTags(body.tags),
         capturedAt: body.capturedAt ? trimTo(body.capturedAt, 40) : new Date().toISOString(),
       },
     };
+  }
+
+  /** 标签：数组或逗号分隔，去重、限长、最多 8 个 */
+  function normalizeTags(value) {
+    var list = Array.isArray(value) ? value : String(value || '').split(/[,，\s]+/);
+    var out = [];
+    for (var i = 0; i < list.length; i += 1) {
+      var tag = String(list[i] || '').replace(/^#/, '').trim();
+      if (!tag || tag.length > 20) continue;
+      if (out.indexOf(tag) < 0) out.push(tag);
+      if (out.length >= 8) break;
+    }
+    return out;
   }
 
   /**
@@ -105,6 +119,7 @@
     safeEqual: safeEqual,
     isValidToken: isValidToken,
     isHttpUrl: isHttpUrl,
+    normalizeTags: normalizeTags,
     normalizeClipPayload: normalizeClipPayload,
     buildClipMarkdown: buildClipMarkdown,
   };

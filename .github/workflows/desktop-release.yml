@@ -60,6 +60,9 @@ jobs:
       # 可复现性由 desktop/package.json 里钉死的精确版本保证。
       # 这一步会顺带跑 prepare，自动生成 renderer/vendor/echarts.min.js 和 resources/icon.png ——
       # 那两个文件同样不在仓库里，但打包时必须有。
+      - name: 依赖体检（镜像残留 / lock 可复现）
+        run: node scripts/check-deps.js
+
       - name: 装依赖
         shell: bash
         run: |

@@ -20,11 +20,11 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 async function getConfig() {
-  const data = await chrome.storage.local.get(['pairing']);
+  const data = await chrome.storage.local.get(['pairing', 'defaultTags']);
   if (!data.pairing) return null;
   const parts = String(data.pairing).split(':');
   if (parts.length !== 3 || Number.isNaN(Number(parts[1]))) return null;
-  return { port: Number(parts[1]), token: parts[2] };
+  return { port: Number(parts[1]), token: parts[2], tags: data.defaultTags || '' };
 }
 
 /**
@@ -138,6 +138,7 @@ function notify(message) {
 }
 
 async function postClip(config, payload) {
+  if (config.tags) payload.tags = config.tags;
   try {
     const res = await fetch('http://127.0.0.1:' + config.port + '/clip', {
       method: 'POST',
@@ -203,7 +204,26 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === MENU_SELECTION) saveToLongPost(tab.id, true);
 });
 
+async function fetchRecent() {
+  const config = await getConfig();
+  if (!config) return [];
+  try {
+    const res = await fetch('http://127.0.0.1:' + config.port + '/recent', {
+      headers: { 'X-LongPost-Token': config.token },
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data.items) ? data.items : [];
+  } catch (error) {
+    return [];
+  }
+}
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message && message.type === 'get-recent') {
+    fetchRecent().then((items) => sendResponse({ ok: true, items: items })).catch(() => sendResponse({ ok: false, items: [] }));
+    return true;
+  }
   if (message && message.type === 'save-current') {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const tab = tabs && tabs[0];
