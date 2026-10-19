@@ -1,0 +1,9 @@
+{
+  "id": "longpost-bridge",
+  "name": "LongPost Bridge",
+  "version": "1.0.0",
+  "minAppVersion": "1.4.0",
+  "description": "把 LongPost 里最近的网页剪藏导入 Obsidian",
+  "author": "LongPost",
+  "isDesktopOnly": true
+}

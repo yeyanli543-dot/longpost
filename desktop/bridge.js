@@ -153,6 +153,8 @@ function startBridge(options) {
           title: normalized.clip.title,
           url: normalized.clip.url,
           tags: normalized.clip.tags,
+          // 带正文：外部应用（Obsidian 插件）要拿它直接建笔记
+          content: String(buildClipMarkdown(normalized.clip)).slice(0, 20000),
           at: new Date().toISOString(),
         });
         if (recent.length > 20) recent.shift();
