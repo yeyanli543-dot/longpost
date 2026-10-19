@@ -724,7 +724,7 @@ function registerIpc() {
   // ---------------------------------------------------------------- Chrome 剪藏桥
   let clipBridge = null;
 
-  async function ensureClipBridge() {
+  async function ensureClipBridgeImpl() {
     if (clipBridge) return clipBridge;
     const settings = await store.getSettings();
     if (!settings.clipBridgeEnabled) return null;
@@ -738,7 +738,7 @@ function registerIpc() {
           tags: ['剪藏'],
         });
         if (!settings.clipBridgeToken) {
-          await mergeSettings({ clipBridgeToken: clipBridge.token });
+          await store.setSettings({ clipBridgeToken: clipBridge.token });
         }
         if (mainWindow && !mainWindow.isDestroyed()) {
           mainWindow.webContents.send('bridge:clipped', { id: saved && saved.id, title: clip.title });
@@ -747,7 +747,7 @@ function registerIpc() {
     });
 
     if (!settings.clipBridgeToken) {
-      await mergeSettings({ clipBridgeToken: clipBridge.token });
+      await store.setSettings({ clipBridgeToken: clipBridge.token });
     }
     return clipBridge;
   }
@@ -759,6 +759,9 @@ function registerIpc() {
     const err = await shell.openPath(dir);
     return err ? { ok: false, error: err } : { ok: true, dir };
   });
+
+  // 把实现注册给模块级包装：启动时在 app.whenReady 里调用，作用域不同
+  clipBridgeImpl = ensureClipBridgeImpl;
 
   ipcMain.handle('bridge:info', async () => {
     const bridge = await ensureClipBridge();
@@ -1000,6 +1003,15 @@ function registerIpc() {
 }
 
 // ---------------------------------------------------------------------------
+
+// 剪藏桥：真正的实现在 IPC 注册处，这里只做模块级转发 ——
+// 启动时（app.whenReady）在另一个作用域，直接调内层函数会 ReferenceError。
+let clipBridgeImpl = null;
+
+async function ensureClipBridge() {
+  if (!clipBridgeImpl) return null;
+  return clipBridgeImpl();
+}
 
 app.whenReady().then(() => {
   store.init(app.getPath('userData'));
