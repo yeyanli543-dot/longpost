@@ -4266,3 +4266,19 @@ body.reading-mode .preview {
     display: none;
   }
 }
+
+/* 剪藏桥请求日志 */
+.clip-log {
+  margin-top: var(--sp-2);
+  max-height: 150px;
+  overflow: auto;
+  padding: var(--sp-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+  color: var(--text-2);
+  white-space: pre-wrap;
+}

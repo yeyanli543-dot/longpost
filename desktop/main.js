@@ -725,32 +725,86 @@ function registerIpc() {
   let clipBridge = null;
 
   async function ensureClipBridgeImpl() {
+    if (!startBridge) return null;
     if (clipBridge) return clipBridge;
+
     const settings = await store.getSettings();
     if (!settings.clipBridgeEnabled) return null;
 
     clipBridge = await startBridge({
       token: settings.clipBridgeToken || undefined,
       onClip: async (clip) => {
-        const saved = await store.saveArticle({
+        await store.saveArticle({
           title: clip.title,
           content: clip.content,
           tags: ['剪藏'],
         });
-        if (!settings.clipBridgeToken) {
-          await store.setSettings({ clipBridgeToken: clipBridge.token });
-        }
         if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('bridge:clipped', { id: saved && saved.id, title: clip.title });
+          mainWindow.webContents.send('bridge:clipped', { title: clip.title });
         }
       },
     });
 
-    if (!settings.clipBridgeToken) {
+    // 首次生成或令牌轮换后要落盘，否则重启就换新令牌、书签全部失效
+    if (settings.clipBridgeToken !== clipBridge.token) {
       await store.setSettings({ clipBridgeToken: clipBridge.token });
     }
     return clipBridge;
   }
+
+  async function stopClipBridge() {
+    if (!clipBridge) return;
+    const current = clipBridge;
+    clipBridge = null;
+    try {
+      await current.close();
+    } catch {
+      /* 已经关了就算了 */
+    }
+  }
+
+  ipcMain.handle('bridge:setEnabled', async (_e, enabled) => {
+    await store.setSettings({ clipBridgeEnabled: Boolean(enabled) });
+    if (enabled) {
+      await ensureClipBridge();
+    } else {
+      await stopClipBridge();
+    }
+    return { ok: true, enabled: Boolean(enabled) };
+  });
+
+  ipcMain.handle('bridge:rotateToken', async () => {
+    await stopClipBridge();
+    await store.setSettings({ clipBridgeToken: '' });
+    const bridge = await ensureClipBridge();
+    return bridge ? { ok: true, token: bridge.token, port: bridge.port } : { ok: false };
+  });
+
+  ipcMain.handle('bridge:log', async () => {
+    return clipBridge && typeof clipBridge.getLog === 'function' ? clipBridge.getLog() : [];
+  });
+
+  // ---------------------------------------------------------------- 发送到 菜单
+  // Windows 的「发送到」= %APPDATA%\Microsoft\Windows\SendTo 下的 .lnk。
+  // Electron 自带 shell.writeShortcutLink，不用调 COM 或 PowerShell。
+  ipcMain.handle('sendTo:install', async () => {
+    if (process.platform !== 'win32') {
+      return { ok: false, error: '仅支持 Windows' };
+    }
+    try {
+      const sendToDir = path.join(process.env.APPDATA || '', 'Microsoft', 'Windows', 'SendTo');
+      const linkPath = path.join(sendToDir, 'LongPost.lnk');
+      const ok = shell.writeShortcutLink(linkPath, 'create', {
+        target: process.execPath,
+        args: '--send-to "%1"',
+        description: '用 LongPost 打开',
+        cwd: path.dirname(process.execPath),
+      });
+      return ok ? { ok: true, path: linkPath } : { ok: false, error: '写入快捷方式失败' };
+    } catch (error) {
+      return { ok: false, error: String((error && error.message) || error) };
+    }
+  });
 
   ipcMain.handle('bridge:openExtensionDir', async () => {
     const dir = app.isPackaged
@@ -759,9 +813,6 @@ function registerIpc() {
     const err = await shell.openPath(dir);
     return err ? { ok: false, error: err } : { ok: true, dir };
   });
-
-  // 把实现注册给模块级包装：启动时在 app.whenReady 里调用，作用域不同
-  clipBridgeImpl = ensureClipBridgeImpl;
 
   ipcMain.handle('bridge:info', async () => {
     const bridge = await ensureClipBridge();
@@ -1013,6 +1064,22 @@ async function ensureClipBridge() {
   return clipBridgeImpl();
 }
 
+// 「发送到 LongPost」：把传进来的文件读成一篇草稿
+function readSendToArgument(argv) {
+  const index = argv.findIndex((a) => a === '--send-to');
+  if (index < 0 || !argv[index + 1]) return null;
+  return argv[index + 1];
+}
+
+function importSendToFile(filePath) {
+  try {
+    const text = fs.readFileSync(filePath, 'utf8');
+    return { title: path.basename(filePath), content: text };
+  } catch (error) {
+    return { title: path.basename(filePath), content: '读取失败：' + String(error && error.message) };
+  }
+}
+
 app.whenReady().then(() => {
   store.init(app.getPath('userData'));
   // 本地桥：开着就随应用启动，用户不必每次先进设置页
@@ -1023,6 +1090,19 @@ app.whenReady().then(() => {
   buildMenu();
   registerIpc();
   createWindow();
+
+  const sendToPath = readSendToArgument(process.argv);
+  if (sendToPath) {
+    const doc = importSendToFile(sendToPath);
+    store
+      .saveArticle({ title: doc.title, content: doc.content, tags: ['导入'] })
+      .then(() => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('bridge:clipped', { title: doc.title });
+        }
+      })
+      .catch(() => {});
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

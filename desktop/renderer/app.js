@@ -2925,7 +2925,7 @@
       }
       const settings = (await LP.getSettings()) || {};
       const backupData = {
-        version: '3.1.7',
+        version: '3.1.8',
         exportedAt: new Date().toISOString(),
         appName: 'LongPost',
         stats: {
@@ -3572,9 +3572,14 @@
   async function toggleClipBridge() {
     const sw = $('clipBridgeSwitch');
     const next = sw.getAttribute('aria-checked') !== 'true';
-    await LP.setSettings({ clipBridgeEnabled: next });
+    if (typeof LP.setBridgeEnabled === 'function') {
+      await LP.setBridgeEnabled(next);
+    } else {
+      await LP.setSettings({ clipBridgeEnabled: next });
+    }
     state.settings.clipBridgeEnabled = next;
     await refreshClipBridge();
+    await refreshClipLog();
     toast(next ? '已开启本地桥，复制书签代码即可使用' : '已关闭本地桥', next ? 'ok' : undefined);
   }
 
@@ -3621,13 +3626,58 @@
     else toast('打不开目录：' + ((res && res.error) || '未知原因'), 'err');
   }
 
+  async function refreshClipLog() {
+    const box = $('clipLog');
+    if (!box) return;
+    if (!LP || typeof LP.bridgeLog !== 'function') return;
+    const entries = await LP.bridgeLog();
+    if (!entries || entries.length === 0) {
+      box.hidden = true;
+      return;
+    }
+    box.hidden = false;
+    box.textContent = entries
+      .slice(-12)
+      .map((e) => {
+        const time = (e.at || '').slice(11, 19);
+        return time + '  ' + (e.method || '') + ' ' + (e.url || '') + '  ' + (e.status || '');
+      })
+      .join('\n');
+  }
+
+  async function rotateBridgeToken() {
+    if (typeof LP.rotateBridgeToken !== 'function') {
+      toast('当前环境不支持', 'err');
+      return;
+    }
+    const res = await LP.rotateBridgeToken();
+    if (!res || !res.ok) {
+      toast('轮换失败', 'err');
+      return;
+    }
+    await refreshClipBridge();
+    toast('令牌已轮换：旧书签和扩展需要重新配对', 'ok');
+  }
+
+  async function installSendToMenu() {
+    if (!LP || typeof LP.installSendTo !== 'function') {
+      toast('当前环境不支持', 'err');
+      return;
+    }
+    const res = await LP.installSendTo();
+    if (res && res.ok) toast('已加入「发送到」菜单：任意文件右键 → 发送到 → LongPost', 'ok');
+    else toast('加入失败：' + ((res && res.error) || '未知原因'), 'err');
+  }
+
   function bindClipBridge() {
     // 设置卡片没插进来时直接跳过，不能让整个启动流程挂在 null 上
-    if (!$('clipBridgeSwitch') || !$('clipBookmarkBtn') || !$('clipPairBtn') || !$('clipExtDirBtn')) return;
+    if (!$('clipBridgeSwitch') || !$('clipBookmarkBtn') || !$('clipPairBtn') || !$('clipExtDirBtn') || !$('clipRotateBtn') || !$('clipSendToBtn')) return;
     $('clipBridgeSwitch').addEventListener('click', toggleClipBridge);
     $('clipBookmarkBtn').addEventListener('click', copyBookmarklet);
     $('clipPairBtn').addEventListener('click', copyPairingCode);
-    $('clipExtDirBtn').addEventListener('click', openExtensionDir);
+    $('clipExtDirBtn').addEventListener('click', openExtensionDir);
+    $('clipRotateBtn').addEventListener('click', rotateBridgeToken);
+    $('clipSendToBtn').addEventListener('click', installSendToMenu);
     if (LP && typeof LP.onClipped === 'function') {
       LP.onClipped(() => {
         refreshAll();

@@ -61,7 +61,11 @@ contextBridge.exposeInMainWorld('lp', {
 
   // Chrome 剪藏桥：端口与令牌（只在开启后返回）
   bridgeInfo: () => ipcRenderer.invoke('bridge:info'),
+  setBridgeEnabled: (v) => ipcRenderer.invoke('bridge:setEnabled', v),
+  rotateBridgeToken: () => ipcRenderer.invoke('bridge:rotateToken'),
+  bridgeLog: () => ipcRenderer.invoke('bridge:log'),
   openExtensionDir: () => ipcRenderer.invoke('bridge:openExtensionDir'),
+  installSendTo: () => ipcRenderer.invoke('sendTo:install'),
   onClipped: (handler) => {
     const listener = (_e, data) => handler(data);
     ipcRenderer.on('bridge:clipped', listener);

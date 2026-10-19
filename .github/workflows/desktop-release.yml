@@ -77,6 +77,10 @@ jobs:
           fi
           exit $code
 
+      - name: 校验打包清单（防止漏打包导致启动崩溃）
+        working-directory: desktop
+        run: node scripts/check-package-files.js
+
       - name: 跑逻辑自检
         shell: bash
         run: |

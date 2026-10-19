@@ -46,6 +46,22 @@ function corsHeaders(extraPrivateNetwork) {
 function startBridge(options) {
   const token = (options && options.token) || createToken(randomBytes);
   const onClip = (options && options.onClip) || (() => {});
+  const onLog = (options && options.onLog) || (() => {});
+
+  /** 最近请求记录，供设置页展示（最多 20 条） */
+  const log = [];
+  function record(entry) {
+    log.push(Object.assign({ at: new Date().toISOString() }, entry));
+    if (log.length > 20) log.shift();
+    try {
+      onLog(entry);
+    } catch {
+      /* 日志回调出错不影响主流程 */
+    }
+  }
+  function getLog() {
+    return log.slice();
+  }
 
   let windowStart = Date.now();
   let count = 0;
@@ -55,6 +71,7 @@ function startBridge(options) {
       String(req.headers['access-control-request-private-network'] || '').toLowerCase() === 'true';
 
     const reply = (status, body) => {
+      record({ method: req.method, url: req.url, status });
       res.writeHead(
         status,
         Object.assign({ 'Content-Type': 'application/json; charset=utf-8' }, corsHeaders(wantsPrivate)),
@@ -63,6 +80,7 @@ function startBridge(options) {
     };
 
     if (req.method === 'OPTIONS') {
+      record({ method: 'OPTIONS', url: req.url, status: 204 });
       res.writeHead(204, corsHeaders(wantsPrivate));
       res.end();
       return;
@@ -132,15 +150,35 @@ function startBridge(options) {
   });
 
   return new Promise((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', () => {
-      const address = server.address();
-      resolve({
-        port: address.port,
-        token: token,
-        close: () => new Promise((done) => server.close(() => done())),
+    // listen(0) 让系统挑空闲端口；万一撞上也不放弃，最多试 3 次
+    let attempts = 0;
+    const tryListen = () => {
+      attempts += 1;
+      const onError = (error) => {
+        if (error && error.code === 'EADDRINUSE' && attempts < 3) {
+          setTimeout(tryListen, 80);
+          return;
+        }
+        reject(error);
+      };
+      server.once('error', onError);
+      server.listen(0, '127.0.0.1', () => {
+        server.removeListener('error', onError);
+        const address = server.address();
+        record({ method: 'LISTEN', url: '127.0.0.1:' + address.port, status: 0 });
+        resolve({
+          port: address.port,
+          token: token,
+          getLog: getLog,
+          close: () =>
+            new Promise((done) => {
+              record({ method: 'CLOSE', url: '', status: 0 });
+              server.close(() => done());
+            }),
+        });
       });
-    });
+    };
+    tryListen();
   });
 }
 

@@ -16,7 +16,7 @@
   'use strict';
 
   /** 跟 desktop/package.json 的 version 保持一致，自检里有断言盯着。 */
-  const APP_VERSION = '3.1.7';
+  const APP_VERSION = '3.1.8';
 
   if (!window.LPRepo || !window.LPIdbBackend) {
     const missing = [];
@@ -434,6 +434,10 @@
     platformLabel: '手机版',
     bridgeInfo: async () => ({ enabled: false }),
     openExtensionDir: async () => ({ ok: false }),
+    installSendTo: async () => ({ ok: false }),
+    setBridgeEnabled: async () => ({ ok: false }),
+    rotateBridgeToken: async () => ({ ok: false }),
+    bridgeLog: async () => [],
     onClipped: () => () => {},
     aiChat: aiChat,
     onAiChunk: onAiChunk,
