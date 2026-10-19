@@ -4237,3 +4237,32 @@ body.reading-mode .preview {
 .tools.condensed .btn-label {
   display: none;
 }
+
+/* ---------------------------------------------------------------- side-foot 自适应 */
+/* 侧栏只有 300px 左右，底部三个带文字的按钮会互相挤压，最后「设置」被截断。
+   给它们换行能力，窄侧栏下退化成纯图标（悬停仍有 title）。 */
+.side-foot {
+  flex-wrap: wrap;
+  row-gap: var(--sp-1);
+}
+
+.foot-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+
+.foot-btns .btn {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 1180px) {
+  .foot-btns .btn span {
+    display: none;
+  }
+  .side-foot .only-desktop {
+    display: none;
+  }
+}
