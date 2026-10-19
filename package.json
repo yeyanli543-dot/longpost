@@ -1,6 +1,6 @@
 {
   "name": "longpost",
-  "version": "3.1.1",
+  "version": "3.1.2",
   "private": true,
   "description": "Modern full-stack open-source platform for long-form content, articles and knowledge sharing",
   "scripts": {
