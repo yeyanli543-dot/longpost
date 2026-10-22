@@ -1,6 +1,6 @@
 {
   "name": "longpost",
-  "version": "3.2.2",
+  "version": "3.2.3",
   "private": true,
   "description": "Modern full-stack open-source platform for long-form content, articles and knowledge sharing",
   "scripts": {
@@ -19,7 +19,9 @@
     "type:check": "concurrently -n \"server,client\" -c \"blue,green\" \"npm run type:check:server\" \"npm run type:check:client\"",
     "type:check:client": "tsc --noEmit --project tsconfig.app.json",
     "type:check:server": "tsc --noEmit --project tsconfig.node.json",
-    "test": "node --import ./test/register-aliases.mjs --test test/*.test.mjs"
+    "test": "node --import ./test/register-aliases.mjs --test test/*.test.mjs",
+    "check:docs": "node scripts/check-doc-version.js",
+    "check:deps": "node scripts/check-deps.js"
   },
   "dependencies": {
     "@nestjs/common": "^12.1.3",

@@ -45,6 +45,10 @@ jobs:
       - name: 取代码
         uses: actions/checkout@v4
 
+      - name: 文档版本校验（README 与 package.json 一致）
+        working-directory: ${{ github.workspace }}
+        run: node scripts/check-doc-version.js
+
       - name: 装 Node
         uses: actions/setup-node@v4
         with:

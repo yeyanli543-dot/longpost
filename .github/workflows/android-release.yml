@@ -65,6 +65,10 @@ jobs:
           echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
 
+      - name: 文档版本校验（README 与 package.json 一致）
+        working-directory: ${{ github.workspace }}
+        run: node scripts/check-doc-version.js
+
       - name: 构建现代前端应用
         run: |
           npm install --legacy-peer-deps --no-audit --no-fund
