@@ -1,0 +1,1682 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>🪶 LongPost v3.2.3 技术架构与产品白皮书</title>
+<style>
+:root { --ink: #1a1d21; --sub: #5a6472; --line: #e3e7ec; --accent: #1d6fe0; --bg: #fbfcfd; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.85 -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+.page { max-width: 860px; margin: 0 auto; padding: 56px 48px 96px; }
+.cover { text-align: center; padding: 72px 0 56px; border-bottom: 2px solid var(--line); margin-bottom: 40px; }
+.cover h1 { font-size: 34px; margin: 0 0 12px; letter-spacing: -0.5px; }
+.cover p { color: var(--sub); margin: 6px 0; font-size: 14px; }
+.toc { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 22px 26px; margin: 0 0 44px; }
+.toc h2 { margin: 0 0 12px; font-size: 16px; letter-spacing: 1px; color: var(--sub); text-transform: uppercase; }
+.toc ul { list-style: none; margin: 0; padding: 0; column-count: 2; column-gap: 32px; }
+.toc li { break-inside: avoid; margin: 4px 0; font-size: 13.5px; }
+.toc li.lv3 { padding-left: 14px; font-size: 12.5px; color: var(--sub); }
+.toc a { color: var(--ink); text-decoration: none; }
+.toc a:hover { color: var(--accent); }
+h1, h2, h3, h4 { line-height: 1.35; margin: 2em 0 0.6em; }
+h2 { font-size: 24px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+h3 { font-size: 18px; color: #23282f; }
+h4 { font-size: 15.5px; }
+p { margin: 0.7em 0; }
+a { color: var(--accent); }
+hr { border: none; border-top: 1px solid var(--line); margin: 40px 0; }
+blockquote {
+  margin: 1em 0; padding: 10px 18px; border-left: 3px solid var(--accent);
+  background: #f2f6fd; color: #2b3a4a; border-radius: 0 8px 8px 0;
+}
+code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+p code, li code { background: #eef1f5; padding: 1px 5px; border-radius: 4px; }
+pre {
+  background: #0f141a; color: #d8e0ea; padding: 16px 18px; border-radius: 10px;
+  overflow: auto; font-size: 12.5px; line-height: 1.6;
+}
+pre code { color: inherit; background: none; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 1em 0; font-size: 13.5px; }
+th, td { border: 1px solid var(--line); padding: 8px 12px; text-align: left; vertical-align: top; }
+th { background: #f3f6f9; font-weight: 600; }
+tbody tr:nth-child(even) { background: #fafbfc; }
+ul, ol { padding-left: 1.4em; }
+li { margin: 0.3em 0; }
+@media print {
+  @page { size: A4; margin: 16mm 14mm; }
+  body { background: #fff; font-size: 11pt; }
+  .page { max-width: none; padding: 0; }
+  .cover { page-break-after: always; padding-top: 30mm; }
+  .toc { page-break-after: always; break-inside: avoid; }
+  h2 { page-break-before: auto; page-break-after: avoid; }
+  h3, h4 { page-break-after: avoid; }
+  pre, table, blockquote { page-break-inside: avoid; }
+  a { color: inherit; text-decoration: none; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="cover">
+    <h1>🪶 LongPost v3.2.3 技术架构与产品白皮书</h1>
+    <div class="meta"><p><strong>文档定位</strong>：面向架构评审、团队交接、技术选型与二次开发者的完整说明。</p><p><strong>覆盖范围</strong>：Web 云端、桌面工作台、Android、Chrome 扩展、本地桥与生态接入。</p><p><strong>数据基准</strong>：仓库 <code>main</code> 分支 v3.2.3（提交 <code>dd84c3f</code>）。</p><p><strong>配套文档</strong>：<a href="./PRODUCT-REPORT.md">产品报告</a> · <a href="./USER-GUIDE.md">使用说明</a> · <a href="./CLIP-API.md">剪藏 API</a> · <a href="./ECOSYSTEM.md">生态接入</a></p></div>
+  </div>
+  <nav class="toc">
+    <h2>目录</h2>
+    <ul><li class="lv2"><a href="#h2">一、 执行摘要</a></li>
+<li class="lv3"><a href="#h3">1.1 长文创作的三重断裂</a></li>
+<li class="lv3"><a href="#h4">1.2 LongPost 的答案</a></li>
+<li class="lv3"><a href="#h5">1.3 关键数字（v3.2.3 实测）</a></li>
+<li class="lv2"><a href="#h6">二、 版本演进</a></li>
+<li class="lv2"><a href="#h7">三、 系统架构总览</a></li>
+<li class="lv3"><a href="#h8">3.1 分层</a></li>
+<li class="lv3"><a href="#h9">3.2 为什么不做成一套</a></li>
+<li class="lv3"><a href="#h10">3.3 一次阅读请求的完整链路</a></li>
+<li class="lv2"><a href="#h11">四、 三端形态与存储拓扑</a></li>
+<li class="lv3"><a href="#h12">4.1 桌面端存储细节</a></li>
+<li class="lv3"><a href="#h13">4.2 移动端</a></li>
+<li class="lv2"><a href="#h14">五、 Web 云端平台</a></li>
+<li class="lv3"><a href="#h15">5.1 模块地图（21 个）</a></li>
+<li class="lv3"><a href="#h16">5.2 路由分布</a></li>
+<li class="lv3"><a href="#h17">5.3 SSR 与客户端渲染的边界</a></li>
+<li class="lv3"><a href="#h18">5.4 数据库访问</a></li>
+<li class="lv2"><a href="#h19">六、 桌面工作台</a></li>
+<li class="lv3"><a href="#h20">6.1 进程结构</a></li>
+<li class="lv3"><a href="#h21">6.2 为什么渲染层不用框架</a></li>
+<li class="lv3"><a href="#h22">6.3 IPC 面（节选）</a></li>
+<li class="lv3"><a href="#h23">6.4 打包清单守卫</a></li>
+<li class="lv2"><a href="#h24">七、 双工作区设计系统</a></li>
+<li class="lv3"><a href="#h25">7.1 两套骨架，不是两套配色</a></li>
+<li class="lv3"><a href="#h26">7.2 设计令牌</a></li>
+<li class="lv3"><a href="#h27">7.3 响应式的真实边界</a></li>
+<li class="lv2"><a href="#h28">八、 内容引擎</a></li>
+<li class="lv3"><a href="#h29">8.1 Markdown 渲染</a></li>
+<li class="lv3"><a href="#h30">8.2 图表 DSL</a></li>
+<li class="lv3"><a href="#h31">8.3 导出矩阵</a></li>
+<li class="lv3"><a href="#h32">8.4 排版算法</a></li>
+<li class="lv2"><a href="#h33">九、 AI 体系</a></li>
+<li class="lv3"><a href="#h34">9.1 三级取用</a></li>
+<li class="lv3"><a href="#h35">9.2 网关设计</a></li>
+<li class="lv3"><a href="#h36">9.3 密钥托管</a></li>
+<li class="lv3"><a href="#h37">9.4 场景化能力</a></li>
+<li class="lv2"><a href="#h38">十、 v3.0 三件套</a></li>
+<li class="lv3"><a href="#h39">10.1 订阅（Newsletter）</a></li>
+<li class="lv3"><a href="#h40">10.2 分发（OG 分享图）</a></li>
+<li class="lv3"><a href="#h41">10.3 迁移（导入 / 导出）</a></li>
+<li class="lv2"><a href="#h42">十一、 v3.1–3.2 生态层</a></li>
+<li class="lv3"><a href="#h43">11.1 本地桥协议</a></li>
+<li class="lv3"><a href="#h44">11.2 一个必须讲清楚的坑：Private Network Access</a></li>
+<li class="lv3"><a href="#h45">11.3 端口与令牌发现</a></li>
+<li class="lv3"><a href="#h46">11.4 Chrome 扩展（MV3）</a></li>
+<li class="lv3"><a href="#h47">11.5 命令行与 Obsidian</a></li>
+<li class="lv2"><a href="#h48">十二、 安全体系</a></li>
+<li class="lv3"><a href="#h49">12.1 威胁模型与处置</a></li>
+<li class="lv3"><a href="#h50">12.2 供应链治理</a></li>
+<li class="lv3"><a href="#h51">12.3 可选功能不得拖垮启动</a></li>
+<li class="lv2"><a href="#h52">十三、 质量工程</a></li>
+<li class="lv3"><a href="#h53">13.1 测试矩阵</a></li>
+<li class="lv3"><a href="#h54">13.2 三个「守卫」脚本</a></li>
+<li class="lv3"><a href="#h55">13.3 CI 流水线</a></li>
+<li class="lv3"><a href="#h56">13.4 质量门禁</a></li>
+<li class="lv2"><a href="#h57">十四、 性能与产物</a></li>
+<li class="lv2"><a href="#h58">十五、 部署与运维</a></li>
+<li class="lv3"><a href="#h59">15.1 三种方式</a></li>
+<li class="lv3"><a href="#h60">15.2 必填环境变量</a></li>
+<li class="lv3"><a href="#h61">15.3 可选：订阅与 AI</a></li>
+<li class="lv3"><a href="#h62">15.4 备份</a></li>
+<li class="lv2"><a href="#h63">十六、 数据模型</a></li>
+<li class="lv2"><a href="#h64">十七、 已知限制与路线图</a></li>
+<li class="lv3"><a href="#h65">17.1 限制</a></li>
+<li class="lv3"><a href="#h66">17.2 路线图</a></li>
+<li class="lv2"><a href="#h67">十八、 附录</a></li>
+<li class="lv3"><a href="#h68">18.1 目录结构</a></li>
+<li class="lv3"><a href="#h69">18.2 常用命令</a></li>
+<li class="lv3"><a href="#h70">18.3 快捷键</a></li>
+<li class="lv3"><a href="#h71">18.4 剪藏 API 速查</a></li>
+<li class="lv2"><a href="#h72">十九、 关键设计决策记录（ADR）</a></li>
+<li class="lv3"><a href="#h73">ADR-01：桌面与 Web 不共享 UI 代码</a></li>
+<li class="lv3"><a href="#h74">ADR-02：测试直连生产代码</a></li>
+<li class="lv3"><a href="#h75">ADR-03：渲染层不引入打包器</a></li>
+<li class="lv3"><a href="#h76">ADR-04：应用内更新不用 electron-updater</a></li>
+<li class="lv3"><a href="#h77">ADR-05：剪藏桥用 HTTP 而不是自定义协议</a></li>
+<li class="lv3"><a href="#h78">ADR-06：剪藏桥默认开启</a></li>
+<li class="lv2"><a href="#h79">二十、 事故复盘</a></li>
+<li class="lv3"><a href="#h80">20.1 v3.1.2 启动闪退（P0）</a></li>
+<li class="lv3"><a href="#h81">20.2 v3.1.4 仍打不开（P0）</a></li>
+<li class="lv3"><a href="#h82">20.3 依赖地狱（P1，连续三次）</a></li>
+<li class="lv3"><a href="#h83">20.4 CI 步骤把自己搞挂（P1）</a></li>
+<li class="lv3"><a href="#h84">20.5 设置面板展不开（P2）</a></li>
+<li class="lv2"><a href="#h85">二十一、 结语</a></li></ul>
+  </nav>
+  <main>
+<h1>🪶 LongPost v3.2.3 技术架构与产品白皮书</h1>
+<blockquote>
+<p><strong>文档定位</strong>：面向架构评审、团队交接、技术选型与二次开发者的完整说明。
+<strong>覆盖范围</strong>：Web 云端、桌面工作台、Android、Chrome 扩展、本地桥与生态接入。
+<strong>数据基准</strong>：仓库 <code>main</code> 分支 v3.2.3（提交 <code>dd84c3f</code>）。
+<strong>配套文档</strong>：<a href="./PRODUCT-REPORT.md">产品报告</a> · <a href="./USER-GUIDE.md">使用说明</a> · <a href="./CLIP-API.md">剪藏 API</a> · <a href="./ECOSYSTEM.md">生态接入</a></p>
+</blockquote>
+<hr>
+<h2 id="h1">目录</h2>
+<table>
+<thead>
+<tr>
+<th>章节</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一</td>
+<td>执行摘要：LongPost 在解决什么问题</td>
+</tr>
+<tr>
+<td>二</td>
+<td>版本演进：从 2.7 到 3.2</td>
+</tr>
+<tr>
+<td>三</td>
+<td>系统架构总览</td>
+</tr>
+<tr>
+<td>四</td>
+<td>三端形态与存储拓扑</td>
+</tr>
+<tr>
+<td>五</td>
+<td>Web 云端平台（21 模块 / 125 路由）</td>
+</tr>
+<tr>
+<td>六</td>
+<td>桌面工作台（Electron 渲染层与主进程）</td>
+</tr>
+<tr>
+<td>七</td>
+<td>双工作区：极简版 / 专业版设计系统</td>
+</tr>
+<tr>
+<td>八</td>
+<td>内容引擎：Markdown、图表 DSL 与导出矩阵</td>
+</tr>
+<tr>
+<td>九</td>
+<td>AI 体系：三级取用与密钥托管</td>
+</tr>
+<tr>
+<td>十</td>
+<td>v3.0 三件套：订阅、分发、迁移</td>
+</tr>
+<tr>
+<td>十一</td>
+<td>v3.1–3.2 生态层：本地桥、扩展、CLI、Obsidian</td>
+</tr>
+<tr>
+<td>十二</td>
+<td>安全体系：威胁模型与防护清单</td>
+</tr>
+<tr>
+<td>十三</td>
+<td>质量工程：测试矩阵与 CI 流水线</td>
+</tr>
+<tr>
+<td>十四</td>
+<td>性能、构建与产物</td>
+</tr>
+<tr>
+<td>十五</td>
+<td>部署与运维</td>
+</tr>
+<tr>
+<td>十六</td>
+<td>数据模型</td>
+</tr>
+<tr>
+<td>十七</td>
+<td>已知限制与路线图</td>
+</tr>
+<tr>
+<td>十八</td>
+<td>附录：目录、环境变量、快捷键、API 速查</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="h2">一、 执行摘要</h2>
+<h3 id="h3">1.1 长文创作的三重断裂</h3>
+<p>传统内容生态把「写」和「发」拆成了互不相通的两半：</p>
+<table>
+<thead>
+<tr>
+<th>形态</th>
+<th>代表</th>
+<th>优势</th>
+<th>断裂点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>中心化内容平台</td>
+<td>公众号、知乎、X</td>
+<td>有流量、有互动</td>
+<td>强制登录、排版受限、数据不属于作者、无法内嵌活数据</td>
+</tr>
+<tr>
+<td>本地笔记工具</td>
+<td>Obsidian、Notion、Logseq</td>
+<td>离线、纯文本、安全</td>
+<td>发布链路重、分享体验差、无社交反馈</td>
+</tr>
+<tr>
+<td>自建博客</td>
+<td>Hexo、Ghost</td>
+<td>自主可控</td>
+<td>门槛高、无互动、移动端体验差</td>
+</tr>
+</tbody></table>
+<p>三者的共同盲区是：<strong>写作者同时需要「离线安全感」和「公网传播力」，但市面上的工具默认你只能二选一。</strong></p>
+<h3 id="h4">1.2 LongPost 的答案</h3>
+<p>LongPost 用一套代码库同时提供两种形态：</p>
+<pre><code>                  ┌──────────────────────────────┐
+                  │        shared/ 纯逻辑层       │
+                  │  同步协议 · 三向合并 · 图表 DSL │
+                  │  盘古排版 · 内容风控 · 数据契约  │
+                  └───────────┬──────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        ▼                     ▼                     ▼
+┌───────────────┐     ┌───────────────┐     ┌───────────────┐
+│  Web 云端社区  │     │  桌面工作台    │     │  Android 应用  │
+│ React19+NestJS│     │ Electron+原生JS│     │ Capacitor 8   │
+│ PostgreSQL    │     │ 本机 JSON 文件 │     │ IndexedDB     │
+└───────┬───────┘     └───────┬───────┘     └───────┬───────┘
+        │                     │                     │
+        └─────────┬───────────┴───────────┬─────────┘
+                  ▼                       ▼
+        ┌──────────────────┐    ┌──────────────────┐
+        │  Chrome 扩展/书签  │    │ CLI / Obsidian    │
+        │  （本地桥 127.0.0.1）│    │ （同一套 API）     │
+        └──────────────────┘    └──────────────────┘
+</code></pre>
+<p>三条设计原则贯穿全项目：</p>
+<ol>
+<li><strong>本地优先</strong>：桌面与移动端 100% 离线可用，只有 AI、WebDAV、更新检查会出站。</li>
+<li><strong>单一事实源</strong>：算法与协议放 <code>shared/</code>，两端引用同一份实现，避免行为漂移。</li>
+<li><strong>可验证</strong>：每个功能都有对应的自检或单元测试；改坏了 CI 会拦住。</li>
+</ol>
+<h3 id="h5">1.3 关键数字（v3.2.3 实测）</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>服务端模块</td>
+<td>21 个</td>
+</tr>
+<tr>
+<td>HTTP 路由</td>
+<td>125 条</td>
+</tr>
+<tr>
+<td>前端页面</td>
+<td>21 个</td>
+</tr>
+<tr>
+<td>服务端代码</td>
+<td>120 文件 / 18,702 行</td>
+</tr>
+<tr>
+<td>前端代码</td>
+<td>229 文件 / 45,319 行</td>
+</tr>
+<tr>
+<td>桌面渲染层</td>
+<td>45 文件 / 22,190 行</td>
+</tr>
+<tr>
+<td>共享逻辑</td>
+<td>10 文件 / 1,864 行</td>
+</tr>
+<tr>
+<td>单元测试</td>
+<td>26 文件 / 225 项全通过</td>
+</tr>
+<tr>
+<td>桌面自检</td>
+<td>78 项</td>
+</tr>
+<tr>
+<td>移动自检</td>
+<td>108 项</td>
+</tr>
+<tr>
+<td>生产依赖</td>
+<td>32 个</td>
+</tr>
+<tr>
+<td>生产依赖漏洞</td>
+<td>0</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="h6">二、 版本演进</h2>
+<table>
+<thead>
+<tr>
+<th>版本</th>
+<th>主题</th>
+<th>关键变化</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>v2.7.5</td>
+<td>双工作区雏形</td>
+<td>布局分叉、杂志排版、崩溃恢复</td>
+</tr>
+<tr>
+<td>v2.9.0</td>
+<td>生态互通</td>
+<td>公众号排版、RSS/Atom、Obsidian 导出、PWA Share Target</td>
+</tr>
+<tr>
+<td>v2.9.5</td>
+<td>分享修复</td>
+<td>微信多场景、QQ 扫码、直达二维码</td>
+</tr>
+<tr>
+<td>v2.9.7</td>
+<td>工程治理</td>
+<td>三套影子目录归档、测试直连生产代码、SSRF 修复、首屏 −86%</td>
+</tr>
+<tr>
+<td>v2.9.8</td>
+<td>安全与体验</td>
+<td>桌面/安卓接入 AI、依赖漏洞 17→0、登录节流、设置面板重构、设计令牌收敛</td>
+</tr>
+<tr>
+<td>v2.9.9–3.0.3</td>
+<td>界面落地与稳定性</td>
+<td>应用内更新、对话框椭圆修复、启动崩溃两连修、锁定官方 npm 源</td>
+</tr>
+<tr>
+<td>v3.0.0</td>
+<td>个人发布引擎</td>
+<td>邮件订阅（双向确认/发布推送/退订）、动态 OG 分享图、Obsidian 导入、整站静态导出</td>
+</tr>
+<tr>
+<td>v3.1.0–3.1.9</td>
+<td>Chrome 连接</td>
+<td>本地桥 + 令牌配对、书签小工具、MV3 扩展、发送到菜单、剪藏 API 文档</td>
+</tr>
+<tr>
+<td>v3.2.0–3.2.3</td>
+<td>生态与治理</td>
+<td>命令行剪藏、Obsidian 插件、依赖体检、README 版本守卫</td>
+</tr>
+</tbody></table>
+<p>三个转折点值得单独说：</p>
+<ul>
+<li><strong>v2.9.7</strong> 之前，测试是“复制一份代码再测”，改完经常忘记同步；之后改成直连生产代码，测试才开始有意义。</li>
+<li><strong>v3.0</strong> 之前，LongPost 只回答“怎么写”；之后开始回答“写完之后”。</li>
+<li><strong>v3.1</strong> 之前，入口只有“我坐下来写”；之后变成“我在哪都能开始写”。</li>
+</ul>
+<hr>
+<h2 id="h7">三、 系统架构总览</h2>
+<h3 id="h8">3.1 分层</h3>
+<pre><code>┌─────────────────────────────────────────────────────────────┐
+│ 表现层                                                       │
+│  client/ (React 19)   desktop/renderer/ (原生 JS)            │
+│  chrome-extension/ (MV3)   obsidian-plugin/ (CommonJS)       │
+├─────────────────────────────────────────────────────────────┤
+│ 接入层                                                       │
+│  NestJS REST /api (125 路由)   Socket.IO (私信/会议信令)      │
+│  SSE (/api/ai/chat)          本地桥 HTTP (127.0.0.1)         │
+├─────────────────────────────────────────────────────────────┤
+│ 领域层                                                       │
+│  server/modules/* (21 个)   desktop/lib/* (渲染层共享模块)    │
+│  shared/* (同步协议、图表 DSL、盘古排版、数据契约)             │
+├─────────────────────────────────────────────────────────────┤
+│ 基础设施                                                     │
+│  Drizzle ORM → PostgreSQL 16    本机 JSON / IndexedDB        │
+│  Sharp (图片)  Nodemailer/Resend (邮件)  ECharts/KaTeX/Prism │
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3 id="h9">3.2 为什么不做成一套</h3>
+<p>社区要联网、要鉴权、要实时；写作台要求断网可用、数据 100% 在本机。硬揉成一套，两边都会做不好。所以：</p>
+<ul>
+<li><code>client/</code> 与 <code>desktop/renderer/</code> 是<strong>两套独立渲染层</strong>，不共享 UI 代码；</li>
+<li>它们共享的是<strong>协议与算法</strong>（<code>shared/</code> 与 <code>desktop/lib/</code>），不是组件；</li>
+<li>Web 与桌面之间的数据交换通过 <strong>导入/导出 + WebDAV 同步</strong>，不靠私有协议。</li>
+</ul>
+<h3 id="h10">3.3 一次阅读请求的完整链路</h3>
+<pre><code>浏览器 GET /p/:slug
+  → NestJS ViewController（SSR）
+  → Drizzle 查询 article + author + images + attachments
+  → renderArticleBody()（Markdown → HTML，图表围栏 → chart 容器）
+  → buildArticleHtml()（注入 OG 标签、结构化数据、首屏样式）
+  → 返回完整 HTML
+  → 客户端 hydrate：按需懒加载 ECharts / KaTeX
+</code></pre>
+<p>免登录短链是这套系统的关键设计：<strong>访客不注册也能读完一篇带图表的长文</strong>。</p>
+<hr>
+<h2 id="h11">四、 三端形态与存储拓扑</h2>
+<table>
+<thead>
+<tr>
+<th>端</th>
+<th>运行时</th>
+<th>数据位置</th>
+<th>离线</th>
+<th>主要场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>桌面</td>
+<td>Electron 44 (Node 22)</td>
+<td><code>%APPDATA%/LongPost/data/articles.json</code> + <code>files/</code></td>
+<td>100%</td>
+<td>深度写作、归档、导出</td>
+</tr>
+<tr>
+<td>Android</td>
+<td>Capacitor 8 WebView</td>
+<td>IndexedDB</td>
+<td>100%</td>
+<td>碎片记录、移动阅读</td>
+</tr>
+<tr>
+<td>Web</td>
+<td>Node 22 + React 19</td>
+<td>PostgreSQL</td>
+<td>需联网（PWA 有缓存）</td>
+<td>公开分发、社区互动、会议</td>
+</tr>
+</tbody></table>
+<h3 id="h12">4.1 桌面端存储细节</h3>
+<pre><code>%APPDATA%/LongPost/
+├── data/
+│   ├── articles.json      # 文章正文与元数据
+│   ├── settings.json      # 偏好、AI 配置、桥令牌
+│   └── files/             # 图片与附件（按 hash 命名）
+├── bridge.json            # 本地桥端口与令牌（运行时生成）
+└── logs/                  # 运行日志
+</code></pre>
+<p>写入策略：<strong>先写临时文件再 rename</strong>，避免中途崩溃留下半个 JSON。</p>
+<h3 id="h13">4.2 移动端</h3>
+<p>Capacitor 只打包 <code>desktop/renderer/</code> 一个目录，所以渲染层里不能出现 <code>../lib/xxx.js</code> 这种跳出目录的引用 —— 所有共享模块都要通过 <code>npm run vendor</code> 复制到 <code>renderer/vendor/</code>。</p>
+<p>这条约束用一个自检兜底：复制完逐字节比对，不一致直接报错。</p>
+<hr>
+<h2 id="h14">五、 Web 云端平台</h2>
+<h3 id="h15">5.1 模块地图（21 个）</h3>
+<table>
+<thead>
+<tr>
+<th>模块</th>
+<th>职责</th>
+<th>关键点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>auth</code></td>
+<td>注册、登录、OAuth、JWT、改密</td>
+<td>登录失败节流（IP+邮箱，15 分钟 5 次锁 15 分钟）</td>
+</tr>
+<tr>
+<td><code>posts</code></td>
+<td>短帖</td>
+<td>字数限制、话题解析、转发引用</td>
+</tr>
+<tr>
+<td><code>articles</code></td>
+<td>长文 CRUD、发布、系列</td>
+<td>发布即触发订阅推送（幂等）</td>
+</tr>
+<tr>
+<td><code>comments</code></td>
+<td>评论与楼中楼</td>
+<td>软删除、点赞、按时间/热度</td>
+</tr>
+<tr>
+<td><code>interactions</code></td>
+<td>点赞、收藏、转发</td>
+<td>计数与通知联动</td>
+</tr>
+<tr>
+<td><code>follows</code></td>
+<td>关注关系</td>
+<td>关注流、粉丝列表</td>
+</tr>
+<tr>
+<td><code>notifications</code></td>
+<td>通知中心</td>
+<td>已读游标、聚合</td>
+</tr>
+<tr>
+<td><code>hashtags</code></td>
+<td>话题</td>
+<td>热榜、内容关联</td>
+</tr>
+<tr>
+<td><code>dm</code></td>
+<td>私信</td>
+<td>Socket.IO 实时、会话列表</td>
+</tr>
+<tr>
+<td><code>meetings</code></td>
+<td>视频会议</td>
+<td>6 位会议码、WebRTC 信令、纪要</td>
+</tr>
+<tr>
+<td><code>uploads</code></td>
+<td>文件上传</td>
+<td>后缀白名单、随机文件名、Sharp 重编码</td>
+</tr>
+<tr>
+<td><code>view</code></td>
+<td>SSR 阅读页与 Feed</td>
+<td>免登录短链、OG 注入、RSS/Atom</td>
+</tr>
+<tr>
+<td><code>sync</code></td>
+<td>WebDAV 代理</td>
+<td>四层 SSRF 守卫</td>
+</tr>
+<tr>
+<td><code>ai</code></td>
+<td>AI 网关</td>
+<td>三级取用、密钥加密托管、SSE 流式</td>
+</tr>
+<tr>
+<td><code>newsletter</code></td>
+<td>订阅与推送</td>
+<td>双向确认、幂等推送、CSV 导出</td>
+</tr>
+<tr>
+<td><code>og</code></td>
+<td>动态分享图</td>
+<td>SVG → PNG、字体探测</td>
+</tr>
+<tr>
+<td><code>access-codes</code></td>
+<td>通行码空间</td>
+<td>一码一空间、使用日志</td>
+</tr>
+<tr>
+<td><code>admin</code></td>
+<td>后台管理</td>
+<td>用户、内容、举报、站点设置</td>
+</tr>
+<tr>
+<td><code>site-settings</code></td>
+<td>站点配置</td>
+<td>注册模式、开关项</td>
+</tr>
+<tr>
+<td><code>pwa</code></td>
+<td>PWA 清单与图标</td>
+<td>可安装、Share Target</td>
+</tr>
+<tr>
+<td><code>hello</code></td>
+<td>健康检查</td>
+<td>部署探活</td>
+</tr>
+</tbody></table>
+<h3 id="h16">5.2 路由分布</h3>
+<p>125 条 HTTP 路由按前缀分组：</p>
+<table>
+<thead>
+<tr>
+<th>前缀</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>/api/auth/*</code></td>
+<td>登录注册、OAuth 回调、改密、偏好</td>
+</tr>
+<tr>
+<td><code>/api/posts/*</code></td>
+<td>短帖时间线、详情、转发</td>
+</tr>
+<tr>
+<td><code>/api/articles/*</code></td>
+<td>长文 CRUD、发布、系列</td>
+</tr>
+<tr>
+<td><code>/api/comments/*</code></td>
+<td>评论增删查</td>
+</tr>
+<tr>
+<td><code>/api/interactions/*</code></td>
+<td>点赞收藏转发</td>
+</tr>
+<tr>
+<td><code>/api/follows/*</code></td>
+<td>关注与粉丝</td>
+</tr>
+<tr>
+<td><code>/api/notifications/*</code></td>
+<td>通知</td>
+</tr>
+<tr>
+<td><code>/api/hashtags/*</code></td>
+<td>话题与热榜</td>
+</tr>
+<tr>
+<td><code>/api/dm/*</code></td>
+<td>私信</td>
+</tr>
+<tr>
+<td><code>/api/meetings/*</code></td>
+<td>会议</td>
+</tr>
+<tr>
+<td><code>/api/upload</code></td>
+<td>上传</td>
+</tr>
+<tr>
+<td><code>/api/sync/*</code></td>
+<td>WebDAV 代理</td>
+</tr>
+<tr>
+<td><code>/api/ai/*</code></td>
+<td>AI 状态、密钥、对话</td>
+</tr>
+<tr>
+<td><code>/api/newsletter/*</code></td>
+<td>订阅、确认、退订、统计、后台</td>
+</tr>
+<tr>
+<td><code>/api/og/*</code></td>
+<td>分享图</td>
+</tr>
+<tr>
+<td><code>/p/:slug</code> <code>/a/:slug</code></td>
+<td>免登录阅读页</td>
+</tr>
+<tr>
+<td><code>/feed.xml</code> <code>/atom.xml</code></td>
+<td>订阅源</td>
+</tr>
+</tbody></table>
+<h3 id="h17">5.3 SSR 与客户端渲染的边界</h3>
+<pre><code>服务端渲染（首屏可见、SEO 友好）
+  ├── 阅读页 /p/:slug
+  ├── RSS / Atom
+  └── 分享图 /api/og/article/:id
+
+客户端渲染（交互、实时）
+  ├── 时间线、编辑器、私信、会议
+  └── 设置、后台
+</code></pre>
+<p>阅读页走 SSR 是因为：爬虫（微信、X、Slack）拿 OG 标签时不执行 JS。</p>
+<h3 id="h18">5.4 数据库访问</h3>
+<p>Drizzle ORM，纯参数化查询。建表不依赖迁移工具，而是<strong>幂等 DDL</strong>：</p>
+<pre><code class="language-sql">CREATE TABLE IF NOT EXISTS app_users (...);
+ALTER TABLE app_users ADD COLUMN IF NOT EXISTS token_version INTEGER NOT NULL DEFAULT 1;
+</code></pre>
+<p>好处：新环境 <code>npm start</code> 就能建库；坏处：改列类型要手写补丁。当前二十余张表的规模下，这个取舍是划算的。</p>
+<hr>
+<h2 id="h19">六、 桌面工作台</h2>
+<h3 id="h20">6.1 进程结构</h3>
+<pre><code>主进程 (main.js)
+├── 窗口与菜单
+├── IPC 面：文章读写、文件导入导出、AI 代理、WebDAV、更新、剪藏桥、发送到
+├── bridge.js     本地桥 HTTP 服务
+├── lib/store.js  仓库层（repo + 磁盘后端）
+└── lib/updater.js 应用内更新
+
+渲染进程 (renderer/app.js)
+├── 原生 JS，无框架、无打包器
+├── 通过 window.LPPlatform 访问能力（平台门面）
+└── vendor/ 下是共享模块与第三方库的拷贝
+</code></pre>
+<h3 id="h21">6.2 为什么渲染层不用框架</h3>
+<ul>
+<li>桌面与 Android 共用同一份渲染层，Capacitor 只打包一个目录；</li>
+<li>没有打包器就没有构建步骤，改完直接生效；</li>
+<li>代价是必须自己管状态与事件，所以代码里到处都是“先查元素再绑定”的防御写法。</li>
+</ul>
+<h3 id="h22">6.3 IPC 面（节选）</h3>
+<table>
+<thead>
+<tr>
+<th>通道</th>
+<th>方向</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>articles:list/save/delete</code></td>
+<td>双向</td>
+<td>文章读写</td>
+</tr>
+<tr>
+<td><code>files:import</code></td>
+<td>双向</td>
+<td>图片附件导入</td>
+</tr>
+<tr>
+<td><code>ai:chat/abort</code></td>
+<td>双向</td>
+<td>AI 流式对话</td>
+</tr>
+<tr>
+<td><code>update:check/download/install</code></td>
+<td>双向</td>
+<td>应用内更新</td>
+</tr>
+<tr>
+<td><code>bridge:info/setEnabled/rotateToken/log</code></td>
+<td>双向</td>
+<td>剪藏桥</td>
+</tr>
+<tr>
+<td><code>sendTo:install</code></td>
+<td>双向</td>
+<td>写 Windows 发送到快捷方式</td>
+</tr>
+<tr>
+<td><code>bridge:clipped</code></td>
+<td>主→渲染</td>
+<td>剪藏完成通知</td>
+</tr>
+</tbody></table>
+<h3 id="h23">6.4 打包清单守卫</h3>
+<p>踩过的坑：新增 <code>desktop/bridge.js</code> 但忘了加进 electron-builder 的 <code>build.files</code>，开发时一切正常，装到用户机器上启动即崩：</p>
+<pre><code>Error: Cannot find module &#39;./bridge&#39;
+</code></pre>
+<p>现在有 <code>scripts/check-package-files.js</code>：静态解析 main/preload 里的 <code>require(&#39;./x&#39;)</code>，逐个比对 <code>build.files</code>，不通过就退出码 1，并且已经挂进 CI。</p>
+<p>同类保险还有一层：<code>main.js</code> 里所有可选功能的 <code>require</code> 都包了 try/catch，<strong>任何一个可选模块缺失都不能让应用打不开</strong>。</p>
+<hr>
+<h2 id="h24">七、 双工作区设计系统</h2>
+<h3 id="h25">7.1 两套骨架，不是两套配色</h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>极简版</th>
+<th>专业版</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>布局</td>
+<td>无侧栏、880px 居中</td>
+<td>侧边抽屉 + 右侧探索栏</td>
+</tr>
+<tr>
+<td>导航</td>
+<td>底部悬浮 Dock</td>
+<td>顶部工具带 + 浮动主按钮</td>
+</tr>
+<tr>
+<td>排版</td>
+<td>首字下沉、标点挤压</td>
+<td>等宽严谨、结构化</td>
+</tr>
+<tr>
+<td>独有工具</td>
+<td>沉浸心流</td>
+<td>知识图谱、写作实验室、版本差分、白板</td>
+</tr>
+</tbody></table>
+<p>切换方式：<code>Alt + M</code> 或点击模式按钮，偏好持久化。</p>
+<h3 id="h26">7.2 设计令牌</h3>
+<p>全部收敛到 <code>:root</code>：</p>
+<pre><code class="language-css">--r-xs 5 / --r-sm 7 / --r-md 10 / --r-lg 14 / --r-xl 20 / --r-pill 999
+--fs-xs 11.5 / --fs-sm 12.5 / --fs-md 13.5 / --fs-lg 15 / --fs-xl 17 / --fs-2xl 20
+--dur-1 120ms / --dur-2 200ms / --dur-3 320ms
+--ease cubic-bezier(0.2, 0.8, 0.2, 1)
+</code></pre>
+<p>v2.9.8 做过一次收敛：圆角从 15 种字面值降到 6 个令牌，字号从 19 种降到 6 个，transition 从 24 处裸秒数降到 3 个。</p>
+<h3 id="h27">7.3 响应式的真实边界</h3>
+<p>工具条 16 个按钮塞进 699px 放不下。策略是<strong>两档降级</strong>：</p>
+<ol>
+<li><strong>紧凑模式</strong>：隐藏按钮文字只留图标（实测 16 个按钮从溢出变成 646px）；</li>
+<li><strong>折叠</strong>：极端窄窗口才按优先级收进「更多」菜单。</li>
+</ol>
+<p>手机上只留 3 个高频按钮（置顶 / 查找 / 更多），其余全在菜单里 —— 并且有一条自检断言「折叠掉的按钮在菜单里都有等价入口」。</p>
+<hr>
+<h2 id="h28">八、 内容引擎</h2>
+<h3 id="h29">8.1 Markdown 渲染</h3>
+<p><code>desktop/lib/markdown.js</code> 是渲染层与导出共用的实现：</p>
+<ul>
+<li>CommonMark 子集 + 表格 + 任务列表 + 高亮 ==text==</li>
+<li>代码高亮：Prism（20 种语言，离线）</li>
+<li>数学：KaTeX（<code>$...$</code> 与 <code>$$...$$</code>）</li>
+<li>图表：<code>chart</code> 围栏 → ECharts 容器</li>
+</ul>
+<h3 id="h30">8.2 图表 DSL</h3>
+<pre><code class="language-markdown">```chart
+{ &quot;type&quot;: &quot;bar&quot;, &quot;title&quot;: &quot;每月发布&quot;, &quot;xAxis&quot;: [&quot;3月&quot;,&quot;4月&quot;],
+  &quot;series&quot;: [{ &quot;name&quot;: &quot;发布&quot;, &quot;data&quot;: [4,7] }] }
+```
+</code></pre>
+<p>四种类型：bar / line / area / pie。导出的 HTML 里图表仍然可交互（ECharts 打包进单文件）。</p>
+<h3 id="h31">8.3 导出矩阵</h3>
+<table>
+<thead>
+<tr>
+<th>格式</th>
+<th>场景</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>自包含 HTML</td>
+<td>发给别人双击看</td>
+<td>图片内联、图表可交互</td>
+</tr>
+<tr>
+<td>分享长图 PNG</td>
+<td>朋友圈/聊天</td>
+<td>2 倍图、按正文全高</td>
+</tr>
+<tr>
+<td>公众号排版</td>
+<td>粘贴到公众号</td>
+<td>内联样式，粘贴即成文</td>
+</tr>
+<tr>
+<td>Obsidian MD</td>
+<td>进第二大脑</td>
+<td>带 frontmatter</td>
+</tr>
+<tr>
+<td>标准 MD</td>
+<td>备份迁移</td>
+<td>纯文本</td>
+</tr>
+<tr>
+<td>EPUB</td>
+<td>电子书</td>
+<td>EPUB 3.0、图片打包</td>
+</tr>
+<tr>
+<td>PDF</td>
+<td>打印归档</td>
+<td>学术排版</td>
+</tr>
+</tbody></table>
+<h3 id="h32">8.4 排版算法</h3>
+<p><code>shared/</code> 里的「盘古」逻辑负责中英文之间自动加空格、标点规范化。它被三个地方引用：编辑器实时预览、导出、公众号排版 —— 所以三处观感一致。</p>
+<hr>
+<h2 id="h33">九、 AI 体系</h2>
+<h3 id="h34">9.1 三级取用</h3>
+<table>
+<thead>
+<tr>
+<th>级别</th>
+<th>凭据来源</th>
+<th>谁付费</th>
+<th>适用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>① 本机 Key</td>
+<td>用户填在设置里，只存本机</td>
+<td>用户</td>
+<td>桌面/安卓主力</td>
+</tr>
+<tr>
+<td>② 账号托管</td>
+<td>填一次，AES-256-GCM 加密入库</td>
+<td>用户</td>
+<td>多设备（仅 Web）</td>
+</tr>
+<tr>
+<td>③ 站点额度</td>
+<td>站长配置，登录即可用，按天限次</td>
+<td>站长</td>
+<td>新用户试用（仅 Web）</td>
+</tr>
+</tbody></table>
+<p>路由优先级：本机 Key → 托管 Key → 站点额度。</p>
+<h3 id="h35">9.2 网关设计</h3>
+<pre><code>渲染层/前端  ──POST /api/ai/chat──►  NestJS AI 网关
+                                        │
+                        ┌───────────────┼───────────────┐
+                        ▼               ▼               ▼
+                  OpenAI 兼容       Gemini         Ollama（本机）
+                        │               │               │
+                        └───────────────┴───────────────┘
+                                        │ SSE 逐段回传
+                                        ▼
+                                    编辑器
+</code></pre>
+<p>为什么要有网关而不是前端直连模型：</p>
+<ul>
+<li>托管 Key 与站点 Key <strong>不能下发到浏览器</strong>；</li>
+<li>需要统一做配额、限流、请求体上限；</li>
+<li>需要把不同厂商的流式格式归一化成同一种 SSE。</li>
+</ul>
+<h3 id="h36">9.3 密钥托管</h3>
+<ul>
+<li>加密：AES-256-GCM，密钥由 <code>AI_KEY_SECRET</code>（缺省回退 <code>JWT_SECRET</code>）派生；</li>
+<li>生产环境没配 secret 时<strong>拒绝托管</strong>，而不是用一个公开常量加密；</li>
+<li>界面只显示掩码，永远不回显明文。</li>
+</ul>
+<h3 id="h37">9.4 场景化能力</h3>
+<p>不是「右侧放个聊天框」，而是嵌进写作动作：</p>
+<table>
+<thead>
+<tr>
+<th>动作</th>
+<th>输入</th>
+<th>输出</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>润色</td>
+<td>选中文字</td>
+<td>更通顺的版本</td>
+</tr>
+<tr>
+<td>精简</td>
+<td>选中文字</td>
+<td>删冗词留主干</td>
+</tr>
+<tr>
+<td>排版</td>
+<td>选中文字</td>
+<td>加空格、规范标点</td>
+</tr>
+<tr>
+<td>续写</td>
+<td>上文</td>
+<td>1–2 段延续</td>
+</tr>
+<tr>
+<td><strong>引流短帖</strong></td>
+<td>整篇文章</td>
+<td>3 个标题 + 1 条短帖 + 1 组 Thread</td>
+</tr>
+</tbody></table>
+<p>引流短帖的提示词里做了长度保护：超过 6000 字按「开头 60% + 结尾 40%」截取 —— 结论通常在文章后半段，只截开头会把最该被引用的话丢掉。</p>
+<hr>
+<h2 id="h38">十、 v3.0 三件套</h2>
+<h3 id="h39">10.1 订阅（Newsletter）</h3>
+<pre><code>读者填邮箱 → POST /api/newsletter/subscribe → 发确认信
+    → 点确认链接 → status=active
+    → 作者发布文章 → 逐封发送 → 幂等锁（article_id 唯一）
+    → 退订链接 → status=unsubscribed
+</code></pre>
+<p>三个刻意的决定：</p>
+<ol>
+<li><strong>订阅接口永远返回 202</strong> —— 不暴露邮箱是否存在，否则它就是探测接口；</li>
+<li><strong>双向确认</strong> —— 既符合反垃圾邮件要求，也保护被同事随手填了邮箱的人；</li>
+<li><strong>发送失败不抛异常</strong> —— 推送是后台动作，一封失败不该让整批中断。</li>
+</ol>
+<p>邮件通道三条：<code>console</code>（只打日志）、<code>resend</code>（HTTP）、<code>smtp</code>（nodemailer）。</p>
+<h3 id="h40">10.2 分发（OG 分享图）</h3>
+<ul>
+<li>入口：<code>GET /api/og/article/:id.png</code></li>
+<li>实现：拼 SVG → sharp 转 PNG（不引入 satori，省掉 10MB 字体）</li>
+<li>折行按字符宽度：中日韩算 1，ASCII 算 0.55</li>
+<li><strong>字体是命门</strong>：容器里没有中文字体就会渲染成方块，所以有 <code>detectCjkFont()</code> 启动探测</li>
+<li>文章没有封面图时，SSR 的 <code>og:image</code> 直接指向动态图</li>
+</ul>
+<h3 id="h41">10.3 迁移（导入 / 导出）</h3>
+<p><strong>导入</strong>：选一个 Markdown 文件夹，递归读取，解析 frontmatter，目录名变标签，同名默认跳过（覆盖是最危险的动作）。</p>
+<p><strong>导出</strong>：生成可直接托管到 GitHub Pages 的静态站：</p>
+<pre><code>static-site/
+  index.html
+  posts/&lt;slug&gt;.html
+  feed.xml
+  sitemap.xml
+</code></pre>
+<p>关键决定：<strong>全部相对链接</strong>。GitHub Pages 的项目站挂在 <code>/repo-name/</code> 下，绝对路径一换目录就断。</p>
+<hr>
+<h2 id="h42">十一、 v3.1–3.2 生态层</h2>
+<h3 id="h43">11.1 本地桥协议</h3>
+<pre><code>Chrome 扩展 / 书签 / CLI / Obsidian 插件
+        │  POST http://127.0.0.1:&lt;随机端口&gt;/clip
+        │  Header: X-LongPost-Token: &lt;48 位十六进制&gt;
+        ▼
+desktop/bridge.js
+        │  令牌恒定时间比较 → 限流 → 体积检查 → 规范化
+        ▼
+store.saveArticle() → 本地文章库（标签「剪藏」+ 来源链接）
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>约束</th>
+<th>实现</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>只监听回环</td>
+<td><code>listen(0, &#39;127.0.0.1&#39;)</code></td>
+</tr>
+<tr>
+<td>端口分配</td>
+<td>系统随机；撞车重试 3 次</td>
+</tr>
+<tr>
+<td>认证</td>
+<td><code>X-LongPost-Token</code>，定长比较</td>
+</tr>
+<tr>
+<td>限流</td>
+<td>60 秒 40 次 → 429</td>
+</tr>
+<tr>
+<td>体积</td>
+<td>512 KB → 413</td>
+</tr>
+<tr>
+<td>跨域</td>
+<td><code>Allow-Origin: *</code> + <strong>Private Network Access</strong> 放行</td>
+</tr>
+<tr>
+<td>来源校验</td>
+<td>只接受 http(s)，<code>file://</code> → 400</td>
+</tr>
+</tbody></table>
+<h3 id="h44">11.2 一个必须讲清楚的坑：Private Network Access</h3>
+<p>公网 https 页面访问 <code>127.0.0.1</code> 时，Chrome 会先发一个带
+<code>Access-Control-Request-Private-Network: true</code> 的预检；服务端不回
+<code>Access-Control-Allow-Private-Network: true</code>，请求在预检阶段就被拦。</p>
+<p>表现是「点书签没反应」——不是连不上，是浏览器不让连。</p>
+<h3 id="h45">11.3 端口与令牌发现</h3>
+<p>外部程序（CLI / Obsidian 插件）不要求用户手填配置，而是读：</p>
+<pre><code class="language-json">// %APPDATA%/LongPost/bridge.json
+{ &quot;port&quot;: 52341, &quot;token&quot;: &quot;9f2c...&quot; }
+</code></pre>
+<p>应用启动时写入，关闭开关时删除。</p>
+<h3 id="h46">11.4 Chrome 扩展（MV3）</h3>
+<ul>
+<li>右键菜单：保存整页 / 只存选区</li>
+<li>弹窗：保存整页、保存选区、从剪贴板保存、最近剪藏</li>
+<li>选项页：配对码、默认标签</li>
+<li>正文提取：<code>article/main/[role=main]</code> → 打分挑块 → 整页 innerText 兜底</li>
+<li><strong>canvas 应用检测</strong>：Google Docs 这类页面 DOM 里没有正文，明确提示改用剪贴板</li>
+</ul>
+<h3 id="h47">11.5 命令行与 Obsidian</h3>
+<pre><code class="language-bash">node scripts/longpost-cli.cjs --title &quot;灵感&quot; --tag 碎片 &quot;一段内容&quot;
+echo &quot;管道内容&quot; | node scripts/longpost-cli.cjs
+</code></pre>
+<p>Obsidian 插件读 <code>bridge.json</code>，把最近 5 条剪藏写成带 frontmatter 的笔记：</p>
+<pre><code class="language-yaml">---
+source: https://example.com/post
+captured: 2026-10-19T03:12:00.000Z
+---
+</code></pre>
+<hr>
+<h2 id="h48">十二、 安全体系</h2>
+<h3 id="h49">12.1 威胁模型与处置</h3>
+<table>
+<thead>
+<tr>
+<th>风险</th>
+<th>处置</th>
+<th>状态</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SSRF（WebDAV 代理）</td>
+<td>协议白名单 → 主机黑名单 → DNS 内网拦截 → 连接期 lookup 复核</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>密码爆破</td>
+<td>IP+邮箱计数，15 分钟 5 次锁 15 分钟</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>JWT 泄露</td>
+<td>tokenVersion 即时吊销</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>托管 Key 泄露</td>
+<td>AES-256-GCM 加密入库，界面只显掩码</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>弱密钥兜底</td>
+<td>生产环境未配 secret 时拒绝托管</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>上传攻击</td>
+<td>随机文件名、后缀白名单、<strong>不收 SVG</strong>、Sharp 重编码</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>富文本注入</td>
+<td>导出前清理 <code>&lt;script&gt;</code> / <code>onerror=</code> / <code>javascript:</code></td>
+<td>✅</td>
+</tr>
+<tr>
+<td>邮件注入</td>
+<td>标题摘要全量 HTML 转义</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>订阅探测</td>
+<td>订阅接口无论存在与否都返回 202</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>本地桥滥用</td>
+<td>回环绑定 + 令牌 + 限流 + 体积上限</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>依赖漏洞</td>
+<td>生产依赖 0 漏洞</td>
+<td>✅</td>
+</tr>
+</tbody></table>
+<h3 id="h50">12.2 供应链治理</h3>
+<p>2026-10 的教训：仓库长期用 npmmirror，镜像给过一批<strong>官方源不存在的版本</strong>（colord 3.0.0、strip-dirs 3.0.1、trim-lines 3.0.2、raw-body 3.0.3、mime-types 3.0.3），CI 一装就 404。</p>
+<p>现在的治理组合：</p>
+<ol>
+<li><code>.npmrc</code> 指向官方源；</li>
+<li><code>scripts/check-deps.js</code>：lockfile 不许有镜像地址 + <code>npm ci --dry-run</code> 必须可复现；</li>
+<li>两个工作流都在装依赖前跑它。</li>
+</ol>
+<h3 id="h51">12.3 可选功能不得拖垮启动</h3>
+<p><code>main.js</code> 里所有可选模块的 require 都在 try/catch 里；剪藏桥缺失时应用照常启动，只是功能不可用。</p>
+<p>这条规则的由来：v3.1.2 因为 <code>bridge.js</code> 没打进包，用户装完直接闪退。</p>
+<hr>
+<h2 id="h52">十三、 质量工程</h2>
+<h3 id="h53">13.1 测试矩阵</h3>
+<table>
+<thead>
+<tr>
+<th>套件</th>
+<th>数量</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>单元测试 <code>test/*.test.mjs</code></td>
+<td><strong>225</strong></td>
+<td>26 个文件，直连生产代码，不经编译</td>
+</tr>
+<tr>
+<td>桌面自检 <code>smoke-test.js</code></td>
+<td><strong>78</strong></td>
+<td>渲染、图表、导出、图标、主进程语法、AI 接线</td>
+</tr>
+<tr>
+<td>移动自检 <code>verify-mobile.js</code></td>
+<td><strong>108</strong></td>
+<td>仓库层、Capacitor 配置、触摸目标、许可证、样式回归</td>
+</tr>
+</tbody></table>
+<p>单元测试覆盖：同步协议、三向合并、SSRF 守卫、登录节流、AI 加密与配额、LLM 流式解析、更新器、内容风控、CSV 注入、盘古排版、EPUB、图表数据、热榜游标、剪藏规范化、HTTP 协议、配对码、OG 模板、静态站、Markdown 导入、依赖与文档守卫。</p>
+<h3 id="h54">13.2 三个「守卫」脚本</h3>
+<table>
+<thead>
+<tr>
+<th>脚本</th>
+<th>拦截什么</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>check-package-files.js</code></td>
+<td>本地 require 没被打进安装包（启动即崩）</td>
+</tr>
+<tr>
+<td><code>check-deps.js</code></td>
+<td>镜像残留、lockfile 不可复现（CI 404）</td>
+</tr>
+<tr>
+<td><code>check-doc-version.js</code></td>
+<td>README 版本与 package.json 不一致（文档撒谎）</td>
+</tr>
+</tbody></table>
+<p>前两个在桌面工作流里，第三个在两个工作流里，全部在构建前跑。</p>
+<h3 id="h55">13.3 CI 流水线</h3>
+<pre><code>推 main / 推 tag
+  → 取代码 → 文档版本校验 → 装依赖 → 前端构建
+  → 依赖体检 → 打包清单校验 → 逻辑自检 → 打包
+  → 生成校验和 → 发布 Release（tag 版为 Latest）
+</code></pre>
+<h3 id="h56">13.4 质量门禁</h3>
+<pre><code class="language-bash">npm run type:check      # 双端 TypeScript
+npm run eslint          # 0 error
+npm test                # 225 / 225
+npm run build           # server + client
+npm run check:deps      # 依赖体检
+npm run check:docs      # 文档版本
+cd desktop &amp;&amp; npm test &amp;&amp; node scripts/verify-mobile.js
+</code></pre>
+<hr>
+<h2 id="h57">十四、 性能与产物</h2>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>数值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>服务端编译</td>
+<td>120 文件（SWC，约 0.3s）</td>
+</tr>
+<tr>
+<td>前端构建</td>
+<td>约 2.5s</td>
+</tr>
+<tr>
+<td>桌面打包</td>
+<td>约 3 分钟（三平台并行）</td>
+</tr>
+<tr>
+<td>入口 chunk</td>
+<td>约 393 kB（gzip 124 kB）</td>
+</tr>
+<tr>
+<td><code>dist/client</code> 总量</td>
+<td>约 7.5 MB</td>
+</tr>
+</tbody></table>
+<p>优化手段：路由级 <code>React.lazy</code>、Mermaid/KaTeX/ECharts 动态导入、<code>emptyOutDir</code> 修正。</p>
+<hr>
+<h2 id="h58">十五、 部署与运维</h2>
+<h3 id="h59">15.1 三种方式</h3>
+<table>
+<thead>
+<tr>
+<th>方式</th>
+<th>适合</th>
+<th>命令</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Docker Compose</td>
+<td>个人/小团队</td>
+<td><code>docker compose up -d --build</code></td>
+</tr>
+<tr>
+<td>PM2</td>
+<td>已有 Node 环境</td>
+<td><code>pm2 start ecosystem.config.cjs</code></td>
+</tr>
+<tr>
+<td>直接跑</td>
+<td>调试</td>
+<td><code>npm run build &amp;&amp; npm start</code></td>
+</tr>
+</tbody></table>
+<h3 id="h60">15.2 必填环境变量</h3>
+<table>
+<thead>
+<tr>
+<th>变量</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>JWT_SECRET</code></td>
+<td>不填会用默认值，等于谁都能伪造登录态</td>
+</tr>
+<tr>
+<td><code>OWNER_EMAIL</code></td>
+<td>站长邮箱</td>
+</tr>
+<tr>
+<td><code>DATABASE_URL</code></td>
+<td>PostgreSQL 连接串</td>
+</tr>
+<tr>
+<td><code>UPLOAD_DIR</code></td>
+<td>上传目录，必须是持久化卷</td>
+</tr>
+</tbody></table>
+<h3 id="h61">15.3 可选：订阅与 AI</h3>
+<pre><code class="language-ini">NEWSLETTER_ENABLED=true
+MAIL_PROVIDER=resend        # 或 smtp / console
+RESEND_API_KEY=re_...
+SITE_URL=https://你的域名
+
+AI_SITE_PROVIDER=gemini
+AI_SITE_KEY=...
+AI_DAILY_QUOTA=20
+</code></pre>
+<h3 id="h62">15.4 备份</h3>
+<pre><code class="language-bash">docker compose exec db pg_dump -U longpost longpost &gt; backup-$(date +%F).sql
+docker run --rm -v longpost_uploads:/data -v &quot;$PWD&quot;:/backup alpine tar czf /backup/uploads.tar.gz -C /data .
+</code></pre>
+<hr>
+<h2 id="h63">十六、 数据模型</h2>
+<p>核心表（节选）：</p>
+<table>
+<thead>
+<tr>
+<th>表</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>app_users</code></td>
+<td>用户、角色、偏好、tokenVersion</td>
+</tr>
+<tr>
+<td><code>posts</code></td>
+<td>短帖</td>
+</tr>
+<tr>
+<td><code>articles</code></td>
+<td>长文（status: published/draft）</td>
+</tr>
+<tr>
+<td><code>article_images</code> / <code>article_attachments</code></td>
+<td>长文附件</td>
+</tr>
+<tr>
+<td><code>comments</code></td>
+<td>评论（软删除）</td>
+</tr>
+<tr>
+<td><code>interactions</code></td>
+<td>点赞/收藏/转发</td>
+</tr>
+<tr>
+<td><code>follows</code></td>
+<td>关注关系</td>
+</tr>
+<tr>
+<td><code>notifications</code></td>
+<td>通知</td>
+</tr>
+<tr>
+<td><code>hashtags</code> / <code>post_hashtags</code></td>
+<td>话题</td>
+</tr>
+<tr>
+<td><code>dm_conversations</code> / <code>dm_messages</code></td>
+<td>私信</td>
+</tr>
+<tr>
+<td><code>meetings</code></td>
+<td>会议与纪要</td>
+</tr>
+<tr>
+<td><code>access_codes</code> / <code>access_code_logs</code></td>
+<td>通行码空间</td>
+</tr>
+<tr>
+<td><code>user_ai_settings</code></td>
+<td>托管 Key 密文与偏好</td>
+</tr>
+<tr>
+<td><code>newsletter_subscribers</code></td>
+<td>订阅者（pending/active/unsubscribed）</td>
+</tr>
+<tr>
+<td><code>newsletter_issues</code></td>
+<td>推送幂等锁（article_id 唯一）</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="h64">十七、 已知限制与路线图</h2>
+<h3 id="h65">17.1 限制</h3>
+<ol>
+<li>桌面/安卓不能用站点 AI 额度（无账号体系）。</li>
+<li>多实例部署需 Socket.IO Redis adapter，PM2 配置锁单实例。</li>
+<li>真实 Chrome 内的扩展安装与点击流程，未在自动化环境中验证。</li>
+<li>扩展的正文提取打分权重凭经验设定，尚未用真实样本校准。</li>
+<li>开发依赖仍有告警（构建工具链，不进运行时）。</li>
+<li>无代码签名：macOS 首次打开需右键放行，Windows 可能触发 SmartScreen。</li>
+</ol>
+<h3 id="h66">17.2 路线图</h3>
+<table>
+<thead>
+<tr>
+<th>优先级</th>
+<th>事项</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>P1</td>
+<td>端到端测试（真 Chrome + 真 vault）</td>
+<td>生态层目前只有单测</td>
+</tr>
+<tr>
+<td>P1</td>
+<td>提取算法用真实样本调参</td>
+<td>现在无法评估“抓得准不准”</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>多实例 Redis adapter</td>
+<td>水平扩容</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>代码签名 + 安卓 release keystore</td>
+<td>消除安装提示</td>
+</tr>
+<tr>
+<td>P3</td>
+<td>Obsidian 社区插件上架</td>
+<td>需要 PR 审核</td>
+</tr>
+<tr>
+<td>P3</td>
+<td>Chrome 商店上架（$5）</td>
+<td>需要付费账号</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="h67">十八、 附录</h2>
+<h3 id="h68">18.1 目录结构</h3>
+<pre><code>longpost/
+├── client/            React 19 前端（@ → client/src）
+├── server/            NestJS 12 后端（sourceRoot = server）
+├── shared/            纯逻辑与类型（无 DOM / 无框架依赖）
+├── desktop/           Electron 应用（含 renderer 与 vendor）
+├── mobile/            Capacitor 安卓壳（webDir 指向 desktop/renderer）
+├── chrome-extension/  MV3 扩展
+├── obsidian-plugin/   Obsidian 插件
+├── test/              Node 原生测试
+├── scripts/           开发、打包、守卫脚本
+├── docs/              白皮书与文档
+└── archive/           历史原型（不参与构建）
+</code></pre>
+<h3 id="h69">18.2 常用命令</h3>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>npm run dev</code></td>
+<td>前后端并行开发</td>
+</tr>
+<tr>
+<td><code>npm run build</code></td>
+<td>全量构建</td>
+</tr>
+<tr>
+<td><code>npm test</code></td>
+<td>单元测试</td>
+</tr>
+<tr>
+<td><code>npm run check:deps</code></td>
+<td>依赖体检</td>
+</tr>
+<tr>
+<td><code>npm run check:docs</code></td>
+<td>文档版本校验</td>
+</tr>
+<tr>
+<td><code>cd desktop &amp;&amp; npm run dist:win</code></td>
+<td>打 Windows 安装包</td>
+</tr>
+<tr>
+<td><code>cd desktop &amp;&amp; node scripts/smoke-test.js</code></td>
+<td>桌面自检</td>
+</tr>
+</tbody></table>
+<h3 id="h70">18.3 快捷键</h3>
+<table>
+<thead>
+<tr>
+<th>快捷键</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Ctrl/Cmd + S</code></td>
+<td>立即保存</td>
+</tr>
+<tr>
+<td><code>Ctrl/Cmd + B</code></td>
+<td>加粗</td>
+</tr>
+<tr>
+<td><code>Ctrl/Cmd + F</code></td>
+<td>查找替换</td>
+</tr>
+<tr>
+<td><code>Ctrl/Cmd + K</code></td>
+<td>命令面板（Web）</td>
+</tr>
+<tr>
+<td><code>Alt + M</code></td>
+<td>切换极简版 / 专业版</td>
+</tr>
+<tr>
+<td><code>Tab</code> / <code>Shift+Tab</code></td>
+<td>缩进 / 反缩进</td>
+</tr>
+<tr>
+<td><code>/</code></td>
+<td>斜杠指令菜单</td>
+</tr>
+</tbody></table>
+<h3 id="h71">18.4 剪藏 API 速查</h3>
+<pre><code class="language-http">POST http://127.0.0.1:&lt;port&gt;/clip
+X-LongPost-Token: &lt;token&gt;
+Content-Type: application/json
+
+{ &quot;title&quot;: &quot;...&quot;, &quot;url&quot;: &quot;https://...&quot;, &quot;content&quot;: &quot;...&quot;, &quot;tags&quot;: &quot;a,b&quot; }
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>状态码</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>200</td>
+<td>已写入</td>
+</tr>
+<tr>
+<td>400</td>
+<td>请求体不合法 / 非 http(s)</td>
+</tr>
+<tr>
+<td>401</td>
+<td>令牌错误</td>
+</tr>
+<tr>
+<td>413</td>
+<td>超过 512 KB</td>
+</tr>
+<tr>
+<td>429</td>
+<td>60 秒内超过 40 次</td>
+</tr>
+</tbody></table>
+<hr>
+<blockquote>
+<p><strong>文档维护约定</strong>：本白皮书与代码同仓，版本号必须与 <code>package.json</code> 一致（<code>npm run check:docs</code> 会校验 README，白皮书由人工核对）。数字类指标（测试数、路由数、代码行数）应在每次大版本发布前重新统计。</p>
+</blockquote>
+<hr>
+<h2 id="h72">十九、 关键设计决策记录（ADR）</h2>
+<h3 id="h73">ADR-01：桌面与 Web 不共享 UI 代码</h3>
+<ul>
+<li><strong>背景</strong>：社区要联网、要鉴权、要实时；写作台要断网可用、数据在本机。</li>
+<li><strong>决策</strong>：<code>client/</code> 与 <code>desktop/renderer/</code> 各自独立，只共享协议与算法。</li>
+<li><strong>代价</strong>：同一个功能要做两遍 UI（比如分享面板）。</li>
+<li><strong>收益</strong>：两边的约束不互相污染，桌面端不会因为 Web 加了个依赖就变重。</li>
+<li><strong>复核信号</strong>：只在桌面端有意义的功能就不做 Web 版（如「发送到」菜单）。</li>
+</ul>
+<h3 id="h74">ADR-02：测试直连生产代码</h3>
+<ul>
+<li><strong>背景</strong>：早期把代码复制一份到测试目录再测，改完经常忘记同步，测试通过但线上是坏的。</li>
+<li><strong>决策</strong>：<code>test/*.test.mjs</code> 直接 import <code>server/</code>、<code>desktop/lib/</code> 的源文件，Node 24 原生剥离类型。</li>
+<li><strong>代价</strong>：测试依赖源码结构，重构文件路径要同步改测试。</li>
+<li><strong>收益</strong>：测试与生产代码不可能漂移。</li>
+</ul>
+<h3 id="h75">ADR-03：渲染层不引入打包器</h3>
+<ul>
+<li><strong>背景</strong>：Capacitor 只打包 <code>desktop/renderer/</code> 一个目录。</li>
+<li><strong>决策</strong>：原生 JS + 全局脚本，共享模块通过 <code>vendor/</code> 拷贝。</li>
+<li><strong>代价</strong>：没有模块系统，共享模块必须自己包 IIFE 防全局污染（踩过：两个模块都写 <code>const API</code>，第二个直接 SyntaxError）。</li>
+<li><strong>收益</strong>：改完刷新即生效，没有构建等待。</li>
+</ul>
+<h3 id="h76">ADR-04：应用内更新不用 electron-updater</h3>
+<ul>
+<li><strong>背景</strong>：当前分发方式是 CI 出包 + 免安装版，没有代码签名。</li>
+<li><strong>决策</strong>：自己实现「拉 release 清单 → 下载 → 校验 sha256 → 拉起安装程序」。</li>
+<li><strong>代价</strong>：没有差分包，每次全量下载。</li>
+<li><strong>收益</strong>：链路短、可控、能强制校验哈希。</li>
+</ul>
+<h3 id="h77">ADR-05：剪藏桥用 HTTP 而不是自定义协议</h3>
+<ul>
+<li><strong>背景</strong>：书签与扩展都要能把内容送进来。</li>
+<li><strong>决策</strong>：本地 HTTP + 令牌；自定义协议 <code>lp://</code> 只用于打开本地文件。</li>
+<li><strong>理由</strong>：协议跳转拿不到返回结果，用户不知道成没成；HTTP 能直接告诉调用方 200 还是 401。</li>
+</ul>
+<h3 id="h78">ADR-06：剪藏桥默认开启</h3>
+<ul>
+<li><strong>背景</strong>：默认关会让「装完不能用」，默认开会让用户对本地端口有顾虑。</li>
+<li><strong>决策</strong>：v3.1.1 起默认开启，设置里可关闭，关闭时真正停掉监听。</li>
+<li><strong>复核信号</strong>：若收到杀毒软件误报，再考虑改回默认关。</li>
+</ul>
+<hr>
+<h2 id="h79">二十、 事故复盘</h2>
+<h3 id="h80">20.1 v3.1.2 启动闪退（P0）</h3>
+<p><strong>现象</strong>：安装后双击无反应，任务管理器里也看不到窗口。</p>
+<p><strong>根因</strong>：新增 <code>desktop/bridge.js</code> 未加入 electron-builder 的 <code>build.files</code>；打包后 <code>require(&#39;./bridge&#39;)</code> 抛 MODULE_NOT_FOUND，且发生在 <code>createWindow()</code> 之前，窗口从未创建。</p>
+<p><strong>修复</strong>：补 <code>build.files</code>；可选模块的 require 全部包 try/catch；新增 <code>check-package-files.js</code> 并挂进 CI。</p>
+<p><strong>教训</strong>：CI 绿只代表「构建成功」，不代表「装上去能跑」。发布前必须真的启动一次打包产物。</p>
+<h3 id="h81">20.2 v3.1.4 仍打不开（P0）</h3>
+<p><strong>现象</strong>：修完 bridge 仍然没有窗口。</p>
+<p><strong>根因</strong>：启动时调用 <code>ensureClipBridge()</code>，但该函数定义在另一个作用域，ReferenceError 同样发生在 <code>createWindow()</code> 之前。</p>
+<p><strong>修复</strong>：改为模块级转发函数；启动顺序调整为「先注册 IPC，再起桥」。</p>
+<p><strong>教训</strong>：主进程是纯 JS，没有类型检查，作用域错误只能靠 <code>node --check</code> 加真实启动发现。</p>
+<h3 id="h82">20.3 依赖地狱（P1，连续三次）</h3>
+<p><strong>现象</strong>：CI 构建全部失败，报 404。</p>
+<p><strong>根因</strong>：仓库长期用 npmmirror，镜像给过一批官方源不存在的版本；删 lockfile 也没用，<code>node_modules/.package-lock.json</code> 会把旧版本带回来。</p>
+<p><strong>修复</strong>：<code>.npmrc</code> 换官方源；删 <code>node_modules</code> 与隐藏 lockfile 后重装；<code>check-deps.js</code> 进 CI。</p>
+<p><strong>教训</strong>：供应链问题不会自己消失，必须有一个自动化的守门人。</p>
+<h3 id="h83">20.4 CI 步骤把自己搞挂（P1）</h3>
+<p><strong>现象</strong>：加了「依赖体检」之后，桌面构建反而失败。</p>
+<p><strong>根因</strong>：步骤插在「装依赖」之前，且继承了 <code>working-directory: desktop</code>，找不到仓库根的脚本。</p>
+<p><strong>修复</strong>：移到安装之后，显式指定仓库根目录。</p>
+<p><strong>教训</strong>：给流水线加守卫时，要按「守卫自己也会失败」来设计顺序。</p>
+<h3 id="h84">20.5 设置面板展不开（P2）</h3>
+<p><strong>现象</strong>：点设置里的分组卡片没反应。</p>
+<p><strong>根因</strong>：<code>dialog-body</code> 是 flex 列容器，卡片默认 <code>flex-shrink: 1</code>，展开时被邻居挤压，外层永远不产生滚动。</p>
+<p><strong>修复</strong>：<code>.settings-card { flex: none; }</code>。</p>
+<p><strong>教训</strong>：视觉 bug 也要用数据确认（量高度、量 scrollHeight），不能只靠肉眼。</p>
+<hr>
+<h2 id="h85">二十一、 结语</h2>
+<blockquote>
+<p><strong>写作要离线，分发要在线，数据要能带走。</strong></p>
+</blockquote>
+<p>三端分离是为了第一条；SSR + 分享图 + 订阅是为了第二条；导入导出 + 静态站 + WebDAV 是为了第三条。</p>
+<p>工程上的坚持只有两条：<strong>能被测试证明的才算做完</strong>，<strong>能被用户装上的才算发布</strong>。</p>
+
+  </main>
+</div>
+</body>
+</html>
