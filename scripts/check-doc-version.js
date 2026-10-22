@@ -48,6 +48,16 @@ if (/LongPost-v[0-9.]+-android\.apk/.test(readme)) {
   problems.push('README 引用了版本化 APK 文件名，实际资产叫 LongPost-android.apk');
 }
 
+// 白皮书的数据基准版本也要对齐
+const whitepaperPath = path.join(root, 'docs', 'WHITEPAPER.md');
+if (fs.existsSync(whitepaperPath)) {
+  const paper = fs.readFileSync(whitepaperPath, 'utf8');
+  const base = paper.match(/数据基准\*\*：仓库 \`main\` 分支 v([0-9.]+)/);
+  if (base && base[1] !== version) {
+    problems.push('白皮书数据基准是 v' + base[1] + '，package.json 是 ' + version);
+  }
+}
+
 if (problems.length > 0) {
   console.error('[docs-check] 未通过（当前版本 ' + version + '）：');
   for (const item of problems) console.error('  - ' + item);
