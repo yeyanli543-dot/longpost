@@ -4,7 +4,7 @@
 
 **下一代长文创作与社交平台 · 极简版 ↔ 专业版双工作区 · 交互式活数据图表 · 免登录公开阅读 · 零服务器离线工作台**
 
-[![Version](https://img.shields.io/badge/version-3.0.3-blue.svg)](https://github.com/yeyanli543-dot/longpost/releases/tag/v3.0.3)
+[![Version](https://img.shields.io/badge/version-3.2.2-blue.svg)](https://github.com/yeyanli543-dot/longpost/releases/tag/v3.2.2)
 [![Build Desktop](https://github.com/yeyanli543-dot/longpost/actions/workflows/desktop-release.yml/badge.svg)](https://github.com/yeyanli543-dot/longpost/actions/workflows/desktop-release.yml)
 [![Build Android](https://github.com/yeyanli543-dot/longpost/actions/workflows/android-release.yml/badge.svg)](https://github.com/yeyanli543-dot/longpost/actions/workflows/android-release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -17,7 +17,7 @@
 
 <p align="center">
   <a href="#-多端下载">📥 多端下载</a> •
-  <a href="#-双模式工作区apple-极简--google-专业">☯️ 双模式工作区</a> •
+  <a href="#-双模式工作区极简版--专业版">☯️ 双模式工作区</a> •
   <a href="#-交互式图表卡片活数据可视化">📊 交互式图表</a> •
   <a href="#-杂志级排版美学与信息设计">📖 杂志级排版</a> •
   <a href="#-三端代码共享架构">🏛️ 三端共享架构</a> •
@@ -53,17 +53,18 @@
 
 ---
 
-## <a id="-多端下载"></a>📥 多端下载 (v3.0.3 最新全平台安装包)
+## <a id="-多端下载"></a>📥 多端下载 (v3.2.2 最新全平台安装包)
 
 所有安装包均通过 GitHub Actions 自动化 CI 构建并带有防篡改校验，即下即用：
 
 | 平台 | 安装包格式 | 下载渠道 | 说明 |
 | :--- | :--- | :--- | :--- |
-| **🪟 Windows** | `.exe` 安装版 / 便携版 | [**下载安装版**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.0.3/LongPost.Setup.3.0.3.exe) · [**免安装便携版**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.0.3/LongPost.3.0.3.exe) | 支持 Windows 10/11，便携免安装版解压双击直接运行 |
-| **🤖 Android** | `.apk` 手机安装包 | [**下载 LongPost-v3.0.3-android.apk**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.0.3/LongPost-v3.0.3-android.apk) | 手机端离线写作，固定签名密钥支持无缝覆盖升级 |
-| **🍎 macOS** | `.dmg` 镜像 | [**下载 LongPost-3.0.3-arm64.dmg**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.0.3/LongPost-3.0.3-arm64.dmg) | 支持 Apple Silicon & Intel，首次打开右键放行 |
-| **🐧 Linux** | `.AppImage` | [**下载 LongPost-3.0.3.AppImage**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.0.3/LongPost-3.0.3.AppImage) | 赋予执行权限 `chmod +x` 后直接运行 |
-| **📦 全部版本** | 全部 5 端安装产物 | [**GitHub Releases v3.0.3 (最新发布页)**](https://github.com/yeyanli543-dot/longpost/releases/tag/v3.0.3) | 包含所有平台的安装包、源码与校验哈希 |
+| **🪟 Windows** | `.exe` 安装版 / 便携版 | [**下载安装版**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.2.2/LongPost.Setup.3.2.2.exe) · [**免安装便携版**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.2.2/LongPost.3.2.2.exe) | 支持 Windows 10/11，便携免安装版解压双击直接运行 |
+| **🤖 Android** | `.apk` 手机安装包 | [**下载 LongPost-android.apk**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.2.2/LongPost-android.apk) | 手机端离线写作，固定签名密钥支持无缝覆盖升级 |
+| **🧩 Chrome 扩展** | 源码目录 | [**查看扩展**](https://github.com/yeyanli543-dot/longpost/tree/main/chrome-extension) | 开发者模式加载，或随桌面版一起分发 |
+| **🍎 macOS** | `.dmg` 镜像 | [**下载 LongPost-3.2.2-arm64.dmg**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.2.2/LongPost-3.2.2-arm64.dmg) | 支持 Apple Silicon & Intel，首次打开右键放行 |
+| **🐧 Linux** | `.AppImage` | [**下载 LongPost-3.2.2.AppImage**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.2.2/LongPost-3.2.2.AppImage) | 赋予执行权限 `chmod +x` 后直接运行 |
+| **📦 全部版本** | 全部安装产物 | [**GitHub Releases v3.2.2 (最新发布页)**](https://github.com/yeyanli543-dot/longpost/releases/tag/v3.2.2) | 包含所有平台的安装包、源码与校验哈希 |
 
 ---
 
@@ -185,13 +186,13 @@ AI_DAILY_QUOTA=20                    # 每个登录用户每天可用次数，0 
 ```
 ```
 
-### v3.0.3 视觉与交互升级亮点：
+### 视觉与交互升级亮点：
 - **自适应现代调色板**：浅色模式采用高雅莫兰迪色系（`#2563eb`, `#7c3aed`, `#db2777`, `#059669`），深色模式采用柔和微光色系（`#38bdf8`, `#818cf8`, `#c084fc`, `#34d399`）；
 - **柱状图现代圆角**：柱体顶部统一增加 `borderRadius: [6, 6, 0, 0]`，告别生硬切角；
 - **环形图优雅间隙**：饼图与环形图引入 `borderRadius: 6` 及主题自适应微隙描边；
 - **双端同构还原**：React 网页端渲染、服务端直出与导出的自包含单文件离线 HTML 完全一致，悬浮探针可实时读取数值。
 
-### 🆕 v3.0.3 工程与数据安全增强
+### 🆕 工程与数据安全增强
 - **WebDAV 全量备份 / 一键恢复**：同步设置面板新增「全量备份」与「从备份恢复」，把全库文章打成单个 `longpost-backup.json` 存进你的 WebDAV；恢复采用 **合并式** 策略，本地已有的文章绝不覆盖，换机或误删时可安全找回；
 - **桌面端长图落盘打通**：`platform.saveExportImage()` 补齐了「preload 通道已通、平台层未接」的断点，桌面端点「保存长图」现在会真正弹出系统保存对话框；
 - **草稿防抖竞态锁**：`LocalFirstStore` 引入 `pendingDraftSnapshot` + `flushPendingSave()`，在切换草稿、读取草稿、删除草稿前强制冲刷挂起写入，彻底消除"跨文档内容互相覆盖"这一类丢稿事故；
@@ -255,6 +256,28 @@ npm test
 7. **数据完整性与多态级联回归（Data Integrity & Cascade）**：`GREATEST(0, val - 1)` 防负数下溢、禁止自关注、父评论与软删除一致性校验，模拟点赞、转发、评论、通知的多态安全级联清理；
 8. **全生态分发与数字第二大脑（Ecosystem Syndication）**：Obsidian 标准 YAML Frontmatter 与 `[[WikiLink]]` 导出适配、微信公众号原生 CSS 样式内联引擎，单键一键排版直通微信后台；
 9. **RSS 2.0 & RFC 4287 Atom 1.0 标准聚合 Feed**：自动生成严格合规的 XML 订阅源，支持主流阅读器（NetNewsWire, Reeder, Follow, Feedly）即刻抓取。
+
+---
+
+## 🔌 v3.1 / v3.2 生态连接
+
+把入口从「我坐下来写」扩到「我在哪都能开始写」。
+
+| 入口 | 说明 |
+| :--- | :--- |
+| **Chrome 扩展** | 右键保存整页 / 只存选区 / 从剪贴板保存；默认标签；最近剪藏 |
+| **书签小工具** | 一段 `javascript:` 代码，任意网页一点即存 |
+| **命令行** | `node scripts/longpost-cli.cjs "内容"`，端口与令牌自动读取 |
+| **Windows「发送到」** | 设置里一键加入，任意文件右键 → 发送到 → LongPost |
+| **Obsidian 插件** | 把最近剪藏导入 vault，带 `source` frontmatter |
+| **任意脚本** | `POST /clip`，见 [剪藏 API](docs/CLIP-API.md) |
+
+本地桥的边界：
+
+- 只监听 `127.0.0.1`，端口由系统分配；
+- 每个请求都要 `X-LongPost-Token`，恒定时间比较；
+- 60 秒 40 次限流、512 KB 体积上限；
+- 放行 Chrome 的 Private Network Access，否则 https 页面访问不到本机（这个坑踩过）。
 
 ---
 
