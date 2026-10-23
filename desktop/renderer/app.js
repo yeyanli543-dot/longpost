@@ -2925,7 +2925,7 @@
       }
       const settings = (await LP.getSettings()) || {};
       const backupData = {
-        version: '3.3.0',
+        version: '3.4.0',
         exportedAt: new Date().toISOString(),
         appName: 'LongPost',
         stats: {
@@ -3038,6 +3038,15 @@
     if (theme === 'light' || theme === 'dark') return theme;
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     return mq.matches ? 'dark' : 'light';
+  }
+
+  /** 皮肤：只切 body 上的类，样式全交给 CSS 变量 */
+  function applySkin(skin) {
+    const value = skin === 'argon' ? 'argon' : 'classic';
+    document.body.classList.toggle('skin-argon', value === 'argon');
+    const host = $('skinSwitch');
+    if (host) syncSegmentedActive('skinSwitch', value);
+    return value;
   }
 
   function applyTheme() {
@@ -3161,6 +3170,7 @@
 
   function applySettingsUi() {
     applyTheme();
+    applySkin(state.settings.skin);
     applyWorkspaceMode(state.settings.workspaceMode || 'lite');
     applyFontSize();
     applyPaneState();

@@ -4282,3 +4282,81 @@ body.reading-mode .preview {
   color: var(--text-2);
   white-space: pre-wrap;
 }
+
+/* ============================================================================
+ * Argon 皮肤（v3.4.0）
+ *
+ * 参考 Argon 那套 PPT 的视觉语言：深蓝主色、宽留白、浅灰描边、柔和投影、
+ * 大圆角。只覆盖设计变量，不改任何布局结构 —— 所以和两套工作区都兼容，
+ * 切换皮肤不会把按钮挤走，也不会改变信息架构。
+ *
+ * 选择器优先级说明：模式变量写在 .mode-apple / .mode-google（0,1,0），
+ * 浅色mode 写在 [data-theme='light'].mode-apple（0,2,0）。
+ * 这里用 body.skin-argon（0,1,1）压过前者，浅色用
+ * [data-theme='light'] body.skin-argon（0,2,1）压过后者。
+ * ========================================================================== */
+
+body.skin-argon {
+  --bg: #0a1020;
+  --bg-2: #0e1628;
+  --surface: #141e33;
+  --surface-2: #1a2740;
+  --surface-3: #22304d;
+  --border: #22314e;
+  --border-strong: #33456b;
+  --text: #eef2fb;
+  --text-2: #a9b6d0;
+  --text-3: #7d8bab;
+
+  --accent: #4f7cf7;
+  --accent-hover: #6b92ff;
+  --accent-soft: rgba(79, 124, 247, 0.18);
+  --accent-line: rgba(79, 124, 247, 0.45);
+  --on-accent: #06122b;
+
+  --r-xs: 6px;
+  --r-sm: 9px;
+  --r-md: 13px;
+  --r-lg: 18px;
+  --r-xl: 24px;
+
+  --sh-1: 0 2px 8px rgba(3, 8, 20, 0.35);
+  --sh-2: 0 10px 28px rgba(3, 8, 20, 0.42);
+  --sh-3: 0 24px 60px rgba(3, 8, 20, 0.55);
+}
+
+[data-theme='light'] body.skin-argon {
+  --bg: #f6f8fd;
+  --bg-2: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f1f5fc;
+  --surface-3: #e6edfa;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --text: #0f172a;
+  --text-2: #475569;
+  --text-3: #94a3b8;
+
+  --accent: #1d4ed8;
+  --accent-hover: #1e40af;
+  --accent-soft: #dbeafe;
+  --accent-line: #bfdbfe;
+  --on-accent: #ffffff;
+
+  --sh-1: 0 1px 3px rgba(15, 23, 42, 0.06);
+  --sh-2: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --sh-3: 0 24px 56px rgba(15, 23, 42, 0.12);
+}
+
+/* Argon 下标题更有分量：字距收紧一点，和宽留白形成对比 */
+body.skin-argon .side-head h1,
+body.skin-argon .title-input {
+  letter-spacing: -0.02em;
+}
+
+/* 主按钮用深蓝实心，和参考稿一致 */
+body.skin-argon .btn.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  box-shadow: var(--sh-1);
+}

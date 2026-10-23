@@ -52,6 +52,8 @@
   function defaultSettings() {
     return {
       theme: 'dark',
+      // 皮肤：classic（现状）| argon（深蓝宽留白）
+      skin: 'classic',
       lastArticleId: '',
       showPreview: true,
       sidebarWidth: 280,
@@ -69,6 +71,7 @@
       // Chrome 剪藏本地桥：默认关闭，设置里手动开启
       clipBridgeEnabled: true,
       clipBridgeToken: '',
+      clipBridgePort: 0,
     };
   }
 

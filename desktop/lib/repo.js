@@ -52,6 +52,8 @@
   function defaultSettings() {
     return {
       theme: 'dark',
+      // 皮肤：classic（现状）| argon（深蓝宽留白）
+      skin: 'classic',
       lastArticleId: '',
       showPreview: true,
       sidebarWidth: 280,
