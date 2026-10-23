@@ -321,3 +321,182 @@ body.mode-chrome .editor-wrap .editor {
 body.mode-chrome .editor-wrap > * + * {
   border-left: 1px solid var(--border);
 }
+
+
+/* ============================================================================
+ * 第三遍：按真机截图校准（Chrome 1613×965，浅色主题）
+ *
+ * 实测到的关键比例（不是猜的）：
+ *   标签条    34px 高，底色 #dee1e6，活动页签纯白、上方圆角 12px、直接连到工具栏
+ *   工具栏    48px 高，纯白；地址栏 40px 高、圆角 20px
+ *   地址栏聚焦 2px #1a73e8 描边 + 轻投影
+ *   书签栏    34px 高，12px 文字，图标 16px，悬停浅灰
+ *   内容区    纯白，没有卡片阴影
+ * ========================================================================== */
+
+body.mode-chrome {
+  --chrome-frame: #dee1e6;   /* 标签条底色 */
+  --chrome-hover: #e8eaed;   /* 悬停灰 */
+}
+
+body.mode-chrome .tabbar {
+  height: 34px;
+  padding: 0 8px;
+  background: var(--chrome-frame);
+  border-bottom: 0;
+  align-items: flex-end;
+}
+
+body.mode-chrome .tabbar .tab {
+  height: 34px;
+  flex: 0 1 240px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px 12px 0 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+body.mode-chrome .tabbar .tab:hover {
+  background: var(--chrome-hover);
+}
+
+body.mode-chrome .tabbar .tab.active {
+  background: var(--surface);
+  border: 0;
+  font-weight: 500;
+}
+
+body.mode-chrome .tabbar .tab.active:hover {
+  background: var(--surface);
+}
+
+/* 工具栏：48px，纯白，和活动页签连成一片 */
+body.mode-chrome .toolbar {
+  height: 48px;
+  padding: 0 8px 0 12px;
+  gap: 8px;
+  background: var(--surface);
+  border-bottom: 0;
+}
+
+/* 地址栏：40px 高、20px 圆角、灰底；聚焦变白 + 蓝色描边 */
+body.mode-chrome .title-input {
+  height: 40px;
+  border-radius: 20px;
+  background-color: var(--bg);
+  padding: 0 16px 0 40px;
+  background-position: 14px center;
+  background-size: 17px;
+  font-size: 14px;
+  box-shadow: none;
+  transition: background-color 120ms, box-shadow 120ms;
+}
+
+body.mode-chrome .title-input:hover {
+  background-color: var(--chrome-hover);
+}
+
+body.mode-chrome .title-input:focus {
+  background-color: var(--surface);
+  box-shadow: 0 0 0 2px var(--accent), 0 1px 6px rgba(32, 33, 36, 0.18);
+}
+
+/* 工具按钮：32px 圆形，图标 18px */
+body.mode-chrome .tools .btn,
+body.mode-chrome .toolbar > .icon-btn {
+  min-width: 32px;
+  min-height: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 999px;
+}
+
+body.mode-chrome .tools .btn .icon,
+body.mode-chrome .toolbar > .icon-btn .icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* 格式栏 = 书签栏：34px、白底、细线、12px 文字 */
+body.mode-chrome .fmtbar {
+  height: 34px;
+  padding: 0 8px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  gap: 2px;
+}
+
+body.mode-chrome .fmt {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--text-2);
+}
+
+body.mode-chrome .fmt:hover {
+  background: var(--chrome-hover);
+  color: var(--text);
+}
+
+/* 内容区：纯白，没有卡片 */
+body.mode-chrome .main {
+  background: var(--surface);
+  padding: 0;
+}
+
+body.mode-chrome .editor-wrap {
+  max-width: none;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--surface);
+}
+
+body.mode-chrome .editor {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 36px 32px 120px;
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--text);
+}
+
+/* 侧栏跟随同一套框架灰 */
+body.mode-chrome .sidebar {
+  width: 260px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+body.mode-chrome .side-head {
+  padding: 12px 12px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+body.mode-chrome .item {
+  border-radius: 8px;
+  margin: 2px 8px;
+  padding: 8px 10px;
+}
+
+body.mode-chrome .item:hover {
+  background: var(--chrome-hover);
+}
+
+body.mode-chrome .item.active {
+  background: var(--accent-soft);
+}
+
+body.mode-chrome .statusbar {
+  height: 26px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--text-3);
+}
