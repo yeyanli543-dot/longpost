@@ -119,7 +119,7 @@
 
           <div class="search-wrap">
             <svg class="icon search-icon" aria-hidden="true"><use href="#i-search"></use></svg>
-            <input class="search" id="search" type="search" placeholder="搜索标题、正文、标签…" aria-label="搜索文章" />
+            <input class="search" id="search" type="search" placeholder="搜索… 支持 标签:灵感 时间:本周" aria-label="搜索文章" />
             <button class="icon-btn search-clear" id="btnSearchClear" hidden aria-label="清空搜索" title="清空搜索">
               <svg class="icon" aria-hidden="true"><use href="#i-x"></use></svg>
             </button>
@@ -659,7 +659,7 @@
                 <label>书签小工具</label>
                 <button class="btn ghost sm" id="clipBookmarkBtn" type="button">复制书签代码</button>
                 <button class="btn ghost sm" id="clipPairBtn" type="button">复制配对码</button>
-                <button class="btn ghost sm" id="clipExtDirBtn" type="button">打开扩展目录</button>
+                <button class="btn ghost sm" id="clipExtDirBtn" type="button">一键安装扩展</button>
                 <button class="btn ghost sm" id="clipRotateBtn" type="button">轮换令牌</button>
                 <button class="btn ghost sm" id="clipSendToBtn" type="button">加入「发送到」菜单</button>
                 <span class="hint" id="clipBridgeStatus">开启后可复制</span>
@@ -1123,6 +1123,7 @@
     <script src="backend-idb.js"></script>
     <script src="export-web.js"></script>
     <script src="platform.js"></script>
+    <script src="vendor/search-query.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

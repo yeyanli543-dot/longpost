@@ -54,6 +54,8 @@
       theme: 'dark',
       // 皮肤：classic（现状）| argon（深蓝宽留白）
       skin: 'classic',
+      // 是否已经放过「欢迎使用」示例文章
+      welcomed: false,
       lastArticleId: '',
       showPreview: true,
       sidebarWidth: 280,

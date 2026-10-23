@@ -778,6 +778,45 @@ function registerIpc() {
     }
   }
 
+  // 一键安装剪藏扩展：把随包分发的扩展拷到用户目录（升级不丢），
+  // 打开文件夹并把路径放进剪贴板 —— Chrome 的「加载已解压的扩展程序」
+  // 需要用户在系统对话框里粘贴这个路径。
+  // 更新日志：随包分发的 changelog.json，按版本号从新到旧返回
+  ipcMain.handle('update:changelog', async () => {
+    try {
+      const file = path.join(app.getAppPath(), 'changelog.json');
+      if (!fs.existsSync(file)) return { ok: true, entries: [] };
+      const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+      const entries = Object.keys(data)
+        .sort((a, b) => (a < b ? 1 : -1))
+        .map((version) => ({ version, items: data[version] }));
+      return { ok: true, current: app.getVersion(), entries };
+    } catch (error) {
+      return { ok: false, error: String((error && error.message) || error) };
+    }
+  });
+
+  ipcMain.handle('clip:installExtension', async () => {
+    try {
+      const { app: electronApp, shell, clipboard } = require('electron');
+      const bundled = app.isPackaged
+        ? path.join(process.resourcesPath, 'chrome-extension')
+        : path.join(__dirname, '..', 'chrome-extension');
+
+      if (!fs.existsSync(bundled)) return { ok: false, error: '安装包里没有找到扩展目录' };
+
+      const dest = path.join(electronApp.getPath('userData'), 'chrome-extension');
+      fs.rmSync(dest, { recursive: true, force: true });
+      fs.cpSync(bundled, dest, { recursive: true });
+
+      clipboard.writeText(dest);
+      await shell.openPath(dest);
+      return { ok: true, dir: dest };
+    } catch (error) {
+      return { ok: false, error: String((error && error.message) || error) };
+    }
+  });
+
   ipcMain.handle('bridge:setEnabled', async (_e, enabled) => {
     await store.setSettings({ clipBridgeEnabled: Boolean(enabled) });
     if (enabled) {

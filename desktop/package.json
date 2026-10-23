@@ -1,6 +1,6 @@
 {
   "name": "longpost-desktop",
-  "version": "3.7.0",
+  "version": "3.8.0",
   "description": "LongPost 桌面版 —— 本地写作与内容工作台，全部数据保存在你自己的电脑上",
   "main": "main.js",
   "author": "yeyanli543-dot",
@@ -59,7 +59,8 @@
       "!renderer/vendor/VENDOR.md",
       "!VENDOR.md",
       "!VENDOR-LICENSES.md",
-      "!node_modules/**"
+      "!node_modules/**",
+      "changelog.json"
     ],
     "directories": {
       "output": "release",

@@ -4,7 +4,7 @@
 
 **下一代长文创作与社交平台 · 极简版 ↔ 专业版双工作区 · 交互式活数据图表 · 免登录公开阅读 · 零服务器离线工作台**
 
-[![Version](https://img.shields.io/badge/version-3.7.0-blue.svg)](https://github.com/yeyanli543-dot/longpost/releases/tag/v3.7.0)
+[![Version](https://img.shields.io/badge/version-3.8.0-blue.svg)](https://github.com/yeyanli543-dot/longpost/releases/tag/v3.8.0)
 [![Build Desktop](https://github.com/yeyanli543-dot/longpost/actions/workflows/desktop-release.yml/badge.svg)](https://github.com/yeyanli543-dot/longpost/actions/workflows/desktop-release.yml)
 [![Build Android](https://github.com/yeyanli543-dot/longpost/actions/workflows/android-release.yml/badge.svg)](https://github.com/yeyanli543-dot/longpost/actions/workflows/android-release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -53,18 +53,18 @@
 
 ---
 
-## <a id="-多端下载"></a>📥 多端下载 (v3.7.0 最新全平台安装包)
+## <a id="-多端下载"></a>📥 多端下载 (v3.8.0 最新全平台安装包)
 
 所有安装包均通过 GitHub Actions 自动化 CI 构建并带有防篡改校验，即下即用：
 
 | 平台 | 安装包格式 | 下载渠道 | 说明 |
 | :--- | :--- | :--- | :--- |
-| **🪟 Windows** | `.exe` 安装版 / 便携版 | [**下载安装版**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.7.0/LongPost.Setup.3.7.0.exe) · [**免安装便携版**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.7.0/LongPost.3.7.0.exe) | 支持 Windows 10/11，便携免安装版解压双击直接运行 |
-| **🤖 Android** | `.apk` 手机安装包 | [**下载 LongPost-android.apk**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.7.0/LongPost-android.apk) | 手机端离线写作，固定签名密钥支持无缝覆盖升级 |
+| **🪟 Windows** | `.exe` 安装版 / 便携版 | [**下载安装版**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.8.0/LongPost.Setup.3.8.0.exe) · [**免安装便携版**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.8.0/LongPost.3.8.0.exe) | 支持 Windows 10/11，便携免安装版解压双击直接运行 |
+| **🤖 Android** | `.apk` 手机安装包 | [**下载 LongPost-android.apk**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.8.0/LongPost-android.apk) | 手机端离线写作，固定签名密钥支持无缝覆盖升级 |
 | **🧩 Chrome 扩展** | 源码目录 | [**查看扩展**](https://github.com/yeyanli543-dot/longpost/tree/main/chrome-extension) | 开发者模式加载，或随桌面版一起分发 |
-| **🍎 macOS** | `.dmg` 镜像 | [**下载 LongPost-3.7.0-arm64.dmg**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.7.0/LongPost-3.7.0-arm64.dmg) | 支持 Apple Silicon & Intel，首次打开右键放行 |
-| **🐧 Linux** | `.AppImage` | [**下载 LongPost-3.7.0.AppImage**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.7.0/LongPost-3.7.0.AppImage) | 赋予执行权限 `chmod +x` 后直接运行 |
-| **📦 全部版本** | 全部安装产物 | [**GitHub Releases v3.7.0 (最新发布页)**](https://github.com/yeyanli543-dot/longpost/releases/tag/v3.7.0) | 包含所有平台的安装包、源码与校验哈希 |
+| **🍎 macOS** | `.dmg` 镜像 | [**下载 LongPost-3.8.0-arm64.dmg**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.8.0/LongPost-3.8.0-arm64.dmg) | 支持 Apple Silicon & Intel，首次打开右键放行 |
+| **🐧 Linux** | `.AppImage` | [**下载 LongPost-3.8.0.AppImage**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.8.0/LongPost-3.8.0.AppImage) | 赋予执行权限 `chmod +x` 后直接运行 |
+| **📦 全部版本** | 全部安装产物 | [**GitHub Releases v3.8.0 (最新发布页)**](https://github.com/yeyanli543-dot/longpost/releases/tag/v3.8.0) | 包含所有平台的安装包、源码与校验哈希 |
 
 ---
 

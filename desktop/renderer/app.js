@@ -572,8 +572,31 @@
     return false;
   }
 
+  /** 搜索语法解析在 lib/search-query.js（纯函数、有单测） */
+  function parseSearchQuery(raw) {
+    if (window.LPQuery && window.LPQuery.parseSearchQuery) return window.LPQuery.parseSearchQuery(raw);
+    return { text: String(raw || '').trim().toLowerCase(), tags: [], since: 0 };
+  }
+
   function visibleArticles() {
-    const query = state.query.trim().toLowerCase();
+    const parsed = parseSearchQuery(state.query);
+    const query = parsed.text;
+    const tagFilter = state.tagFilter;
+
+    const passesTagAndTime = (article) => {
+      if (tagFilter && (article.tags || []).indexOf(tagFilter) === -1) return false;
+      for (const tag of parsed.tags) {
+        const tags = (article.tags || []).map((t) => String(t).toLowerCase());
+        if (tags.indexOf(tag) === -1) return false;
+      }
+      if (parsed.since && (article.updatedAt || article.createdAt || 0) < parsed.since) return false;
+      return true;
+    };
+
+    if (!query) {
+      state.searchSource = parsed.tags.length || parsed.since ? '条件筛选' : '';
+      return state.articles.filter(passesTagAndTime);
+    }
     if (!query) {
       state.searchSource = '';
       return state.articles.filter((article) => {
@@ -589,7 +612,7 @@
     if (ids) ids.forEach((id) => { byIndex[id] = true; });
     state.searchSource = ids ? '本地检索' + (ids.length ? ' ' + ids.length : '') : '';
     return state.articles.filter((article) => {
-      if (state.tagFilter && (article.tags || []).indexOf(state.tagFilter) === -1) return false;
+      if (!passesTagAndTime(article)) return false;
       return byIndex[article.id] === true || articleMatches(article, query);
     });
   }
@@ -3653,6 +3676,33 @@
     copyToClipboard(code);
   }
 
+  /** 一键安装剪藏扩展：拷到用户目录 + 打开文件夹 + 复制路径 + 三步提示 */
+  async function installExtension() {
+    if (!LP || typeof LP.installExtension !== 'function') {
+      toast('当前平台不支持一键安装');
+      return;
+    }
+    setBusyLabel('正在准备扩展…');
+    try {
+      const res = await LP.installExtension();
+      if (!res || !res.ok) {
+        toast('准备失败：' + ((res && res.error) || '未知错误'));
+        return;
+      }
+      const status = $('clipBridgeStatus');
+      if (status) {
+        status.textContent =
+          '扩展已复制到：' + res.dir +
+          '\n接下来三步：① 地址栏打开 chrome://extensions ② 打开右上角「开发者模式」 ③ 点「加载已解压的扩展程序」，把刚复制的路径粘贴进去。';
+      }
+      toast('路径已复制，按提示在 Chrome 里加载');
+    } catch (err) {
+      toast('准备失败：' + ((err && err.message) || err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function openExtensionDir() {
     if (!LP || typeof LP.openExtensionDir !== 'function') {
       toast('当前环境不支持', 'err');
@@ -3712,7 +3762,7 @@
     $('clipBridgeSwitch').addEventListener('click', toggleClipBridge);
     $('clipBookmarkBtn').addEventListener('click', copyBookmarklet);
     $('clipPairBtn').addEventListener('click', copyPairingCode);
-    $('clipExtDirBtn').addEventListener('click', openExtensionDir);
+    $('clipExtDirBtn').addEventListener('click', installExtension);
     $('clipRotateBtn').addEventListener('click', rotateBridgeToken);
     $('clipSendToBtn').addEventListener('click', installSendToMenu);
     if (LP && typeof LP.onClipped === 'function') {
@@ -3733,10 +3783,29 @@
     if (el) el.textContent = text || '';
   }
 
+  let changelogCache = null;
+
+  async function changelogLine(version) {
+    try {
+      if (!changelogCache) {
+        changelogCache = typeof LP.updateChangelog === 'function' ? await LP.updateChangelog() : { entries: [] };
+      }
+      const entry = (changelogCache.entries || []).find((item) => item.version === version);
+      if (!entry || !entry.items.length) return '';
+      return entry.items.slice(0, 2).join('；');
+    } catch (err) {
+      return '';
+    }
+  }
+
   function showUpdateBanner(info) {
     const bar = $('updateBanner');
     if (!bar) return;
     $('updateBannerText').textContent = '发现新版本 ' + info.latest + '（当前 ' + info.current + '）';
+    changelogLine(info.latest).then((line) => {
+      if (!line) return;
+      $('updateBannerText').textContent = '新版本 ' + info.latest + '：' + line;
+    });
     bar.hidden = false;
   }
 
