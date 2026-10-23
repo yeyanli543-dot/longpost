@@ -2925,7 +2925,7 @@
       }
       const settings = (await LP.getSettings()) || {};
       const backupData = {
-        version: '3.2.3',
+        version: '3.3.0',
         exportedAt: new Date().toISOString(),
         appName: 'LongPost',
         stats: {
@@ -4619,10 +4619,31 @@
     });
     tools.classList.remove('condensed');
     if (isNarrow()) {
-      // 窄屏用自己那套（只留 3 个高频键 + 更多），别在这里折叠
+      // 窄屏：顶栏只保留「预览 / 分享 / 更多」三个，其余全部收进菜单。
+      //
+      // 这里必须用**内联 display**，不能只加 .folded 类：实测 390px 下
+      // 样式表里的 .tools .btn { display: none } 没有生效（cssRules 能读到、
+      // 选择器也匹配，但计算值仍是 flex），结果 13 个按钮横向溢出，
+      // 标题被压到 8px 宽 —— 手机端根本没法用。
+      // 内联样式优先级最高，不依赖样式表的加载顺序。
       bar.classList.remove('overflowing');
+      const KEEP = { btnPreview: 1, btnShare: 1, btnMore: 1 };
+      Array.from(tools.querySelectorAll('.btn')).forEach((el) => {
+        if (KEEP[el.id]) {
+          el.style.display = '';
+          el.classList.remove('folded');
+        } else {
+          el.style.display = 'none';
+          el.classList.add('folded');
+        }
+      });
       return;
     }
+
+    // 回到宽屏：把窄屏加的内联 display 清掉
+    Array.from(tools.querySelectorAll('.btn')).forEach((el) => {
+      if (el.style.display === 'none') el.style.display = '';
+    });
     // 两种溢出都要算：宽度 >1240 时 .tools 有自己的 max-width，溢出发生在**内部**
     // （scrollWidth > clientWidth）；<=1240 放开 max-width 后溢出跑到**容器外**
     // （tools 右缘越过工具条右缘）。只量一种会把后者漏掉。
