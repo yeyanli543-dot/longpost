@@ -132,3 +132,192 @@ body.mode-chrome .editor-wrap {
   max-width: 1100px;
   width: calc(100% - 48px);
 }
+
+
+/* ============================================================================
+ * 第二遍：把「密度」和「浏览器感」做出来
+ *
+ * 上一版只换了颜色和导航位置，所以看起来还是「原来的东西换了个色」。
+ * Chrome 的辨识度其实来自三件事：
+ *   1. 行高很紧（标签 34px、工具栏 40px、图标 16px）；
+ *   2. 地址栏那颗「圆角胶囊」；
+ *   3. 内容是一整块白色，没有卡片阴影。
+ * ========================================================================== */
+
+/* ---------------------------------------------------------------- 标签条更紧 */
+body.mode-chrome .tabbar {
+  height: 34px;
+  padding: 4px 8px 0;
+  gap: 2px;
+}
+
+body.mode-chrome .tabbar .tab {
+  flex: 0 1 190px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px 8px 0 0;
+  font-size: 12px;
+  gap: 6px;
+}
+
+body.mode-chrome .tabbar .tab .tab-icon {
+  width: 13px;
+  height: 13px;
+}
+
+/* 让出的高度也要跟着改 */
+body.mode-chrome .app {
+  padding-top: 34px;
+}
+
+/* ---------------------------------------------------------------- 工具栏：一条 40px 的带 */
+body.mode-chrome .toolbar {
+  height: 40px;
+  padding: 0 8px;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+/* 地址栏：整条工具栏里最像 Chrome 的那个元素 */
+body.mode-chrome .title-input {
+  height: 30px;
+  min-width: 0;
+  flex: 1 1 auto;
+  border: 0;
+  border-radius: 999px;
+  background: var(--bg) url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235f6368' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") no-repeat 10px center;
+  background-size: 14px;
+  padding: 0 12px 0 30px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+body.mode-chrome .title-input:focus {
+  background-color: var(--surface);
+  box-shadow: 0 0 0 2px var(--accent-soft), 0 1px 3px rgba(60, 64, 67, 0.15);
+  outline: none;
+}
+
+/* 工具按钮：28px 方点，图标 15px */
+body.mode-chrome .tools {
+  gap: 1px;
+}
+
+body.mode-chrome .tools .btn,
+body.mode-chrome .toolbar > .icon-btn {
+  min-width: 28px;
+  min-height: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  border-radius: 999px;
+  color: var(--text-2);
+}
+
+body.mode-chrome .tools .btn:hover,
+body.mode-chrome .toolbar > .icon-btn:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+body.mode-chrome .tools .btn .icon {
+  width: 15px;
+  height: 15px;
+}
+
+/* ---------------------------------------------------------------- 格式栏：30px */
+body.mode-chrome .fmtbar {
+  height: 32px;
+  padding: 0 8px;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+
+body.mode-chrome .fmt {
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  color: var(--text-2);
+}
+
+body.mode-chrome .fmt:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+/* ---------------------------------------------------------------- 画布与纸 */
+body.mode-chrome .main {
+  background: #f8f9fa;
+  padding: 20px 24px;
+}
+
+body.mode-chrome .editor-wrap {
+  margin: 0 auto;
+  max-width: 860px;
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.08);
+}
+
+/* 正文排版：更像文档，少一点界面感 */
+body.mode-chrome .editor {
+  padding: 40px 56px;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+/* ---------------------------------------------------------------- 侧栏 */
+body.mode-chrome .sidebar {
+  width: 272px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+body.mode-chrome .side-head {
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+body.mode-chrome .item {
+  border-radius: 8px;
+  margin: 2px 8px;
+}
+
+body.mode-chrome .item.active {
+  background: var(--accent-soft);
+}
+
+/* ---------------------------------------------------------------- 状态栏 */
+body.mode-chrome .statusbar {
+  height: 26px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+
+/* 编辑区左右两栏都应该是「纸」：上一版左栏还留着画布灰 */
+body.mode-chrome .editor-wrap,
+body.mode-chrome .editor-wrap > *,
+body.mode-chrome .editor-wrap .pane,
+body.mode-chrome .editor-wrap .editor-pane,
+body.mode-chrome .editor-wrap .preview-pane {
+  background: var(--surface);
+}
+
+body.mode-chrome .editor-wrap textarea,
+body.mode-chrome .editor-wrap .editor {
+  background: transparent;
+}
+
+/* 两栏之间用一条细线分开，而不是色差 */
+body.mode-chrome .editor-wrap > * + * {
+  border-left: 1px solid var(--border);
+}
