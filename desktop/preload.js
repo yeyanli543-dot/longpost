@@ -48,6 +48,7 @@ contextBridge.exposeInMainWorld('lp', {
   exportHtml: (id) => ipcRenderer.invoke('export:html', id),
   exportMarkdown: (id) => ipcRenderer.invoke('export:markdown', id),
   exportPdf: (payload) => ipcRenderer.invoke('export:pdf', payload),
+  exportDocx: (payload) => ipcRenderer.invoke('export:docx', payload),
   saveExportImage: (payload) => ipcRenderer.invoke('export:save-image', payload),
 
   // 应用

@@ -2636,6 +2636,33 @@
     }
   }
 
+  /** 导出 Word：标题层级会映射到 Word 的「标题 1..6」，可在 Word 里自动生成目录。 */
+  async function exportDocxById(id) {
+    if (typeof LP.exportDocx !== 'function') {
+      toast('当前平台不支持导出 Word');
+      return;
+    }
+    setBusyLabel();
+    try {
+      const article = await LP.getArticle(id);
+      if (!article) {
+        toast('文章不存在');
+        return;
+      }
+      const res = await LP.exportDocx({ title: article.title || '未命名', markdown: article.content || '' });
+      if (res && res.ok) {
+        const name = String(res.path || '').split(/[\\/]/).pop();
+        toast('已导出：' + name);
+      } else if (!res || !res.canceled) {
+        toast('导出失败：' + ((res && res.error) || '未知错误'));
+      }
+    } catch (err) {
+      toast('导出失败：' + ((err && err.message) || err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function exportById(kind, id) {
     setBusyLabel();
     try {
@@ -6139,6 +6166,7 @@
         { sep: true },
         { label: '导出网页', icon: 'download', onPick: () => exportById('html', id) },
         { label: '导出 Markdown', icon: 'file-text', onPick: () => exportById('md', id) },
+            { label: '导出 Word（.docx）', icon: 'file-text', onPick: () => exportDocxById(id) },
         { sep: true },
         { label: '删除（进回收站）', icon: 'trash', danger: true, onPick: () => deleteById(id) },
       ],
@@ -6210,6 +6238,7 @@
     items.push(
       { label: '导出网页', icon: 'download', onPick: () => exportArticle('html') },
       { label: '导出 Markdown', icon: 'file-text', onPick: () => exportArticle('md') },
+          { label: '导出 Word（.docx）', icon: 'file-text', onPick: () => exportDocxById(state.current.id) },
       {
         label: '导出长图（PNG）',
         icon: 'image',

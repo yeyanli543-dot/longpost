@@ -989,6 +989,27 @@ function registerIpc() {
     }
   });
 
+  // Word 导出：渲染层把 markdown 传进来，主进程生成 docx 并落盘。
+  // 标题层级映射到 Word 的「标题 1..6」，Word 里可直接插入自动目录。
+  ipcMain.handle('export:docx', async (_e, { title, markdown }) => {
+    const suggested = String(title || '未命名').replace(/[\\/:*?"<>|]/g, '_').slice(0, 60);
+    const res = await dialog.showSaveDialog(mainWindow, {
+      title: '导出为 Word 文档',
+      defaultPath: suggested + '.docx',
+      filters: [{ name: 'Word 文档', extensions: ['docx'] }],
+    });
+    if (res.canceled || !res.filePath) return { ok: false, canceled: true };
+
+    try {
+      const { buildDocx } = require('./lib/docx.js');
+      const buffer = buildDocx({ title, markdown });
+      fs.writeFileSync(res.filePath, buffer);
+      return { ok: true, path: res.filePath, bytes: buffer.length };
+    } catch (err) {
+      return { ok: false, error: String((err && err.message) || err) };
+    }
+  });
+
   ipcMain.handle('export:pdf', async (_e, { title, html, options = {} }) => {
     const suggested = (title || '未命名').replace(/[\\/:*?"<>|]/g, '_').slice(0, 60);
     const res = await dialog.showSaveDialog(mainWindow, {
@@ -1099,8 +1120,58 @@ function importSendToFile(filePath) {
   }
 }
 
+// ---------------------------------------------------------------- 首启引导
+// 第一次打开时放一篇可编辑的示例文章：空白编辑器对新手是劝退的，
+// 这篇同时充当功能导览。用户删掉它不影响任何状态（welcomed 已置位）。
+const WELCOME_MARKDOWN = [
+  '# 欢迎使用 LongPost',
+  '',
+  '这是你的第一篇文档，可以直接改、直接删。',
+  '',
+  '## 三件最常用的事',
+  '',
+  '1. **写**：左边写 Markdown，右边实时预览；`Ctrl/Cmd + S` 立即保存（平时会自动保存）。',
+  '2. **切**：按 `Alt + M` 在「极简版」和「专业版」之间切换 —— 前者干净，后者工具齐全。',
+  '3. **发**：右上角「更多」里能导出网页、Markdown、Word、长图，也能把整站导出成静态站。',
+  '',
+  '## 让内容更好看',
+  '',
+  '- 用 # 起标题，## 起小节，大纲面板会自动生成',
+  '- 三反引号包起来的代码块会高亮',
+  '- 写成 chart 围栏可以插入可交互图表',
+  '',
+  '> 所有内容都只存在这台电脑上。不联网、不上传、不需要账号。',
+  '',
+  '## 从别处把内容带进来',
+  '',
+  '- 设置 → Chrome 剪藏：开启后可以在浏览器里一键存网页',
+  '- 设置 → 数据与关于 → 导入 Markdown 文件夹：把 Obsidian 笔记搬过来',
+  '- 任意文件右键 → 发送到 → LongPost（在设置里一键安装）',
+  '',
+  '## 需要帮忙时',
+  '',
+  '设置 → 数据与关于 里有「使用说明」和「检查更新」。',
+  '',
+  '祝你写得顺手。',
+].join('\n');
+
+async function seedWelcomeArticle() {
+  try {
+    const settings = await store.getSettings();
+    if (settings.welcomed) return;
+    const list = await store.listArticles();
+    if (!list || list.length === 0) {
+      await store.saveArticle({ title: '欢迎使用 LongPost', content: WELCOME_MARKDOWN, tags: ['指南'] });
+    }
+    await store.setSettings({ welcomed: true });
+  } catch (error) {
+    // 引导失败不能影响启动
+    console.warn('[welcome] 初始化示例文章失败:', error && error.message);
+  }
+}
 app.whenReady().then(() => {
   store.init(app.getPath('userData'));
+  seedWelcomeArticle().catch(() => {});
   // 本地桥：开着就随应用启动，用户不必每次先进设置页
   ensureClipBridge().catch(() => {
     /* 端口被占或设置未开，静默跳过 */
