@@ -4360,3 +4360,13 @@ body.skin-argon .btn.primary {
   color: var(--on-accent);
   box-shadow: var(--sh-1);
 }
+
+/* 设置底部：版本号与「检查更新」常驻，不再藏在折叠区里 */
+.dialog-foot .foot-version {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-right: 4px;
+}
+.dialog-foot .foot-spacer {
+  flex: 1;
+}

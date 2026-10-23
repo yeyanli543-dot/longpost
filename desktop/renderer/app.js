@@ -3781,6 +3781,8 @@
   function updateStatusText(text) {
     const el = $('updateStatus');
     if (el) el.textContent = text || '';
+    const el2 = $('updateStatus2');
+    if (el2) el2.textContent = text || '';
   }
 
   let changelogCache = null;
@@ -3903,6 +3905,13 @@
       $('updateBanner').hidden = true;
     });
     $('updateCheckBtn').addEventListener('click', () => checkForAppUpdate(false));
+    if ($('updateCheckBtn2')) $('updateCheckBtn2').addEventListener('click', () => checkForAppUpdate(false));
+
+    if ($('footVersion') && typeof LP.appInfo === 'function') {
+      LP.appInfo().then((info) => {
+        if (info && info.version) $('footVersion').textContent = 'LongPost ' + info.version;
+      }).catch(() => {});
+    }
 
     // 启动后延迟检查：别和首屏渲染抢带宽
     if (LP && typeof LP.updateCheck === 'function') {
