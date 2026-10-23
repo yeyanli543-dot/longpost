@@ -413,6 +413,7 @@ SITE_URL=https://你的域名     # 影响确认信链接、RSS 与分享图域�
 
 | 文档 | 内容 |
 | :--- | :--- |
+| **[国内下载](docs/DOWNLOAD-CN.md)** | GitHub 加速镜像地址与 sha256 校验值 |
 | **[技术白皮书](docs/WHITEPAPER.md)** | 架构、模块地图、安全模型、质量工程、部署与路线图的完整说明（另有 [HTML](docs/whitepaper.html) / [PDF](docs/whitepaper.pdf) 版本） |
 | **[产品报告](docs/PRODUCT-REPORT.md)** | 产品定位、功能全景、技术架构、版本演进、工程质量、安全与隐私、性能数据、已知限制、路线图 |
 | **[使用说明](docs/USER-GUIDE.md)** | 安装、界面导览、写作与快捷键、AI 助手配置、导出分享、WebDAV 同步、双工作区、自建部署、排错 |
