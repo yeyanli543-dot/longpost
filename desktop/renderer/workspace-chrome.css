@@ -1,0 +1,134 @@
+/* ============================================================================
+ * 工作台（Chrome 风）—— 第三套独立骨架
+ *
+ * 设计约束：
+ *   1. 只在 body.mode-chrome 下生效，绝不参与前两套工作区的级联；
+ *   2. 自带完整设计令牌，不继承 .mode-apple / .mode-google 的任何变量；
+ *   3. 只做视觉与骨架，不改 APP 的交互逻辑（DOM 仍复用现有节点）。
+ *
+ * 结构对照：
+ *   底部 Dock        → 顶部标签条（像浏览器标签页）
+ *   深色画布          → 浅灰画布 + 白色「纸」
+ *   侧栏卡片堆叠      → 白色面板 + 1px 细线
+ * ========================================================================== */
+
+body.mode-chrome {
+  /* 完整令牌：灰白 + Google 蓝 */
+  --bg: #f1f3f4;
+  --bg-2: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f8f9fa;
+  --surface-3: #eef1f4;
+  --border: #dadce0;
+  --border-strong: #c4c7cc;
+  --text: #202124;
+  --text-2: #5f6368;
+  --text-3: #80868b;
+
+  --accent: #1a73e8;
+  --accent-hover: #1765cc;
+  --accent-soft: #e8f0fe;
+  --accent-line: #c6dafc;
+  --on-accent: #ffffff;
+
+  --r-xs: 4px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 24px;
+
+  --sh-1: 0 1px 2px rgba(60, 64, 67, 0.1);
+  --sh-2: 0 1px 3px rgba(60, 64, 67, 0.12), 0 4px 8px rgba(60, 64, 67, 0.08);
+  --sh-3: 0 4px 16px rgba(60, 64, 67, 0.16);
+
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* 让出顶部标签条 */
+body.mode-chrome .app {
+  padding-top: 46px;
+  background: var(--bg);
+}
+
+/* ---------------------------------------------------------------- 标签条 */
+body.mode-chrome .tabbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: auto;
+  height: 46px;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 6px 12px 0;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  z-index: 80;
+}
+
+body.mode-chrome .tabbar .tab {
+  flex: 0 1 210px;
+  min-width: 0;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  background: transparent;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+body.mode-chrome .tabbar .tab.active {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+body.mode-chrome .tabbar .tab-icon {
+  width: 15px;
+  height: 15px;
+  opacity: 0.75;
+}
+
+/* ---------------------------------------------------------------- 侧栏 */
+body.mode-chrome .sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+body.mode-chrome .side-head {
+  background: var(--surface);
+}
+
+/* ---------------------------------------------------------------- 主区 */
+body.mode-chrome .main {
+  background: var(--bg);
+}
+
+body.mode-chrome .toolbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+body.mode-chrome .fmtbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+/* 编辑区 = 浅灰画布上的一张纸 */
+body.mode-chrome .editor-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--sh-2);
+  margin: 16px auto;
+  max-width: 1100px;
+  width: calc(100% - 48px);
+}

@@ -86,7 +86,7 @@ function pickChecksumAsset(assets) {
 
 /**
  * 从 GitHub 的 /releases/latest 302 跳转地址里解析版本号。
- * 例：https://github.com/o/r/releases/tag/v3.4.1 → 3.4.1
+ * 例：https://github.com/o/r/releases/tag/v3.5.0 → 3.5.0
  */
 function parseLatestTag(location) {
   const text = String(location || '');

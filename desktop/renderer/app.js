@@ -2925,7 +2925,7 @@
       }
       const settings = (await LP.getSettings()) || {};
       const backupData = {
-        version: '3.4.1',
+        version: '3.5.0',
         exportedAt: new Date().toISOString(),
         appName: 'LongPost',
         stats: {
@@ -3057,10 +3057,13 @@
   }
 
   function applyWorkspaceMode(mode) {
-    const isLite = mode !== 'pro';
-    const actual = isLite ? 'lite' : 'pro';
+    const isChrome = mode === 'chrome';
+    const isLite = !isChrome && mode !== 'pro';
+    const actual = isChrome ? 'chrome' : isLite ? 'lite' : 'pro';
     state.settings.workspaceMode = actual;
     document.documentElement.dataset.workspaceMode = actual;
+    document.documentElement.classList.toggle('mode-chrome', isChrome);
+    document.body.classList.toggle('mode-chrome', isChrome);
     document.documentElement.classList.toggle('mode-apple', isLite);
     document.documentElement.classList.toggle('mode-lite', isLite);
     document.documentElement.classList.toggle('mode-google', !isLite);
@@ -3070,8 +3073,15 @@
     document.body.classList.toggle('mode-google', !isLite);
     document.body.classList.toggle('mode-pro', !isLite);
 
+    if (isChrome) {
+      ['mode-apple', 'mode-lite', 'mode-google', 'mode-pro'].forEach((cls) => {
+        document.documentElement.classList.remove(cls);
+        document.body.classList.remove(cls);
+      });
+    }
+
     const badge = isLite ? '' : '';
-    const label = isLite ? '极简' : '专业';
+    const label = isChrome ? '工作台' : isLite ? '极简' : '专业';
     const title = isLite
       ? '当前：极简版（点击切换至 专业版，快捷键 Alt+M）'
       : '当前：专业版（点击切换至 极简版，快捷键 Alt+M）';
@@ -3131,7 +3141,8 @@
 
   async function toggleWorkspaceMode() {
     document.documentElement.classList.add('mode-morphing');
-    const next = state.settings.workspaceMode === 'pro' ? 'lite' : 'pro';
+    const current = state.settings.workspaceMode || 'lite';
+    const next = current === 'lite' ? 'pro' : current === 'pro' ? 'chrome' : 'lite';
     state.settings = await LP.setSettings({ workspaceMode: next });
     applyWorkspaceMode(next);
     setTimeout(() => {
@@ -3190,6 +3201,7 @@
       [
         { key: 'lite', label: '极简版' },
         { key: 'pro', label: '专业版' },
+        { key: 'chrome', label: '工作台' },
       ],
       state.settings.workspaceMode || 'lite',
       async (key) => {
@@ -3199,7 +3211,7 @@
         setTimeout(() => {
           document.documentElement.classList.remove('mode-morphing');
         }, 400);
-        toast(key === 'lite' ? '已切换为 极简版' : '已切换为 专业版');
+        toast(key === 'lite' ? '已切换为 极简版' : key === 'pro' ? '已切换为 专业版' : '已切换为 工作台');
       },
     );
 
