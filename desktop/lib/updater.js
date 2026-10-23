@@ -18,6 +18,10 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { app, shell, net } = require('electron');
 
+/** 仓库地址与「最新发布」入口（走 302 跳转，不吃 API 限流） */
+const REPO_BASE = 'https://github.com/yeyanli543-dot/longpost';
+const LATEST_PAGE = REPO_BASE + '/releases/latest';
+
 /** 默认清单地址：GitHub Releases API（只取 latest，不列全部） */
 const DEFAULT_FEED =
   'https://api.github.com/repos/yeyanli543-dot/longpost/releases/latest';
@@ -76,6 +80,34 @@ function pickAsset(assets, platform = process.platform) {
 function pickChecksumAsset(assets) {
   const list = Array.isArray(assets) ? assets : [];
   return list.find((a) => /\.sha256$/i.test(a.name || '')) || list.find((a) => /checksums.*\.txt$/i.test(a.name || '')) || null;
+}
+
+// ---------------------------------------------------------------- 版本发现
+
+/**
+ * 从 GitHub 的 /releases/latest 302 跳转地址里解析版本号。
+ * 例：https://github.com/o/r/releases/tag/v3.4.1 → 3.4.1
+ */
+function parseLatestTag(location) {
+  const text = String(location || '');
+  const m = text.match(/\/releases\/tag\/v?([0-9][0-9.\w-]*)/i);
+  return m ? m[1] : null;
+}
+
+/**
+ * 按命名约定拼出各平台资产地址。
+ *
+ * 这样就不必依赖 GitHub API —— 未认证的 API 每小时只有 60 次，
+ * 用完就 403，更新提示会静默失效（实测遇到过）。
+ */
+function assetUrlFor(version, platform) {
+  const base = REPO_BASE + '/releases/download/v' + version + '/';
+  if (platform === 'win32') {
+    return { setup: base + 'LongPost.Setup.' + version + '.exe', portable: base + 'LongPost.' + version + '.exe' };
+  }
+  if (platform === 'darwin') return { dmg: base + 'LongPost-' + version + '-arm64.dmg' };
+  if (platform === 'linux') return { appImage: base + 'LongPost-' + version + '.AppImage' };
+  return {};
 }
 
 // ---------------------------------------------------------------- 网络
@@ -200,6 +232,72 @@ function findChecksum(text, fileName) {
  * @param {string} [options.feed] 自定义清单地址；默认 GitHub latest release
  * @param {string} [options.currentVersion] 默认取 app.getVersion()
  */
+function headLocation(url) {
+  return new Promise((resolve, reject) => {
+    const request = net.request({ url, method: 'HEAD', redirect: 'manual' });
+    request.setHeader('User-Agent', 'LongPost-Desktop-Updater');
+    const timer = setTimeout(() => {
+      request.abort();
+      reject(new Error('检查更新超时'));
+    }, CHECK_TIMEOUT_MS);
+
+    request.on('response', (response) => {
+      clearTimeout(timer);
+      const location = response.headers.location || response.headers.Location;
+      response.resume();
+      resolve({ status: response.statusCode, location: Array.isArray(location) ? location[0] : location });
+    });
+    request.on('error', (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
+    request.end();
+  });
+}
+
+/**
+ * 走网页跳转拿版本：没有 API 限流，也不会因为 403 静默失效。
+ */
+async function checkViaRedirect(currentVersion) {
+  const { status, location } = await headLocation(LATEST_PAGE);
+  if (status !== 301 && status !== 302 && status !== 307 && status !== 308) {
+    throw new Error('最新的发布页没有按预期跳转（HTTP ' + status + '）');
+  }
+  const latest = parseLatestTag(location);
+  if (!latest) throw new Error('无法从跳转地址解析版本号');
+
+  const hasUpdate = compareVersions(latest, currentVersion) > 0;
+  const assets = assetUrlFor(latest, process.platform);
+
+  if (!hasUpdate) {
+    return { current: currentVersion, latest, hasUpdate: false, notes: '', url: null, assetName: null, checksumUrl: null, publishedAt: null };
+  }
+
+  const name =
+    process.platform === 'win32'
+      ? 'LongPost.Setup.' + latest + '.exe'
+      : process.platform === 'darwin'
+        ? 'LongPost-' + latest + '-arm64.dmg'
+        : 'LongPost-' + latest + '.AppImage';
+  const url =
+    process.platform === 'win32'
+      ? assets.setup
+      : process.platform === 'darwin'
+        ? assets.dmg
+        : assets.appImage;
+
+  return {
+    current: currentVersion,
+    latest,
+    hasUpdate: true,
+    notes: '',
+    url,
+    assetName: name,
+    checksumUrl: REPO_BASE + '/releases/download/v' + latest + '/checksums.txt',
+    publishedAt: null,
+  };
+}
+
 async function checkForUpdates(options = {}) {
   const currentVersion = options.currentVersion || app.getVersion();
   const feed = options.feed || DEFAULT_FEED;
@@ -304,6 +402,8 @@ module.exports = {
   pickChecksumAsset,
   findChecksum,
   normalizeName,
+  parseLatestTag,
+  assetUrlFor,
   checkForUpdates,
   downloadUpdate,
   installUpdate,
