@@ -40,6 +40,11 @@ describe('WebDAV SSRF Private IP Filter Suite', () => {
     assert.equal(isPrivateIp('fc00::1'), true);
     assert.equal(isPrivateIp('fd12:3456::1'), true);
     assert.equal(isPrivateIp('fe80::abcd'), true);
+    assert.equal(isPrivateIp('0:0:0:0:0:0:0:1'), true);
+    assert.equal(isPrivateIp('0:0:0:0:0:ffff:7f00:1'), true);
+    assert.equal(isPrivateIp('64:ff9b::a00:1'), true);
+    assert.equal(isPrivateIp('64:ff9b::1'), true);
+    assert.equal(isPrivateIp('ff02::1'), true);
   });
 
   it('应当放行正常的公网公有 IP', () => {
@@ -117,29 +122,39 @@ describe('resolvePublicHost DNS 解析期防护', () => {
   });
 
   it('无法解析的域名返回 ok=false 而不是抛异常', async () => {
-    const result = await resolvePublicHost('this-host-should-not-resolve.invalid');
+    const unavailable = (_host, _options, callback) => callback(new Error('DNS 不可用'));
+    const result = await resolvePublicHost('this-host-should-not-resolve.invalid', unavailable);
     assert.equal(result.ok, false);
   });
 });
 
 describe('createGuardedLookup 连接期 DNS 复核（防 DNS rebinding）', () => {
-  const callLookup = (hostname) =>
+  const callLookup = (records, options = { family: 0 }) =>
     new Promise((resolve) => {
-      const lookup = createGuardedLookup();
-      lookup(hostname, { family: 0 }, (err, address) => {
+      const dns = (_host, _options, callback) => callback(null, records);
+      const lookup = createGuardedLookup(dns);
+      lookup('example.test', options, (err, address) => {
         resolve({ err, address });
       });
     });
 
   it('解析到内网主机时以 ESSRFBLOCKED 失败', async () => {
-    const { err } = await callLookup('localhost');
+    const { err } = await callLookup([{ address: '127.0.0.1', family: 4 }]);
     assert.ok(err, '必须返回错误而不是正常地址');
     assert.equal(err.code, 'ESSRFBLOCKED');
   });
 
-  it('解析到公网主机时返回真实地址', async () => {
-    const { err, address } = await callLookup('example.com');
+  it('解析到公网主机时返回该地址，无需外部 DNS', async () => {
+    const { err, address } = await callLookup([{ address: '8.8.8.8', family: 4 }]);
     assert.equal(err, null);
-    assert.ok(typeof address === 'string' && address.length > 0);
+    assert.equal(address, '8.8.8.8');
+  });
+
+  it('同一个域名只要含内网记录就拒绝，防止 DNS 重绑定', async () => {
+    const { err } = await callLookup([
+      { address: '8.8.8.8', family: 4 },
+      { address: '0:0:0:0:0:0:0:1', family: 6 },
+    ], { all: true });
+    assert.equal(err.code, 'ESSRFBLOCKED');
   });
 });

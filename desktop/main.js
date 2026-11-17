@@ -876,18 +876,28 @@ function registerIpc() {
 
 
   // ---------------------------------------------------------------- 应用内更新
-  ipcMain.handle('update:check', async (_e, feed) => {
+  let checkedUpdate = null;
+  let downloadedUpdate = null;
+  let updateDownloading = false;
+  ipcMain.handle('update:check', async () => {
     try {
       const settings = await store.getSettings();
-      const info = await updater.checkForUpdates({ feed: feed || settings.updateFeed || undefined });
+      const info = await updater.checkForUpdates({ feed: settings.updateFeed || undefined });
+      checkedUpdate = info.hasUpdate && info.url ? info : null;
+      downloadedUpdate = null;
       return { ok: true, info };
     } catch (err) {
       return { ok: false, error: (err && err.message) || String(err) };
     }
   });
 
-  ipcMain.handle('update:download', async (event, info) => {
+  ipcMain.handle('update:download', async (event) => {
     const sender = event.sender;
+    if (updateDownloading) return { ok: false, error: '更新包正在下载' };
+    if (!checkedUpdate) return { ok: false, error: '请先检查可用更新' };
+    const info = checkedUpdate;
+    downloadedUpdate = null;
+    updateDownloading = true;
     try {
       const res = await updater.downloadUpdate(info, {
         onProgress: (received, total) => {
@@ -895,16 +905,24 @@ function registerIpc() {
           sender.send('update:progress', { received, total });
         },
       });
+      if (checkedUpdate !== info) {
+        try { fs.unlinkSync(res.filePath); } catch { /* 忽略 */ }
+        throw new Error('更新信息已变化，请重新检查');
+      }
+      downloadedUpdate = res;
       return { ok: true, ...res };
     } catch (err) {
       return { ok: false, error: (err && err.message) || String(err) };
+    } finally {
+      updateDownloading = false;
     }
   });
 
-  ipcMain.handle('update:install', async (_e, filePath) => {
+  ipcMain.handle('update:install', async () => {
     try {
-      await updater.installUpdate(filePath);
-      return { ok: true };
+      if (!downloadedUpdate || !downloadedUpdate.verified) throw new Error('请先下载并校验更新包');
+      const result = await updater.installUpdate(downloadedUpdate.filePath, { expectedSha256: downloadedUpdate.sha256 });
+      return { ok: true, ...result };
     } catch (err) {
       return { ok: false, error: (err && err.message) || String(err) };
     }
@@ -1159,6 +1177,20 @@ function importSendToFile(filePath) {
   }
 }
 
+async function importSendToArgument(filePath, workingDirectory) {
+  if (!filePath) return;
+  const resolved = path.resolve(workingDirectory || process.cwd(), filePath);
+  const doc = importSendToFile(resolved);
+  try {
+    await store.saveArticle({ title: doc.title, content: doc.content, tags: ['导入'] });
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('bridge:clipped', { title: doc.title });
+    }
+  } catch (error) {
+    console.warn('[send-to] 导入失败:', error && error.message);
+  }
+}
+
 // ---------------------------------------------------------------- 首启引导
 // 第一次打开时放一篇可编辑的示例文章：空白编辑器对新手是劝退的，
 // 这篇同时充当功能导览。用户删掉它不影响任何状态（welcomed 已置位）。
@@ -1208,35 +1240,44 @@ async function seedWelcomeArticle() {
     console.warn('[welcome] 初始化示例文章失败:', error && error.message);
   }
 }
-app.whenReady().then(() => {
-  store.init(app.getPath('userData'));
-  seedWelcomeArticle().catch(() => {});
-  // 本地桥：开着就随应用启动，用户不必每次先进设置页
-  ensureClipBridge().catch(() => {
-    /* 端口被占或设置未开，静默跳过 */
+// 磁盘库是整份读写，多个桌面进程同时访问同一数据目录会互相覆盖。
+// 后续启动交给已有进程处理；通过 additionalData 保留「发送到」的完整参数。
+const sendToAtLaunch = readSendToArgument(process.argv);
+const hasInstanceLock = app.requestSingleInstanceLock({ sendToPath: sendToAtLaunch, workingDirectory: process.cwd() });
+if (!hasInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', (_event, argv, workingDirectory, additionalData) => {
+    if (!mainWindow || mainWindow.isDestroyed()) createWindow();
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
+      mainWindow.focus();
+    }
+    const incomingPath = (additionalData && additionalData.sendToPath) || readSendToArgument(argv);
+    const incomingDir = (additionalData && additionalData.workingDirectory) || workingDirectory;
+    void importSendToArgument(incomingPath, incomingDir);
   });
-  registerLpProtocol();
-  buildMenu();
-  registerIpc();
-  createWindow();
 
-  const sendToPath = readSendToArgument(process.argv);
-  if (sendToPath) {
-    const doc = importSendToFile(sendToPath);
-    store
-      .saveArticle({ title: doc.title, content: doc.content, tags: ['导入'] })
-      .then(() => {
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('bridge:clipped', { title: doc.title });
-        }
-      })
-      .catch(() => {});
-  }
+  app.whenReady().then(() => {
+    store.init(app.getPath('userData'));
+    seedWelcomeArticle().catch(() => {});
+    // 本地桥：开着就随应用启动，用户不必每次先进设置页
+    ensureClipBridge().catch(() => {
+      /* 端口被占或设置未开，静默跳过 */
+    });
+    registerLpProtocol();
+    buildMenu();
+    registerIpc();
+    createWindow();
 
-  app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    void importSendToArgument(sendToAtLaunch, process.cwd());
+
+    app.on('activate', () => {
+      if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
   });
-});
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

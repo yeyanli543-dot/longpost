@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { json, urlencoded } from 'express';
 import { join } from 'path';
-import { __express as hbsExpressEngine } from 'hbs';
+import { htmlViewEngine } from './common/utils/html-view-engine';
 
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { mkdirSync } from 'fs';
@@ -56,7 +56,7 @@ async function bootstrap() {
   // 注册视图引擎, 渲染 client 目录下的 html 文件
   app.setBaseViewsDir(clientDistDir);
   app.setViewEngine('html');
-  app.engine('html', hbsExpressEngine);
+  app.engine('html', htmlViewEngine);
 
   await app.listen(port, host);
   logger.log(`Server running on ${host}:${port}`);

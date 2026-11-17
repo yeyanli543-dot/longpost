@@ -36,6 +36,7 @@ import {
   type RssItemData,
 } from '@server/common/utils/rss-builder';
 import { ASSET_BASE_PATH } from '@server/config/client.config';
+import { serializePlatformData } from '@server/common/utils/html-view-engine';
 
 function getRequestBaseUrl(req: Request): string {
   const forwardedHost = req.headers['x-forwarded-host'];
@@ -127,7 +128,7 @@ export class ViewController {
     res: Response,
   ): Promise<void> {
     const platformData = (req as any).__platform_data__ ?? {};
-    const platformJson = JSON.stringify(platformData).replace(/'/g, "\\'");
+    const platformJson = serializePlatformData(platformData);
     const baseUrl = getRequestBaseUrl(req);
     const fullUrl = `${baseUrl}${req.originalUrl}`;
 
@@ -419,7 +420,7 @@ export class ViewController {
   async render(@Req() req: Request): Promise<OgRenderData> {
     const platformData = (req as any).__platform_data__ ?? {};
     const baseData: OgRenderData = {
-      __platform__: JSON.stringify(platformData),
+      __platform__: serializePlatformData(platformData),
       ogTitle: 'LongPost',
       ogDescription: '长文发布平台',
       ogImage: '',

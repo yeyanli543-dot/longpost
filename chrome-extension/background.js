@@ -146,7 +146,7 @@ async function postClip(config, payload) {
       body: JSON.stringify(payload),
     });
     return res.ok;
-  } catch (error) {
+  } catch {
     return false;
   }
 }
@@ -214,7 +214,7 @@ async function fetchRecent() {
     if (!res.ok) return [];
     const data = await res.json();
     return Array.isArray(data.items) ? data.items : [];
-  } catch (error) {
+  } catch {
     return [];
   }
 }

@@ -58,15 +58,14 @@ function createFsBackend() {
     return path.join(dataDir(), 'settings.json');
   }
 
-  function readJson(file, fallback) {
+  function readJson(file) {
     try {
-      if (!fs.existsSync(file)) return fallback;
       const raw = fs.readFileSync(file, 'utf8');
-      if (!raw.trim()) return fallback;
-      const parsed = JSON.parse(raw);
-      return parsed == null ? fallback : parsed;
-    } catch {
-      return fallback;
+      if (!raw.trim()) throw new Error('文件为空');
+      return JSON.parse(raw);
+    } catch (error) {
+      // 已存在的库不能在读取失败时悄悄变成空库，否则下一次保存会覆盖原文件。
+      throw new Error('无法读取本地数据文件 ' + file + '；原文件未被覆盖：' + error.message);
     }
   }
 
@@ -82,15 +81,20 @@ function createFsBackend() {
     filesDir,
 
     readArticles() {
-      const arr = readJson(articlesFile(), []);
-      return Array.isArray(arr) ? arr : [];
+      const arr = readJson(articlesFile());
+      if (!Array.isArray(arr)) throw new Error('文章数据格式错误；原文件未被覆盖：' + articlesFile());
+      return arr;
     },
     writeArticles(list) {
       writeJson(articlesFile(), list);
     },
 
     readSettings() {
-      return readJson(settingsFile(), {});
+      const settings = readJson(settingsFile());
+      if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+        throw new Error('设置数据格式错误；原文件未被覆盖：' + settingsFile());
+      }
+      return settings;
     },
     writeSettings(obj) {
       writeJson(settingsFile(), obj);
@@ -131,6 +135,7 @@ function createFsBackend() {
     },
 
     readFileBlob(stored) {
+      if (!isSafeStoredName(stored)) return null;
       const abs = path.join(filesDir(), stored);
       if (!fs.existsSync(abs)) return null;
       return fs.readFileSync(abs);
@@ -138,6 +143,7 @@ function createFsBackend() {
 
     deleteFile(stored) {
       try {
+        if (!isSafeStoredName(stored)) return false;
         const abs = path.join(filesDir(), stored);
         if (!fs.existsSync(abs)) return false;
         fs.unlinkSync(abs);
@@ -149,6 +155,7 @@ function createFsBackend() {
 
     fileSize(stored) {
       try {
+        if (!isSafeStoredName(stored)) return 0;
         return fs.statSync(path.join(filesDir(), stored)).size;
       } catch {
         return 0;
@@ -158,6 +165,9 @@ function createFsBackend() {
 }
 
 const IMAGE_EXTS = new Set(['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.avif', '.svg']);
+function isSafeStoredName(name) {
+  return typeof name === 'string' && name !== '.' && name !== '..' && /^[a-z0-9._-]+$/i.test(name);
+}
 function isImageExt(ext) {
   return IMAGE_EXTS.has(String(ext || '').toLowerCase());
 }

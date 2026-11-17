@@ -85,9 +85,9 @@ contextBridge.exposeInMainWorld('lp', {
   pickMarkdownFolder: () => ipcRenderer.invoke('import:pickFolder'),
 
   // 应用内更新：检查 / 下载 / 拉起安装程序
-  updateCheck: (feed) => ipcRenderer.invoke('update:check', feed),
-  updateDownload: (info) => ipcRenderer.invoke('update:download', info),
-  updateInstall: (filePath) => ipcRenderer.invoke('update:install', filePath),
+  updateCheck: () => ipcRenderer.invoke('update:check'),
+  updateDownload: () => ipcRenderer.invoke('update:download'),
+  updateInstall: () => ipcRenderer.invoke('update:install'),
   onUpdateProgress: (handler) => {
     const listener = (_event, data) => handler(data);
     ipcRenderer.on('update:progress', listener);

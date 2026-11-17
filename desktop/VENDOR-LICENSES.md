@@ -19,7 +19,7 @@
 | 1 | echarts | 6.1.0 | Apache-2.0 | Apache Software Foundation | https://github.com/apache/echarts | 图表运行库（存量） | `echarts.min.js` |
 | 2 | prismjs | 1.30.0 | MIT | © 2012 Lea Verou | https://github.com/PrismJS/prism | 代码块语法高亮 | `prism/prism.js`、`prism/components/prism-*.min.js` ×20、`prism/themes/*.min.css` ×2 |
 | 3 | katex | 0.19.0 | MIT | © 2013-2020 Khan Academy and other contributors | https://github.com/KaTeX/KaTeX | LaTeX 公式渲染 | `katex/katex.min.js`、`katex/katex.min.css`、`katex/contrib/auto-render.min.js`、`katex/fonts/*.woff2` ×20 |
-| 4 | markdown-it | 15.0.2 | MIT | © 2014 Vitaly Puzrin, Alex Kocharin | https://github.com/markdown-it/markdown-it | 增强 Markdown 渲染 | `markdown-it/markdown-it.umd.min.js` |
+| 4 | markdown-it | 15.0.3 | MIT | © 2014 Vitaly Puzrin, Alex Kocharin | https://github.com/markdown-it/markdown-it | 增强 Markdown 渲染 | `markdown-it/markdown-it.umd.min.js` |
 | 5 | markdown-it-task-lists | 2.1.1 | ISC | © 2016 Revin Guillen | https://github.com/revin/markdown-it-task-lists | 任务清单 | `markdown-it/markdown-it-task-lists.min.js` |
 | 6 | markdown-it-footnote | 4.0.0 | MIT | © 2014-2015 Vitaly Puzrin, Alex Kocharin | https://github.com/markdown-it/markdown-it-footnote | 脚注 | `markdown-it/markdown-it-footnote.min.js` |
 | 7 | markdown-it-deflist | 4.0.0 | MIT | © 2014-2015 Vitaly Puzrin, Alex Kocharin | https://github.com/markdown-it/markdown-it-deflist | 定义列表 | `markdown-it/markdown-it-deflist.min.js` |

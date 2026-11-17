@@ -3,8 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-// 更新器只在 Electron 里跑，但版本比较与选包是纯函数，可以直接单测。
-// 顶层 require('electron') 在纯 Node 下返回的是二进制路径字符串，解构得到 undefined，不影响这些函数。
+// 更新器按需加载 Electron，版本比较与选包可在纯 Node 中直接测试。
 const updater = require('../desktop/lib/updater.js');
 
 describe('应用内更新：版本比较', () => {
@@ -34,12 +33,13 @@ describe('应用内更新：安装包选择', () => {
   ];
 
   it('Windows 优先选安装版而不是便携版', () => {
-    assert.equal(updater.pickAsset(assets, 'win32').name, 'LongPost.Setup.2.9.9.exe');
+    assert.equal(updater.pickAsset(assets, 'win32', 'x64').name, 'LongPost.Setup.2.9.9.exe');
   });
 
   it('macOS 选 dmg，Linux 选 AppImage', () => {
-    assert.equal(updater.pickAsset(assets, 'darwin').name, 'LongPost-2.9.9-arm64.dmg');
-    assert.equal(updater.pickAsset(assets, 'linux').name, 'LongPost-2.9.9.AppImage');
+    assert.equal(updater.pickAsset(assets, 'darwin', 'arm64').name, 'LongPost-2.9.9-arm64.dmg');
+    assert.equal(updater.pickAsset(assets, 'darwin', 'x64'), null);
+    assert.equal(updater.pickAsset(assets, 'linux', 'x64').name, 'LongPost-2.9.9.AppImage');
   });
 
   it('没有匹配产物时返回 null，而不是瞎挑一个', () => {

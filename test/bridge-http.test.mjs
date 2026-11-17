@@ -30,6 +30,7 @@ describe('剪藏桥：HTTP 协议', () => {
       assert.equal(res.headers.get('access-control-allow-private-network'), 'true');
       assert.equal(res.headers.get('access-control-allow-origin'), '*');
       assert.match(res.headers.get('access-control-allow-headers'), /x-longpost-token/i);
+      assert.match(res.headers.get('access-control-allow-methods'), /GET/);
     });
   });
 
@@ -74,5 +75,21 @@ describe('剪藏桥：HTTP 协议', () => {
       const res = await fetch('http://127.0.0.1:' + bridge.port + '/other', { method: 'POST' });
       assert.equal(res.status, 404);
     });
+  });
+
+  it('保存失败的剪藏不会出现在最近记录中', async () => {
+    const bridge = await startBridge({ onClip: async () => { throw new Error('写入失败'); } });
+    try {
+      const base = 'http://127.0.0.1:' + bridge.port;
+      const headers = { 'Content-Type': 'application/json', 'X-LongPost-Token': bridge.token };
+      const save = await fetch(base + '/clip', {
+        method: 'POST', headers, body: JSON.stringify({ title: '失败', url: 'https://a.com', content: '正文' }),
+      });
+      assert.equal(save.status, 500);
+      const recent = await fetch(base + '/recent', { headers: { 'X-LongPost-Token': bridge.token } });
+      assert.deepEqual((await recent.json()).items, []);
+    } finally {
+      await bridge.close();
+    }
   });
 });

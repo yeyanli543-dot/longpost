@@ -14,7 +14,7 @@ document.getElementById('saveClipboard').addEventListener('click', async () => {
     }
     chrome.runtime.sendMessage({ type: 'save-clipboard', text: text });
     window.close();
-  } catch (error) {
+  } catch {
     hint.textContent = '读不到剪贴板，请确认扩展权限';
   }
 });
