@@ -34,6 +34,11 @@ module.exports = tseslint.config(
   },
   ...tseslint.configs.recommended,
   {
+    // Obsidian 桌面插件以 CommonJS 加载，Node 内置模块也需要 require。
+    files: ['obsidian-plugin/**/*.js'],
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
+  },
+  {
     files: ['client/src/**/*.{ts,tsx}'],
     plugins: {
       'react-hooks': reactHooks,

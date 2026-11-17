@@ -8,7 +8,7 @@
  * 安全约束（对应 AGENTS.md 的出站/入站约定）：
  *   - 绑回环地址，外部机器连不上；
  *   - 令牌恒定时间比较；
- *   - CORS 只放行 POST/OPTIONS + 令牌头；不用凭据；
+ *   - CORS 只放行 GET/POST/OPTIONS + 令牌头；不用凭据；
  *   - 60 秒内超过 40 次请求直接 429。
  */
 
@@ -25,7 +25,7 @@ const MAX_REQUESTS = 40;
 function corsHeaders(extraPrivateNetwork) {
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, X-LongPost-Token',
     'Access-Control-Max-Age': '600',
   };
@@ -149,6 +149,13 @@ function startBridge(options) {
       }
 
       try {
+        await onClip({
+          title: normalized.clip.title,
+          content: buildClipMarkdown(normalized.clip),
+          tags: normalized.clip.tags,
+          sourceUrl: normalized.clip.url,
+          capturedAt: normalized.clip.capturedAt,
+        });
         recent.push({
           title: normalized.clip.title,
           url: normalized.clip.url,
@@ -159,13 +166,6 @@ function startBridge(options) {
         });
         if (recent.length > 20) recent.shift();
 
-        await onClip({
-          title: normalized.clip.title,
-          content: buildClipMarkdown(normalized.clip),
-          tags: normalized.clip.tags,
-          sourceUrl: normalized.clip.url,
-          capturedAt: normalized.clip.capturedAt,
-        });
         reply(200, { ok: true });
       } catch (error) {
         reply(500, { ok: false, error: String((error && error.message) || error) });

@@ -26,7 +26,7 @@ LongPost 自身以 MIT 许可证发布（见仓库根目录 `LICENSE`）。下�
 | 1 | echarts | 6.1.0 | Apache-2.0 | Copyright 2017-2026 The Apache Software Foundation | https://github.com/apache/echarts | 图表运行库；导出 HTML 时整份内联进去，离线也能画图 |
 | 2 | prismjs | 1.30.0 | MIT | Copyright (c) 2012 Lea Verou | https://github.com/PrismJS/prism | 代码块语法高亮，对标 Typora / Obsidian / GitHub 的代码渲染 |
 | 3 | katex | 0.19.0 | MIT | Copyright (c) 2013-2020 Khan Academy and other contributors | https://github.com/KaTeX/KaTeX | LaTeX 数学公式渲染，对标 Obsidian / Notion 的公式 |
-| 4 | markdown-it | 15.0.2 | MIT | Copyright (c) 2014 Vitaly Puzrin, Alex Kocharin. | https://github.com/markdown-it/markdown-it | 完整 CommonMark + GFM 渲染（表格对齐、脚注、任务清单、定义列表、emoji），对标 Typora 的 Markdown 子集 |
+| 4 | markdown-it | 15.0.3 | MIT | Copyright (c) 2014 Vitaly Puzrin, Alex Kocharin. | https://github.com/markdown-it/markdown-it | 完整 CommonMark + GFM 渲染（表格对齐、脚注、任务清单、定义列表、emoji），对标 Typora 的 Markdown 子集 |
 | 5 | markdown-it-task-lists | 2.1.1 | ISC | Copyright (c) 2016, Revin Guillen | https://github.com/revin/markdown-it-task-lists | Markdown 任务清单 [- [x] / - [ ]] 渲染成可点复选框，对标 GitHub / Obsidian |
 | 6 | markdown-it-footnote | 4.0.0 | MIT | Copyright (c) 2014-2015 Vitaly Puzrin, Alex Kocharin. | https://github.com/markdown-it/markdown-it-footnote | 脚注 [^1]，对标 Obsidian / Notion 的脚注 |
 | 7 | markdown-it-deflist | 4.0.0 | MIT | Copyright (c) 2014-2015 Vitaly Puzrin, Alex Kocharin. | https://github.com/markdown-it/markdown-it-deflist | 定义列表，对标 Pandoc / Obsidian 的 Deflist |
@@ -339,7 +339,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-### 2.4 markdown-it 15.0.2 — MIT
+### 2.4 markdown-it 15.0.3 — MIT
 
 来源：`node_modules/markdown-it/LICENSE`（1073 字节，逐字节收录）
 

@@ -156,7 +156,7 @@ const VENDOR = [
   },
   {
     pkg: 'markdown-it',
-    version: '15.0.2',
+    version: '15.0.3',
     license: 'MIT',
     home: 'https://github.com/markdown-it/markdown-it',
     why: '完整 CommonMark + GFM 渲染（表格对齐、脚注、任务清单、定义列表、emoji），对标 Typora 的 Markdown 子集',

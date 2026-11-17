@@ -178,11 +178,21 @@
   }
 
   function createRepo(backend) {
+    // 文章和设置均为整份读写；把同一实例内的操作排队，防止并发读到旧快照后互相覆盖。
+    let pending = Promise.resolve();
+    function serialize(operation) {
+      return (...args) => {
+        const result = pending.then(() => operation(...args));
+        pending = result.catch(() => {});
+        return result;
+      };
+    }
     // ------------------------------------------------------------ 文章与空间隔离
 
     async function readAll() {
       const arr = await backend.readArticles();
-      return Array.isArray(arr) ? arr : [];
+      if (!Array.isArray(arr)) throw new Error('文章数据格式错误，已停止写入以保护原始数据');
+      return arr;
     }
 
     async function writeAll(list) {
@@ -291,7 +301,8 @@
     async function listArticles(options) {
       const opts = options || {};
       const all = await readAll();
-      const spaceKey = opts.spaceKey != null ? String(opts.spaceKey) : await getActiveSpaceKey();
+      const spaceKey = await getActiveSpaceKey();
+      if (opts.spaceKey != null && String(opts.spaceKey) !== spaceKey) return [];
       const live = all
         .filter((a) => !a.deletedAt && inSpace(a, spaceKey))
         .map((a) => decodeArticle(a, spaceKey));
@@ -347,9 +358,16 @@
       const content = String(input.content == null ? '' : input.content);
       const summary = makeSummary(content);
       const tags = normalizeTags(input.tags);
-      const activeSpace = input.spaceKey != null ? String(input.spaceKey) : await getActiveSpaceKey();
+      const activeSpace = await getActiveSpaceKey();
+      if (input.spaceKey != null && String(input.spaceKey) !== activeSpace) {
+        throw new Error('文章不属于当前空间，未保存');
+      }
       const spaceHash = hashSpaceKey(activeSpace);
       const index = input.id ? list.findIndex((a) => a.id === input.id) : -1;
+
+      if (input.id && (index === -1 || !inSpace(list[index], activeSpace))) {
+        throw new Error('文章不存在或不属于当前空间，未保存');
+      }
 
       if (index === -1) {
         const storedArticle = {
@@ -433,7 +451,8 @@
     /** 彻底删掉，不进回收站。用户主动清空时才走这里。 */
     async function purgeArticle(id) {
       const list = await readAll();
-      const next = list.filter((a) => a.id !== id);
+      const spaceKey = await getActiveSpaceKey();
+      const next = list.filter((a) => !(a.id === id && inSpace(a, spaceKey)));
       if (next.length === list.length) return { ok: false, error: '文章不存在' };
       await writeAll(next);
       return { ok: true };
@@ -567,9 +586,19 @@
     /** 有多少文件已经没有任何文章引用了。 */
     async function listOrphanFiles() {
       const all = await readAll();
+      const spaceKey = await getActiveSpaceKey();
       const used = {};
       for (const a of all) {
-        for (const s of collectRefs(a.content)) used[s] = true;
+        // 无法解读其他空间的正文时不能证明任何附件是孤儿，宁可不清理。
+        const contents = [a.content].concat((Array.isArray(a.history) ? a.history : []).map((h) => h.content));
+        for (const content of contents) {
+          let text = String(content || '');
+          if (text.startsWith('enc1:')) {
+            if (!spaceKey || !inSpace(a, spaceKey)) return [];
+            text = decipherField(text, spaceKey);
+          }
+          for (const s of collectRefs(text)) used[s] = true;
+        }
       }
       const files = await backend.listFiles();
       return files.filter((f) => !used[f.stored]);
@@ -604,14 +633,16 @@
     async function getProposals(articleId) {
       if (!articleId) return [];
       const all = await readAll();
-      const found = all.find((a) => a.id === articleId);
+      const spaceKey = await getActiveSpaceKey();
+      const found = all.find((a) => a.id === articleId && inSpace(a, spaceKey));
       return found && Array.isArray(found.proposals) ? found.proposals : [];
     }
 
     async function saveProposals(articleId, proposals) {
       if (!articleId) return [];
       const list = await readAll();
-      const idx = list.findIndex((a) => a.id === articleId);
+      const spaceKey = await getActiveSpaceKey();
+      const idx = list.findIndex((a) => a.id === articleId && inSpace(a, spaceKey));
       if (idx === -1) return [];
       const valid = Array.isArray(proposals) ? proposals : [];
       list[idx].proposals = valid;
@@ -630,7 +661,7 @@
         if (unres.length > 0) {
           out.push({
             articleId: a.id,
-            title: a.title || '未命名',
+            title: decodeArticle(a, spaceKey).title || '未命名',
             count: unres.length,
             proposals: unres,
           });
@@ -639,7 +670,7 @@
       return out;
     }
 
-    return {
+    const operations = {
       listArticles,
       listTrash,
       getArticle,
@@ -659,12 +690,15 @@
       readFileBlob,
       listOrphanFiles,
       deleteFiles,
-      collectRefs,
       getProposals,
       saveProposals,
       listUnresolvedProposals,
       getSettings,
       setSettings,
+    };
+    return {
+      ...Object.fromEntries(Object.entries(operations).map(([name, operation]) => [name, serialize(operation)])),
+      collectRefs,
       dataDir: () => backend.dataDir(),
       filesDir: () => backend.filesDir(),
     };

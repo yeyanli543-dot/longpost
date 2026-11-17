@@ -55,16 +55,18 @@
 
 ## <a id="-多端下载"></a>📥 多端下载 (v3.8.1 最新全平台安装包)
 
-所有安装包均通过 GitHub Actions 自动化 CI 构建并带有防篡改校验，即下即用：
+安装包由 GitHub Actions 构建，桌面版发布页提供 SHA-256 校验和：
 
 | 平台 | 安装包格式 | 下载渠道 | 说明 |
 | :--- | :--- | :--- | :--- |
 | **🪟 Windows** | `.exe` 安装版 / 便携版 | [**下载安装版**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.8.1/LongPost.Setup.3.8.1.exe) · [**免安装便携版**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.8.1/LongPost.3.8.1.exe) | 支持 Windows 10/11，便携免安装版解压双击直接运行 |
 | **🤖 Android** | `.apk` 手机安装包 | [**下载 LongPost-android.apk**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.8.1/LongPost-android.apk) | 手机端离线写作，固定签名密钥支持无缝覆盖升级 |
 | **🧩 Chrome 扩展** | 源码目录 | [**查看扩展**](https://github.com/yeyanli543-dot/longpost/tree/main/chrome-extension) | 开发者模式加载，或随桌面版一起分发 |
-| **🍎 macOS** | `.dmg` 镜像 | [**下载 LongPost-3.8.1-arm64.dmg**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.8.1/LongPost-3.8.1-arm64.dmg) | 支持 Apple Silicon & Intel，首次打开右键放行 |
+| **🍎 macOS** | `.dmg` 镜像 | [**下载 LongPost-3.8.1-arm64.dmg**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.8.1/LongPost-3.8.1-arm64.dmg) | Apple Silicon，首次打开可能需要右键放行；此版本未提供 Intel 安装包 |
 | **🐧 Linux** | `.AppImage` | [**下载 LongPost-3.8.1.AppImage**](https://github.com/yeyanli543-dot/longpost/releases/download/v3.8.1/LongPost-3.8.1.AppImage) | 赋予执行权限 `chmod +x` 后直接运行 |
 | **📦 全部版本** | 全部安装产物 | [**GitHub Releases v3.8.1 (最新发布页)**](https://github.com/yeyanli543-dot/longpost/releases/tag/v3.8.1) | 包含所有平台的安装包、源码与校验哈希 |
+
+Android 当前发行包使用仓库中公开的固定调试签名，签名不能证明 APK 的发布者身份；请从官方发布页获取。更换为私有发布签名需要先完成本地数据的备份与迁移，详见 [Android 签名说明](mobile/signing/README.md)。
 
 ---
 
@@ -240,7 +242,7 @@ AI_DAILY_QUOTA=20                    # 每个登录用户每天可用次数，0 
 
 ## 🛡️ 安全加固与原生测试套件
 
-项目内置针对生产级网络攻击与边界场景的自动化安全防护，原生测试套件包含 **9 个专业套件、37 项测试用例全部通过（~570ms 极速验证）**：
+项目使用 Node.js 原生测试运行器检查安全、数据完整性、同步、导出与桌面更新等场景。测试直接引用生产代码；运行测试需要 Node.js 24 或更新版本：
 
 ```bash
 npm test
@@ -286,7 +288,8 @@ npm test
 ### 💻 方案 A：直接运行桌面写作端（零配置）
 
 ```bash
-# 1. 编译前端产物
+# 1. 安装根目录依赖并编译前端产物
+npm ci
 npm run build:client
 
 # 2. 进入桌面目录并启动
@@ -300,12 +303,12 @@ npm start
 ### 🌐 方案 B：启动 Web 全栈开发服务
 
 #### 运行前置条件
-- **Node.js** >= 18（推荐 22+）
+- **Node.js 24+**（运行完整测试套件所需）
 - **PostgreSQL** 数据库实例
 
 ```bash
 # 1. 根目录安装依赖
-npm install --ignore-scripts
+npm ci
 
 # 2. 复制环境变量配置文件
 cp .env.example .env
@@ -347,8 +350,8 @@ npm run apk
 | **后端开发** | NestJS 12 · TypeScript · Drizzle ORM · PostgreSQL · Socket.IO · SWC 编译器 |
 | **图表引擎** | Apache ECharts 6 · 自适应莫兰迪色盘 · 同构 DSL 卡片解析器 |
 | **桌面客户端** | Electron 44 · 独立本地文件存储与数据隔离 · electron-builder |
-| **移动客户端** | Capacitor 8 (Android) · 挖孔屏自适应安全边距 · 独立离线密钥签名 |
-| **测试与质量** | Node.js 原生 Test Runner (`node --test`) · 9 个套件 37 项安全与算法测试用例 |
+| **移动客户端** | Capacitor 8 (Android) · 挖孔屏自适应安全边距 · 固定调试签名 |
+| **测试与质量** | Node.js 原生 Test Runner (`node --test`) · 桌面端与跨端资源自检 |
 
 ---
 
@@ -373,7 +376,7 @@ npm run apk
 ├── mobile/              # Capacitor 8 移动端安卓工程
 │   └── capacitor.config.json # WebDir 指向 ../desktop/renderer
 ├── shared/              # 前后端共享类型与图表卡片 DSL 规范 (chart-card.ts)
-├── test/                # 21 个套件 107 项原生单元测试（直连生产代码，不经编译）
+├── test/                # 原生单元测试（直连生产代码，不经编译）
 └── .github/workflows/   # 云端自动化 CI/CD (多端编译与 Release 发布)
 ```
 

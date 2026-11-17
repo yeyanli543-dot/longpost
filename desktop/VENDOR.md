@@ -191,9 +191,9 @@ function highlightCodeBlocks(root) {
   没有运行时依赖，停滞带来的风险主要是新语言支持滞后 —— 需要新语言就
   `node_modules/prismjs/components/prism-<lang>.min.js` 加一条清单即可。
 
-### 3. markdown-it 15.0.2 + 4 个插件 — 增强 Markdown 渲染
+### 3. markdown-it 15.0.3 + 4 个插件 — 增强 Markdown 渲染
 
-- 仓库：https://github.com/markdown-it/markdown-it ｜ License：MIT ｜ 体积：**132,176 字节**（129.1 KB）
+- 仓库：https://github.com/markdown-it/markdown-it ｜ License：MIT ｜ 体积：**117,882 字节**（115.1 KB）
 - 解决什么：补齐现在手写渲染器缺的那几样 —— **任务清单**（`- [x]`）、**脚注**（`[^1]`）、
   **定义列表**、**emoji 简写**（`:smile:`）、**表格对齐**、删除线、嵌套列表等 CommonMark/GFM 细节
 - 对标谁：GitHub Flavored Markdown / Typora / Obsidian 的 Markdown 子集
@@ -365,7 +365,7 @@ if (matchMedia('(max-width: 720px)').matches) {
 
 | 分组 | 字节 | 说明 |
 | --- | ---: | --- |
-| 新增第三方库合计 | **895,458**（874.5 KB） | 本次新装的 13 个库 |
+| 新增第三方库合计 | **881,164**（860.5 KB） | 本次新装的 13 个库 |
 | echarts.min.js（存量） | 1,121,883 | 本来就有，未变 |
 | lib/ 共享模块拷贝（存量） | 41,538 | markdown/chart/repo/page-style/outline，未变 |
 | 随包合规声明 | 44,344 | `THIRD-PARTY-NOTICES.md`，面向接收方，**必须**随包 |

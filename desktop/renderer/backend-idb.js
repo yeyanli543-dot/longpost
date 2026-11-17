@@ -124,8 +124,9 @@
 
       async readArticles() {
         const rec = await get(KV, 'articles');
-        const arr = rec && rec.value;
-        return Array.isArray(arr) ? arr : [];
+        if (!rec) return [];
+        if (!Array.isArray(rec.value)) throw new Error('本地文章数据格式错误，已停止写入以保护原始数据');
+        return rec.value;
       },
       writeArticles(list) {
         return put(KV, { key: 'articles', value: list });
@@ -133,7 +134,11 @@
 
       async readSettings() {
         const rec = await get(KV, 'settings');
-        return rec && rec.value && typeof rec.value === 'object' ? rec.value : {};
+        if (!rec) return {};
+        if (!rec.value || typeof rec.value !== 'object' || Array.isArray(rec.value)) {
+          throw new Error('本地设置数据格式错误，已停止写入以保护原始数据');
+        }
+        return rec.value;
       },
       writeSettings(obj) {
         return put(KV, { key: 'settings', value: obj });

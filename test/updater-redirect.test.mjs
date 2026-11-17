@@ -20,12 +20,13 @@ describe('更新：从跳转地址解析版本', () => {
 
 describe('更新：资产命名约定', () => {
   it('Windows 安装版与便携版', () => {
-    const a = U.assetUrlFor('3.4.0', 'win32');
+    const a = U.assetUrlFor('3.4.0', 'win32', 'x64');
     assert.ok(a.setup.endsWith('/v3.4.0/LongPost.Setup.3.4.0.exe'));
     assert.ok(a.portable.endsWith('/v3.4.0/LongPost.3.4.0.exe'));
   });
   it('macOS 与 Linux', () => {
-    assert.ok(U.assetUrlFor('3.4.0', 'darwin').dmg.endsWith('LongPost-3.4.0-arm64.dmg'));
-    assert.ok(U.assetUrlFor('3.4.0', 'linux').appImage.endsWith('LongPost-3.4.0.AppImage'));
+    assert.ok(U.assetUrlFor('3.4.0', 'darwin', 'arm64').dmg.endsWith('LongPost-3.4.0-arm64.dmg'));
+    assert.equal(U.assetUrlFor('3.4.0', 'darwin', 'x64').dmg, undefined);
+    assert.ok(U.assetUrlFor('3.4.0', 'linux', 'x64').appImage.endsWith('LongPost-3.4.0.AppImage'));
   });
 });

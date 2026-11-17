@@ -1,0 +1,37 @@
+name: Verify changes
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: 安装锁定依赖
+        run: npm ci --no-audit --no-fund
+      - name: 类型检查
+        run: npm run type:check
+      - name: 代码检查
+        run: npm run eslint
+      - name: 测试实际模块
+        run: npm test
+      - name: 构建前后端
+        run: npm run build
+      - name: 检查版本、依赖和跨端资源
+        run: |
+          npm run check:docs
+          npm run check:deps
+          node desktop/scripts/check-package-files.js
+          node desktop/scripts/smoke-test.js
+          node desktop/scripts/verify-mobile.js

@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const { buildDocx, markdownToDocumentXml, escapeXml } = require('../desktop/lib/docx.js');
-const { zipStore, crc32 } = require('../desktop/lib/zip.js');
+const { crc32 } = require('../desktop/lib/zip.js');
 
 describe('Word 导出：zip 容器', () => {
   it('以 PK 开头，并包含 docx 必需部件', () => {

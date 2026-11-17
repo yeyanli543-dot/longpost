@@ -35,7 +35,15 @@ const BLOCKED_HOSTNAMES = new Set(['localhost', 'metadata', 'metadata.google.int
  */
 export function isPrivateIp(input: string): boolean {
   if (!input) return true;
-  const ip = input.trim().toLowerCase().replace(/^\[|\]$/g, '');
+  let ip = input.trim().toLowerCase().replace(/^\[|\]$/g, '');
+  // 同一个 IPv6 地址可以有多种展开写法；先规范化，避免展开的环回或 mapped 地址绕过判断。
+  if (net.isIPv6(ip)) {
+    try {
+      ip = new URL(`http://[${ip}]/`).hostname.slice(1, -1);
+    } catch {
+      return true;
+    }
+  }
 
   // IPv4-mapped IPv6：::ffff:127.0.0.1 → 127.0.0.1
   if (ip.startsWith('::ffff:')) {
@@ -74,10 +82,21 @@ export function isPrivateIp(input: string): boolean {
     // ULA fc00::/7、链路本地 fe80::/10
     if (/^f[cd][0-9a-f]{2}:/.test(ip)) return true;
     if (/^fe[89ab][0-9a-f]:/.test(ip)) return true;
+    if (ip.startsWith('ff')) return true; // IPv6 multicast
     // NAT64 well-known prefix 64:ff9b::/96，内嵌 IPv4 需再校验
     if (ip.startsWith('64:ff9b::')) {
       const tail = ip.slice('64:ff9b::'.length);
       if (net.isIPv4(tail)) return isPrivateIp(tail);
+      const hex = tail.match(/^([0-9a-f]{1,4}):([0-9a-f]{1,4})$/);
+      if (hex) {
+        const hi = parseInt(hex[1], 16);
+        const lo = parseInt(hex[2], 16);
+        return isPrivateIp([hi >> 8, hi & 0xff, lo >> 8, lo & 0xff].join('.'));
+      }
+      if (/^[0-9a-f]{0,4}$/.test(tail)) {
+        const lo = parseInt(tail || '0', 16);
+        return isPrivateIp([0, 0, lo >> 8, lo & 0xff].join('.'));
+      }
     }
     return false;
   }
@@ -136,6 +155,7 @@ export function checkOutboundUrl(rawUrl: string): OutboundUrlCheck {
  */
 export async function resolvePublicHost(
   hostname: string,
+  lookup: typeof dnsLookup = dnsLookup,
 ): Promise<{ ok: boolean; reason?: string; addresses: string[] }> {
   const host = hostname.replace(/^\[|\]$/g, '');
   if (net.isIP(host)) {
@@ -145,7 +165,7 @@ export async function resolvePublicHost(
   }
 
   const records = await new Promise<Array<{ address: string }>>((resolve, reject) => {
-    dnsLookup(host, { all: true }, (err, addresses) => {
+    lookup(host, { all: true }, (err, addresses) => {
       if (err) reject(err);
       else resolve(addresses as Array<{ address: string }>);
     });
@@ -178,13 +198,13 @@ type LookupCallback = (
  *
  * 这是防 DNS rebinding 的关键 —— 校验和连接用的是同一次解析结果。
  */
-export function createGuardedLookup() {
+export function createGuardedLookup(lookup: typeof dnsLookup = dnsLookup) {
   return function guardedLookup(
     hostname: string,
     options: any,
     callback: LookupCallback,
   ): void {
-    dnsLookup(hostname, { ...options, all: true }, (err: NodeJS.ErrnoException | null, addresses: any) => {
+    lookup(hostname, { ...options, all: true }, (err: NodeJS.ErrnoException | null, addresses: any) => {
       if (err) {
         callback(err, '');
         return;

@@ -780,50 +780,74 @@
     $('panes').scrollTop = mem.panes || 0;
   }
 
-  async function openArticle(id) {
-    saveScroll();
-    const article = await LP.getArticle(id);
-    if (!article) {
-      toast('文章不存在了，可能已经被删除', 'err');
-      await refreshAll();
-      return;
-    }
-    state.current = article;
-    state.dirty = false;
-    $('title').value = article.title || '';
-    $('editor').value = article.content || '';
-    $('empty').hidden = true;
-    $('editorWrap').hidden = false;
-    $('app').dataset.view = 'editor';
-    if (isNarrow() && !hasLayer('view:editor')) {
-      openLayer('view:editor', () => {
-        $('app').dataset.view = 'list';
-        syncTabs();
-      });
-    }
-    refreshPinButton();
-    renderPreview();
-    scheduleOutline();
-    updateStats();
-    refreshFmtState();
-    renderList();
-    syncTabs();
-    restoreScroll();
-    closeMenu();
-    // 列表态下 .tools 没有布局宽度，量不出溢出；进入编辑器后必须重算一次，
-    // 否则 1320/1280 宽下「更多」还是会跑到视口外（截图里抓到的就是这个）。
-    syncToolsOverflow();
-
-    // 提议加载与环境监视条激活
+  let editorLocks = 0;
+  let previousReadOnly = null;
+  async function withEditorLocked(action) {
+    const title = $('title');
+    const editor = $('editor');
+    if (editorLocks === 0) previousReadOnly = [title.readOnly, editor.readOnly];
+    editorLocks += 1;
+    title.readOnly = true;
+    editor.readOnly = true;
     try {
-      const savedProposals = await LP.getProposals(id);
-      if (Array.isArray(savedProposals)) state.current.proposals = savedProposals;
-    } catch (err) {
-      /* 忽略 */
+      return await action();
+    } finally {
+      editorLocks -= 1;
+      if (editorLocks === 0) {
+        title.readOnly = previousReadOnly[0];
+        editor.readOnly = previousReadOnly[1];
+        previousReadOnly = null;
+      }
     }
-    if (ambientDismissedArticleId !== id) ambientDismissedArticleId = null;
-    renderAmbientBar();
-    scheduleIdleAnalysis();
+  }
+
+  async function openArticle(id) {
+    return withEditorLocked(async () => {
+      if (!(await flushBeforeSwitch())) return;
+      saveScroll();
+      const article = await LP.getArticle(id);
+      if (!article) {
+        toast('文章不存在了，可能已经被删除', 'err');
+        await refreshAll();
+        return;
+      }
+      state.current = article;
+      state.dirty = false;
+      $('title').value = article.title || '';
+      $('editor').value = article.content || '';
+      $('empty').hidden = true;
+      $('editorWrap').hidden = false;
+      $('app').dataset.view = 'editor';
+      if (isNarrow() && !hasLayer('view:editor')) {
+        openLayer('view:editor', () => {
+          $('app').dataset.view = 'list';
+          syncTabs();
+        });
+      }
+      refreshPinButton();
+      renderPreview();
+      scheduleOutline();
+      updateStats();
+      refreshFmtState();
+      renderList();
+      syncTabs();
+      restoreScroll();
+      closeMenu();
+      // 列表态下 .tools 没有布局宽度，量不出溢出；进入编辑器后必须重算一次，
+      // 否则 1320/1280 宽下「更多」还是会跑到视口外（截图里抓到的就是这个）。
+      syncToolsOverflow();
+
+      // 提议加载与环境监视条激活
+      try {
+        const savedProposals = await LP.getProposals(id);
+        if (state.current && state.current.id === id && Array.isArray(savedProposals)) state.current.proposals = savedProposals;
+      } catch (err) {
+        /* 忽略 */
+      }
+      if (ambientDismissedArticleId !== id) ambientDismissedArticleId = null;
+      renderAmbientBar();
+      scheduleIdleAnalysis();
+    });
   }
 
   function hasLayer(name) {
@@ -832,6 +856,7 @@
   }
 
   async function newArticle() {
+    if (!(await flushBeforeSwitch())) return;
     // saveArticle 收的是「一个 payload 对象」，id 缺省就是新建（preload 与 repo 同一套签名）
     const article = await LP.saveArticle({
       title: '未命名文章',
@@ -860,7 +885,11 @@
     syncTabs();
   }
 
+  let editRevision = 0;
+  let saveInFlight = null;
+
   function markDirty() {
+    editRevision += 1;
     state.dirty = true;
     clearTimeout(state.saveTimer);
     clearTimeout(state.previewTimer);
@@ -875,34 +904,55 @@
 
   async function saveNow(silent) {
     clearTimeout(state.saveTimer);
-    if (!state.current) return;
+    if (saveInFlight) return saveInFlight;
+    if (!state.current) return true;
     if (!state.dirty) {
       if (!silent) setStatus('已经是最新的了');
-      return;
+      return true;
     }
     if (!silent) setStatus('保存中…');
-    const payload = {
-      id: state.current.id,
-      title: $('title').value.trim() || '未命名文章',
-      content: $('editor').value,
-      tags: state.current.tags || [],
-    };
+    saveInFlight = (async () => {
+      try {
+        // 写入进行中用户仍可能输入；只在保存的快照追上编辑器时清除未保存状态。
+        do {
+          while (state.current && state.dirty) {
+            const revision = editRevision;
+            const id = state.current.id;
+            const payload = {
+              id,
+              title: $('title').value.trim() || '未命名文章',
+              content: $('editor').value,
+              tags: state.current.tags || [],
+            };
+            const saved = await LP.saveArticle(payload);
+            if (!state.current || state.current.id !== id) return false;
+            state.current = saved;
+            if (editRevision === revision) state.dirty = false;
+          }
+          await reloadList();
+          renderList();
+        } while (state.current && state.dirty);
+        setStatus('已保存 · ' + new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+        refreshPinButton();
+        return true;
+      } catch (err) {
+        setStatus('保存失败');
+        toast('保存失败：' + String((err && err.message) || err), 'err');
+        return false;
+      }
+    })();
     try {
-      const saved = await LP.saveArticle(payload);
-      state.current = saved;
-      state.dirty = false;
-      await reloadList();
-      renderList();
-      setStatus('已保存 · ' + new Date().toLocaleTimeString('zh-CN', { hour12: false }));
-      refreshPinButton();
-    } catch (err) {
-      setStatus('保存失败');
-      toast('保存失败：' + String((err && err.message) || err), 'err');
+      return await saveInFlight;
+    } finally {
+      saveInFlight = null;
     }
   }
 
   async function flushBeforeSwitch() {
-    if (state.dirty) await saveNow(true);
+    while (state.dirty || saveInFlight) {
+      if (!(await saveNow(true))) return false;
+    }
+    return true;
   }
 
   function refreshPinButton() {
@@ -953,12 +1003,14 @@
       text: '「' + title + '」会先放进回收站，之后还能恢复。确定删除吗？',
       okLabel: '删除',
       danger: true,
-      onOk: async () => {
-        await LP.deleteArticle(id);
-        clearCurrent();
+      onOk: async () => withEditorLocked(async () => {
+        if (state.current && state.current.id === id && !(await flushBeforeSwitch())) return;
+        const result = await LP.deleteArticle(id);
+        if (!result || !result.ok) { toast('删除失败：' + ((result && result.error) || '未知错误'), 'err'); return; }
+        if (state.current && state.current.id === id) clearCurrent();
         await refreshAll();
         toast('已移入回收站', 'ok');
-      },
+      }),
     });
   }
 
@@ -970,12 +1022,14 @@
       text: '「' + title + '」会先放进回收站，之后还能恢复。确定删除吗？',
       okLabel: '删除',
       danger: true,
-      onOk: async () => {
-        await LP.deleteArticle(id);
+      onOk: async () => withEditorLocked(async () => {
+        if (state.current && state.current.id === id && !(await flushBeforeSwitch())) return;
+        const result = await LP.deleteArticle(id);
+        if (!result || !result.ok) { toast('删除失败：' + ((result && result.error) || '未知错误'), 'err'); return; }
         if (state.current && state.current.id === id) clearCurrent();
         await refreshAll();
         toast('已移入回收站', 'ok');
-      },
+      }),
     });
   }
 
@@ -2640,7 +2694,7 @@
   }
 
   async function doExportArticle(kind) {
-    if (state.dirty) await saveNow(true);
+    if (!(await flushBeforeSwitch())) return;
     setBusyLabel();
     try {
       const res = kind === 'html' ? await LP.exportHtml(state.current.id) : await LP.exportMarkdown(state.current.id);
@@ -3803,9 +3857,10 @@
   function showUpdateBanner(info) {
     const bar = $('updateBanner');
     if (!bar) return;
-    $('updateBannerText').textContent = '发现新版本 ' + info.latest + '（当前 ' + info.current + '）';
+    $('updateBannerText').textContent = info.error || '发现新版本 ' + info.latest + '（当前 ' + info.current + '）';
+    $('updateDownloadBtn').disabled = !info.url;
     changelogLine(info.latest).then((line) => {
-      if (!line) return;
+      if (!line || info.error || updateState.busy || updateState.info !== info) return;
       $('updateBannerText').textContent = '新版本 ' + info.latest + '：' + line;
     });
     bar.hidden = false;
@@ -3837,17 +3892,19 @@
 
     const info = res.info;
     if (!info || !info.hasUpdate) {
+      updateState.info = null;
+      if ($('updateBanner')) $('updateBanner').hidden = true;
       if (!silent) updateStatusText('已是最新版本（' + ((info && info.current) || '') + '）');
       return;
     }
 
     updateState.info = info;
     showUpdateBanner(info);
-    if (!silent) updateStatusText('发现新版本 ' + info.latest);
+    if (!silent) updateStatusText(info.error || '发现新版本 ' + info.latest);
   }
 
   async function downloadAndInstallUpdate() {
-    if (updateState.busy || !updateState.info) return;
+    if (updateState.busy || !updateState.info || !updateState.info.url) return;
     updateState.busy = true;
 
     const btn = $('updateDownloadBtn');
@@ -3858,15 +3915,15 @@
     let off = null;
     if (typeof LP.onUpdateProgress === 'function') {
       off = LP.onUpdateProgress(({ received, total }) => {
-        const pct = total ? Math.round((received / total) * 100) : 0;
-        btn.textContent = '下载 ' + pct + '%';
-        label.textContent = '正在下载安装包… ' + pct + '%';
+        const progress = total ? Math.min(100, Math.round((received / total) * 100)) + '%' : (received / 1048576).toFixed(1) + ' MB';
+        btn.textContent = '下载 ' + progress;
+        label.textContent = '正在下载安装包… ' + progress;
       });
     }
 
     let res;
     try {
-      res = await LP.updateDownload(updateState.info);
+      res = await LP.updateDownload();
     } catch (err) {
       res = { ok: false, error: String((err && err.message) || err) };
     } finally {
@@ -3881,15 +3938,18 @@
       return;
     }
 
-    label.textContent = res.verified ? '安装包已校验，正在启动安装…' : '安装包已下载（发布方未提供校验和）';
+    label.textContent = '安装包已校验，正在准备安装…';
     btn.textContent = '安装并重启';
     btn.disabled = true;
 
     try {
-      await LP.updateInstall(res.filePath);
+      const installed = await LP.updateInstall();
+      if (!installed || !installed.ok) throw new Error((installed && installed.error) || '未知错误');
+      label.textContent = installed.message || '安装程序已启动';
+      btn.textContent = installed.mode === 'manual' ? '已下载安装包' : '安装程序已启动';
     } catch (err) {
       btn.disabled = false;
-      btn.textContent = '重新安装';
+      btn.textContent = '重试更新';
       label.textContent = '启动安装程序失败：' + String((err && err.message) || err);
     } finally {
       updateState.busy = false;
@@ -4445,32 +4505,35 @@
   // ------------------------------------------------------------ 历史版本
 
   async function openHistory() {
-    if (!state.current) return;
-    const rows = await LP.listRevisions(state.current.id);
-    const host = $('historyList');
-    if (!rows.length) {
-      host.innerHTML = '<div class="list-empty small">' + icon('clock') + '<p>还没有历史版本。改一改、保存一次就会出现。</p></div>';
-    } else {
-      host.innerHTML = rows
-        .map(
-          (row) =>
-            '<div class="panel-row" data-index="' +
-            row.index +
-            '"><div class="panel-main"><div class="panel-title">' +
-            esc(row.title || '未命名') +
-            ' <span class="panel-tag">' +
-            (row.chars || 0) +
-            ' 字</span></div><div class="panel-sub">' +
-            (formatTime(row.at) || '—') +
-            ' · ' +
-            esc(row.summary || '') +
-            '</div></div><div class="panel-acts"><button class="btn ghost sm" data-rollback="' +
-            row.index +
-            '">回滚</button></div></div>',
-        )
-        .join('');
-    }
-    openSheet('historyModal');
+    return withEditorLocked(async () => {
+      if (!state.current) return;
+      if (!(await flushBeforeSwitch())) return;
+      const rows = await LP.listRevisions(state.current.id);
+      const host = $('historyList');
+      if (!rows.length) {
+        host.innerHTML = '<div class="list-empty small">' + icon('clock') + '<p>还没有历史版本。改一改、保存一次就会出现。</p></div>';
+      } else {
+        host.innerHTML = rows
+          .map(
+            (row) =>
+              '<div class="panel-row" data-index="' +
+              row.index +
+              '"><div class="panel-main"><div class="panel-title">' +
+              esc(row.title || '未命名') +
+              ' <span class="panel-tag">' +
+              (row.chars || 0) +
+              ' 字</span></div><div class="panel-sub">' +
+              (formatTime(row.at) || '—') +
+              ' · ' +
+              esc(row.summary || '') +
+              '</div></div><div class="panel-acts"><button class="btn ghost sm" data-rollback="' +
+              row.index +
+              '">回滚</button></div></div>',
+          )
+          .join('');
+      }
+      openSheet('historyModal');
+    });
   }
 
   // ------------------------------------------------------------ 图表对话框
@@ -4794,8 +4857,8 @@
     $('tabSettings').classList.toggle('on', settingsOn);
   }
 
-  function showList() {
-    void flushBeforeSwitch();
+  async function showList() {
+    if (!(await flushBeforeSwitch())) return;
     dismissOverlays();
     $('app').dataset.view = 'list';
     $('ambientBar').hidden = true;
@@ -5462,7 +5525,7 @@
   }
 
   // ==========================================================================
-  // 通行码登录 (Passcode) 与 Google 账号独立文章空间切换中心
+  // 通行码与邮箱标识的本地文章空间切换中心
   // ==========================================================================
   let currentAuthTab = 'passcode';
 
@@ -5476,7 +5539,7 @@
     const articleCount = Array.isArray(state.articles) ? state.articles.length : 0;
 
     if (user && user.provider) {
-      const badge = user.provider === 'google' ? 'Google 空间' : '通行码空间';
+      const badge = user.provider === 'google' ? '邮箱空间' : '通行码空间';
       const label = badge + ' · ' + (user.name || '创作者');
       if (btnAuth) {
         btnAuth.textContent = label;
@@ -5490,7 +5553,7 @@
         if (btnLogout) btnLogout.hidden = false;
         const sub =
           (user.provider === 'google'
-            ? '绑定邮箱：' + (user.email || 'Google 账号')
+            ? '空间邮箱：' + (user.email || '未填写')
             : '专属通行码：' + (user.code || '****')) +
           ' · 当前空间共 ' +
           articleCount +
@@ -5501,34 +5564,36 @@
       }
     } else {
       if (btnAuth) {
-        btnAuth.textContent = '登录 / 切换空间';
-        btnAuth.title = '输入通行码或登录 Google 账号，切换独立的私密文章空间';
+        btnAuth.textContent = '切换本地空间';
+        btnAuth.title = '输入通行码或邮箱，切换本地文章空间';
       }
       if (btnEmptyAuth) {
-        btnEmptyAuth.textContent = '通行码 / Google 独立空间';
+        btnEmptyAuth.textContent = '通行码 / 邮箱空间';
       }
       if (profileBox && profileInfo) {
         profileBox.hidden = false;
         if (btnLogout) btnLogout.hidden = true;
         profileInfo.innerHTML =
           '<div class="auth-user-title">当前处于：<strong>默认公共空间</strong>（共 ' + articleCount + ' 篇文章）</div>' +
-          '<div class="auth-user-sub">下方输入任意通行码或 Google 账号，即可进入与公共空间完全隔离的独立文章空间</div>';
+          '<div class="auth-user-sub">下方输入通行码或邮箱和口令，即可切换本地文章列表</div>';
       }
     }
   }
 
   async function applyAuthSpaceSwitch(authUser, welcomePrefix) {
-    await flushBeforeSwitch();
-    state.settings = await LP.setSettings({ authUser: authUser || null, lastArticleId: '' });
-    state.tag = '';
-    clearCurrent();
-    await refreshAll();
-    syncAuthUi();
-    if (state.articles && state.articles.length > 0) {
-      await openArticle(state.articles[0].id);
-    }
-    const count = Array.isArray(state.articles) ? state.articles.length : 0;
-    toast(welcomePrefix + '（该独立空间共 ' + count + ' 篇文章）', 'ok');
+    return withEditorLocked(async () => {
+      if (!(await flushBeforeSwitch())) return;
+      state.settings = await LP.setSettings({ authUser: authUser || null, lastArticleId: '' });
+      state.tag = '';
+      clearCurrent();
+      await refreshAll();
+      syncAuthUi();
+      if (state.articles && state.articles.length > 0) {
+        await openArticle(state.articles[0].id);
+      }
+      const count = Array.isArray(state.articles) ? state.articles.length : 0;
+      toast(welcomePrefix + '（该独立空间共 ' + count + ' 篇文章）', 'ok');
+    });
   }
 
   function switchAuthTab(tab) {
@@ -5547,7 +5612,7 @@
       'authTabSwitch',
       [
         { key: 'passcode', label: '通行码独立空间' },
-        { key: 'google', label: 'Google 独立空间' },
+        { key: 'google', label: '邮箱空间' },
       ],
       currentAuthTab,
       (key) => switchAuthTab(key),
@@ -5601,12 +5666,12 @@
     const pin = (pinInput ? pinInput.value : '').trim();
     const rawName = (nameInput ? nameInput.value : '').trim();
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      toast('请输入有效的 Google 邮箱地址', 'err');
+      toast('请输入有效的邮箱地址', 'err');
       if (emailInput) emailInput.focus();
       return;
     }
     if (!pin || pin.length < 4) {
-      toast('请输入至少 4 位空间安全口令（用于加密保护该 Google 独立空间）', 'err');
+      toast('请输入至少 4 位空间口令', 'err');
       if (pinInput) pinInput.focus();
       return;
     }
@@ -5620,12 +5685,12 @@
     };
     if (pinInput) pinInput.value = '';
     closeSheet('authModal');
-    await applyAuthSpaceSwitch(authUser, '已解锁 Google 加密独立空间「' + name + '」');
+    await applyAuthSpaceSwitch(authUser, '已进入邮箱对应的本地空间「' + name + '」');
   }
 
   async function handleAuthLogout() {
     closeSheet('authModal');
-    await applyAuthSpaceSwitch(null, '已退出私密空间，切回默认公共空间');
+    await applyAuthSpaceSwitch(null, '已切回默认公共空间');
   }
 
   // ==========================================================================
@@ -6116,23 +6181,26 @@
     $('historyList').addEventListener('click', async (event) => {
       const rollback = event.target.closest('[data-rollback]');
       if (!rollback || !state.current) return;
-      const index = Number(rollback.getAttribute('data-rollback'));
-      const res = await LP.restoreRevision(state.current.id, index);
-      if (!res || !res.ok) {
-        toast('回滚失败：' + ((res && res.error) || '未知原因'), 'err');
-        return;
-      }
-      state.current = res.article;
-      $('title').value = res.article.title || '';
-      $('editor').value = res.article.content || '';
-      state.dirty = false;
-      renderPreview();
-      updateStats();
-      scheduleOutline();
-      await openHistory();
-      await reloadList();
-      renderList();
-      toast('已回滚到那一版（当前版本已存成历史）', 'ok');
+      await withEditorLocked(async () => {
+        if (!(await flushBeforeSwitch())) return;
+        const index = Number(rollback.getAttribute('data-rollback'));
+        const res = await LP.restoreRevision(state.current.id, index);
+        if (!res || !res.ok) {
+          toast('回滚失败：' + ((res && res.error) || '未知原因'), 'err');
+          return;
+        }
+        state.current = res.article;
+        $('title').value = res.article.title || '';
+        $('editor').value = res.article.content || '';
+        state.dirty = false;
+        renderPreview();
+        updateStats();
+        scheduleOutline();
+        await openHistory();
+        await reloadList();
+        renderList();
+        toast('已回滚到那一版（当前版本已存成历史）', 'ok');
+      });
     });
 
     // ---------------------------------------------------------- 确认框
@@ -6162,8 +6230,13 @@
     window.addEventListener('scroll', () => {
       if (!isNarrow()) closeMenu();
     });
-    window.addEventListener('beforeunload', () => {
-      if (state.dirty) saveNow(true);
+    window.addEventListener('beforeunload', (event) => {
+      if (state.dirty || saveInFlight) {
+        event.preventDefault();
+        event.returnValue = '';
+        toast('正在保存，请保存完成后再关闭窗口', 'err');
+        void saveNow(true);
+      }
     });
 
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -6330,7 +6403,7 @@
       { label: '历史版本', icon: 'clock', onPick: openHistory },
       { label: '查找与替换', icon: 'search', key: 'Ctrl/⌘ + F', onPick: openFind },
       { label: '文章统计', icon: 'info', onPick: openStats },
-      { label: '通行码与 Google 登录', icon: 'settings', onPick: openAuthModal },
+      { label: '通行码与邮箱空间', icon: 'settings', onPick: openAuthModal },
       { sep: true },
       { label: '删除（进回收站）', icon: 'trash', danger: true, onPick: deleteCurrent },
     );
