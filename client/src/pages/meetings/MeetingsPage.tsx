@@ -29,15 +29,15 @@ const statusTabs: { key: 'all' | MeetingStatus; label: string }[] = [
 const getStatusColor = (status: MeetingStatus) => {
   switch (status) {
     case 'ongoing':
-      return 'bg-green-500/20 text-green-400 border-green-500/30';
+      return 'bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30';
     case 'scheduled':
-      return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
+      return 'bg-primary/15 text-primary border-primary/30';
     case 'ended':
-      return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+      return 'bg-muted text-muted-foreground border-border';
     case 'cancelled':
-      return 'bg-red-500/20 text-red-400 border-red-500/30';
+      return 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30';
     default:
-      return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+      return 'bg-muted text-muted-foreground border-border';
   }
 };
 
@@ -135,7 +135,7 @@ const MeetingsPage = () => {
   if (!user) {
     return (
       <LoginGate
-        icon={<Video className="w-12 h-12 text-[#2f3336]" />}
+        icon={<Video className="w-12 h-12 text-muted-foreground/60" />}
         title="登录后查看会议"
         description="登录后即可预约会议、加入视频会议并查看会议纪要"
       />
@@ -150,7 +150,7 @@ const MeetingsPage = () => {
           <h1 className="text-xl font-bold text-foreground">会议</h1>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-1.5 px-4 py-2 bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-bold rounded-full transition-colors text-sm"
+            className="flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-full transition-colors text-sm"
             data-ai-section-type="button"
           >
             <Plus className="w-4 h-4" />
@@ -161,21 +161,21 @@ const MeetingsPage = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex overflow-x-auto border-b border-[#2f3336] px-2 sticky top-[57px] bg-black z-10 scrollbar-hide">
+      <div className="flex overflow-x-auto border-b border-border px-2 sticky top-[57px] bg-background z-10 scrollbar-hide">
         {statusTabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors relative flex-shrink-0 ${
               activeTab === tab.key
-                ? 'text-[#1d9bf0]'
-                : 'text-[#71767b] hover:text-[#e7e9ea]'
+                ? 'text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
             data-ai-section-type="button"
           >
             {tab.label}
             {activeTab === tab.key && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1d9bf0]" />
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
             )}
           </button>
         ))}
@@ -185,13 +185,13 @@ const MeetingsPage = () => {
       <div data-ai-section-type="card-list">
         {loading ? (
           <div className="flex justify-center items-center py-16">
-            <Loader2 className="w-8 h-8 text-[#1d9bf0] animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
         ) : meetings.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
-            <Video className="w-16 h-16 text-[#2f3336] mb-4" />
-            <h2 className="text-xl font-bold text-[#e7e9ea] mb-2">暂无会议</h2>
-            <p className="text-[#71767b] text-sm mb-6">
+            <Video className="w-16 h-16 text-muted-foreground/60 mb-4" />
+            <h2 className="text-xl font-bold text-foreground mb-2">暂无会议</h2>
+            <p className="text-muted-foreground text-sm mb-6">
               {activeTab === 'all'
                 ? '创建第一个会议，开始高效协作'
                 : `暂无${statusTabs.find((t) => t.key === activeTab)?.label}的会议`}
@@ -199,7 +199,7 @@ const MeetingsPage = () => {
             {user ? (
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="px-6 py-2 bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-bold rounded-full transition-colors"
+                className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-full transition-colors"
                 data-ai-section-type="button"
               >
                 创建会议
@@ -207,7 +207,7 @@ const MeetingsPage = () => {
             ) : (
               <button
                 onClick={() => navigate('/login')}
-                className="flex items-center gap-2 px-6 py-2 bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-bold rounded-full transition-colors"
+                className="flex items-center gap-2 px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-full transition-colors"
                 data-ai-section-type="button"
               >
                 <LogIn className="w-4 h-4" />
@@ -225,10 +225,10 @@ const MeetingsPage = () => {
               <div
                 key={meeting.id}
                 onClick={() => navigate(`/meetings/${meeting.id}`)}
-                className="px-4 py-4 border-b border-[#2f3336] cursor-pointer hover:bg-white/[0.02] transition-colors group"
+                className="px-4 py-4 border-b border-border cursor-pointer hover:bg-white/[0.02] transition-colors group"
               >
                 <div className="flex items-start justify-between gap-3 mb-2">
-                  <h3 className="font-bold text-[#e7e9ea] text-lg group-hover:text-[#1d9bf0] transition-colors line-clamp-2">
+                  <h3 className="font-bold text-foreground text-lg group-hover:text-primary transition-colors line-clamp-2">
                     {meeting.title}
                   </h3>
                   <span
@@ -238,7 +238,7 @@ const MeetingsPage = () => {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-4 text-sm text-[#71767b] mb-3">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                   <div className="flex items-center gap-1.5">
                     <Calendar className="w-4 h-4" />
                     <span>{formatDateTime(meeting.startTime)}</span>
@@ -251,7 +251,7 @@ const MeetingsPage = () => {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-[#2f3336] flex items-center justify-center overflow-hidden">
+                    <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center overflow-hidden">
                       {meeting.creatorAvatarUrl ? (
                         <Image
                           src={meeting.creatorAvatarUrl}
@@ -259,23 +259,23 @@ const MeetingsPage = () => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <span className="text-[10px] font-bold text-gray-400">
+                        <span className="text-[10px] font-bold text-muted-foreground">
                           {avatarInitial}
                         </span>
                       )}
                     </div>
-                    <span className="text-sm text-[#71767b]">
+                    <span className="text-sm text-muted-foreground">
                       {meeting.creatorName}
                     </span>
-                    <span className="text-[#2f3336]">·</span>
-                    <div className="flex items-center gap-1 text-sm text-[#71767b]">
+                    <span className="text-muted-foreground/60">·</span>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
                       <Users className="w-4 h-4" />
                       <span>{meeting.participantCount}</span>
                     </div>
                     {meeting.isPublic && (
                       <>
-                        <span className="text-[#2f3336]">·</span>
-                        <span className="text-xs px-2 py-0.5 bg-[#2f3336] rounded text-[#71767b]">
+                        <span className="text-muted-foreground/60">·</span>
+                        <span className="text-xs px-2 py-0.5 bg-secondary rounded text-muted-foreground">
                           公开
                         </span>
                       </>
@@ -289,13 +289,13 @@ const MeetingsPage = () => {
                           e.stopPropagation();
                           navigate(`/meetings/${meeting.id}/room`);
                         }}
-                        className="px-3 py-1.5 bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white text-sm font-bold rounded-full transition-colors"
+                        className="px-3 py-1.5 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-bold rounded-full transition-colors"
                         data-ai-section-type="button"
                       >
                         加入
                       </button>
                     )}
-                    <ChevronRight className="w-5 h-5 text-[#2f3336] group-hover:text-[#71767b] transition-colors" />
+                    <ChevronRight className="w-5 h-5 text-muted-foreground/60 group-hover:text-muted-foreground transition-colors" />
                   </div>
                 </div>
               </div>
@@ -310,18 +310,18 @@ const MeetingsPage = () => {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-4 py-2 text-sm text-[#e7e9ea] border border-[#2f3336] rounded-full hover:bg-[#16181c] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 text-sm text-foreground border border-border rounded-full hover:bg-card disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             data-ai-section-type="button"
           >
             上一页
           </button>
-          <span className="text-sm text-[#71767b] px-2">
+          <span className="text-sm text-muted-foreground px-2">
             {page} / {totalPages}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-4 py-2 text-sm text-[#e7e9ea] border border-[#2f3336] rounded-full hover:bg-[#16181c] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 text-sm text-foreground border border-border rounded-full hover:bg-card disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             data-ai-section-type="button"
           >
             下一页

@@ -32,29 +32,17 @@ const PostCard = ({ post }: PostCardProps) => {
   const [reportOpen, setReportOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
 
-  const handleArticleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (post.article) {
-      navigate(`/article/${post.article.id}`);
-    }
-  };
-
   const handleShare = () => {
     setShareOpen(true);
   };
 
   const handleCommentClick = () => {
-    if (post.article) {
-      navigate(`/article/${post.article.id}`);
-    } else {
-      toast.info('帖子评论功能即将上线');
-    }
+    navigate(`/post/${post.id}#comments`);
   };
 
-  const handlePostClick = () => {
-    if (post.article) {
-      navigate(`/article/${post.article.id}`);
-    }
+  const handlePostClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (!event.currentTarget.contains(event.target as Node)) return;
+    navigate(`/post/${post.id}`);
   };
 
   const avatarInitial = post.authorName?.charAt(0)?.toUpperCase() ?? '?';
@@ -103,7 +91,7 @@ const PostCard = ({ post }: PostCardProps) => {
       transition={{ duration: 0.5, ease: 'easeOut', backgroundColor: { duration: 0.15 } }}
       whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.02)' }}
       whileTap={{ scale: 0.99 }}
-      className="feed-post-card flex gap-3 px-4 py-3 border-b border-gray-800 cursor-pointer transition-colors duration-150"
+      className="feed-post-card flex gap-3 px-4 py-3 border-b border-border cursor-pointer transition-colors duration-150"
       data-ai-section-type="card-list"
     >
       {/* Avatar */}
@@ -111,7 +99,7 @@ const PostCard = ({ post }: PostCardProps) => {
          <Link
           to={`/user/${post.authorId}`}
           onClick={(e) => e.stopPropagation()}
-          className="block w-12 h-12 rounded-full bg-gray-700 overflow-hidden hover:opacity-80 transition-opacity"
+          className="block w-12 h-12 rounded-full bg-secondary overflow-hidden hover:opacity-80 transition-opacity"
         >
           {post.authorAvatarUrl ? (
             <Image
@@ -123,7 +111,7 @@ const PostCard = ({ post }: PostCardProps) => {
               }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-lg font-bold text-gray-300">
+            <div className="w-full h-full flex items-center justify-center text-lg font-bold text-foreground">
               {avatarInitial}
             </div>
           )}
@@ -136,7 +124,7 @@ const PostCard = ({ post }: PostCardProps) => {
         {(post.isPinned || post.isFeatured) && (
           <div className="flex items-center gap-2 mb-2">
              {post.isPinned && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500 text-white text-xs font-medium animate-pin-breathe">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-orange-500 text-black text-xs font-medium animate-pin-breathe">
                 <Pin className="w-3 h-3" />置顶
               </span>
             )}
@@ -153,40 +141,42 @@ const PostCard = ({ post }: PostCardProps) => {
           <Link
             to={`/user/${post.authorId}`}
             onClick={(e) => e.stopPropagation()}
-            className="font-bold text-gray-100 truncate hover:underline"
+            className="font-bold text-foreground truncate hover:underline"
           >
             {post.authorName}
           </Link>
           {post.authorRole === 'admin' && <AdminBadge size="sm" />}
-          <span className="text-gray-500 truncate">
+          <span className="text-muted-foreground truncate">
             @{post.authorId.slice(0, 8)}
           </span>
-          <span className="text-gray-500">·</span>
-          <span className="text-gray-500 flex-shrink-0">
+          <span className="text-muted-foreground">·</span>
+          <Link to={`/post/${post.id}`} onClick={(event) => event.stopPropagation()} className="text-muted-foreground flex-shrink-0 hover:underline" aria-label="查看动态详情">
             {dayjs(post.createdAt).fromNow()}
-          </span>
+          </Link>
           <div className="ml-auto relative">
              <motion.button
               onClick={handleMenuToggle}
+              aria-label="动态更多操作"
+              aria-expanded={menuOpen}
               whileHover={{ rotate: 90 }}
               transition={{ duration: 0.2 }}
-              className="p-1 text-gray-500 hover:text-gray-300 hover:bg-gray-800 rounded-full transition-colors"
+              className="p-1 text-muted-foreground hover:text-foreground hover:bg-muted rounded-full transition-colors"
             >
               <MoreHorizontal className="w-4 h-4" />
             </motion.button>
             {menuOpen && (
-              <div className="absolute right-0 top-full mt-1 w-40 bg-[#16181c] border border-[#2f3336] rounded-lg shadow-lg overflow-hidden z-10">
+              <div className="absolute right-0 top-full mt-1 w-40 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-10">
                 {isAdmin && (
                   <>
                     <button
                       onClick={handlePin}
-                      className="w-full px-3 py-2 text-left text-sm text-gray-100 hover:bg-gray-800 transition-colors"
+                      className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors"
                     >
                       {post.isPinned ? '取消置顶' : '置顶帖子'}
                     </button>
                     <button
                       onClick={handleFeature}
-                      className="w-full px-3 py-2 text-left text-sm text-gray-100 hover:bg-gray-800 transition-colors"
+                      className="w-full px-3 py-2 text-left text-sm text-foreground hover:bg-muted transition-colors"
                     >
                       {post.isFeatured ? '取消加精' : '加精帖子'}
                     </button>
@@ -195,7 +185,7 @@ const PostCard = ({ post }: PostCardProps) => {
                 {user && user.id !== post.authorId && (
                   <button
                     onClick={handleReportClick}
-                    className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-gray-800 transition-colors"
+                    className="w-full px-3 py-2 text-left text-sm text-destructive hover:bg-muted transition-colors"
                   >
                     举报内容
                   </button>
@@ -206,26 +196,27 @@ const PostCard = ({ post }: PostCardProps) => {
         </div>
 
         {/* Post body */}
-        <div className="mt-1 text-base leading-relaxed text-gray-100">
+        <div className="mt-1 text-base leading-relaxed text-foreground">
           <RichTextContent content={post.content} />
         </div>
 
         {/* Linked article card */}
         {post.article && (
-          <div
-            onClick={handleArticleClick}
-            className="mt-3 border border-gray-800 rounded-xl p-3 hover:bg-gray-900/50 transition-colors cursor-pointer"
+          <Link
+            to={`/article/${post.article.id}`}
+            onClick={(event) => event.stopPropagation()}
+            className="block mt-3 border border-border rounded-xl p-3 hover:bg-muted/60 transition-colors"
           >
-            <h4 className="font-bold text-gray-100 truncate">
+            <h4 className="font-bold text-foreground truncate">
               {post.article.title}
             </h4>
             {post.article.excerpt && (
-              <p className="mt-1 text-sm text-gray-500 line-clamp-2">
+              <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
                 {post.article.excerpt}
               </p>
             )}
             {(post.article.imageCount > 0 || post.article.attachmentCount > 0) && (
-              <div className="mt-2 flex items-center gap-3 text-xs text-gray-500">
+              <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
                 {post.article.imageCount > 0 && (
                   <span className="flex items-center gap-1">
                     <ImageIcon className="w-3.5 h-3.5" />
@@ -240,7 +231,7 @@ const PostCard = ({ post }: PostCardProps) => {
                 )}
               </div>
             )}
-          </div>
+          </Link>
         )}
 
         {/* Action buttons */}

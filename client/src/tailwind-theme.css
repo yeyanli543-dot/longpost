@@ -28,7 +28,7 @@
   --secondary: hsl(220 13% 14%);
   --secondary-foreground: hsl(210 20% 96%);
   --muted: hsl(220 13% 14%);
-  --muted-foreground: hsl(215 10% 55%);
+  --muted-foreground: hsl(215 14% 70%);
   --accent: hsl(220 13% 14%);
   --accent-foreground: hsl(210 20% 96%);
   --info: hsl(204 88% 53%);
@@ -113,7 +113,7 @@
   --secondary: hsl(220 14% 96%);
   --secondary-foreground: hsl(220 14% 14%);
   --muted: hsl(220 14% 96%);
-  --muted-foreground: hsl(218 7% 59%);
+  --muted-foreground: hsl(218 12% 39%);
   --accent: hsl(220 14% 96%);
   --accent-foreground: hsl(220 14% 14%);
   --info: hsl(221 83% 53%);
@@ -284,60 +284,46 @@
 
 /* 强调色定义 */
 .accent-blue {
-  --primary: hsl(204 88% 53%);
-  --primary-foreground: hsl(210 20% 98%);
-  --ring: hsl(204 88% 53%);
-  --sidebar-primary: hsl(204 88% 53%);
-  --sidebar-ring: hsl(204 88% 53%);
+  --primary: #0969c3;
 }
 .accent-green {
-  --primary: hsl(158 64% 48%);
-  --primary-foreground: hsl(210 20% 98%);
-  --ring: hsl(158 64% 48%);
-  --sidebar-primary: hsl(158 64% 48%);
-  --sidebar-ring: hsl(158 64% 48%);
+  --primary: #087449;
 }
 .accent-purple {
-  --primary: hsl(270 70% 62%);
-  --primary-foreground: hsl(210 20% 98%);
-  --ring: hsl(270 70% 62%);
-  --sidebar-primary: hsl(270 70% 62%);
-  --sidebar-ring: hsl(270 70% 62%);
+  --primary: #7540b6;
 }
 .accent-pink {
-  --primary: hsl(347 77% 58%);
-  --primary-foreground: hsl(210 20% 98%);
-  --ring: hsl(347 77% 58%);
-  --sidebar-primary: hsl(347 77% 58%);
-  --sidebar-ring: hsl(347 77% 58%);
+  --primary: #ba2854;
 }
 .accent-orange {
-  --primary: hsl(24 95% 53%);
-  --primary-foreground: hsl(210 20% 98%);
-  --ring: hsl(24 95% 53%);
-  --sidebar-primary: hsl(24 95% 53%);
-  --sidebar-ring: hsl(24 95% 53%);
+  --primary: #a84d00;
 }
 .accent-amber {
-  --primary: hsl(43 96% 52%);
-  --primary-foreground: hsl(30 25% 18%);
-  --ring: hsl(43 96% 52%);
-  --sidebar-primary: hsl(43 96% 52%);
-  --sidebar-ring: hsl(43 96% 52%);
+  --primary: #825700;
 }
 .accent-cyan {
-  --primary: hsl(189 94% 43%);
-  --primary-foreground: hsl(210 20% 98%);
-  --ring: hsl(189 94% 43%);
-  --sidebar-primary: hsl(189 94% 43%);
-  --sidebar-ring: hsl(189 94% 43%);
+  --primary: #006c79;
 }
 .accent-mono {
-  --primary: hsl(215 14% 55%);
-  --primary-foreground: hsl(210 20% 98%);
-  --ring: hsl(215 14% 55%);
-  --sidebar-primary: hsl(215 14% 55%);
-  --sidebar-ring: hsl(215 14% 55%);
+  --primary: #515c69;
+}
+
+:is(.accent-blue, .accent-green, .accent-purple, .accent-pink, .accent-orange, .accent-amber, .accent-cyan, .accent-mono) {
+  --primary-foreground: #fff;
+  --ring: var(--primary);
+  --sidebar-primary: var(--primary);
+  --sidebar-ring: var(--primary);
+}
+.dark.accent-blue { --primary: #83c3ff; }
+.dark.accent-green { --primary: #72dca9; }
+.dark.accent-purple { --primary: #cfacff; }
+.dark.accent-pink { --primary: #ffabc4; }
+.dark.accent-orange { --primary: #ffc18a; }
+.dark.accent-amber { --primary: #f6cf7a; }
+.dark.accent-cyan { --primary: #83dce5; }
+.dark.accent-mono { --primary: #c1cad4; }
+.dark:is(.accent-blue, .accent-green, .accent-purple, .accent-pink, .accent-orange, .accent-amber, .accent-cyan, .accent-mono) {
+  --primary-foreground: #071b2d;
 }
 
 /* 字体偏好 */

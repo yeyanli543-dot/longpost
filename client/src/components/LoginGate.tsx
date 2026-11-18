@@ -24,13 +24,13 @@ const LoginGate = ({
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
       <div className="mb-4">
-        {icon ?? <LogIn className="w-12 h-12 text-[#2f3336]" />}
+        {icon ?? <LogIn className="w-12 h-12 text-muted-foreground" />}
       </div>
-      <h2 className="text-2xl font-bold text-[#e7e9ea] mb-2">{title}</h2>
-      <p className="text-[#71767b] mb-6 max-w-sm">{description}</p>
+      <h2 className="text-2xl font-bold text-foreground mb-2">{title}</h2>
+      <p className="text-muted-foreground mb-6 max-w-sm">{description}</p>
       <button
         onClick={handleLogin}
-        className="px-6 py-2 bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-bold rounded-full transition-colors"
+        className="px-6 py-2 bg-primary hover:opacity-90 text-primary-foreground font-bold rounded-full transition-colors"
         data-ai-section-type="button"
       >
         {buttonText}

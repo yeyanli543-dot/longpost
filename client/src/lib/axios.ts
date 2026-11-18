@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance } from 'axios';
+import { getAppBasePath } from './utils';
 
-const CLIENT_BASE_PATH = (typeof process !== 'undefined' && process.env?.CLIENT_BASE_PATH) || '/';
+const CLIENT_BASE_PATH = getAppBasePath();
 
 export const axiosForBackend: AxiosInstance = axios.create({
   baseURL: CLIENT_BASE_PATH,

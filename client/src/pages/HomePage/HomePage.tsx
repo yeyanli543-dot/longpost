@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
-import { toast } from 'sonner';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import 'dayjs/locale/zh-cn';
 import { FileText, Image as ImageIcon, Paperclip, LogIn, Megaphone } from 'lucide-react';
 import { resolveAppUrl } from '@/lib/utils';
 import { logger } from '@/lib/logger';
@@ -14,6 +13,8 @@ import ErrorFallback from '@client/src/components/ErrorFallback';
 import { useAuth } from '@client/src/hooks/useAuth';
 import type { TimelineItem, PostItem, ArticleSummary, TimelineView } from '@shared/api.interface';
 import ShareDialog from '@/components/share/ShareDialog';
+import { WorkspaceModeSwitcher } from '@/components/WorkspaceMode/WorkspaceModeSwitcher';
+import './home.css';
 
 dayjs.extend(relativeTime);
 
@@ -27,17 +28,9 @@ const PostCard = ({ post }: PostCardProps) => {
   const navigate = useNavigate();
   const [shareOpen, setShareOpen] = useState(false);
 
-  const handlePostClick = () => {
-    if (post.article) {
-      navigate(post.article.slug ? `/p/${post.article.slug}` : `/article/${post.article.id}`);
-    }
-  };
-
-  const handleArticleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (post.article) {
-      navigate(post.article.slug ? `/p/${post.article.slug}` : `/article/${post.article.id}`);
-    }
+  const handlePostClick = (event: React.MouseEvent<HTMLElement>) => {
+    if (!event.currentTarget.contains(event.target as Node)) return;
+    navigate(`/post/${post.id}`);
   };
 
   const handleShare = () => {
@@ -45,23 +38,13 @@ const PostCard = ({ post }: PostCardProps) => {
   };
 
   const handleCommentClick = () => {
-    if (post.article) {
-      navigate(post.article.slug ? `/p/${post.article.slug}` : `/article/${post.article.id}`);
-    } else {
-      toast.info('帖子评论功能即将上线');
-    }
+    navigate(`/post/${post.id}#comments`);
   };
 
   return (
-    <motion.article
+    <article
       onClick={handlePostClick}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.1 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-      whileHover={{ backgroundColor: 'rgba(22, 24, 28, 0.5)' }}
-      whileTap={{ scale: 0.99 }}
-      className="flex gap-3 px-4 py-3 border-b border-gray-800 cursor-pointer select-none active:bg-gray-800/40 transition-colors"
+      className="home-entry flex gap-3 border-b border-border cursor-pointer transition-colors"
       data-ai-section-type="card-list"
     >
       {/* Avatar */}
@@ -69,9 +52,9 @@ const PostCard = ({ post }: PostCardProps) => {
         <Link
           to={`/user/${post.authorId}`}
           onClick={(e) => e.stopPropagation()}
-          className="block w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-700 flex items-center justify-center hover:opacity-80 transition-opacity"
+          className="flex w-10 h-10 md:w-12 md:h-12 rounded-full bg-secondary items-center justify-center hover:opacity-80 transition-opacity"
         >
-          <FileText className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
+          <FileText className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
         </Link>
       </div>
 
@@ -82,40 +65,41 @@ const PostCard = ({ post }: PostCardProps) => {
           <Link
             to={`/user/${post.authorId}`}
             onClick={(e) => e.stopPropagation()}
-            className="font-bold text-gray-100 truncate hover:underline"
+            className="font-semibold text-foreground truncate hover:underline"
           >
             {post.authorName}
           </Link>
-          <span className="text-gray-500 truncate">
+          <span className="text-muted-foreground truncate">
             @{post.authorId.slice(0, 8)}
           </span>
-          <span className="text-gray-500">·</span>
-          <span className="text-gray-500 flex-shrink-0">
-            {dayjs(post.createdAt).fromNow()}
-          </span>
+          <span className="text-muted-foreground">·</span>
+          <Link to={`/post/${post.id}`} onClick={(e) => e.stopPropagation()} className="text-muted-foreground flex-shrink-0 hover:underline" aria-label="查看这条动态">
+            {dayjs(post.createdAt).locale('zh-cn').fromNow()}
+          </Link>
         </div>
 
         {/* Post body */}
-        <div className="mt-1 text-base leading-relaxed text-gray-100">
+        <div className="mt-1 text-base leading-relaxed text-foreground">
           <RichTextContent content={post.content} />
         </div>
 
          {/* Linked article card */}
          {post.article && (
-           <div
-             onClick={handleArticleClick}
-             className="mt-3 border border-gray-800 rounded-xl p-3 hover:bg-gray-900/50 transition-colors cursor-pointer"
+           <Link
+             to={post.article.slug ? `/p/${post.article.slug}` : `/article/${post.article.id}`}
+             onClick={(e) => e.stopPropagation()}
+             className="block mt-3 border border-border rounded-xl p-4 hover:bg-muted/60 transition-colors"
            >
-             <h4 className="font-bold text-gray-100 truncate">
+             <h4 className="font-semibold text-foreground truncate">
                {post.article.title}
              </h4>
              {post.article.excerpt && (
-               <p className="mt-1 text-sm text-gray-500 line-clamp-2">
+               <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
                  {post.article.excerpt}
                </p>
              )}
              {(post.article.imageCount > 0 || post.article.attachmentCount > 0) && (
-               <div className="mt-2 flex items-center gap-3 text-xs text-gray-500">
+               <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
                  {post.article.imageCount > 0 && (
                    <span className="flex items-center gap-1">
                      <ImageIcon className="w-3.5 h-3.5" />
@@ -130,7 +114,7 @@ const PostCard = ({ post }: PostCardProps) => {
                  )}
                </div>
              )}
-           </div>
+           </Link>
          )}
 
           {/* Action buttons */}
@@ -158,7 +142,7 @@ const PostCard = ({ post }: PostCardProps) => {
           coverUrl: post.article?.coverUrl || null,
         }}
       />
-    </motion.article>
+    </article>
   );
 };
 
@@ -185,15 +169,9 @@ const ArticleCard = ({ article }: ArticleCardProps) => {
   };
 
   return (
-    <motion.article
+    <article
       onClick={handleClick}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.1 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
-      whileHover={{ backgroundColor: 'rgba(22, 24, 28, 0.5)' }}
-      whileTap={{ scale: 0.99 }}
-      className="flex gap-3 px-4 py-3 border-b border-gray-800 cursor-pointer select-none active:bg-gray-800/40 transition-colors"
+      className="home-entry flex gap-3 border-b border-border cursor-pointer transition-colors"
       data-ai-section-type="card-list"
     >
       {/* Avatar */}
@@ -201,9 +179,9 @@ const ArticleCard = ({ article }: ArticleCardProps) => {
         <Link
           to={`/user/${article.authorId}`}
           onClick={(e) => e.stopPropagation()}
-          className="block w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-700 flex items-center justify-center hover:opacity-80 transition-opacity"
+          className="flex w-10 h-10 md:w-12 md:h-12 rounded-full bg-secondary items-center justify-center hover:opacity-80 transition-opacity"
         >
-          <FileText className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
+          <FileText className="w-4 h-4 md:w-5 md:h-5 text-muted-foreground" />
         </Link>
       </div>
 
@@ -214,32 +192,34 @@ const ArticleCard = ({ article }: ArticleCardProps) => {
           <Link
             to={`/user/${article.authorId}`}
             onClick={(e) => e.stopPropagation()}
-            className="font-bold text-gray-100 truncate hover:underline"
+            className="font-semibold text-foreground truncate hover:underline"
           >
             {article.authorName}
           </Link>
-          <span className="text-gray-500">发布了文章</span>
-          <span className="text-gray-500">·</span>
-          <span className="text-gray-500 flex-shrink-0">
-            {dayjs(article.createdAt).fromNow()}
+          <span className="text-muted-foreground">发布了文章</span>
+          <span className="text-muted-foreground">·</span>
+          <span className="text-muted-foreground flex-shrink-0">
+            {dayjs(article.createdAt).locale('zh-cn').fromNow()}
           </span>
         </div>
 
         {/* Title */}
-        <h3 className="mt-2 text-xl font-bold text-gray-100 leading-snug">
-          {article.title}
+        <h3 className="mt-2 text-xl font-semibold text-foreground leading-snug">
+          <Link to={article.slug ? `/p/${article.slug}` : `/article/${article.id}`} onClick={(e) => e.stopPropagation()} className="hover:underline">
+            {article.title}
+          </Link>
         </h3>
 
         {/* Excerpt */}
         {article.excerpt && (
-          <p className="mt-2 text-base text-gray-400 leading-relaxed line-clamp-3">
+          <p className="mt-2 text-base text-muted-foreground leading-relaxed line-clamp-3">
             {article.excerpt}
           </p>
         )}
 
         {/* Media indicators */}
         {(article.imageCount > 0 || article.attachmentCount > 0) && (
-          <div className="mt-3 flex items-center gap-3 text-xs text-gray-500">
+          <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
             {article.imageCount > 0 && (
               <span className="flex items-center gap-1">
                 <ImageIcon className="w-3.5 h-3.5" />
@@ -256,7 +236,7 @@ const ArticleCard = ({ article }: ArticleCardProps) => {
         )}
 
           {/* Read count */}
-          <div className="mt-3 text-xs text-gray-500">
+          <div className="mt-3 text-xs text-muted-foreground">
             阅读 · {article.readCount} 次
           </div>
 
@@ -288,14 +268,14 @@ const ArticleCard = ({ article }: ArticleCardProps) => {
           coverUrl: article.coverUrl || null,
         }}
       />
-    </motion.article>
+    </article>
   );
 };
 
 // ---------- Skeleton ----------
 
 const SkeletonCard = () => (
-  <div className="flex gap-3 px-4 py-3 border-b border-gray-800">
+  <div className="home-entry flex gap-3 border-b border-border" aria-hidden="true">
     <div className="w-10 h-10 md:w-12 md:h-12 rounded-full shimmer flex-shrink-0" />
     <div className="flex-1 space-y-2">
       <div className="h-4 rounded w-1/3 shimmer" />
@@ -318,8 +298,10 @@ const HomePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [announcement, setAnnouncement] = useState<string | null>(null);
   const [announcementLoading, setAnnouncementLoading] = useState(true);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const requestIdRef = useRef(0);
 
   // Fetch site settings for announcement
   useEffect(() => {
@@ -339,8 +321,9 @@ const HomePage = () => {
     void fetchSiteSettings();
   }, []);
 
-  const loadMore = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
+  const loadMore = useCallback(async (retry = false) => {
+    if (loadingMore || (!hasMore && !retry)) return;
+    const requestId = requestIdRef.current;
     setLoadingMore(true);
     setError(null);
     try {
@@ -349,29 +332,52 @@ const HomePage = () => {
         20,
         view,
       );
+      if (requestId !== requestIdRef.current) return;
       setItems((prev) => [...prev, ...response.items]);
       setNextCursor(response.nextCursor);
       setHasMore(response.hasMore);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       logger.error('加载时间线失败', err);
       setError('加载失败，请稍后重试');
       setHasMore(false);
     } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
   }, [loadingMore, hasMore, nextCursor, view]);
 
-  // Reset and reload when view changes
+  // Each view starts at the first page; ignore any slower response from the previous view.
   useEffect(() => {
+    const requestId = ++requestIdRef.current;
     setItems([]);
     setNextCursor(null);
     setHasMore(true);
-    setLoading(true);
+    setLoadingMore(false);
     setError(null);
-    void loadMore();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view]);
+    if (view === 'following' && !user) {
+      setHasMore(false);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    void postsApi.getTimeline(undefined, 20, view).then((response) => {
+      if (requestId !== requestIdRef.current) return;
+      setItems(response.items);
+      setNextCursor(response.nextCursor);
+      setHasMore(response.hasMore);
+    }).catch((err) => {
+      if (requestId !== requestIdRef.current) return;
+      logger.error('加载时间线失败', err);
+      setError('加载失败，请稍后重试');
+      setHasMore(false);
+    }).finally(() => {
+      if (requestId === requestIdRef.current) setLoading(false);
+    });
+    return () => { requestIdRef.current += 1; };
+  }, [view, user?.id, reloadKey]);
 
   // Infinite scroll observer
   useEffect(() => {
@@ -392,11 +398,7 @@ const HomePage = () => {
   }, [loading, loadingMore, hasMore, loadMore]);
 
   const handleRetry = () => {
-    setNextCursor(null);
-    setHasMore(true);
-    setLoading(true);
-    setError(null);
-    void loadMore();
+    setReloadKey((value) => value + 1);
   };
 
   const viewTabs: { key: TimelineView; label: string }[] = [
@@ -410,14 +412,17 @@ const HomePage = () => {
   const showFollowingLoginPrompt = view === 'following' && !user;
 
   return (
-    <div className="min-h-screen">
-      {/* Sticky header */}
-      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border pt-safe">
-        <div className="px-4 py-2.5 md:py-3">
-          <h1 className="text-lg md:text-xl font-bold text-foreground">首页</h1>
+    <div className="home-page min-h-screen">
+      <header className="home-header border-b border-border pt-safe">
+        <div className="home-heading">
+          <div className="home-heading-top">
+            <p className="home-eyebrow">LONGPOST / 发现</p>
+            <div className="md:hidden"><WorkspaceModeSwitcher compact /></div>
+          </div>
+          <h1>发现值得读的内容。</h1>
+          <p className="home-intro">从一个想法，到一篇长文。</p>
         </div>
-        {/* View tabs */}
-        <div className="flex border-t border-border overflow-x-auto md:overflow-visible">
+        <div className="home-tabs flex overflow-x-auto" role="group" aria-label="内容筛选">
           {viewTabs.map((tab) => (
             <button
               key={tab.key}
@@ -428,10 +433,11 @@ const HomePage = () => {
                 }
                 setView(tab.key);
               }}
-              className={`flex-1 min-w-20 min-h-11 md:min-h-0 py-3 md:py-4 text-center cursor-pointer transition-colors hover:bg-[#16181c] ${
+              aria-pressed={view === tab.key}
+              className={`home-tab flex-1 min-w-20 min-h-11 text-center cursor-pointer transition-colors ${
                 view === tab.key
-                  ? 'text-gray-100 font-bold border-b-2 border-[#1d9bf0]'
-                  : 'text-gray-500 border-b-2 border-transparent'
+                  ? 'text-foreground font-semibold is-active'
+                  : 'text-muted-foreground'
               }`}
               data-ai-section-type="button"
             >
@@ -451,10 +457,10 @@ const HomePage = () => {
 
       {/* Following login prompt */}
       {showFollowingLoginPrompt && (
-        <div className="px-4 py-8 text-center border-b border-gray-800">
+        <div className="px-4 py-8 text-center border-b border-border">
           <LogIn className="w-10 h-10 mx-auto mb-3 text-blue-500" />
-          <p className="text-lg font-bold text-gray-100">登录后查看关注动态</p>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-lg font-bold text-foreground">登录后查看关注动态</p>
+          <p className="text-sm text-muted-foreground mt-1">
             登录后可查看你关注的用户发布的内容
           </p>
           <button
@@ -480,7 +486,7 @@ const HomePage = () => {
          ) : error && items.length === 0 ? (
            <ErrorFallback message={error} onRetry={handleRetry} />
          ) : items.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">暂无内容</div>
+          !showFollowingLoginPrompt && <div className="home-empty text-center text-muted-foreground">这里还没有内容，稍后再来看看。</div>
         ) : (
           items.map((item, index) =>
             item.type === 'post' && item.post ? (
@@ -497,7 +503,7 @@ const HomePage = () => {
         {/* Loading more indicator */}
         <div ref={sentinelRef} className="py-6 pb-24 md:pb-6 text-center">
           {loadingMore && (
-            <div className="flex items-center justify-center gap-1.5 text-gray-500">
+            <div className="flex items-center justify-center gap-1.5 text-muted-foreground">
               <span className="w-2 h-2 rounded-full bg-blue-500 dot-bounce dot-bounce-0" />
               <span className="w-2 h-2 rounded-full bg-blue-500 dot-bounce dot-bounce-1" />
               <span className="w-2 h-2 rounded-full bg-blue-500 dot-bounce dot-bounce-2" />
@@ -507,9 +513,7 @@ const HomePage = () => {
            <div className="py-4 px-4 text-center">
              <button
                onClick={() => {
-                 setHasMore(true);
-                 setError(null);
-                 void loadMore();
+                 void loadMore(true);
                }}
                className="text-sm text-[#1d9bf0] hover:underline"
                data-ai-section-type="button"
@@ -519,7 +523,7 @@ const HomePage = () => {
            </div>
          )}
           {!hasMore && items.length > 0 && !loadingMore && !error && (
-            <p className="text-sm text-gray-600">没有更多了</p>
+            <p className="text-sm text-muted-foreground">已经看到最后了</p>
           )}
         </div>
       </div>

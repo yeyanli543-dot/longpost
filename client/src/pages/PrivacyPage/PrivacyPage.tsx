@@ -7,28 +7,28 @@ const LegalPageLayout: React.FC<{
   children: React.ReactNode;
 }> = ({ title, lastUpdated, children }) => {
   return (
-    <div className="min-h-screen bg-black text-gray-200">
+    <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-3xl mx-auto px-6 py-12">
         <div className="mb-10">
           <Link
             to="/"
-            className="text-blue-500 hover:text-blue-400 text-sm font-medium"
+            className="text-primary hover:text-primary/80 text-sm font-medium"
           >
             ← 返回首页
           </Link>
         </div>
 
-        <header className="mb-10 pb-8 border-b border-gray-800">
-          <h1 className="text-4xl font-bold text-gray-100 mb-3">{title}</h1>
-          <p className="text-sm text-gray-500">最后更新：{lastUpdated}</p>
+        <header className="mb-10 pb-8 border-b border-border">
+          <h1 className="text-4xl font-bold text-foreground mb-3">{title}</h1>
+          <p className="text-sm text-muted-foreground">最后更新：{lastUpdated}</p>
         </header>
 
-        <article className="prose prose-invert prose-gray max-w-none">
+        <article className="prose dark:prose-invert prose-gray max-w-none">
           {children}
         </article>
 
-        <footer className="mt-16 pt-8 border-t border-gray-800 text-center">
-          <p className="text-sm text-gray-500">
+        <footer className="mt-16 pt-8 border-t border-border text-center">
+          <p className="text-sm text-muted-foreground">
             如有疑问，请通过站内私信或邮箱联系我们。
           </p>
         </footer>
@@ -43,8 +43,8 @@ const Section: React.FC<{ heading: string; children: React.ReactNode }> = ({
 }) => (
   <section className="mb-10">
     <Reveal y={22}>
-      <h2 className="text-2xl font-bold text-gray-100 mb-4">{heading}</h2>
-      <div className="space-y-4 text-base leading-relaxed text-gray-300">
+      <h2 className="text-2xl font-bold text-foreground mb-4">{heading}</h2>
+      <div className="space-y-4 text-base leading-relaxed text-foreground/90">
         {children}
       </div>
     </Reveal>
@@ -56,8 +56,8 @@ const SubSection: React.FC<{ heading: string; children: React.ReactNode }> = ({
   children,
 }) => (
   <div className="mb-5">
-    <h3 className="text-lg font-semibold text-gray-200 mb-2">{heading}</h3>
-    <div className="space-y-3 text-base leading-relaxed text-gray-300">
+    <h3 className="text-lg font-semibold text-foreground mb-2">{heading}</h3>
+    <div className="space-y-3 text-base leading-relaxed text-foreground/90">
       {children}
     </div>
   </div>

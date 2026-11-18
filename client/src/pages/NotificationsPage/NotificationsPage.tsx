@@ -45,13 +45,13 @@ const NOTIFICATION_ICON: Record<NotificationType, typeof Heart> = {
 const NOTIFICATION_ICON_COLOR: Record<NotificationType, string> = {
   like: 'text-red-500',
   repost: 'text-green-500',
-  comment: 'text-blue-500',
-  follow: 'text-blue-500',
+  comment: 'text-primary',
+  follow: 'text-primary',
   mention: 'text-purple-500',
   content_removed: 'text-orange-500',
   user_banned: 'text-red-500',
-  dm: 'text-blue-500',
-  meeting_invite: 'text-blue-500',
+  dm: 'text-primary',
+  meeting_invite: 'text-primary',
 };
 
 const SYSTEM_NOTIFICATION_TYPES: ReadonlySet<NotificationType> = new Set([
@@ -114,19 +114,19 @@ const NotificationCard = ({
       viewport={{ once: true, amount: 0.1 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
       whileHover={{ backgroundColor: 'rgba(22, 24, 28, 0.5)' }}
-      className={`relative flex gap-3 px-4 py-3.5 border-b border-gray-800 cursor-pointer ${
-        !notification.isRead ? 'bg-blue-500/5' : ''
+      className={`relative flex gap-3 px-4 py-3.5 border-b border-border cursor-pointer ${
+        !notification.isRead ? 'bg-primary/5' : ''
       }`}
       data-ai-section-type="card-list"
     >
       {/* Unread indicator */}
       {!notification.isRead && (
-        <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500" />
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
       )}
 
       {/* Icon */}
       <div className="flex-shrink-0 pt-1">
-        <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
           <Icon className={`w-4 h-4 ${iconColor}`} />
         </div>
       </div>
@@ -135,7 +135,7 @@ const NotificationCard = ({
       <div className="flex-1 min-w-0">
         <div className="flex items-start gap-2">
           {/* Avatar / System icon */}
-          <div className="w-8 h-8 rounded-full bg-gray-700 flex-shrink-0 flex items-center justify-center overflow-hidden">
+          <div className="w-8 h-8 rounded-full bg-secondary flex-shrink-0 flex items-center justify-center overflow-hidden">
             {isSystem ? (
               <Icon className={`w-4 h-4 ${iconColor}`} />
             ) : notification.actor?.avatarUrl ? (
@@ -145,7 +145,7 @@ const NotificationCard = ({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-xs font-bold text-gray-300">
+              <span className="text-xs font-bold text-foreground">
                 {avatarInitial}
               </span>
             )}
@@ -153,29 +153,29 @@ const NotificationCard = ({
 
           {/* Text */}
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-100 leading-snug break-words">
+            <p className="text-sm text-foreground leading-snug break-words">
               {isSystem ? (
                 <span className="font-bold">{text}</span>
               ) : (
                 <>
                   <span className="font-bold">{actorName}</span>{' '}
-                  <span className="text-gray-400">
+                  <span className="text-muted-foreground">
                     {text.replace(actorName, '').trim()}
                   </span>
                 </>
               )}
             </p>
             {reason && (
-              <p className="mt-1 text-sm text-gray-500 line-clamp-2 break-words">
+              <p className="mt-1 text-sm text-muted-foreground line-clamp-2 break-words">
                 原因：{reason}
               </p>
             )}
             {notification.metadata && typeof (notification.metadata as Record<string, unknown>).text === 'string' && !reason && (
-              <p className="mt-1 text-sm text-gray-500 line-clamp-2 break-words">
+              <p className="mt-1 text-sm text-muted-foreground line-clamp-2 break-words">
                 {(notification.metadata as Record<string, unknown>).text as string}
               </p>
             )}
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-muted-foreground">
               {dayjs(notification.createdAt).fromNow()}
             </p>
           </div>
@@ -188,7 +188,7 @@ const NotificationCard = ({
 // ---------- Skeleton ----------
 
 const SkeletonCard = () => (
-  <div className="flex gap-3 px-4 py-3.5 border-b border-gray-800">
+  <div className="flex gap-3 px-4 py-3.5 border-b border-border">
     <div className="w-8 h-8 rounded-full shimmer flex-shrink-0" />
     <div className="flex-1 space-y-2">
       <div className="h-4 rounded w-2/3 shimmer" />
@@ -325,7 +325,7 @@ const NotificationsPage: React.FC = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
         加载中...
       </div>
     );
@@ -350,7 +350,7 @@ const NotificationsPage: React.FC = () => {
             <button
               onClick={handleMarkAllRead}
               disabled={markingRead}
-              className="text-sm text-blue-500 hover:text-blue-400 transition-colors disabled:opacity-50 min-h-[44px] px-2 flex items-center"
+              className="text-sm text-primary hover:text-blue-400 transition-colors disabled:opacity-50 min-h-[44px] px-2 flex items-center"
               data-ai-section-type="button"
             >
               {markingRead ? '处理中...' : '全部已读'}
@@ -370,9 +370,9 @@ const NotificationsPage: React.FC = () => {
             <SkeletonCard />
           </>
         ) : error && items.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">{error}</div>
+          <div className="p-8 text-center text-muted-foreground">{error}</div>
         ) : items.length === 0 ? (
-          <div className="px-4 py-16 text-center text-gray-500">
+          <div className="px-4 py-16 text-center text-muted-foreground">
             <Bell className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p className="text-lg">暂无通知</p>
             <p className="text-sm mt-1">有新通知时会在这里显示</p>
@@ -409,14 +409,14 @@ const NotificationsPage: React.FC = () => {
         {/* Loading more indicator */}
         <div ref={sentinelRef} className="py-6 text-center">
           {loadingMore && (
-            <div className="flex items-center justify-center gap-1.5 text-gray-500">
-              <span className="w-2 h-2 rounded-full bg-blue-500 dot-bounce dot-bounce-0" />
-              <span className="w-2 h-2 rounded-full bg-blue-500 dot-bounce dot-bounce-1" />
-              <span className="w-2 h-2 rounded-full bg-blue-500 dot-bounce dot-bounce-2" />
+            <div className="flex items-center justify-center gap-1.5 text-muted-foreground">
+              <span className="w-2 h-2 rounded-full bg-primary dot-bounce dot-bounce-0" />
+              <span className="w-2 h-2 rounded-full bg-primary dot-bounce dot-bounce-1" />
+              <span className="w-2 h-2 rounded-full bg-primary dot-bounce dot-bounce-2" />
             </div>
           )}
           {!hasMore && items.length > 0 && !loadingMore && (
-            <p className="text-sm text-gray-600">没有更多了</p>
+            <p className="text-sm text-muted-foreground">没有更多了</p>
           )}
         </div>
       </div>

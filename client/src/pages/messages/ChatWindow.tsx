@@ -206,17 +206,17 @@ const ChatWindow = ({
         {isMobile && (
           <button
             onClick={onBack}
-            className="p-2 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
+            className="p-2 rounded-full hover:bg-accent transition-colors flex-shrink-0"
             data-ai-section-type="button"
           >
-            <ArrowLeft className="w-5 h-5 text-[#e7e9ea]" />
+            <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
         )}
         <Link
           to={`/user/${conversation.otherUserId}`}
           className="flex items-center gap-3 flex-1 min-w-0 hover:opacity-80 transition-opacity"
         >
-          <div className="w-10 h-10 rounded-full bg-[#2f3336] flex items-center justify-center flex-shrink-0 overflow-hidden">
+          <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 overflow-hidden">
             {conversation.otherUserAvatarUrl ? (
               <Image
                 src={conversation.otherUserAvatarUrl}
@@ -224,13 +224,13 @@ const ChatWindow = ({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-base font-bold text-gray-300">
+              <span className="text-base font-bold text-foreground/90">
                 {avatarInitial}
               </span>
             )}
           </div>
           <div className="min-w-0">
-            <p className="text-[#e7e9ea] font-bold truncate">
+            <p className="text-foreground font-bold truncate">
               {conversation.otherUserName}
             </p>
           </div>
@@ -244,21 +244,21 @@ const ChatWindow = ({
       >
         {loadingMore && (
           <div className="flex justify-center py-2">
-            <Loader2 className="w-5 h-5 text-[#71767b] animate-spin" />
+            <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
           </div>
         )}
 
         {!initialLoaded ? (
           <div className="flex justify-center items-center h-full">
-            <Loader2 className="w-8 h-8 text-[#1d9bf0] animate-spin" />
+            <Loader2 className="w-8 h-8 text-primary animate-spin" />
           </div>
          ) : messages.length === 0 ? (
            <div className="flex flex-col items-center justify-center h-full text-center gap-3 px-6">
-             <div className="w-16 h-16 rounded-full bg-[#16181c] border border-[#2f3336] flex items-center justify-center">
-               <MessageSquare className="w-8 h-8 text-[#1d9bf0]" />
+             <div className="w-16 h-16 rounded-full bg-card border border-border flex items-center justify-center">
+               <MessageSquare className="w-8 h-8 text-primary" />
              </div>
-             <p className="text-[#e7e9ea] text-xl font-bold">还没有消息</p>
-             <p className="text-[#71767b] text-sm">发送第一条消息，开始和 {conversation.otherUserName} 的对话吧</p>
+             <p className="text-foreground text-xl font-bold">还没有消息</p>
+             <p className="text-muted-foreground text-sm">发送第一条消息，开始和 {conversation.otherUserName} 的对话吧</p>
            </div>
         ) : (
           messages.map((msg) => {
@@ -272,8 +272,8 @@ const ChatWindow = ({
                 <div
                   className={`max-w-[75%] px-4 py-2 rounded-3xl break-words ${
                     isOwn
-                      ? 'bg-[#1d9bf0] text-white rounded-br-md'
-                      : 'bg-[#16181c] text-[#e7e9ea] rounded-bl-md border border-[#2f3336]'
+                      ? 'bg-primary text-primary-foreground rounded-br-md'
+                      : 'bg-card text-foreground rounded-bl-md border border-border'
                   }`}
                 >
                   <p className="text-base leading-relaxed whitespace-pre-wrap">
@@ -281,7 +281,7 @@ const ChatWindow = ({
                   </p>
                   <div
                     className={`flex items-center gap-1 mt-1 text-[11px] ${
-                      isOwn ? 'justify-end text-blue-200/80' : 'text-[#71767b]'
+                      isOwn ? 'justify-end text-muted-foreground' : 'text-muted-foreground'
                     }`}
                   >
                     <span>{formatTime(msg.createdAt)}</span>
@@ -300,9 +300,9 @@ const ChatWindow = ({
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-[#2f3336] p-3 bg-black pb-[calc(12px+env(safe-area-inset-bottom))]">
+      <div className="border-t border-border p-3 bg-background pb-[calc(12px+env(safe-area-inset-bottom))]">
         <div className="flex items-end gap-2">
-          <div className="flex-1 bg-[#16181c] border border-[#2f3336] rounded-2xl px-4 py-2 focus-within:border-[#1d9bf0] transition-colors">
+          <div className="flex-1 bg-card border border-border rounded-2xl px-4 py-2 focus-within:border-primary transition-colors">
             <textarea
               ref={textareaRef}
               value={input}
@@ -310,14 +310,14 @@ const ChatWindow = ({
               onKeyDown={handleKeyDown}
               placeholder="输入消息..."
               rows={1}
-              className="w-full bg-transparent text-[#e7e9ea] placeholder:text-[#71767b] outline-none resize-none text-base leading-relaxed max-h-[120px]"
+              className="w-full bg-transparent text-foreground placeholder:text-muted-foreground outline-none resize-none text-base leading-relaxed max-h-[120px]"
               style={{ minHeight: '24px' }}
             />
           </div>
           <button
             onClick={() => { void handleSend(); }}
             disabled={!input.trim() || sending}
-            className="p-3 rounded-full bg-[#1d9bf0] hover:bg-[#1a8cd8] disabled:bg-[#1d9bf0]/50 disabled:cursor-not-allowed text-white transition-colors flex-shrink-0"
+            className="p-3 rounded-full bg-primary hover:bg-primary/90 disabled:bg-primary/50 disabled:cursor-not-allowed text-primary-foreground transition-colors flex-shrink-0"
             data-ai-section-type="button"
           >
             {sending ? (

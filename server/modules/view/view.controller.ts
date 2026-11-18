@@ -35,7 +35,7 @@ import {
   buildAtomXml,
   type RssItemData,
 } from '@server/common/utils/rss-builder';
-import { ASSET_BASE_PATH } from '@server/config/client.config';
+import { ASSET_BASE_PATH, clientBaseHref } from '@server/config/client.config';
 import { serializePlatformData } from '@server/common/utils/html-view-engine';
 
 function getRequestBaseUrl(req: Request): string {
@@ -69,6 +69,7 @@ function toAbsoluteUrl(url: string, baseUrl: string, reqPath: string): string {
 
 interface OgRenderData {
   __platform__: string;
+  assetBase: string;
   ogTitle: string;
   ogDescription: string;
   ogImage: string;
@@ -421,6 +422,7 @@ export class ViewController {
     const platformData = (req as any).__platform_data__ ?? {};
     const baseData: OgRenderData = {
       __platform__: serializePlatformData(platformData),
+      assetBase: clientBaseHref(ASSET_BASE_PATH),
       ogTitle: 'LongPost',
       ogDescription: '长文发布平台',
       ogImage: '',

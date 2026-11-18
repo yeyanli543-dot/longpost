@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { User as UserIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { logger } from '@/lib/logger';
@@ -16,12 +16,7 @@ interface UserCardProps {
 }
 
 const UserCard = ({ user }: UserCardProps) => {
-  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-
-  const handleClick = () => {
-    navigate(`/user/${user.id}`);
-  };
 
   const isOwnProfile = currentUser?.id === user.id;
 
@@ -29,13 +24,13 @@ const UserCard = ({ user }: UserCardProps) => {
 
   return (
     <div
-      className="flex items-center gap-3 px-4 py-3 border-b border-gray-800 hover:bg-gray-900/50 transition-colors cursor-pointer"
-      onClick={handleClick}
+      className="flex items-center gap-3 px-4 py-3 border-b border-border hover:bg-accent transition-colors"
       data-ai-section-type="card-list"
     >
+      <Link to={`/user/${user.id}`} className="flex flex-1 min-w-0 items-center gap-3 rounded-lg">
       {/* Avatar */}
       <div className="flex-shrink-0">
-        <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
+        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center overflow-hidden">
           {user.avatarUrl ? (
             <Image
               src={user.avatarUrl}
@@ -43,7 +38,7 @@ const UserCard = ({ user }: UserCardProps) => {
               className="w-full h-full object-cover"
             />
           ) : (
-            <span className="text-base font-bold text-gray-300">
+            <span className="text-base font-bold text-foreground/90">
               {avatarInitial}
             </span>
           )}
@@ -53,33 +48,35 @@ const UserCard = ({ user }: UserCardProps) => {
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline gap-1">
-          <span className="font-bold text-gray-100 truncate">
+          <span className="font-bold text-foreground truncate">
             {user.nickname}
           </span>
-          <span className="text-sm text-gray-500 truncate">
+          <span className="text-sm text-muted-foreground truncate">
             @{user.id.slice(0, 8)}
           </span>
         </div>
         {user.bio && (
-          <p className="mt-1 text-sm text-gray-400 line-clamp-2 break-words">
+          <p className="mt-1 text-sm text-muted-foreground line-clamp-2 break-words">
             {user.bio}
           </p>
         )}
-        <div className="mt-1 flex gap-4 text-xs text-gray-500">
+        <div className="mt-1 flex gap-4 text-xs text-muted-foreground">
           <span>
-            <span className="text-gray-100 font-medium">
+            <span className="text-foreground font-medium">
               {user.followingCount ?? 0}
             </span>{' '}
             关注
           </span>
           <span>
-            <span className="text-gray-100 font-medium">
+            <span className="text-foreground font-medium">
               {user.followerCount ?? 0}
             </span>{' '}
             粉丝
           </span>
         </div>
       </div>
+
+      </Link>
 
       {/* Follow button */}
       {!isOwnProfile && (
@@ -98,11 +95,11 @@ const UserCard = ({ user }: UserCardProps) => {
 // ---------- Skeleton ----------
 
 const SkeletonCard = () => (
-  <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-800">
-    <div className="w-12 h-12 rounded-full bg-gray-800 animate-pulse flex-shrink-0" />
+  <div className="flex items-center gap-3 px-4 py-3 border-b border-border">
+    <div className="w-12 h-12 rounded-full bg-muted animate-pulse flex-shrink-0" />
     <div className="flex-1 space-y-2">
-      <div className="h-4 bg-gray-800 rounded w-1/3 animate-pulse" />
-      <div className="h-3 bg-gray-800 rounded w-1/4 animate-pulse" />
+      <div className="h-4 bg-muted rounded w-1/3 animate-pulse" />
+      <div className="h-3 bg-muted rounded w-1/4 animate-pulse" />
     </div>
   </div>
 );
@@ -222,24 +219,24 @@ const FollowListPage: React.FC = () => {
           <h1 className="text-xl font-bold text-foreground">
             {activeTab === 'followers' ? '粉丝' : '关注'}
           </h1>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             @{userId?.slice(0, 8) ?? ''}
           </p>
         </div>
         {/* Tabs */}
-        <div className="flex border-t border-gray-800">
+        <div className="flex border-t border-border">
           {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => handleTabChange(tab.key)}
-              className={`flex-1 relative py-4 text-sm font-medium transition-colors hover:bg-gray-900/50 ${
-                activeTab === tab.key ? 'text-gray-100' : 'text-gray-500'
+              className={`flex-1 relative py-4 text-sm font-medium transition-colors hover:bg-accent ${
+                activeTab === tab.key ? 'text-foreground' : 'text-muted-foreground'
               }`}
               data-ai-section-type="button"
             >
               <span>{tab.label}</span>
               {activeTab === tab.key && (
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-blue-500 rounded-full" />
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-primary rounded-full" />
               )}
             </button>
           ))}
@@ -257,9 +254,9 @@ const FollowListPage: React.FC = () => {
             <SkeletonCard />
           </>
         ) : error && users.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">{error}</div>
+          <div className="p-8 text-center text-muted-foreground">{error}</div>
         ) : users.length === 0 ? (
-          <div className="px-4 py-16 text-center text-gray-500">
+          <div className="px-4 py-16 text-center text-muted-foreground">
             <UserIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p className="text-lg">{emptyText.title}</p>
             <p className="text-sm mt-1">{emptyText.desc}</p>
@@ -273,13 +270,13 @@ const FollowListPage: React.FC = () => {
         {/* Loading more indicator */}
         <div ref={sentinelRef} className="py-6 text-center">
           {loadingMore && (
-            <div className="flex items-center justify-center gap-2 text-gray-500">
-              <div className="w-5 h-5 border-2 border-gray-700 border-t-blue-500 rounded-full animate-spin" />
+            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+              <div className="w-5 h-5 border-2 border-border border-t-primary rounded-full animate-spin" />
               <span>加载中...</span>
             </div>
           )}
           {!hasMore && users.length > 0 && !loadingMore && (
-            <p className="text-sm text-gray-600">没有更多了</p>
+            <p className="text-sm text-muted-foreground">没有更多了</p>
           )}
         </div>
       </div>

@@ -390,7 +390,7 @@ const ArticleComposer = ({
             </button>
             <button
               onClick={handleDismissDraft}
-              className="px-2 py-1 text-gray-400 hover:text-white transition-colors"
+              className="px-2 py-1 text-muted-foreground hover:text-foreground transition-colors"
             >
               忽略
             </button>
@@ -405,7 +405,7 @@ const ArticleComposer = ({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder={isLite ? '无标题文章' : '文章标题'}
-          className={`w-full bg-transparent font-bold text-foreground placeholder:text-muted-foreground/40 outline-none transition-all ${
+          className={`w-full bg-transparent font-bold text-foreground placeholder:text-muted-foreground outline-none transition-all ${
             isLite
               ? 'text-3xl sm:text-4xl tracking-tight border-none'
               : 'text-2xl border-b border-border/80 pb-3 focus:border-blue-500'
@@ -472,7 +472,7 @@ const ArticleComposer = ({
         </div>
       )}
 
-      <div className="border-t border-gray-800 pt-3">
+      <div className="border-t border-border pt-3">
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => setShowChartDialog(true)}
@@ -482,7 +482,7 @@ const ArticleComposer = ({
             <BarChart3 className="h-4 w-4" />
             插入图表
           </button>
-          <span className="text-xs text-gray-600">
+          <span className="text-xs text-muted-foreground">
             图表会渲染成卡片，站内阅读和分享出去的公开链接长得一样
           </span>
         </div>
@@ -507,10 +507,10 @@ const ArticleComposer = ({
 
       {/* Images */}
       {(images.length > 0 || showPublishUI) && (
-        <div className="border-t border-gray-800 pt-4">
+        <div className="border-t border-border pt-4">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-gray-500">
-              图片配图 <span className="text-gray-600">（{images.length}/{MAX_IMAGES}）</span>
+            <p className="text-sm text-muted-foreground">
+              图片配图 <span className="text-muted-foreground">（{images.length}/{MAX_IMAGES}）</span>
             </p>
             {showPublishUI && images.length < MAX_IMAGES && (
               <button
@@ -527,7 +527,7 @@ const ArticleComposer = ({
           {images.length > 0 && (
             <div className="grid grid-cols-3 gap-2">
               {images.map((img, i) => (
-                <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-gray-900 group">
+                <div key={i} className="relative aspect-square rounded-lg overflow-hidden bg-muted group">
                   <Image src={img.imageUrl} alt={img.name} className="w-full h-full object-cover" />
                   {showPublishUI && (
                     <button
@@ -549,10 +549,10 @@ const ArticleComposer = ({
 
       {/* Attachments */}
       {(attachments.length > 0 || showPublishUI) && (
-        <div className="border-t border-gray-800 pt-4">
+        <div className="border-t border-border pt-4">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-gray-500">
-              文件附件 <span className="text-gray-600">（{attachments.length}/{MAX_ATTACHMENTS}）</span>
+            <p className="text-sm text-muted-foreground">
+              文件附件 <span className="text-muted-foreground">（{attachments.length}/{MAX_ATTACHMENTS}）</span>
             </p>
             {showPublishUI && attachments.length < MAX_ATTACHMENTS && (
               <button
@@ -569,13 +569,13 @@ const ArticleComposer = ({
           {attachments.length > 0 && (
             <div className="space-y-2">
               {attachments.map((att, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 bg-gray-900/50 border border-gray-800 rounded-lg group">
-                  <div className="w-10 h-10 rounded-lg bg-gray-800 flex items-center justify-center flex-shrink-0">
+                <div key={i} className="flex items-center gap-3 p-3 bg-card border border-border rounded-lg group">
+                  <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
                     <FileText className="w-5 h-5 text-blue-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-200 truncate">{att.fileName}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm font-medium text-foreground truncate">{att.fileName}</p>
+                    <p className="text-xs text-muted-foreground">
                       {formatFileSize(att.fileSize)}
                       {att.fileType ? ` · ${att.fileType.split('/')[1] || att.fileType}` : ''}
                     </p>
@@ -622,7 +622,7 @@ const ArticleComposer = ({
               className={`disabled:opacity-40 disabled:cursor-not-allowed font-medium py-2 px-5 rounded-full transition-all text-xs border ${
                 isLite
                   ? 'bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-700 shadow-2xs'
-                  : 'bg-white hover:bg-gray-100 dark:bg-[#202124] dark:hover:bg-[#2d2e30] text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-700'
+                  : 'bg-white hover:bg-gray-100 dark:bg-[#202124] dark:hover:bg-[#2d2e30] text-gray-700 dark:text-foreground border-gray-300 dark:border-gray-700'
               }`}
             >
               {isSavingDraft

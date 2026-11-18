@@ -27,6 +27,7 @@ export interface SafeAreaMeasurements {
 }
 
 const THEME_KEY = 'app-theme-preference';
+const THEME_EVENT = 'longpost:theme-change';
 const ACCENT_KEY = 'app-accent-preference';
 const FONT_KEY = 'app-font-preference';
 const FONT_SIZE_KEY = 'app-fontsize-preference';
@@ -163,6 +164,24 @@ export function useTheme() {
     const saved = localStorage.getItem(THEME_KEY) as ThemeMode | null;
     return saved ?? 'dark';
   });
+
+  // The command palette, settings and reader can be mounted together. Keep
+  // their selected theme in sync in this tab and when another tab changes it.
+  useEffect(() => {
+    const onTheme = (event: Event): void => {
+      const mode = (event as CustomEvent<ThemeMode>).detail;
+      if (mode) setThemeState(mode);
+    };
+    const onStorage = (event: StorageEvent): void => {
+      if (event.key === THEME_KEY && event.newValue) setThemeState(event.newValue as ThemeMode);
+    };
+    window.addEventListener(THEME_EVENT, onTheme);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener(THEME_EVENT, onTheme);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
 
   const [accent, setAccentState] = useState<AccentColor>(() => {
     if (typeof window === 'undefined') return 'blue';
@@ -319,7 +338,10 @@ export function useTheme() {
     };
   }, [refreshSafeArea]);
 
-  const setTheme = (mode: ThemeMode): void => setThemeState(mode);
+  const setTheme = (mode: ThemeMode): void => {
+    setThemeState(mode);
+    if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(THEME_EVENT, { detail: mode }));
+  };
   const setAccent = (acc: AccentColor): void => setAccentState(acc);
   const setFontFamily = (font: FontFamily): void => setFontFamilyState(font);
   const setFontSize = (size: FontSize): void => setFontSizeState(size);
@@ -329,7 +351,7 @@ export function useTheme() {
   const setLandscapeGuard = (guard: boolean): void => setLandscapeGuardState(guard);
 
   const resetToDefaults = (): void => {
-    setThemeState('dark');
+    setTheme('dark');
     setAccentState('blue');
     setFontFamilyState('sans');
     setFontSizeState('medium');

@@ -10,8 +10,9 @@ import RoutesComponent from './app.tsx';
 import './index.css';
 import { createPortal } from 'react-dom';
 import { Toaster } from '@client/src/components/ui/sonner';
+import { getAppBasePath } from '@client/src/lib/utils';
 
-const CLIENT_BASE_PATH = process.env.CLIENT_BASE_PATH || '/';
+const CLIENT_BASE_PATH = getAppBasePath();
 const isFileProtocol = typeof window !== 'undefined' && window.location.protocol === 'file:';
 
 const MainApp = () => {

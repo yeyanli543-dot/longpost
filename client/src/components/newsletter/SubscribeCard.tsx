@@ -63,14 +63,14 @@ export default function SubscribeCard({ source = 'article' }: { source?: string 
   if (enabled === false) return null;
 
   return (
-    <section className="mt-8 rounded-2xl border border-[#2f3336] bg-[#0c0d0f] p-5">
+    <section className="mt-8 rounded-2xl border border-border bg-[#0c0d0f] p-5">
       <div className="flex items-start gap-3">
-        <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#1d9bf0]/10 text-[#1d9bf0]">
+        <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
           <Mail className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-semibold text-[#e7e9ea]">订阅新文章</h2>
-          <p className="mt-1 text-sm leading-relaxed text-[#71767b]">
+          <h2 className="text-base font-semibold text-foreground">订阅新文章</h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
             有新文章时发一封邮件给你，不发别的，随时可以退订。
             {count !== null && count > 0 ? ` 已有 ${count} 位订阅者。` : ''}
           </p>
@@ -86,12 +86,12 @@ export default function SubscribeCard({ source = 'article' }: { source?: string 
               }}
               placeholder="you@example.com"
               aria-label="邮箱地址"
-              className="h-10 flex-1 rounded-lg border border-[#2f3336] bg-transparent px-3 text-sm text-[#e7e9ea] placeholder:text-[#71767b] focus:border-[#1d9bf0] focus:outline-none"
+              className="h-10 flex-1 rounded-lg border border-border bg-transparent px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
             />
             <button
               type="submit"
               disabled={status === 'sending' || email.trim().length === 0}
-              className="h-10 rounded-lg bg-[#1d9bf0] px-4 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+              className="h-10 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
             >
               {status === 'sending' ? '发送中…' : '订阅'}
             </button>

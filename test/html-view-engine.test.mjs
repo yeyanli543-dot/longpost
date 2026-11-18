@@ -8,6 +8,7 @@ import express from 'express';
 
 import { htmlViewEngine, serializePlatformData } from '../server/common/utils/html-view-engine.ts';
 import { buildArticleHtml } from '../server/common/utils/article-template.ts';
+import { clientBaseHref } from '../server/config/client.config.ts';
 
 const render = (file, data) => new Promise((resolve, reject) => {
   htmlViewEngine(file, data, (error, result) => error ? reject(error) : resolve(result));
@@ -23,6 +24,19 @@ function platformFromHtml(html) {
 }
 
 describe('Web 视图模板与内嵌数据', () => {
+  it('深层链接使用安全的站点资源根路径', async () => {
+    assert.equal(clientBaseHref(''), '/');
+    assert.equal(clientBaseHref('/app/example/'), '/app/example/');
+    assert.equal(clientBaseHref('//other.example'), '/');
+    assert.equal(clientBaseHref('/app\\other'), '/');
+    const html = await render(path.resolve('client/index.html'), { assetBase: clientBaseHref('/app/example') });
+    assert.match(html, /<base id="longpost-base" href="\/app\/example\/">/);
+    const defaultHtml = await render(path.resolve('client/index.html'), {});
+    assert.match(defaultHtml, /<base id="longpost-base" href="\/">/);
+    const escapedHtml = await render(path.resolve('client/index.html'), { assetBase: '/x" onload="bad' });
+    assert.ok(!escapedHtml.includes('href="/x" onload="bad"'));
+  });
+
   it('SPA 模板保留 OG 转义，并正确还原含特殊字符的平台数据', async () => {
     const value = { text: "引号'、反斜杠\\、</script><script>bad()</script>", line: 'a\u2028b' };
     const html = await render(path.resolve('client/index.html'), {

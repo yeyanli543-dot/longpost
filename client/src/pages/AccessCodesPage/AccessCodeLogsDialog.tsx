@@ -74,12 +74,12 @@ export default function AccessCodeLogsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#16181c] border-[#2f3336] text-[#e7e9ea] max-w-lg sm:max-w-lg max-sm:bottom-0 max-sm:top-auto max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:max-w-full max-sm:p-4 max-sm:max-h-[85vh] max-sm:overflow-y-auto">
+      <DialogContent className="bg-card border-border text-foreground max-w-lg sm:max-w-lg max-sm:bottom-0 max-sm:top-auto max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:max-w-full max-sm:p-4 max-sm:max-h-[85vh] max-sm:overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-[#e7e9ea] flex items-center gap-2">
+          <DialogTitle className="text-foreground flex items-center gap-2">
             <History size={18} />
             使用记录
-            <span className="text-sm text-[#71767b] font-normal font-mono">
+            <span className="text-sm text-muted-foreground font-normal font-mono">
               {codeValue}
             </span>
           </DialogTitle>
@@ -87,7 +87,7 @@ export default function AccessCodeLogsDialog({
 
         <div className="space-y-2">
           {/* Header row */}
-          <div className="grid grid-cols-12 text-xs text-[#71767b] px-3 py-2 bg-black/50 rounded-md">
+          <div className="grid grid-cols-12 text-xs text-muted-foreground px-3 py-2 bg-muted rounded-md">
             <div className="col-span-3">时间</div>
             <div className="col-span-3">IP 地址</div>
             <div className="col-span-2">结果</div>
@@ -95,7 +95,7 @@ export default function AccessCodeLogsDialog({
           </div>
 
           {loading && items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Loader2 size={24} className="animate-spin" />
               <p className="mt-2 text-sm">加载中...</p>
             </div>
@@ -107,7 +107,7 @@ export default function AccessCodeLogsDialog({
               </Button>
             </div>
           ) : items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <History size={24} />
               <p className="mt-2 text-sm">暂无记录</p>
             </div>
@@ -116,12 +116,12 @@ export default function AccessCodeLogsDialog({
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="grid grid-cols-12 items-center px-3 py-2 text-sm hover:bg-black/40 rounded-md transition-colors"
+                  className="grid grid-cols-12 items-center px-3 py-2 text-sm hover:bg-accent rounded-md transition-colors"
                 >
-                  <div className="col-span-3 text-[#71767b] text-xs">
+                  <div className="col-span-3 text-muted-foreground text-xs">
                     {dayjs(item.createdAt).format('MM-DD HH:mm:ss')}
                   </div>
-                  <div className="col-span-3 text-[#e7e9ea] font-mono text-xs">
+                  <div className="col-span-3 text-foreground font-mono text-xs">
                     {item.ipAddress || '-'}
                   </div>
                   <div className="col-span-2">
@@ -137,11 +137,11 @@ export default function AccessCodeLogsDialog({
                   </div>
                   <div className="col-span-4">
                     {item.success ? (
-                      <span className="text-[#e7e9ea] truncate">
+                      <span className="text-foreground truncate">
                         {item.loggedInUserId || '-'}
                       </span>
                     ) : (
-                      <span className="text-[#71767b] truncate" title={item.errorReason ?? ''}>
+                      <span className="text-muted-foreground truncate" title={item.errorReason ?? ''}>
                          {item.errorReason || '-'}
                       </span>
                     )}
@@ -153,17 +153,17 @@ export default function AccessCodeLogsDialog({
 
           {/* Pagination */}
           {total > 0 && (
-            <div className="flex items-center justify-center gap-2 pt-2 border-t border-[#2f3336]">
+            <div className="flex items-center justify-center gap-2 pt-2 border-t border-border">
               <Button
                 variant="outline"
                 size="sm"
                 disabled={page <= 1 || loading}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="border-[#2f3336] text-[#e7e9ea] h-7"
+                className="border-border text-foreground h-7"
               >
                 <ChevronLeft size={14} />
               </Button>
-              <span className="text-sm text-[#71767b] min-w-[80px] text-center">
+              <span className="text-sm text-muted-foreground min-w-[80px] text-center">
                 第 {page} / {totalPages} 页
               </span>
               <Button
@@ -171,7 +171,7 @@ export default function AccessCodeLogsDialog({
                 size="sm"
                 disabled={page >= totalPages || loading}
                 onClick={() => setPage((p) => p + 1)}
-                className="border-[#2f3336] text-[#e7e9ea] h-7"
+                className="border-border text-foreground h-7"
               >
                 <ChevronRight size={14} />
               </Button>

@@ -12,7 +12,7 @@
     "build": "npm run build:server && npm run build:client",
     "build:prod": "npm run build:server && npm run build:client",
     "build:server": "nest build",
-    "build:client": "vite build --config vite.config.ts",
+    "build:client": "vite build --config vite.config.ts && node scripts/check-client-css.cjs",
     "start": "node dist/server/main.js",
     "lint": "node ./scripts/lint.js",
     "eslint": "eslint . --quiet",

@@ -117,7 +117,7 @@ function StateCard({
   text: string;
 }): React.ReactElement {
   return (
-    <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+    <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
       <div className="mb-3">{icon}</div>
       <p className="text-sm">{text}</p>
     </div>
@@ -141,7 +141,7 @@ function Pagination({
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   if (totalPages <= 1) return null;
   return (
-    <div className="flex items-center justify-center gap-2 py-4 border-t border-[#2f3336]">
+    <div className="flex items-center justify-center gap-2 py-4 border-t border-border">
       <Button
         variant="outline"
         size="sm"
@@ -151,7 +151,7 @@ function Pagination({
         <ChevronLeft size={14} />
         上一页
       </Button>
-      <span className="text-sm text-gray-500 min-w-[80px] text-center">
+      <span className="text-sm text-muted-foreground min-w-[80px] text-center">
         第 {page} / {totalPages} 页
       </span>
       <Button
@@ -233,18 +233,18 @@ function DashboardTab(): React.ReactElement {
     <div className="space-y-6">
       {/* 总数统计 */}
       <section>
-        <h3 className="text-lg font-semibold text-[#e7e9ea] mb-3">数据概览</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-3">数据概览</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3" data-ai-section-type="card-stat">
           {totalCards.map((c: { label: string; value: number; icon: React.ReactNode; color: string }) => (
             <div
               key={c.label}
-              className="bg-[#16181c] border border-[#2f3336] rounded-lg p-4"
+              className="bg-card border border-border rounded-lg p-4"
             >
               <div className={`flex items-center gap-2 mb-2 ${c.color}`}>
                 {c.icon}
-                <span className="text-xs text-gray-500">{c.label}</span>
+                <span className="text-xs text-muted-foreground">{c.label}</span>
               </div>
-              <div className="text-2xl font-bold text-[#e7e9ea]">{c.value.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-foreground">{c.value.toLocaleString()}</div>
             </div>
           ))}
         </div>
@@ -252,15 +252,15 @@ function DashboardTab(): React.ReactElement {
 
       {/* 今日新增 */}
       <section>
-        <h3 className="text-lg font-semibold text-[#e7e9ea] mb-3">今日新增</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-3">今日新增</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3" data-ai-section-type="card-stat">
           {todayCards.map((c: { label: string; value: number }) => (
             <div
               key={c.label}
-              className="bg-[#16181c] border border-[#2f3336] rounded-lg p-4"
+              className="bg-card border border-border rounded-lg p-4"
             >
-              <div className="text-xs text-gray-500 mb-2">{c.label}</div>
-              <div className="text-2xl font-bold text-[#1d9bf0]">+{c.value.toLocaleString()}</div>
+              <div className="text-xs text-muted-foreground mb-2">{c.label}</div>
+              <div className="text-2xl font-bold text-primary">+{c.value.toLocaleString()}</div>
             </div>
           ))}
         </div>
@@ -268,12 +268,12 @@ function DashboardTab(): React.ReactElement {
 
       {/* 待处理 */}
       <section>
-        <h3 className="text-lg font-semibold text-[#e7e9ea] mb-3">待处理</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-3">待处理</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3" data-ai-section-type="card-stat">
           {pendingCards.map((c: { label: string; value: number; color: string }) => (
             <div
               key={c.label}
-              className="bg-[#16181c] border border-[#2f3336] rounded-lg p-4"
+              className="bg-card border border-border rounded-lg p-4"
             >
               <div className={`text-xs mb-2 ${c.color}`}>{c.label}</div>
               <div className={`text-2xl font-bold ${c.color}`}>{c.value.toLocaleString()}</div>
@@ -375,7 +375,7 @@ function ModerationTab(): React.ReactElement {
   return (
     <div className="flex flex-col h-full">
       {/* Sub tabs */}
-      <div className="flex items-center gap-1 mb-4 border-b border-[#2f3336] pb-3 overflow-x-auto scrollbar-hide">
+      <div className="flex items-center gap-1 mb-4 border-b border-border pb-3 overflow-x-auto scrollbar-hide">
         {subTabs.map((tab: { key: 'posts' | 'articles'; label: string }) => (
           <Button
             key={tab.key}
@@ -392,7 +392,7 @@ function ModerationTab(): React.ReactElement {
          ))}
        </div>
 
-       <div className="flex-1 border border-[#2f3336] rounded-lg overflow-hidden bg-[#16181c]">
+       <div className="flex-1 border border-border rounded-lg overflow-hidden bg-card">
         {loading && items.length === 0 ? (
           <StateCard icon={<Loader2 size={32} className="animate-spin" />} text="加载中..." />
         ) : error ? (
@@ -409,19 +409,19 @@ function ModerationTab(): React.ReactElement {
             {items.map((item: PostItem | ArticleSummary) => {
               const post = item as PostItem;
               return (
-                <div key={post.id} className="p-4 hover:bg-[#1d1f23] transition-colors">
+                <div key={post.id} className="p-4 hover:bg-muted transition-colors">
                   <div className="flex items-start gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="font-medium text-[#e7e9ea] text-sm truncate">
+                        <span className="font-medium text-foreground text-sm truncate">
                           {post.authorName}
                         </span>
-                        <span className="text-xs text-gray-500">{fmtDate(post.createdAt)}</span>
+                        <span className="text-xs text-muted-foreground">{fmtDate(post.createdAt)}</span>
                         <Badge variant="secondary" className="text-[10px]">
                           待审核
                         </Badge>
                       </div>
-                      <p className="text-sm text-[#e7e9ea] line-clamp-3 mb-2">
+                      <p className="text-sm text-foreground line-clamp-3 mb-2">
                         {post.content}
                       </p>
                     </div>
@@ -456,19 +456,19 @@ function ModerationTab(): React.ReactElement {
             {items.map((item: PostItem | ArticleSummary) => {
               const article = item as ArticleSummary;
               return (
-                <div key={article.id} className="p-4 hover:bg-[#1d1f23] transition-colors">
+                <div key={article.id} className="p-4 hover:bg-muted transition-colors">
                   <div className="flex items-start gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <h4 className="font-semibold text-[#e7e9ea] truncate">{article.title}</h4>
+                        <h4 className="font-semibold text-foreground truncate">{article.title}</h4>
                         <Badge variant="secondary" className="text-[10px] flex-shrink-0">
                           待审核
                         </Badge>
                       </div>
-                      <p className="text-sm text-gray-400 line-clamp-2 mb-2">
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
                         {article.excerpt || '暂无摘要'}
                       </p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                         <span>作者: {article.authorName}</span>
                         <span>{fmtDate(article.createdAt)}</span>
                       </div>
@@ -514,15 +514,15 @@ function ModerationTab(): React.ReactElement {
       {rejectDialog && (
         <div className="fixed inset-0 bg-black/70 z-50" onClick={() => !rejectSubmitting && setRejectDialog(null)}>
           <div
-            className="absolute bottom-0 left-0 right-0 bg-[#16181c] border border-[#2f3336] rounded-t-2xl max-h-[85vh] overflow-y-auto sm:top-1/2 sm:left-1/2 sm:right-auto sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-md sm:rounded-2xl sm:overflow-hidden"
+            className="absolute bottom-0 left-0 right-0 bg-card border border-border rounded-t-2xl max-h-[85vh] overflow-y-auto sm:top-1/2 sm:left-1/2 sm:right-auto sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-md sm:rounded-2xl sm:overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[#2f3336]">
-              <h3 className="text-lg font-bold text-gray-100">驳回原因</h3>
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+              <h3 className="text-lg font-bold text-foreground">驳回原因</h3>
               <button
                 onClick={() => setRejectDialog(null)}
                 disabled={rejectSubmitting}
-                className="p-1 text-gray-500 hover:text-gray-300 transition-colors"
+                className="p-1 text-muted-foreground hover:text-foreground/90 transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -536,11 +536,11 @@ function ModerationTab(): React.ReactElement {
                 maxLength={500}
                 className="resize-none"
               />
-              <p className="mt-1 text-xs text-gray-500 text-right">
+              <p className="mt-1 text-xs text-muted-foreground text-right">
                 {rejectReason.length}/500
               </p>
             </div>
-            <div className="flex gap-3 px-4 py-3 border-t border-[#2f3336]">
+            <div className="flex gap-3 px-4 py-3 border-t border-border">
               <Button
                 variant="outline"
                 onClick={() => setRejectDialog(null)}
@@ -654,7 +654,7 @@ function PostsTab(): React.ReactElement {
       {/* 搜索栏 */}
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="relative flex-1 min-w-[160px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="按关键词搜索帖子..."
             value={searchInput}
@@ -675,7 +675,7 @@ function PostsTab(): React.ReactElement {
       </div>
 
       {/* 列表 */}
-      <div className="flex-1 border border-[#2f3336] rounded-lg overflow-hidden bg-[#16181c]">
+      <div className="flex-1 border border-border rounded-lg overflow-hidden bg-card">
         {loading && items.length === 0 ? (
           <StateCard icon={<Loader2 size={32} className="animate-spin" />} text="加载中..." />
         ) : error ? (
@@ -690,14 +690,14 @@ function PostsTab(): React.ReactElement {
         ) : (
           <div className="divide-y divide-[#2f3336]">
             {items.map((post: PostItem) => (
-              <div key={post.id} className="p-4 hover:bg-[#1d1f23] transition-colors">
+              <div key={post.id} className="p-4 hover:bg-muted transition-colors">
                 <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-medium text-[#e7e9ea] text-sm truncate">
+                      <span className="font-medium text-foreground text-sm truncate">
                         {post.authorName}
                       </span>
-                      <span className="text-xs text-gray-500">{fmtDate(post.createdAt)}</span>
+                      <span className="text-xs text-muted-foreground">{fmtDate(post.createdAt)}</span>
                       {post.isPinned && (
                         <Badge variant="default" className="text-[10px] bg-orange-500 hover:bg-orange-500 text-white border-0">
                           <Pin size={10} className="mr-1" />
@@ -711,10 +711,10 @@ function PostsTab(): React.ReactElement {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-[#e7e9ea] line-clamp-2 mb-2">
+                    <p className="text-sm text-foreground line-clamp-2 mb-2">
                       {post.content}
                     </p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <ThumbsUp size={12} />
                         {post.likeCount}
@@ -856,7 +856,7 @@ function ArticlesTab(): React.ReactElement {
     <div className="flex flex-col h-full">
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="relative flex-1 min-w-[160px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="按关键词搜索文章..."
             value={searchInput}
@@ -877,7 +877,7 @@ function ArticlesTab(): React.ReactElement {
       </div>
 
       {/* 列表 */}
-      <div className="flex-1 border border-[#2f3336] rounded-lg overflow-hidden bg-[#16181c]">
+      <div className="flex-1 border border-border rounded-lg overflow-hidden bg-card">
         {loading && items.length === 0 ? (
           <StateCard icon={<Loader2 size={32} className="animate-spin" />} text="加载中..." />
         ) : error ? (
@@ -892,11 +892,11 @@ function ArticlesTab(): React.ReactElement {
         ) : (
           <div className="divide-y divide-[#2f3336]">
             {items.map((article: ArticleSummary) => (
-              <div key={article.id} className="p-4 hover:bg-[#1d1f23] transition-colors">
+              <div key={article.id} className="p-4 hover:bg-muted transition-colors">
                 <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h4 className="font-semibold text-[#e7e9ea] truncate">{article.title}</h4>
+                      <h4 className="font-semibold text-foreground truncate">{article.title}</h4>
                       {article.isPinned && (
                         <Badge variant="default" className="text-[10px] flex-shrink-0 bg-orange-500 hover:bg-orange-500 text-white border-0">
                           <Pin size={10} className="mr-1" />
@@ -910,10 +910,10 @@ function ArticlesTab(): React.ReactElement {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 line-clamp-1 mb-2">
+                    <p className="text-sm text-muted-foreground line-clamp-1 mb-2">
                       {article.excerpt || '暂无摘要'}
                     </p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                       <span>作者: {article.authorName}</span>
                       <span className="flex items-center gap-1">
                         <Eye size={12} />
@@ -1048,7 +1048,7 @@ function CommentsTab(): React.ReactElement {
     <div className="flex flex-col h-full">
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="relative flex-1 min-w-[160px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="按关键词搜索评论..."
             value={searchInput}
@@ -1068,7 +1068,7 @@ function CommentsTab(): React.ReactElement {
         </Button>
       </div>
 
-      <div className="flex-1 border border-[#2f3336] rounded-lg overflow-hidden bg-[#16181c]">
+      <div className="flex-1 border border-border rounded-lg overflow-hidden bg-card">
         {loading && items.length === 0 ? (
           <StateCard icon={<Loader2 size={32} className="animate-spin" />} text="加载中..." />
         ) : error ? (
@@ -1085,18 +1085,18 @@ function CommentsTab(): React.ReactElement {
             {items.map((comment: CommentItem) => (
               <div
                 key={comment.id}
-                className={`p-4 hover:bg-[#1d1f23] transition-colors ${comment.isDeleted ? 'opacity-60' : ''}`}
+                className={`p-4 hover:bg-muted transition-colors ${comment.isDeleted ? 'opacity-60' : ''}`}
               >
                 <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-medium text-[#e7e9ea] text-sm">
+                      <span className="font-medium text-foreground text-sm">
                         {comment.userName}
                       </span>
                       <Badge variant="outline" className="text-[10px]">
                         {comment.contentTypeId}
                       </Badge>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-muted-foreground">
                         {fmtDate(comment.createdAt)}
                       </span>
                       {comment.isDeleted && (
@@ -1105,10 +1105,10 @@ function CommentsTab(): React.ReactElement {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-[#e7e9ea] line-clamp-2 mb-1">
+                    <p className="text-sm text-foreground line-clamp-2 mb-1">
                       {comment.body}
                     </p>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <ThumbsUp size={12} />
                         {comment.likeCount}
@@ -1216,7 +1216,7 @@ function UsersTab(): React.ReactElement {
     <div className="flex flex-col h-full">
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="relative flex-1 min-w-[160px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="按昵称或邮箱搜索..."
             value={searchInput}
@@ -1236,7 +1236,7 @@ function UsersTab(): React.ReactElement {
         </Button>
       </div>
 
-      <div className="flex-1 border border-[#2f3336] rounded-lg overflow-hidden bg-[#16181c]">
+      <div className="flex-1 border border-border rounded-lg overflow-hidden bg-card">
         {loading && items.length === 0 ? (
           <StateCard icon={<Loader2 size={32} className="animate-spin" />} text="加载中..." />
         ) : error ? (
@@ -1253,10 +1253,10 @@ function UsersTab(): React.ReactElement {
             {items.map((user: AdminUserItem) => (
               <div
                 key={user.id}
-                className={`p-4 hover:bg-[#1d1f23] transition-colors ${user.isBanned ? 'opacity-60' : ''}`}
+                className={`p-4 hover:bg-muted transition-colors ${user.isBanned ? 'opacity-60' : ''}`}
               >
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#2f3336] flex-shrink-0 flex items-center justify-center text-[#e7e9ea] font-medium overflow-hidden">
+                  <div className="w-10 h-10 rounded-full bg-secondary flex-shrink-0 flex items-center justify-center text-foreground font-medium overflow-hidden">
                     {user.avatarUrl ? (
                       <Image
                         src={user.avatarUrl}
@@ -1269,7 +1269,7 @@ function UsersTab(): React.ReactElement {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-[#e7e9ea] truncate">
+                      <span className="font-medium text-foreground truncate">
                         {user.nickname}
                       </span>
                       {user.role === 'admin' ? (
@@ -1287,8 +1287,8 @@ function UsersTab(): React.ReactElement {
                         </Badge>
                       )}
                     </div>
-                    <div className="text-xs text-gray-500 truncate">{user.email}</div>
-                    <div className="flex items-center gap-4 text-xs text-gray-500 mt-1 flex-wrap">
+                    <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1 flex-wrap">
                       <span>注册: {fmtDate(user.createdAt)}</span>
                       <span>帖子: {user.postCount}</span>
                       <span>文章: {user.articleCount}</span>
@@ -1446,7 +1446,7 @@ function ReportsTab(): React.ReactElement {
   return (
     <div className="flex flex-col h-full">
       {/* Status filter tabs */}
-      <div className="flex items-center gap-1 mb-4 border-b border-[#2f3336] pb-3 overflow-x-auto scrollbar-hide">
+      <div className="flex items-center gap-1 mb-4 border-b border-border pb-3 overflow-x-auto scrollbar-hide">
         {statusTabs.map((tab: { key: ReportStatus | 'all'; label: string }) => (
            <Button
              key={tab.key}
@@ -1463,7 +1463,7 @@ function ReportsTab(): React.ReactElement {
         ))}
       </div>
 
-      <div className="flex-1 border border-[#2f3336] rounded-lg overflow-hidden bg-[#16181c]">
+      <div className="flex-1 border border-border rounded-lg overflow-hidden bg-card">
         {loading && items.length === 0 ? (
           <StateCard icon={<Loader2 size={32} className="animate-spin" />} text="加载中..." />
         ) : error ? (
@@ -1478,10 +1478,10 @@ function ReportsTab(): React.ReactElement {
         ) : (
           <div className="divide-y divide-[#2f3336]">
             {items.map((report: ReportItem) => (
-              <div key={report.id} className="p-4 hover:bg-[#1d1f23] transition-colors">
+              <div key={report.id} className="p-4 hover:bg-muted transition-colors">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium text-[#e7e9ea]">
+                    <span className="text-sm font-medium text-foreground">
                       {report.reporterName}
                     </span>
                     <Badge variant="outline" className="text-[10px]">
@@ -1497,29 +1497,29 @@ function ReportsTab(): React.ReactElement {
                       {statusLabel(report.status)}
                     </Badge>
                   </div>
-                  <span className="text-xs text-gray-500 flex-shrink-0">
+                  <span className="text-xs text-muted-foreground flex-shrink-0">
                     {fmtDate(report.createdAt)}
                   </span>
                 </div>
                 {report.description && (
-                  <p className="text-sm text-gray-400 mb-2">
+                  <p className="text-sm text-muted-foreground mb-2">
                     描述: {report.description}
                   </p>
                 )}
                 {(report.contentPreview || report.contentTitle) && (
-                  <div className="bg-black/30 border border-[#2f3336] rounded p-2 mb-2">
+                  <div className="bg-muted/70 border border-border rounded p-2 mb-2">
                     {report.contentTitle && (
-                      <div className="text-sm font-medium text-[#e7e9ea] mb-1">
+                      <div className="text-sm font-medium text-foreground mb-1">
                         {report.contentTitle}
                       </div>
                     )}
                     {report.contentPreview && (
-                      <p className="text-xs text-gray-400 line-clamp-2">
+                      <p className="text-xs text-muted-foreground line-clamp-2">
                         {report.contentPreview}
                       </p>
                     )}
                     {report.contentAuthorName && (
-                      <p className="text-xs text-gray-500 mt-1">
+                      <p className="text-xs text-muted-foreground mt-1">
                         作者: {report.contentAuthorName}
                       </p>
                     )}
@@ -1651,8 +1651,8 @@ function SiteSettingsTab(): React.ReactElement {
   return (
     <div className="max-w-2xl space-y-6">
       {/* 站点名称 */}
-      <div className="bg-[#16181c] border border-[#2f3336] rounded-lg p-4">
-        <Label htmlFor="siteName" className="text-[#e7e9ea] mb-2 block">
+      <div className="bg-card border border-border rounded-lg p-4">
+        <Label htmlFor="siteName" className="text-foreground mb-2 block">
           站点名称
         </Label>
         <Input
@@ -1664,10 +1664,10 @@ function SiteSettingsTab(): React.ReactElement {
       </div>
 
       {/* 站点 Logo */}
-      <div className="bg-[#16181c] border border-[#2f3336] rounded-lg p-4">
-        <Label htmlFor="siteLogoUrl" className="text-[#e7e9ea] mb-2 block">
+      <div className="bg-card border border-border rounded-lg p-4">
+        <Label htmlFor="siteLogoUrl" className="text-foreground mb-2 block">
           站点 Logo URL
-          <span className="text-xs text-gray-500 ml-2">（输入图片 URL 地址）</span>
+          <span className="text-xs text-muted-foreground ml-2">（输入图片 URL 地址）</span>
         </Label>
         <Input
           id="siteLogoUrl"
@@ -1676,7 +1676,7 @@ function SiteSettingsTab(): React.ReactElement {
           placeholder="https://example.com/logo.png"
         />
         {siteLogoUrl && (
-          <div className="mt-3 p-3 bg-black/30 rounded inline-block">
+          <div className="mt-3 p-3 bg-muted/70 rounded inline-block">
             <Image
               src={siteLogoUrl}
               alt="站点 Logo 预览"
@@ -1687,8 +1687,8 @@ function SiteSettingsTab(): React.ReactElement {
       </div>
 
       {/* 站点简介 */}
-      <div className="bg-[#16181c] border border-[#2f3336] rounded-lg p-4">
-        <Label htmlFor="siteDescription" className="text-[#e7e9ea] mb-2 block">
+      <div className="bg-card border border-border rounded-lg p-4">
+        <Label htmlFor="siteDescription" className="text-foreground mb-2 block">
           站点简介
         </Label>
         <Textarea
@@ -1703,10 +1703,10 @@ function SiteSettingsTab(): React.ReactElement {
       </div>
 
       {/* 站点公告 */}
-      <div className="bg-[#16181c] border border-[#2f3336] rounded-lg p-4">
-        <Label htmlFor="siteAnnouncement" className="text-[#e7e9ea] mb-2 block">
+      <div className="bg-card border border-border rounded-lg p-4">
+        <Label htmlFor="siteAnnouncement" className="text-foreground mb-2 block">
           站点公告
-          <span className="text-xs text-gray-500 ml-2">（显示在首页顶部公告栏）</span>
+          <span className="text-xs text-muted-foreground ml-2">（显示在首页顶部公告栏）</span>
         </Label>
         <Textarea
           id="siteAnnouncement"
@@ -1720,31 +1720,31 @@ function SiteSettingsTab(): React.ReactElement {
       </div>
 
       {/* 开关设置 */}
-      <div className="bg-[#16181c] border border-[#2f3336] rounded-lg p-4 space-y-4">
+      <div className="bg-card border border-border rounded-lg p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-medium text-[#e7e9ea]">开放注册</div>
-            <div className="text-xs text-gray-500">是否允许新用户注册账号</div>
+            <div className="text-sm font-medium text-foreground">开放注册</div>
+            <div className="text-xs text-muted-foreground">是否允许新用户注册账号</div>
           </div>
           <Switch checked={allowRegister} onCheckedChange={setAllowRegister} />
         </div>
 
-        <div className="border-t border-[#2f3336]" />
+        <div className="border-t border-border" />
 
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-medium text-[#e7e9ea]">Google 登录</div>
-            <div className="text-xs text-gray-500">是否启用 Google 第三方登录</div>
+            <div className="text-sm font-medium text-foreground">Google 登录</div>
+            <div className="text-xs text-muted-foreground">是否启用 Google 第三方登录</div>
           </div>
           <Switch checked={googleLoginEnabled} onCheckedChange={setGoogleLoginEnabled} />
         </div>
 
-        <div className="border-t border-[#2f3336]" />
+        <div className="border-t border-border" />
 
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-sm font-medium text-[#e7e9ea]">内容审核</div>
-            <div className="text-xs text-gray-500">发布内容是否需要审核后展示</div>
+            <div className="text-sm font-medium text-foreground">内容审核</div>
+            <div className="text-xs text-muted-foreground">发布内容是否需要审核后展示</div>
           </div>
           <Switch
             checked={contentModerationEnabled}
@@ -1752,18 +1752,18 @@ function SiteSettingsTab(): React.ReactElement {
           />
         </div>
 
-        <div className="border-t border-[#2f3336]" />
+        <div className="border-t border-border" />
 
         <div className="space-y-2">
           <div>
-            <div className="text-sm font-medium text-[#e7e9ea]">注册方式</div>
-            <div className="text-xs text-gray-500 mb-2">允许用户使用哪些方式注册账号</div>
+            <div className="text-sm font-medium text-foreground">注册方式</div>
+            <div className="text-xs text-muted-foreground mb-2">允许用户使用哪些方式注册账号</div>
           </div>
           <Select value={registrationMode} onValueChange={(v) => setRegistrationMode(v as RegistrationMode)}>
-            <SelectTrigger className="w-full bg-black border-[#2f3336] text-[#e7e9ea]">
+            <SelectTrigger className="w-full bg-background border-border text-foreground">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-[#16181c] border-[#2f3336] text-[#e7e9ea]">
+            <SelectContent className="bg-card border-border text-foreground">
               <SelectItem value="email_and_google">邮箱 + Google 登录</SelectItem>
               <SelectItem value="google_only">仅 Google 登录</SelectItem>
             </SelectContent>
@@ -1797,7 +1797,7 @@ const AdminPage: React.FC = () => {
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-3 text-gray-500">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
           <Loader2 size={32} className="animate-spin" />
           <span>加载中...</span>
         </div>
@@ -1809,12 +1809,12 @@ const AdminPage: React.FC = () => {
   if (!user || !isAdmin) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="bg-[#16181c] border border-[#2f3336] rounded-xl p-8 text-center max-w-md">
+        <div className="bg-card border border-border rounded-xl p-8 text-center max-w-md">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
             <Shield size={32} className="text-red-500" />
           </div>
-          <h2 className="text-xl font-bold text-[#e7e9ea] mb-2">无权限访问</h2>
-          <p className="text-sm text-gray-500 mb-6">
+          <h2 className="text-xl font-bold text-foreground mb-2">无权限访问</h2>
+          <p className="text-sm text-muted-foreground mb-6">
             您没有管理员权限，无法访问管理后台。请使用管理员账号登录后重试。
           </p>
         </div>
@@ -1848,11 +1848,11 @@ const AdminPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-60px)] bg-black pb-24 md:pb-0 overflow-x-hidden">
+    <div className="min-h-[calc(100vh-60px)] bg-background pb-24 md:pb-0 overflow-x-hidden">
       {/* 移动端：顶部横向滚动 Tab */}
       <div className="md:hidden sticky top-0 z-10 bg-card border-b border-border pt-safe">
         <div className="px-4 pt-3 pb-2">
-          <h1 className="text-lg font-bold text-[#e7e9ea]">管理后台</h1>
+          <h1 className="text-lg font-bold text-foreground">管理后台</h1>
         </div>
         <div className="flex overflow-x-auto gap-1.5 px-3 pb-2.5 scrollbar-hide">
           {ADMIN_TABS.map((tab: AdminTab) => {
@@ -1863,8 +1863,8 @@ const AdminPage: React.FC = () => {
                 onClick={() => setActiveTab(tab.key)}
                 className={`flex items-center gap-1.5 px-3 min-h-[44px] rounded-full whitespace-nowrap text-sm transition-colors flex-shrink-0 ${
                   isActive
-                    ? 'bg-[#1d9bf0]/10 text-[#1d9bf0] font-medium'
-                    : 'text-gray-400 hover:bg-[#2f3336] hover:text-[#e7e9ea]'
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 }`}
                 data-ai-section-type="button"
               >
@@ -1878,10 +1878,10 @@ const AdminPage: React.FC = () => {
 
       <div className="flex">
         {/* 桌面端：左侧侧边栏 Tab */}
-        <aside className="hidden md:block w-56 border-r border-[#2f3336] bg-[#16181c] flex-shrink-0 py-4">
+        <aside className="hidden md:block w-56 border-r border-border bg-card flex-shrink-0 py-4">
           <div className="px-4 mb-4">
-            <h1 className="text-lg font-bold text-[#e7e9ea]">管理后台</h1>
-            <p className="text-xs text-gray-500 mt-1">Admin Dashboard</p>
+            <h1 className="text-lg font-bold text-foreground">管理后台</h1>
+            <p className="text-xs text-muted-foreground mt-1">Admin Dashboard</p>
           </div>
           <nav className="space-y-1 px-2">
             {ADMIN_TABS.map((tab: AdminTab) => (
@@ -1890,8 +1890,8 @@ const AdminPage: React.FC = () => {
                 onClick={() => setActiveTab(tab.key)}
                 className={`w-full flex items-center gap-3 px-3 min-h-[44px] rounded-lg text-sm transition-colors text-left ${
                   activeTab === tab.key
-                    ? 'bg-[#1d9bf0]/10 text-[#1d9bf0] font-medium'
-                    : 'text-gray-400 hover:bg-[#2f3336] hover:text-[#e7e9ea]'
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 }`}
                 data-ai-section-type="button"
               >

@@ -94,8 +94,8 @@ const ComposePage = () => {
   // Auth loading state
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -103,19 +103,19 @@ const ComposePage = () => {
   // Not logged in - show login prompt
   if (!user) {
     return (
-      <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
-          <div className="bg-gray-900/50 border border-gray-800 rounded-2xl p-8">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-blue-500/20 flex items-center justify-center">
-              <FileText className="w-8 h-8 text-blue-500" />
+          <div className="bg-muted/50 border border-border rounded-2xl p-8">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-primary/20 flex items-center justify-center">
+              <FileText className="w-8 h-8 text-primary" />
             </div>
-            <h1 className="text-2xl font-bold text-gray-100 mb-2">登录后即可发布</h1>
-            <p className="text-gray-500 mb-8">
+            <h1 className="text-2xl font-bold text-foreground mb-2">登录后即可发布</h1>
+            <p className="text-muted-foreground mb-8">
               登录 LongPost，发布你的短帖和长文
             </p>
             <button
               onClick={() => navigate('/login')}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full transition-colors text-base"
+              className="w-full bg-primary hover:opacity-90 text-primary-foreground font-bold py-3 px-6 rounded-full transition-colors text-base"
               data-ai-section-type="button"
             >
               登录 / 注册
@@ -135,24 +135,26 @@ const ComposePage = () => {
         <div className="flex">
           <button
              onClick={() => setActiveTab('post')}
+             aria-pressed={activeTab === 'post'}
              className={`flex-1 min-h-[44px] md:min-h-0 py-3 md:py-4 text-sm md:text-base font-medium transition-colors relative ${
-               activeTab === 'post' ? 'text-gray-100' : 'text-gray-500 hover:text-gray-300'
+               activeTab === 'post' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
              }`}
            >
              发布短帖
              {activeTab === 'post' && (
-               <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-blue-500 rounded-full" />
+               <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-primary rounded-full" />
              )}
            </button>
            <button
              onClick={() => setActiveTab('article')}
+             aria-pressed={activeTab === 'article'}
              className={`flex-1 min-h-[44px] md:min-h-0 py-3 md:py-4 text-sm md:text-base font-medium transition-colors relative ${
-               activeTab === 'article' ? 'text-gray-100' : 'text-gray-500 hover:text-gray-300'
+               activeTab === 'article' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
              }`}
            >
             {isEditMode ? '编辑长文' : '发布长文'}
             {activeTab === 'article' && (
-              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-blue-500 rounded-full" />
+              <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-primary rounded-full" />
             )}
           </button>
         </div>
@@ -163,7 +165,7 @@ const ComposePage = () => {
           <PostComposer initialContent={initialPostContent} />
         ) : articleLoading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
         ) : (
           <ArticleComposer
@@ -232,14 +234,14 @@ const PostComposer = ({ initialContent = '' }: PostComposerProps) => {
     ? 'text-red-500'
     : charRemaining <= 20
       ? 'text-yellow-500'
-      : 'text-gray-500';
+      : 'text-muted-foreground';
 
   return (
     <div className="flex gap-3">
       {/* Avatar placeholder */}
       <div className="flex-shrink-0">
-        <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
-          <User className="w-5 h-5 text-gray-400" />
+        <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+          <User className="w-5 h-5 text-muted-foreground" />
         </div>
       </div>
 
@@ -250,25 +252,25 @@ const PostComposer = ({ initialContent = '' }: PostComposerProps) => {
            onChange={(e) => setContent(e.target.value)}
            placeholder="说点什么..."
            rows={4}
-           className="w-full bg-transparent text-base md:text-lg text-gray-100 placeholder:text-gray-500 resize-none outline-none border-none"
+           className="w-full bg-transparent text-base md:text-lg text-foreground placeholder:text-muted-foreground resize-none outline-none border-none"
          />
 
         {/* Selected article display */}
         {selectedArticle && (
-          <div className="mt-3 p-3 border border-gray-700 rounded-xl bg-gray-900/50 flex items-center gap-3">
-            <FileText className="w-5 h-5 text-blue-500 flex-shrink-0" />
+          <div className="mt-3 p-3 border border-border rounded-xl bg-muted/50 flex items-center gap-3">
+            <FileText className="w-5 h-5 text-primary flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-100 truncate">
+              <p className="text-sm font-medium text-foreground truncate">
                 {selectedArticle.title}
               </p>
-              <p className="text-xs text-gray-500">已关联此文章</p>
+              <p className="text-xs text-muted-foreground">已关联此文章</p>
             </div>
             <button
                onClick={() => setSelectedArticle(null)}
-               className="p-2 md:p-1 hover:bg-gray-700 rounded-full transition-colors"
+               className="p-2 md:p-1 hover:bg-muted rounded-full transition-colors"
                aria-label="移除关联文章"
              >
-               <X className="w-4 h-4 text-gray-400" />
+               <X className="w-4 h-4 text-muted-foreground" />
             </button>
           </div>
         )}
@@ -285,12 +287,12 @@ const PostComposer = ({ initialContent = '' }: PostComposerProps) => {
         )}
 
         {/* Action bar */}
-        <div className="mt-4 pt-3 border-t border-gray-800 flex items-center justify-between">
+        <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             {!showArticleSelector && !selectedArticle && (
                <button
                  onClick={() => setShowArticleSelector(true)}
-                 className="flex items-center gap-1.5 min-h-[44px] md:min-h-0 text-sm text-blue-500 hover:text-blue-400 transition-colors"
+                 className="flex items-center gap-1.5 min-h-[44px] md:min-h-0 text-sm text-primary hover:text-blue-400 transition-colors"
                >
                  <Link2 className="w-4 h-4" />
                  添加文章链接
@@ -299,7 +301,7 @@ const PostComposer = ({ initialContent = '' }: PostComposerProps) => {
              {showArticleSelector && !selectedArticle && (
                <button
                  onClick={() => setShowArticleSelector(false)}
-                 className="flex items-center gap-1.5 min-h-[44px] md:min-h-0 text-sm text-gray-500 hover:text-gray-300 transition-colors"
+                 className="flex items-center gap-1.5 min-h-[44px] md:min-h-0 text-sm text-muted-foreground hover:text-foreground transition-colors"
                >
                  <X className="w-4 h-4" />
                  取消
@@ -314,7 +316,7 @@ const PostComposer = ({ initialContent = '' }: PostComposerProps) => {
             <button
                onClick={handlePublish}
                disabled={!canPublish}
-               className="bg-blue-500 hover:bg-blue-600 disabled:bg-blue-500/50 disabled:cursor-not-allowed text-white font-bold min-h-[44px] px-6 rounded-full transition-colors text-sm flex items-center justify-center"
+               className="bg-primary hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-primary-foreground font-bold min-h-[44px] px-6 rounded-full transition-opacity text-sm flex items-center justify-center"
                data-ai-section-type="button"
              >
               {isPublishing ? (
@@ -376,8 +378,8 @@ const ArticleSelector = ({ onSelect, onClose }: ArticleSelectorProps) => {
   }, [keyword, searchArticles]);
 
   return (
-    <div className="mt-3 border border-gray-700 rounded-xl overflow-hidden bg-gray-900/50">
-      <div className="p-3 border-b border-gray-800">
+    <div className="mt-3 border border-border rounded-xl overflow-hidden bg-muted/50">
+      <div className="p-3 border-b border-border">
         <div className="relative">
           <input
             ref={inputRef}
@@ -385,22 +387,22 @@ const ArticleSelector = ({ onSelect, onClose }: ArticleSelectorProps) => {
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="搜索已有文章..."
-            className="w-full bg-transparent text-sm text-gray-100 placeholder:text-gray-500 outline-none pl-0"
+            className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none pl-0"
           />
           {isSearching && (
-            <Loader2 className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 animate-spin" />
+            <Loader2 className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground animate-spin" />
           )}
         </div>
       </div>
 
       <div className="max-h-60 overflow-y-auto">
         {keyword.trim() && !isSearching && results.length === 0 && (
-          <div className="p-4 text-center text-sm text-gray-500">
+          <div className="p-4 text-center text-sm text-muted-foreground">
             没有找到相关文章
           </div>
         )}
         {!keyword.trim() && (
-          <div className="p-4 text-center text-sm text-gray-500">
+          <div className="p-4 text-center text-sm text-muted-foreground">
             输入关键词搜索文章
           </div>
         )}
@@ -408,13 +410,13 @@ const ArticleSelector = ({ onSelect, onClose }: ArticleSelectorProps) => {
           <button
             key={article.id}
             onClick={() => onSelect(article)}
-            className="w-full text-left p-3 hover:bg-gray-800 transition-colors border-b border-gray-800 last:border-b-0"
+            className="w-full text-left p-3 hover:bg-muted transition-colors border-b border-border last:border-b-0"
           >
-            <p className="text-sm font-medium text-gray-100 truncate">
+            <p className="text-sm font-medium text-foreground truncate">
               {article.title}
             </p>
             {article.excerpt && (
-              <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
                 {article.excerpt}
               </p>
             )}
@@ -422,10 +424,10 @@ const ArticleSelector = ({ onSelect, onClose }: ArticleSelectorProps) => {
         ))}
       </div>
 
-      <div className="p-2 border-t border-gray-800">
+      <div className="p-2 border-t border-border">
         <button
           onClick={onClose}
-          className="w-full text-xs text-gray-500 hover:text-gray-300 py-1 transition-colors"
+          className="w-full text-xs text-muted-foreground hover:text-foreground py-1 transition-colors"
         >
           取消
         </button>

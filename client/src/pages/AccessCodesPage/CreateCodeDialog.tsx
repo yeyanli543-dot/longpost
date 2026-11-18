@@ -139,41 +139,41 @@ export default function CreateCodeDialog({
         onOpenChange(v);
       }}
     >
-      <DialogContent className="bg-[#16181c] border-[#2f3336] text-[#e7e9ea] max-w-md sm:max-w-md max-sm:bottom-0 max-sm:top-auto max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:max-w-full max-sm:p-4 max-sm:max-h-[85vh] max-sm:overflow-y-auto">
+      <DialogContent className="bg-card border-border text-foreground max-w-md sm:max-w-md max-sm:bottom-0 max-sm:top-auto max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:max-w-full max-sm:p-4 max-sm:max-h-[85vh] max-sm:overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-[#e7e9ea]">生成通行码</DialogTitle>
+          <DialogTitle className="text-foreground">生成通行码</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label className="text-[#e7e9ea]">成员昵称 <span className="text-red-400">*</span></Label>
+            <Label className="text-foreground">成员昵称 <span className="text-red-400">*</span></Label>
             <Input
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
               placeholder="请输入成员昵称"
               maxLength={100}
-              className="bg-black border-[#2f3336] text-[#e7e9ea] placeholder:text-[#71767b]"
+              className="bg-background border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[#e7e9ea]">用户名（可选）</Label>
+            <Label className="text-foreground">用户名（可选）</Label>
             <Input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="不填则自动生成"
               maxLength={100}
-              className="bg-black border-[#2f3336] text-[#e7e9ea] placeholder:text-[#71767b]"
+              className="bg-background border-border text-foreground placeholder:text-muted-foreground"
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[#e7e9ea]">角色</Label>
+            <Label className="text-foreground">角色</Label>
             <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
-              <SelectTrigger className="w-full bg-black border-[#2f3336] text-[#e7e9ea]">
+              <SelectTrigger className="w-full bg-background border-border text-foreground">
                 <SelectValue placeholder="选择角色" />
               </SelectTrigger>
-              <SelectContent className="bg-[#16181c] border-[#2f3336] text-[#e7e9ea]">
+              <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="user">普通成员</SelectItem>
                 <SelectItem value="admin">管理员</SelectItem>
               </SelectContent>
@@ -181,15 +181,15 @@ export default function CreateCodeDialog({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[#e7e9ea]">有效期</Label>
+            <Label className="text-foreground">有效期</Label>
             <Select
               value={expiryMode}
               onValueChange={(v) => setExpiryMode(v as ExpiryMode)}
             >
-              <SelectTrigger className="w-full bg-black border-[#2f3336] text-[#e7e9ea]">
+              <SelectTrigger className="w-full bg-background border-border text-foreground">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#16181c] border-[#2f3336] text-[#e7e9ea]">
+              <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="permanent">永久有效</SelectItem>
                 <SelectItem value="date">指定日期</SelectItem>
               </SelectContent>
@@ -199,7 +199,7 @@ export default function CreateCodeDialog({
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-full justify-start text-left font-normal bg-black border-[#2f3336] text-[#e7e9ea]"
+                    className="w-full justify-start text-left font-normal bg-background border-border text-foreground"
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {expiryDate
@@ -207,7 +207,7 @@ export default function CreateCodeDialog({
                       : '选择日期'}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-[#16181c] border-[#2f3336]">
+                <PopoverContent className="w-auto p-0 bg-card border-border">
                   <Calendar
                     mode="single"
                     selected={expiryDate}
@@ -220,15 +220,15 @@ export default function CreateCodeDialog({
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[#e7e9ea]">可使用次数</Label>
+            <Label className="text-foreground">可使用次数</Label>
             <Select
               value={usesMode}
               onValueChange={(v) => setUsesMode(v as UsesMode)}
             >
-              <SelectTrigger className="w-full bg-black border-[#2f3336] text-[#e7e9ea]">
+              <SelectTrigger className="w-full bg-background border-border text-foreground">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="bg-[#16181c] border-[#2f3336] text-[#e7e9ea]">
+              <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="unlimited">不限次数</SelectItem>
                 <SelectItem value="once">仅首次登录有效</SelectItem>
                 <SelectItem value="custom">自定义次数</SelectItem>
@@ -240,20 +240,20 @@ export default function CreateCodeDialog({
                 min={1}
                 value={customUses}
                 onChange={(e) => setCustomUses(e.target.value)}
-                className="bg-black border-[#2f3336] text-[#e7e9ea]"
+                className="bg-background border-border text-foreground"
               />
             )}
           </div>
 
           <div className="space-y-2">
-            <Label className="text-[#e7e9ea]">备注（可选）</Label>
+            <Label className="text-foreground">备注（可选）</Label>
             <Textarea
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="备注信息"
               maxLength={500}
               rows={3}
-              className="bg-black border-[#2f3336] text-[#e7e9ea] placeholder:text-[#71767b] resize-none"
+              className="bg-background border-border text-foreground placeholder:text-muted-foreground resize-none"
             />
           </div>
         </div>
@@ -262,14 +262,14 @@ export default function CreateCodeDialog({
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="border-[#2f3336] text-[#e7e9ea]"
+            className="border-border text-foreground"
           >
             取消
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={submitting}
-            className="bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white border-[#1d9bf0]"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground border-primary"
           >
             {submitting ? '生成中...' : '生成'}
           </Button>

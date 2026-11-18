@@ -64,7 +64,7 @@ const FollowButton = ({
 
   const sizeClasses =
     size === 'sm'
-      ? 'px-4 py-1 text-sm font-bold'
+      ? 'min-h-10 px-4 py-1 text-sm font-bold'
       : size === 'lg'
         ? 'px-6 py-2.5 text-base font-bold'
         : 'px-5 py-2 text-sm font-bold';
@@ -83,10 +83,10 @@ const FollowButton = ({
       if (isHovered) {
         return `${base} bg-red-600 hover:bg-red-700 text-white border border-red-600`;
       }
-      return `${base} bg-gray-700 text-white border border-gray-600`;
+      return `${base} bg-secondary text-secondary-foreground border border-border`;
     }
 
-    return `${base} bg-blue-500 hover:bg-blue-600 text-white border border-blue-500 hover:scale-[1.02]`;
+    return `${base} bg-primary hover:bg-primary/90 text-primary-foreground border border-primary hover:scale-[1.02]`;
   };
 
   return (
