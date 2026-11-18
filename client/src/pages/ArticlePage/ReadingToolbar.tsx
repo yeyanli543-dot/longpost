@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { Minus, Plus, Sun, Moon, List } from 'lucide-react';
 import type { ThemeMode, FontSize } from '@shared/api.interface';
 
@@ -15,21 +14,12 @@ export default function ReadingToolbar({
   theme,
   setTheme,
 }: ReadingToolbarProps) {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setVisible(window.scrollY > 200);
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   const toggleTheme = () => {
     if (theme === 'light') setTheme('dark');
     else if (theme === 'dark') setTheme('sepia');
     else setTheme('light');
   };
+  const nextThemeLabel = theme === 'light' ? '深色' : theme === 'dark' ? '暖色' : '浅色';
 
   const decreaseFont = () => {
     if (fontSize === 'xlarge') setFontSize('large');
@@ -44,44 +34,40 @@ export default function ReadingToolbar({
   };
 
   return (
-    <div
-      className={`fixed right-3 md:right-4 z-40 flex flex-col gap-2 md:gap-1 p-2 md:p-1.5 rounded-full bg-card/90 backdrop-blur border border-border transition-opacity duration-300 shadow-md ${
-        visible ? 'opacity-100' : 'opacity-0 pointer-events-none'
-      }`}
-      style={{ top: 'calc(4.5rem + var(--safe-area-inset-top))' }}
-    >
+    <div className="mb-6 flex items-center gap-1 rounded-xl bg-card border border-border p-1" role="toolbar" aria-label="阅读设置">
+      <span className="pl-3 pr-2 text-xs font-medium text-muted-foreground">阅读设置</span>
       <button
          onClick={decreaseFont}
          disabled={fontSize === 'small'}
-         className="h-11 w-11 md:h-auto md:w-auto md:p-2 flex items-center justify-center rounded-full hover:bg-[#2f3336] transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+         className="h-11 w-11 flex items-center justify-center rounded-lg hover:bg-muted transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
          aria-label="减小字号"
          title="减小字号"
          data-ai-section-type="button"
        >
-         <Minus className="w-4 h-4 md:w-[18px] md:h-[18px] text-[#e7e9ea]" />
+         <Minus className="w-4 h-4 md:w-[18px] md:h-[18px] text-foreground" />
        </button>
        <button
          onClick={increaseFont}
-         disabled={fontSize === 'large'}
-         className="h-11 w-11 md:h-auto md:w-auto md:p-2 flex items-center justify-center rounded-full hover:bg-[#2f3336] transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
+         disabled={fontSize === 'xlarge'}
+         className="h-11 w-11 flex items-center justify-center rounded-lg hover:bg-muted transition-colors disabled:opacity-30 disabled:hover:bg-transparent"
          aria-label="增大字号"
          title="增大字号"
          data-ai-section-type="button"
        >
-         <Plus className="w-4 h-4 md:w-[18px] md:h-[18px] text-[#e7e9ea]" />
+         <Plus className="w-4 h-4 md:w-[18px] md:h-[18px] text-foreground" />
        </button>
-       <div className="w-full h-px bg-[#2f3336] my-1 md:my-0.5" />
+       <div className="h-5 w-px bg-border mx-1" aria-hidden="true" />
        <button
          onClick={toggleTheme}
-         className="h-11 w-11 md:h-auto md:w-auto md:p-2 flex items-center justify-center rounded-full hover:bg-[#2f3336] transition-colors"
-         aria-label={theme === 'dark' ? '切换浅色模式' : '切换深色模式'}
-         title={theme === 'dark' ? '切换浅色模式' : '切换深色模式'}
+         className="h-11 w-11 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
+         aria-label={`切换为${nextThemeLabel}主题`}
+         title={`切换为${nextThemeLabel}主题`}
          data-ai-section-type="button"
        >
          {theme === 'dark' ? (
-           <Sun className="w-4 h-4 md:w-[18px] md:h-[18px] text-[#e7e9ea]" />
+           <Sun className="w-4 h-4 md:w-[18px] md:h-[18px] text-foreground" />
          ) : (
-           <Moon className="w-4 h-4 md:w-[18px] md:h-[18px] text-[#e7e9ea]" />
+           <Moon className="w-4 h-4 md:w-[18px] md:h-[18px] text-foreground" />
          )}
        </button>
        <button
@@ -89,12 +75,12 @@ export default function ReadingToolbar({
            const el = document.getElementById('comments-section');
            el?.scrollIntoView({ behavior: 'smooth' });
          }}
-         className="h-11 w-11 md:h-auto md:w-auto md:p-2 flex items-center justify-center rounded-full hover:bg-[#2f3336] transition-colors"
-         aria-label="目录"
-         title="目录（跳转到评论区）"
+         className="h-11 w-11 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
+         aria-label="跳转到评论区"
+         title="跳转到评论区"
          data-ai-section-type="button"
        >
-         <List className="w-4 h-4 md:w-[18px] md:h-[18px] text-[#e7e9ea]" />
+         <List className="w-4 h-4 md:w-[18px] md:h-[18px] text-foreground" />
        </button>
     </div>
   );

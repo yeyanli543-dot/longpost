@@ -5,7 +5,7 @@ import Handlebars, { type TemplateDelegate } from 'handlebars';
 // Express options prevents callers from changing layout or filesystem settings.
 const handlebars = Handlebars.create();
 const templates = new Map<string, TemplateDelegate>();
-const fields = ['__platform__', 'ogTitle', 'ogDescription', 'ogImage', 'ogUrl', 'twitterCard'] as const;
+const fields = ['__platform__', 'assetBase', 'ogTitle', 'ogDescription', 'ogImage', 'ogUrl', 'twitterCard'] as const;
 
 export function htmlViewEngine(
   filename: string,

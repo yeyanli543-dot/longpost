@@ -180,7 +180,7 @@ export const AccessCodesManager: React.FC = () => {
 
   if (loading && items.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+      <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
         <Loader2 size={32} className="animate-spin" />
         <p className="mt-3 text-sm">加载中...</p>
       </div>
@@ -202,7 +202,7 @@ export const AccessCodesManager: React.FC = () => {
     <div className="flex flex-col h-full">
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <div className="relative flex-1 min-w-[160px]">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="搜索通行码或备注..."
             value={keyword}
@@ -220,20 +220,20 @@ export const AccessCodesManager: React.FC = () => {
         </Button>
       </div>
 
-      <div className="flex-1 border border-[#2f3336] rounded-lg overflow-hidden bg-[#16181c]">
+      <div className="flex-1 border border-border rounded-lg overflow-hidden bg-card">
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
             <Users size={32} className="mb-3 opacity-50" />
             <p className="text-sm">暂无通行码</p>
           </div>
         ) : (
           <div className="divide-y divide-[#2f3336]">
             {items.map((item: AccessCodeItem) => (
-              <div key={item.id} className="flex flex-col gap-3 px-4 py-3 hover:bg-[#1d1f23] transition-colors">
+              <div key={item.id} className="flex flex-col gap-3 px-4 py-3 hover:bg-muted transition-colors">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <code className="text-sm font-mono text-[#e7e9ea] bg-[#2f3336] px-2 py-0.5 rounded break-all">
+                      <code className="text-sm font-mono text-foreground bg-secondary px-2 py-0.5 rounded break-all">
                         {item.code}
                       </code>
                       <Badge
@@ -243,15 +243,15 @@ export const AccessCodesManager: React.FC = () => {
                         {getStatusLabel(item.status)}
                       </Badge>
                       {item.maxUses !== null && (
-                        <span className="text-xs text-[#71767b]">
+                        <span className="text-xs text-muted-foreground">
                           {item.useCount}/{item.maxUses} 次
                         </span>
                       )}
                     </div>
                     {item.note && (
-                      <p className="text-sm text-[#71767b] mt-1 break-words">{item.note}</p>
+                      <p className="text-sm text-muted-foreground mt-1 break-words">{item.note}</p>
                     )}
-                    <div className="flex items-center gap-3 mt-1 text-xs text-[#71767b] flex-wrap">
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
                       <span>角色：{item.role === 'admin' ? '管理员' : item.role === 'editor' ? '编辑' : '普通用户'}</span>
                       <span>创建于 {formatRelative(item.createdAt)}</span>
                       {item.lastUsedAt && (
@@ -263,7 +263,7 @@ export const AccessCodesManager: React.FC = () => {
                     variant="ghost"
                     size="icon"
                     onClick={() => void handleCopy(item.code)}
-                    className="h-11 w-11 text-[#71767b] hover:text-[#e7e9ea] flex-shrink-0"
+                    className="h-11 w-11 text-muted-foreground hover:text-foreground flex-shrink-0"
                     title="复制"
                     data-ai-section-type="button"
                   >
@@ -333,12 +333,12 @@ export const AccessCodesManager: React.FC = () => {
             size="sm"
             disabled={page <= 1 || loading}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="border-[#2f3336] text-[#e7e9ea]"
+            className="border-border text-foreground"
           >
             <ChevronLeft size={14} />
             上一页
           </Button>
-          <span className="text-sm text-[#71767b] min-w-[80px] text-center">
+          <span className="text-sm text-muted-foreground min-w-[80px] text-center">
             第 {page} / {totalPages} 页
           </span>
           <Button
@@ -346,7 +346,7 @@ export const AccessCodesManager: React.FC = () => {
             size="sm"
             disabled={page >= totalPages || loading}
             onClick={() => setPage((p) => p + 1)}
-            className="border-[#2f3336] text-[#e7e9ea]"
+            className="border-border text-foreground"
           >
             下一页
             <ChevronRight size={14} />

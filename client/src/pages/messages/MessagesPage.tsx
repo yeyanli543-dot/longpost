@@ -116,12 +116,12 @@ const MessagesPage = () => {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-6 text-center">
-        <LogIn className="w-12 h-12 text-[#2f3336] mb-4" />
-        <h2 className="text-2xl font-bold text-[#e7e9ea] mb-2">登录后查看私信</h2>
-        <p className="text-[#71767b] mb-6">登录后即可与其他用户发送私信</p>
+        <LogIn className="w-12 h-12 text-muted-foreground/60 mb-4" />
+        <h2 className="text-2xl font-bold text-foreground mb-2">登录后查看私信</h2>
+        <p className="text-muted-foreground mb-6">登录后即可与其他用户发送私信</p>
         <button
           onClick={() => navigate('/login')}
-          className="px-6 py-2 bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-bold rounded-full transition-colors"
+          className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-full transition-colors"
           data-ai-section-type="button"
         >
           登录
@@ -135,12 +135,12 @@ const MessagesPage = () => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-0px)] md:flex-row">
-      <div className={`flex flex-col ${showChatDesktop ? 'w-[340px] flex-shrink-0 border-r border-[#2f3336]' : 'w-full'} ${isMobile && showMobileChat ? 'hidden' : 'flex'}`}>
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#2f3336] sticky top-0 bg-background/80 backdrop-blur z-10 md:static md:bg-transparent md:backdrop-blur-0 pt-safe">
+      <div className={`flex flex-col ${showChatDesktop ? 'w-[340px] flex-shrink-0 border-r border-border' : 'w-full'} ${isMobile && showMobileChat ? 'hidden' : 'flex'}`}>
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border sticky top-0 bg-background/80 backdrop-blur z-10 md:static md:bg-transparent md:backdrop-blur-0 pt-safe">
             <h1 className="text-xl font-bold text-foreground">私信</h1>
             <button
               onClick={() => setShowNewMessage(true)}
-              className="p-2 rounded-full hover:bg-white/10 transition-colors text-[#1d9bf0]"
+              className="p-2 rounded-full hover:bg-accent transition-colors text-primary"
               data-ai-section-type="button"
               title="新私信"
             >
@@ -151,18 +151,18 @@ const MessagesPage = () => {
           <div className="flex-1 overflow-y-auto min-h-0 pb-[env(safe-area-inset-bottom)]">
             {loading ? (
               <div className="flex justify-center items-center py-12">
-                <Loader2 className="w-8 h-8 text-[#1d9bf0] animate-spin" />
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
               </div>
             ) : conversations.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                <MessageSquarePlus className="w-12 h-12 text-[#2f3336] mb-4" />
-                <h2 className="text-xl font-bold text-[#e7e9ea] mb-2">暂无对话</h2>
-                <p className="text-[#71767b] text-sm mb-6">
+                <MessageSquarePlus className="w-12 h-12 text-muted-foreground/60 mb-4" />
+                <h2 className="text-xl font-bold text-foreground mb-2">暂无对话</h2>
+                <p className="text-muted-foreground text-sm mb-6">
                   点击右上角按钮，向其他用户发送第一条私信
                 </p>
                 <button
                   onClick={() => setShowNewMessage(true)}
-                  className="px-6 py-2 bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-bold rounded-full transition-colors"
+                  className="px-6 py-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-full transition-colors"
                   data-ai-section-type="button"
                 >
                   发起私信
@@ -179,13 +179,13 @@ const MessagesPage = () => {
                     <div
                       key={conv.id}
                       onClick={() => handleSelectConversation(conv.id)}
-                      className={`group flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors border-b border-[#2f3336] ${
+                      className={`group flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors border-b border-border ${
                         isSelected
-                          ? 'bg-[#16181c]'
+                          ? 'bg-card'
                           : 'hover:bg-white/[0.03]'
                       }`}
                     >
-                      <div className="w-12 h-12 rounded-full bg-[#2f3336] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                      <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 overflow-hidden">
                         {conv.otherUserAvatarUrl ? (
                           <Image
                             src={conv.otherUserAvatarUrl}
@@ -193,7 +193,7 @@ const MessagesPage = () => {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <span className="text-lg font-bold text-gray-300">
+                          <span className="text-lg font-bold text-foreground/90">
                             {avatarInitial}
                           </span>
                         )}
@@ -203,13 +203,13 @@ const MessagesPage = () => {
                           <p
                             className={`font-bold truncate ${
                               conv.unreadCount > 0
-                                ? 'text-[#e7e9ea]'
-                                : 'text-[#e7e9ea]'
+                                ? 'text-foreground'
+                                : 'text-foreground'
                             }`}
                           >
                             {conv.otherUserName}
                           </p>
-                          <span className="text-xs text-[#71767b] flex-shrink-0">
+                          <span className="text-xs text-muted-foreground flex-shrink-0">
                             {formatTime(conv.lastMessageAt)}
                           </span>
                         </div>
@@ -217,15 +217,15 @@ const MessagesPage = () => {
                           <p
                             className={`text-sm truncate ${
                               conv.unreadCount > 0
-                                ? 'text-[#e7e9ea] font-semibold'
-                                : 'text-[#71767b]'
+                                ? 'text-foreground font-semibold'
+                                : 'text-muted-foreground'
                             }`}
                           >
                             {conv.lastMessage || '暂无消息'}
                           </p>
                           <div className="flex items-center gap-2 flex-shrink-0">
                             {conv.unreadCount > 0 && (
-                              <span className="min-w-[18px] h-[18px] px-1.5 bg-[#1d9bf0] rounded-full text-[11px] font-bold text-white flex items-center justify-center">
+                              <span className="min-w-[18px] h-[18px] px-1.5 bg-primary rounded-full text-[11px] font-bold text-primary-foreground flex items-center justify-center">
                                 {conv.unreadCount > 99 ? '99+' : conv.unreadCount}
                               </span>
                             )}
@@ -233,7 +233,7 @@ const MessagesPage = () => {
                               onClick={(e) => {
                                 void handleDeleteConversation(e, conv.id);
                               }}
-                              className="p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-red-500/20 text-[#71767b] hover:text-red-400 transition-all"
+                              className="p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-red-500/20 text-muted-foreground hover:text-red-400 transition-all"
                               data-ai-section-type="button"
                               title="删除会话"
                               disabled={deletingId === conv.id}
@@ -267,7 +267,7 @@ const MessagesPage = () => {
       )}
 
       {showChatMobile && selectedConversation && (
-        <div className="fixed inset-0 z-20 bg-black">
+        <div className="fixed inset-0 z-20 bg-background">
           <ChatWindow
             conversation={selectedConversation}
             currentUserId={user.id}
@@ -280,9 +280,9 @@ const MessagesPage = () => {
       {!isMobile && !selectedConversation && (
         <div className="hidden md:flex flex-1 items-center justify-center text-center">
           <div className="px-8">
-            <MessageSquarePlus className="w-12 h-12 text-[#2f3336] mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-[#e7e9ea] mb-2">选择一个对话</h2>
-            <p className="text-[#71767b] text-sm">
+            <MessageSquarePlus className="w-12 h-12 text-muted-foreground/60 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-foreground mb-2">选择一个对话</h2>
+            <p className="text-muted-foreground text-sm">
               从左侧选择一个会话，或点击「新私信」开始新的对话
             </p>
           </div>

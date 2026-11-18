@@ -1,4 +1,5 @@
 @layer theme, base, components, utilities;
+@import "tailwindcss";
 @import "tw-animate-css";
 @import './tailwind-theme.css';
 @import './components/animations.css';
@@ -156,8 +157,7 @@ input, textarea, button, select {
 }
 
 .mode-apple.dark,
-.mode-apple .dark,
-:root:where(.mode-apple:not(.light-mode)) {
+.mode-apple .dark {
   --app-glass-bg: rgba(18, 18, 20, 0.75);
   --app-glass-border: rgba(255, 255, 255, 0.08);
 }
@@ -178,8 +178,7 @@ input, textarea, button, select {
 }
 
 .mode-google.dark,
-.mode-google .dark,
-:root:where(.mode-google:not(.light-mode)) {
+.mode-google .dark {
   --m3-primary: #8ab4f8;
   --m3-primary-hover: #aecbfa;
   --m3-surface: #131314;
@@ -206,9 +205,28 @@ input, textarea, button, select {
   backdrop-filter: blur(32px) saturate(220%);
   -webkit-backdrop-filter: blur(32px) saturate(220%);
   border: 1px solid var(--app-glass-border);
+  border-radius: 20px;
   box-shadow:
     0 16px 36px -10px rgba(0, 0, 0, 0.22),
     0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+}
+
+:where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 3px;
+}
+
+[role='dialog'][aria-label='全局命令面板'] button[data-selected='true'] svg {
+  color: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* 专业版容器卡片类 */

@@ -3,7 +3,19 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+  <base id="longpost-base" href="{{#if assetBase}}{{assetBase}}{{else}}/{{/if}}">
+  <script>
+    // The hosted view supplies its mount path; standalone file previews keep
+    // paths relative to the file. Set this before the browser loads assets.
+    (function () {
+      var base = document.getElementById('longpost-base');
+      var href = base && base.getAttribute('href');
+      if (base && (location.protocol === 'file:' || !href || href.indexOf('{' + '{') !== -1)) {
+        base.setAttribute('href', location.protocol === 'file:' ? './' : '/');
+      }
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#1d9bf0">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">

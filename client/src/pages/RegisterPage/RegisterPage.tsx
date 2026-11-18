@@ -119,21 +119,21 @@ const RegisterPageContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-black flex items-start md:items-center justify-center px-4 pt-8 md:pt-0 pb-[env(safe-area-inset-bottom)]">
+    <div className="min-h-screen w-full bg-background flex items-start md:items-center justify-center px-4 pt-8 md:pt-0 pb-[env(safe-area-inset-bottom)]">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-6 md:mb-8">
-          <Feather className="w-7 h-7 md:w-8 md:h-8 text-blue-500" strokeWidth={1.5} />
-          <span className="text-xl md:text-2xl font-bold text-gray-100">LongPost</span>
+          <Feather className="w-7 h-7 md:w-8 md:h-8 text-primary" strokeWidth={1.5} />
+          <span className="text-xl md:text-2xl font-bold text-foreground">LongPost</span>
         </div>
 
-        <div className="bg-gray-950 border border-gray-800 rounded-xl p-4 md:p-6">
-          <h1 className="text-xl font-bold text-gray-100 mb-2">创建账号</h1>
+        <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-sm">
+          <h1 className="text-xl font-bold text-foreground mb-2">创建账号</h1>
 
           {settingsLoading ? (
-            <div className="py-8 text-center text-gray-500">加载中...</div>
+            <div className="py-8 text-center text-muted-foreground">加载中...</div>
           ) : registrationMode === 'google_only' ? (
             <>
-              <p className="text-sm text-gray-500 mb-6">本站仅支持 Google 账号注册登录</p>
+              <p className="text-sm text-muted-foreground mb-6">本站仅支持 Google 账号注册登录</p>
 
               {googleEnabled ? (
                 <button
@@ -150,15 +150,15 @@ const RegisterPageContent: React.FC = () => {
                   使用 Google 注册
                 </button>
               ) : (
-                <p className="text-sm text-gray-500 text-center py-4">注册功能暂未启用</p>
+                <p className="text-sm text-muted-foreground text-center py-4">注册功能暂未启用</p>
               )}
 
-              <div className="mt-6 pt-4 border-t border-gray-800 text-center">
-                <p className="text-sm text-gray-500">
+              <div className="mt-6 pt-4 border-t border-border text-center">
+                <p className="text-sm text-muted-foreground">
                   已有账号？{' '}
                   <Link
                     to="/login"
-                    className="text-blue-500 hover:text-blue-400 font-medium"
+                    className="text-primary hover:text-blue-400 font-medium"
                   >
                     去登录
                   </Link>
@@ -167,11 +167,11 @@ const RegisterPageContent: React.FC = () => {
             </>
           ) : (
             <>
-              <p className="text-sm text-gray-500 mb-6">填写信息创建账号</p>
+              <p className="text-sm text-muted-foreground mb-6">填写信息创建账号</p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="nickname" className="text-gray-300">
+                  <Label htmlFor="nickname" className="text-foreground">
                     昵称
                   </Label>
                   <Input
@@ -181,7 +181,7 @@ const RegisterPageContent: React.FC = () => {
                     onChange={(e) => setNickname(e.target.value)}
                     placeholder="你的昵称"
                     disabled={submitting}
-                    className="h-11 md:h-9 bg-transparent border-gray-700 text-gray-100 placeholder:text-gray-600 focus-visible:border-blue-500"
+                    className="h-11 md:h-9 bg-transparent border-input text-foreground placeholder:text-muted-foreground focus-visible:border-primary"
                     maxLength={50}
                   />
                   <div className="flex justify-between items-start">
@@ -190,12 +190,12 @@ const RegisterPageContent: React.FC = () => {
                         <p className="text-sm text-red-500">{errors.nickname}</p>
                       )}
                     </div>
-                    <span className="text-xs text-gray-600">{nickname.length}/50</span>
+                    <span className="text-xs text-muted-foreground">{nickname.length}/50</span>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-gray-300">
+                  <Label htmlFor="email" className="text-foreground">
                     邮箱
                   </Label>
                   <Input
@@ -205,7 +205,7 @@ const RegisterPageContent: React.FC = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
                     disabled={submitting}
-                    className="h-11 md:h-9 bg-transparent border-gray-700 text-gray-100 placeholder:text-gray-600 focus-visible:border-blue-500"
+                    className="h-11 md:h-9 bg-transparent border-input text-foreground placeholder:text-muted-foreground focus-visible:border-primary"
                   />
                   {errors.email && (
                     <p className="text-sm text-red-500">{errors.email}</p>
@@ -213,7 +213,7 @@ const RegisterPageContent: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-gray-300">
+                  <Label htmlFor="password" className="text-foreground">
                     密码
                   </Label>
                   <Input
@@ -223,7 +223,7 @@ const RegisterPageContent: React.FC = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="至少 6 位"
                     disabled={submitting}
-                    className="h-11 md:h-9 bg-transparent border-gray-700 text-gray-100 placeholder:text-gray-600 focus-visible:border-blue-500"
+                    className="h-11 md:h-9 bg-transparent border-input text-foreground placeholder:text-muted-foreground focus-visible:border-primary"
                   />
                   {errors.password && (
                     <p className="text-sm text-red-500">{errors.password}</p>
@@ -233,7 +233,7 @@ const RegisterPageContent: React.FC = () => {
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className="w-full min-h-11 md:min-h-9 bg-blue-500 hover:bg-blue-600 text-white border-transparent mt-2"
+                  className="w-full min-h-11 md:min-h-9 bg-primary hover:opacity-90 text-primary-foreground border-transparent mt-2"
                 >
                   {submitting ? '注册中...' : '注册'}
                 </Button>
@@ -242,9 +242,9 @@ const RegisterPageContent: React.FC = () => {
               {googleEnabled && (
                 <div className="mt-6">
                   <div className="relative flex items-center">
-                    <div className="flex-grow border-t border-gray-800"></div>
-                    <span className="flex-shrink mx-4 text-xs text-gray-600">或使用 Google 注册</span>
-                    <div className="flex-grow border-t border-gray-800"></div>
+                    <div className="flex-grow border-t border-border"></div>
+                    <span className="flex-shrink mx-4 text-xs text-muted-foreground">或使用 Google 注册</span>
+                    <div className="flex-grow border-t border-border"></div>
                   </div>
 
                   <button
@@ -263,12 +263,12 @@ const RegisterPageContent: React.FC = () => {
                 </div>
               )}
 
-              <div className="mt-6 pt-4 border-t border-gray-800 text-center">
-                <p className="text-sm text-gray-500">
+              <div className="mt-6 pt-4 border-t border-border text-center">
+                <p className="text-sm text-muted-foreground">
                   已有账号？{' '}
                   <Link
                     to="/login"
-                    className="text-blue-500 hover:text-blue-400 font-medium"
+                    className="text-primary hover:text-blue-400 font-medium"
                   >
                     去登录
                   </Link>

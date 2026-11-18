@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 
 import { installAuthInterceptor } from './api/interceptor';
 import { AuthProvider } from './hooks/useAuth';
+import { useTheme } from './hooks/useTheme';
 import Layout from './components/Layout';
 import NotFound from './pages/NotFound/NotFound';
 
@@ -16,6 +17,7 @@ import NotFound from './pages/NotFound/NotFound';
  */
 const HomePage = lazy(() => import('./pages/HomePage/HomePage'));
 const ArticlePage = lazy(() => import('./pages/ArticlePage/ArticlePage'));
+const PostPage = lazy(() => import('./pages/PostPage/PostPage'));
 const ComposePage = lazy(() => import('./pages/ComposePage/ComposePage'));
 const SearchPage = lazy(() => import('./pages/SearchPage/SearchPage'));
 const LoginPage = lazy(() => import('./pages/LoginPage/LoginPage'));
@@ -40,7 +42,7 @@ installAuthInterceptor();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    const swUrl = new URL('sw.js', window.location.origin + window.location.pathname).href;
+    const swUrl = new URL('sw.js', document.baseURI).href;
     navigator.serviceWorker.register(swUrl).catch(() => {});
   });
 }
@@ -58,6 +60,9 @@ function RouteFallback() {
 }
 
 const RoutesComponent = () => {
+  // Standalone routes (such as sign-in and legal pages) share the same theme
+  // listener as pages within the main application shell.
+  useTheme();
   return (
     <AuthProvider>
       <Suspense fallback={<RouteFallback />}>
@@ -65,6 +70,7 @@ const RoutesComponent = () => {
           <Route element={<Layout />}>
             <Route index element={<HomePage />} />
             <Route path="article/:id" element={<ArticlePage />} />
+            <Route path="post/:id" element={<PostPage />} />
             <Route path="p/:slug" element={<ArticlePage />} />
             <Route path="compose" element={<ComposePage />} />
             <Route path="search" element={<SearchPage />} />

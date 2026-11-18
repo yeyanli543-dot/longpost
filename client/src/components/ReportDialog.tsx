@@ -73,17 +73,17 @@ const ReportDialog = ({ open, onClose, contentType, contentId }: ReportDialogPro
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 10 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="bg-[#16181c] border border-[#2f3336] rounded-2xl w-full max-w-md overflow-hidden"
+            className="bg-card border border-border rounded-2xl w-full max-w-md overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#2f3336]">
-          <h3 className="text-lg font-bold text-gray-100 flex items-center gap-2">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
             <Flag className="w-5 h-5 text-red-400" />
             举报内容
           </h3>
           <button
             onClick={onClose}
-            className="p-1 text-gray-500 hover:text-gray-300 transition-colors"
+            className="p-1 text-muted-foreground hover:text-foreground/90 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -91,7 +91,7 @@ const ReportDialog = ({ open, onClose, contentType, contentId }: ReportDialogPro
 
         <div className="p-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground/90 mb-2">
               举报原因
             </label>
             <div className="space-y-2">
@@ -100,8 +100,8 @@ const ReportDialog = ({ open, onClose, contentType, contentId }: ReportDialogPro
                   key={r.value}
                   className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
                     reason === r.value
-                      ? 'bg-blue-500/10 border border-blue-500/30'
-                      : 'bg-[#000] border border-[#2f3336] hover:border-gray-700'
+                      ? 'bg-primary/10 border border-blue-500/30'
+                      : 'bg-[#000] border border-border hover:border-border'
                   }`}
                 >
                   <input
@@ -112,14 +112,14 @@ const ReportDialog = ({ open, onClose, contentType, contentId }: ReportDialogPro
                     onChange={() => setReason(r.value)}
                     className="w-4 h-4 accent-blue-500"
                   />
-                  <span className="text-sm text-gray-100">{r.label}</span>
+                  <span className="text-sm text-foreground">{r.label}</span>
                 </label>
               ))}
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-foreground/90 mb-2">
               补充说明（可选）
             </label>
             <textarea
@@ -128,18 +128,18 @@ const ReportDialog = ({ open, onClose, contentType, contentId }: ReportDialogPro
               placeholder="请描述具体问题..."
               rows={3}
               maxLength={500}
-              className="w-full px-3 py-2 bg-black border border-[#2f3336] rounded-lg text-gray-100 text-sm focus:outline-none focus:border-blue-500 resize-none"
+              className="w-full px-3 py-2 bg-background border border-border rounded-lg text-foreground text-sm focus:outline-none focus:border-blue-500 resize-none"
             />
-            <p className="mt-1 text-xs text-gray-500 text-right">
+            <p className="mt-1 text-xs text-muted-foreground text-right">
               {description.length}/500
             </p>
           </div>
         </div>
 
-        <div className="flex gap-3 px-4 py-3 border-t border-[#2f3336]">
+        <div className="flex gap-3 px-4 py-3 border-t border-border">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2 text-sm text-gray-300 bg-[#2f3336] hover:bg-gray-700 rounded-full transition-colors"
+            className="flex-1 px-4 py-2 text-sm text-foreground/90 bg-secondary hover:bg-accent rounded-full transition-colors"
             disabled={submitting}
           >
             取消

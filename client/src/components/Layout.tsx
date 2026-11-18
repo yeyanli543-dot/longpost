@@ -13,7 +13,6 @@ import {
   Mail,
   Video,
   User,
-  Plus,
 } from 'lucide-react';
 import { useAuth } from '@client/src/hooks/useAuth';
 import { logger } from '@/lib/logger';
@@ -47,7 +46,7 @@ const bottomNavItems = [
 const Layout = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading, logout } = useAuth();
-  const { isLite, isPro } = useWorkspaceMode();
+  const { isLite } = useWorkspaceMode();
   const [menuOpen, setMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [dmUnreadCount, setDmUnreadCount] = useState(0);
@@ -145,7 +144,7 @@ const Layout = () => {
   };
 
   const renderSidebarNav = () => (
-    <nav className="mt-2 flex flex-col gap-1">
+    <nav className="mt-2 flex flex-col gap-1" aria-label="主导航">
       {navItems
         .filter((item) => {
           if (item.requireAdmin && user?.role !== 'admin') return false;
@@ -166,13 +165,13 @@ const Layout = () => {
             className={({ isActive }) =>
               isLite
                 ? `flex items-center gap-4 px-4 py-2.5 rounded-2xl transition-all duration-200 relative ${
-                    isActive && user
+                    isActive && (user || !item.requireAuth)
                       ? 'bg-blue-500/10 dark:bg-blue-400/15 text-blue-600 dark:text-blue-400 font-semibold shadow-sm'
                       : 'hover:bg-black/5 dark:hover:bg-white/5 text-foreground/85 font-normal'
                   }`
                 : `flex items-center gap-4 px-5 py-3 rounded-full transition-colors relative ${
-                    isActive && user
-                      ? 'google-nav-pill-active font-semibold'
+                    isActive && (user || !item.requireAuth)
+                      ? 'bg-primary/10 text-primary font-semibold'
                       : 'hover:bg-muted/70 text-foreground font-normal'
                   }`
             }
@@ -211,11 +210,7 @@ const Layout = () => {
   );
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${
-      isLite
-        ? 'bg-[#fbfbfd] text-[#1d1d1f] dark:bg-black dark:text-[#f5f5f7]'
-        : 'bg-[#f8fafd] text-[#1f1f1f] dark:bg-[#131314] dark:text-[#e3e3e3]'
-    }`}>
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       <div className={`mx-auto flex transition-all duration-300 ${
         isLite ? 'max-w-[880px] justify-center px-4 md:px-8' : 'max-w-[1290px]'
       }`}>
@@ -223,13 +218,10 @@ const Layout = () => {
         {!isLite && (
           <aside className="hidden md:flex w-[275px] h-screen sticky top-0 flex-col px-3 py-2 border-r border-gray-200 dark:border-gray-800 transition-colors duration-300">
             <div className="flex items-center justify-between px-2 py-3">
-              <div
-                className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
-                onClick={() => navigate('/')}
-              >
-                <Feather className="w-7 h-7 text-blue-500" />
+              <NavLink to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity" aria-label="LongPost 首页">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Feather className="w-5 h-5" /></span>
                 <span className="text-xl font-bold tracking-tight">LongPost</span>
-              </div>
+              </NavLink>
             </div>
 
             <div className="px-2 py-1 mb-2">
@@ -240,14 +232,16 @@ const Layout = () => {
 
             <button
               onClick={handleComposeClick}
-              className="mt-4 text-white font-bold py-3 px-8 transition-all duration-150 hover:scale-[1.02] active:scale-95 bg-[#1a73e8] hover:bg-[#1557b0] dark:bg-[#8ab4f8] dark:hover:bg-[#aecbfa] dark:text-[#001d35] rounded-full shadow-sm w-full"
+              className="mt-4 bg-primary text-primary-foreground font-semibold py-3 px-8 transition-opacity hover:opacity-90 rounded-xl w-full"
               data-ai-section-type="button"
             >发布</button>
 
             <div className="mt-auto pb-4 relative pb-[env(safe-area-inset-bottom)]" ref={menuRef}>
-              <div
-                className="flex items-center gap-3 px-4 py-3 rounded-full hover:bg-gray-900 cursor-pointer transition-colors"
+              <button
+                type="button"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-muted text-left transition-colors"
                 onClick={handleUserClick}
+                aria-expanded={user ? menuOpen : undefined}
               >
                 {user ? (
                   <>
@@ -274,20 +268,20 @@ const Layout = () => {
                     </div>
                   </>
                 )}
-              </div>
+              </button>
 
               {user && menuOpen && (
-                <div className="absolute bottom-full left-0 right-0 mb-2 mx-2 bg-gray-900 border border-gray-800 rounded-xl shadow-lg overflow-hidden">
+                <div className="absolute bottom-full left-0 right-0 mb-2 mx-2 bg-popover border border-border rounded-xl shadow-lg overflow-hidden">
                   <button
                     onClick={() => { setMenuOpen(false); navigate('/me'); }}
-                    className="w-full px-4 py-3 text-left text-sm text-gray-100 hover:bg-gray-800 transition-colors flex items-center gap-3"
+                    className="w-full px-4 py-3 text-left text-sm text-popover-foreground hover:bg-muted transition-colors flex items-center gap-3"
                     data-ai-section-type="button"
                   >
                     <FileText className="w-4 h-4" />我的内容
                   </button>
                   <button
                     onClick={() => { setMenuOpen(false); navigate('/settings'); }}
-                    className="w-full px-4 py-3 text-left text-sm text-gray-100 hover:bg-gray-800 transition-colors flex items-center gap-3"
+                    className="w-full px-4 py-3 text-left text-sm text-popover-foreground hover:bg-muted transition-colors flex items-center gap-3"
                     data-ai-section-type="button"
                   >
                     <FileText className="w-4 h-4" />设置
@@ -295,7 +289,7 @@ const Layout = () => {
                   {user?.role === 'admin' && (
                     <button
                       onClick={() => { setMenuOpen(false); navigate('/admin'); }}
-                      className="w-full px-4 py-3 text-left text-sm text-blue-400 hover:bg-gray-800 transition-colors flex items-center gap-3 border-t border-gray-800"
+                      className="w-full px-4 py-3 text-left text-sm text-primary hover:bg-muted transition-colors flex items-center gap-3 border-t border-border"
                       data-ai-section-type="button"
                     >
                       <Shield className="w-4 h-4" />管理后台
@@ -303,7 +297,7 @@ const Layout = () => {
                   )}
                   <button
                     onClick={handleLogout}
-                    className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-gray-800 transition-colors flex items-center gap-3 border-t border-gray-800"
+                    className="w-full px-4 py-3 text-left text-sm text-destructive hover:bg-muted transition-colors flex items-center gap-3 border-t border-border"
                     data-ai-section-type="button"
                   >
                     <LogOut className="w-4 h-4" />退出登录
@@ -314,8 +308,8 @@ const Layout = () => {
           </aside>
         )}
 
-        <main className={`flex-1 min-w-0 min-h-screen relative pb-[calc(56px+var(--safe-area-inset-bottom))] md:pb-0 px-safe md:px-0 ${
-          isLite ? '' : 'border-r border-border'
+        <main className={`flex-1 min-w-0 min-h-screen relative pb-[calc(56px+var(--safe-area-inset-bottom))] px-safe md:px-0 ${
+          isLite ? 'md:pb-28' : 'md:pb-0 border-r border-border'
         }`}>
           <AnimatePresence mode="wait">
             <motion.div
@@ -334,8 +328,8 @@ const Layout = () => {
           <div className="w-[350px] h-screen sticky top-0 p-4 hidden xl:block space-y-4">
             <TrendingSidebar />
             <div className="bg-card rounded-2xl p-4 border border-border">
-              <h3 className="text-xl font-bold mb-3 text-card-foreground">关于 LongPost</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">长文发布平台。短帖引流，长文阅读。像 X 一样发帖，也可以写完整长文，通过链接跳转阅读。</p>
+              <h3 className="text-base font-semibold mb-3 text-card-foreground">关于 LongPost</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">记录想法，发布长文，与更多人分享值得读的内容。</p>
             </div>
           </div>
         )}
@@ -343,9 +337,8 @@ const Layout = () => {
 
       {/* Mobile bottom navigation */}
       <nav
-        className={`fixed bottom-0 left-0 right-0 z-50 border-t md:hidden px-safe transition-colors ${
-          isLite ? 'apple-glass border-zinc-200/50 dark:border-zinc-800/50' : 'bg-[#f0f4f9] dark:bg-[#1e1f20] border-gray-200 dark:border-gray-800'
-        }`}
+        aria-label="主导航"
+        className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-background/95 backdrop-blur-xl md:hidden px-safe transition-colors"
         style={{ paddingBottom: 'var(--safe-area-inset-bottom)' }}
       >
         <div className="flex items-center justify-around h-14 relative overflow-x-auto scrollbar-hide">
@@ -363,7 +356,7 @@ const Layout = () => {
                   className={({ isActive }) =>
                     `flex flex-col items-center justify-center flex-1 min-w-[44px] max-w-[56px] h-14 relative flex-shrink-0 touch-manipulation select-none active:scale-95 transition-all ${
                       isActive
-                        ? isLite ? 'text-blue-500 font-semibold' : 'google-nav-pill-active py-1'
+                        ? 'text-primary font-semibold'
                         : 'text-muted-foreground'
                     }`
                   }
@@ -383,22 +376,10 @@ const Layout = () => {
         </div>
       </nav>
 
-      {/* Mobile FAB button */}
-      <button
-        onClick={handleComposeClick}
-        className={`fixed right-4 z-40 w-14 h-14 shadow-lg flex items-center justify-center transition-all touch-manipulation select-none active:scale-95 md:hidden ${
-          isLite ? 'rounded-2xl bg-blue-600 text-white' : 'rounded-2xl google-fab'
-        }`}
-        style={{ bottom: 'calc(76px + var(--safe-area-inset-bottom))' }}
-        aria-label="发布"
-        data-ai-section-type="button"
-      >
-        <Plus className="w-7 h-7" />
-      </button>
-
       {/* 🍏 Apple 模式专享：macOS / iPadOS 悬浮灵动胶囊 Dock (桌面端) */}
       {isLite && (
-        <motion.div
+        <motion.nav
+          aria-label="主导航"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3 }}
@@ -490,19 +471,7 @@ const Layout = () => {
             </NavLink>
           )}
           <WorkspaceModeSwitcher compact />
-        </motion.div>
-      )}
-
-      {/* 🔷 Google 模式专享：桌面端 Material 3 浮动扩展 FAB */}
-      {isPro && (
-        <button
-          onClick={handleComposeClick}
-          className="fixed bottom-8 right-8 z-40 google-fab rounded-2xl px-5 py-3.5 hidden md:flex items-center gap-2.5 shadow-lg active:scale-95 transition-all"
-          aria-label="快速发帖 / 撰写长文"
-        >
-          <Plus className="w-5 h-5" />
-          <span className="text-sm font-semibold tracking-wide">撰写</span>
-        </button>
+        </motion.nav>
       )}
 
       {/* Global Command Palette */}

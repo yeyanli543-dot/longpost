@@ -140,32 +140,32 @@ export default function BatchCreateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-[#16181c] border-[#2f3336] text-[#e7e9ea] max-w-lg sm:max-w-lg max-sm:bottom-0 max-sm:top-auto max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:max-w-full max-sm:p-4 max-sm:max-h-[85vh] max-sm:overflow-y-auto max-h-[85vh] overflow-y-auto">
+      <DialogContent className="bg-card border-border text-foreground max-w-lg sm:max-w-lg max-sm:bottom-0 max-sm:top-auto max-sm:left-0 max-sm:right-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none max-sm:max-w-full max-sm:p-4 max-sm:max-h-[85vh] max-sm:overflow-y-auto max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-[#e7e9ea]">批量生成通行码</DialogTitle>
+          <DialogTitle className="text-foreground">批量生成通行码</DialogTitle>
         </DialogHeader>
 
         {generatedItems.length === 0 ? (
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label className="text-[#e7e9ea]">数量（1-100）</Label>
+              <Label className="text-foreground">数量（1-100）</Label>
               <Input
                 type="number"
                 min={1}
                 max={100}
                 value={count}
                 onChange={(e) => setCount(e.target.value)}
-                className="bg-black border-[#2f3336] text-[#e7e9ea]"
+                className="bg-background border-border text-foreground"
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[#e7e9ea]">角色</Label>
+              <Label className="text-foreground">角色</Label>
               <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
-                <SelectTrigger className="w-full bg-black border-[#2f3336] text-[#e7e9ea]">
+                <SelectTrigger className="w-full bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#16181c] border-[#2f3336] text-[#e7e9ea]">
+                <SelectContent className="bg-card border-border text-foreground">
                   <SelectItem value="user">普通成员</SelectItem>
                   <SelectItem value="admin">管理员</SelectItem>
                 </SelectContent>
@@ -173,15 +173,15 @@ export default function BatchCreateDialog({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[#e7e9ea]">有效期</Label>
+              <Label className="text-foreground">有效期</Label>
               <Select
                 value={expiryMode}
                 onValueChange={(v) => setExpiryMode(v as ExpiryMode)}
               >
-                <SelectTrigger className="w-full bg-black border-[#2f3336] text-[#e7e9ea]">
+                <SelectTrigger className="w-full bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#16181c] border-[#2f3336] text-[#e7e9ea]">
+                <SelectContent className="bg-card border-border text-foreground">
                   <SelectItem value="permanent">永久有效</SelectItem>
                   <SelectItem value="date">指定日期</SelectItem>
                 </SelectContent>
@@ -191,7 +191,7 @@ export default function BatchCreateDialog({
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
-                      className="w-full justify-start text-left font-normal bg-black border-[#2f3336] text-[#e7e9ea]"
+                      className="w-full justify-start text-left font-normal bg-background border-border text-foreground"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {expiryDate
@@ -199,7 +199,7 @@ export default function BatchCreateDialog({
                         : '选择日期'}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 bg-[#16181c] border-[#2f3336]">
+                  <PopoverContent className="w-auto p-0 bg-card border-border">
                     <Calendar
                       mode="single"
                       selected={expiryDate}
@@ -212,15 +212,15 @@ export default function BatchCreateDialog({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[#e7e9ea]">可使用次数</Label>
+              <Label className="text-foreground">可使用次数</Label>
               <Select
                 value={usesMode}
                 onValueChange={(v) => setUsesMode(v as UsesMode)}
               >
-                <SelectTrigger className="w-full bg-black border-[#2f3336] text-[#e7e9ea]">
+                <SelectTrigger className="w-full bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-[#16181c] border-[#2f3336] text-[#e7e9ea]">
+                <SelectContent className="bg-card border-border text-foreground">
                   <SelectItem value="unlimited">不限次数</SelectItem>
                   <SelectItem value="once">仅首次登录有效</SelectItem>
                   <SelectItem value="custom">自定义次数</SelectItem>
@@ -232,49 +232,49 @@ export default function BatchCreateDialog({
                   min={1}
                   value={customUses}
                   onChange={(e) => setCustomUses(e.target.value)}
-                  className="bg-black border-[#2f3336] text-[#e7e9ea]"
+                  className="bg-background border-border text-foreground"
                 />
               )}
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[#e7e9ea]">备注（可选）</Label>
+              <Label className="text-foreground">备注（可选）</Label>
               <Textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 maxLength={500}
                 rows={2}
-                className="bg-black border-[#2f3336] text-[#e7e9ea] placeholder:text-[#71767b] resize-none"
+                className="bg-background border-border text-foreground placeholder:text-muted-foreground resize-none"
               />
             </div>
           </div>
         ) : (
           <div className="space-y-3 py-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[#71767b]">
+              <span className="text-sm text-muted-foreground">
                 共 {generatedItems.length} 个通行码
               </span>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleCopyAll}
-                className="border-[#2f3336] text-[#e7e9ea]"
+                className="border-border text-foreground"
               >
                 <Copy size={14} />
                 复制全部
               </Button>
             </div>
-            <div className="max-h-[40vh] overflow-y-auto border border-[#2f3336] rounded-md bg-black">
+            <div className="max-h-[40vh] overflow-y-auto border border-border rounded-md bg-background">
               {generatedItems.map((item, idx) => (
                 <div
                   key={item.id}
-                  className="flex items-center px-3 py-2 border-b border-[#2f3336] last:border-b-0 font-mono text-sm text-[#e7e9ea]"
+                  className="flex items-center px-3 py-2 border-b border-border last:border-b-0 font-mono text-sm text-foreground"
                 >
-                  <span className="w-8 text-[#71767b] text-xs">{idx + 1}.</span>
+                  <span className="w-8 text-muted-foreground text-xs">{idx + 1}.</span>
                   <span className="flex-1">{item.code}</span>
                   <Download
                     size={14}
-                    className="text-[#71767b] cursor-pointer hover:text-[#e7e9ea]"
+                    className="text-muted-foreground cursor-pointer hover:text-foreground"
                     onClick={async () => {
                       try {
                         await navigator.clipboard.writeText(item.code);
@@ -294,7 +294,7 @@ export default function BatchCreateDialog({
           <Button
             variant="outline"
             onClick={handleClose}
-            className="border-[#2f3336] text-[#e7e9ea]"
+            className="border-border text-foreground"
           >
             {generatedItems.length > 0 ? '关闭' : '取消'}
           </Button>
@@ -302,7 +302,7 @@ export default function BatchCreateDialog({
             <Button
               onClick={handleSubmit}
               disabled={submitting}
-              className="bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white border-[#1d9bf0]"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground border-primary"
             >
               {submitting ? '生成中...' : '批量生成'}
             </Button>

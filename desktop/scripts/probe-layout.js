@@ -207,7 +207,24 @@ async function runP1(rendererDir, shotDir) {
       const foot = m.querySelector('.dialog-foot');
       const footBtn = foot ? [].slice.call(foot.querySelectorAll('button')).filter(isVisible).map(el=>({id:el.id, ...hitOf(el)})) : [];
       return { scroll, btns, footBtn };`);
-    out.drawers[id] = { ...rec, raw, scrolled };
+    // A button can be inside the screen but clipped by the scrollable body.
+    // Check each enabled control after scrolling it into view, rather than
+    // mistaking the fixed footer for an obstruction of offscreen content.
+    const reachable = await ev(`
+      const m = $(${JSON.stringify(id)});
+      // Chromium can report rectangles for descendants of closed <details>.
+      // Expand the groups first so their controls can actually be reached.
+      [].slice.call(m.querySelectorAll('details')).forEach(el=>{ if(!el.closest('[hidden]')) el.open=true; });
+      await sleep(100);
+      const buttons = [].slice.call(m.querySelectorAll('button')).filter(el=>isVisible(el) && !el.disabled);
+      const results=[];
+      for(const el of buttons){
+        el.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
+        await sleep(45); finishAnims();
+        results.push({id:el.id || String(el.className).split(' ')[0], ...hitOf(el)});
+      }
+      return results;`);
+    out.drawers[id] = { ...rec, raw, scrolled, reachable };
     if (SHOT && rec.ok) {
       await ev('return true;');
       await win.webContents.capturePage();
@@ -327,18 +344,16 @@ app.whenReady().then(async () => {
           continue;
         }
         if (!r.ok) { console.log('  ' + id.padEnd(14) + ' 打开失败 openNow=' + JSON.stringify(r.openNow)); continue; }
-        const bad = r.btns.filter((b) => !b.isSelf);
-        const off = r.btns.filter((b) => !b.inVp);
+        const bad = r.reachable.filter((b) => !b.inVp || !b.isSelf);
         const tabBad = r.tabs.filter((t) => !t.isSelf);
-        const badAfterScroll = r.scrolled ? r.scrolled.btns.filter((b) => !b.isSelf) : [];
         const footBad = r.scrolled ? r.scrolled.footBtn.filter((b) => !b.isSelf) : r.footBtn.filter((b) => !b.isSelf);
         console.log('  ' + id.padEnd(14) + ' 打开=' + String(r.raw.opened).padEnd(20) +
-          ' 命中自己=' + (r.btns.length - bad.length) + '/' + r.btns.length + '（出视口' + off.length + '，滚到底后不中=' + badAfterScroll.length + '）' +
+          ' 逐项滚动后命中=' + (r.reachable.length - bad.length) + '/' + r.reachable.length +
           ' 抽屉底↔底栏上沿=' + (r.gap >= 0 ? '+' : '') + r.gap + 'px(raw ' + (r.raw.gapRaw >= 0 ? '+' : '') + r.raw.gapRaw + ',重叠' + r.overlap + ')' +
           ' footer按钮命中自己=' + ((r.footBtn.length) - footBad.length) + '/' + r.footBtn.length +
           ' 底栏4项命中自己=' + (r.tabs.length - tabBad.length) + '/' + r.tabs.length +
           ' 点「列表」后抽屉=' + (r.afterTapTab.openAfter.length ? '仍开' + JSON.stringify(r.afterTapTab.openAfter) : '已关') + '/view=' + r.afterTapTab.view +
-          (bad.length ? ' 【被接走】' + JSON.stringify(bad.map((b) => (b.id || b.txt) + '->' + b.hit)) : ''));
+          (bad.length ? ' 【无法命中】' + JSON.stringify(bad.map((b) => b.id + '->' + b.hit)) : ''));
       }
     }
     if (MODE === 'p2' || MODE === 'all') {
@@ -367,13 +382,12 @@ app.whenReady().then(async () => {
     const fails = [];
     const ok = (cond, msg) => { if (!cond) fails.push(msg); };
     if (p1) {
-      const vp = p1.viewport;
       for (const [id, r] of Object.entries(p1.drawers)) {
         if (id === 'settingsClickConsequence') { ok(!r.error, '后果测试无法执行：' + r.error); continue; }
         ok(r.ok, 'P1 ' + id + ' 用真实入口打不开（openNow=' + JSON.stringify(r.openNow) + '）');
         if (!r.ok) continue;
-        const obscured = r.btns.filter((b) => b.cx >= 0 && b.cx <= vp.w && b.cy >= 0 && b.cy <= vp.h && !b.isSelf);
-        ok(obscured.length === 0, 'P1 ' + id + ' 有屏幕内按钮被接走：' + JSON.stringify(obscured.map((b) => (b.id || b.txt) + '->' + b.hit)));
+        const obscured = r.reachable.filter((b) => !b.inVp || !b.isSelf);
+        ok(obscured.length === 0, 'P1 ' + id + ' 滚动后仍有按钮无法命中：' + JSON.stringify(obscured.map((b) => b.id + '->' + b.hit)));
         ok(r.footBtn.every((b) => b.isSelf), 'P1 ' + id + ' footer 按钮没命中自己：' + JSON.stringify(r.footBtn.filter((b) => !b.isSelf).map((b) => b.id + '->' + b.hit)));
         ok(r.gap >= -1, 'P1 ' + id + ' 抽屉底边低于底栏上沿（gap=' + r.gap + '）');
         ok(r.overlap <= 0, 'P1 ' + id + ' 抽屉与底栏重叠 ' + r.overlap + 'px');

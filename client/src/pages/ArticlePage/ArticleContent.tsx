@@ -30,9 +30,10 @@ const fontSizeMap: Record<FontSize, string> = {
 interface ArticleContentProps {
   article: ArticleDetail;
   fontSize: FontSize;
+  theme: 'light' | 'dark';
 }
 
-export default function ArticleContent({ article, fontSize }: ArticleContentProps) {
+export default function ArticleContent({ article, fontSize, theme }: ArticleContentProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
   const [lightboxOpen, setLightboxOpen] = useState<boolean>(false);
 
@@ -63,6 +64,7 @@ export default function ArticleContent({ article, fontSize }: ArticleContentProp
       <div className={`${textClass} leading-[1.75] md:leading-relaxed text-foreground article-editorial-text article-drop-cap mb-8`}>
         <ArticleBody
           content={article.content}
+          theme={theme}
           markdownClassName="prose-headings:text-foreground prose-p:text-foreground prose-a:text-primary prose-strong:text-foreground prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-pre:bg-muted prose-pre:text-foreground prose-blockquote:border-primary prose-blockquote:text-muted-foreground prose-ul:text-foreground prose-ol:text-foreground prose-li:text-foreground prose-h2:text-2xl prose-h2:font-bold prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-6 prose-h3:mb-3"
         />
       </div>

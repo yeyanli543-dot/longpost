@@ -34,10 +34,13 @@ export const CommandPalette: React.FC = () => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const { mode, toggleMode, isLite } = useWorkspaceMode();
+  const isDarkTheme = resolvedTheme !== 'light' && resolvedTheme !== 'sepia';
 
   // 监听 Ctrl+K / Cmd+K
   useEffect(() => {
@@ -54,9 +57,14 @@ export const CommandPalette: React.FC = () => {
   // 打开时自动聚焦
   useEffect(() => {
     if (isOpen) {
+      previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       setQuery('');
       setSelectedIndex(0);
-      setTimeout(() => inputRef.current?.focus(), 50);
+      const timer = window.setTimeout(() => inputRef.current?.focus(), 50);
+      return () => {
+        window.clearTimeout(timer);
+        if (previousFocusRef.current?.isConnected) previousFocusRef.current.focus();
+      };
     }
   }, [isOpen]);
 
@@ -103,11 +111,11 @@ export const CommandPalette: React.FC = () => {
     },
     {
       id: 'theme-toggle',
-      title: `切换主题 (当前: ${resolvedTheme === 'dark' ? '深色模式' : '浅色模式'})`,
-      subtitle: '一键切换高质感暗黑与明亮配色',
-      icon: resolvedTheme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-sky-400" />,
+      title: `切换主题 (当前: ${isDarkTheme ? '深色模式' : '浅色模式'})`,
+      subtitle: '在深色与浅色主题之间切换',
+      icon: isDarkTheme ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-sky-400" />,
       category: '系统设置',
-      perform: () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark'),
+      perform: () => setTheme(isDarkTheme ? 'light' : 'dark'),
     },
     {
       id: 'workspace-mode-toggle',
@@ -150,6 +158,20 @@ export const CommandPalette: React.FC = () => {
   }, [query]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setIsOpen(false);
+      return;
+    }
+    if (e.key === 'Tab') {
+      const controls = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>('input, button:not(:disabled), [href], [tabindex]:not([tabindex="-1"])') || []);
+      if (!controls.length) return;
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      return;
+    }
     if (filtered.length === 0) return;
 
     if (e.key === 'ArrowDown') {
@@ -165,9 +187,6 @@ export const CommandPalette: React.FC = () => {
         setIsOpen(false);
         current.perform();
       }
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      setIsOpen(false);
     }
   };
 
@@ -193,6 +212,10 @@ export const CommandPalette: React.FC = () => {
           onClick={() => setIsOpen(false)}
         >
           <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="全局命令面板"
             className="w-full max-w-xl rounded-2xl border border-border/80 bg-popover/95 shadow-2xl backdrop-blur-2xl overflow-hidden animate-in zoom-in-95"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={handleKeyDown}
@@ -205,6 +228,7 @@ export const CommandPalette: React.FC = () => {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="搜索全局命令、快速导航或快捷操作..."
+                aria-label="搜索命令"
                 className="w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground/60 outline-none"
               />
               <kbd className="hidden sm:inline-block px-2 py-0.5 rounded bg-muted text-xs text-muted-foreground border border-border/40 font-mono">
@@ -224,6 +248,7 @@ export const CommandPalette: React.FC = () => {
                   return (
                     <button
                       key={item.id}
+                      data-selected={isSelected}
                       onClick={() => {
                         setIsOpen(false);
                         item.perform();

@@ -12,3 +12,10 @@ export const ASSET_BASE_PATH =
   rawClientBasePath === undefined
     ? ''
     : rawClientBasePath.trim().replace(/\/+$/, '');
+
+/** A same-origin directory URL for the SPA shell, including its final slash. */
+export function clientBaseHref(basePath: string): string {
+  if (!basePath || basePath === '/') return '/';
+  if (!basePath.startsWith('/') || basePath.startsWith('//') || /[\\?#\u0000-\u0020]/.test(basePath)) return '/';
+  return basePath.replace(/\/+$/, '') + '/';
+}

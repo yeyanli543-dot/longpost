@@ -31,7 +31,7 @@ export default function ArticleBody({ content, markdownClassName, theme = 'dark'
           return (
             <pre
               key={`invalid-chart-${index}`}
-              className="my-6 overflow-x-auto rounded-md border border-[#2f3336] bg-[#16181c] p-3 text-xs text-[#71767b]"
+              className="my-6 overflow-x-auto rounded-md border border-border bg-card p-3 text-xs text-muted-foreground"
             >
               <code>{segment.raw.trim()}</code>
             </pre>

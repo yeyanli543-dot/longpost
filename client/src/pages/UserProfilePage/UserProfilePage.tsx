@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -46,65 +46,58 @@ const ProfilePostCard = ({ post }: ProfilePostCardProps) => {
   const navigate = useNavigate();
   const [shareOpen, setShareOpen] = useState(false);
 
-  const handleArticleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (post.article) {
-      navigate(`/article/${post.article.id}`);
-    }
-  };
-
   const handleShare = () => {
     setShareOpen(true);
   };
 
   const handleCommentClick = () => {
-    if (post.article) {
-      navigate(`/article/${post.article.id}`);
-    } else {
-      toast.info('帖子评论功能即将上线');
-    }
+    navigate(`/post/${post.id}#comments`);
   };
 
   return (
     <article
-      className="px-4 py-3 border-b border-gray-800 hover:bg-gray-900/50 transition-colors cursor-pointer"
+      className="px-4 py-3 border-b border-border hover:bg-muted/60 transition-colors cursor-pointer"
+      onClick={(event) => {
+        if (event.currentTarget.contains(event.target as Node)) navigate(`/post/${post.id}`);
+      }}
       data-ai-section-type="card-list"
     >
       {/* Header */}
       <div className="flex items-baseline gap-1 text-sm">
-        <span className="font-bold text-gray-100 truncate">
+        <span className="font-bold text-foreground truncate">
           {post.authorName}
         </span>
-        <span className="text-gray-500 truncate">
+        <span className="text-muted-foreground truncate">
           @{post.authorId.slice(0, 8)}
         </span>
-        <span className="text-gray-500">·</span>
-        <span className="text-gray-500 flex-shrink-0">
+        <span className="text-muted-foreground">·</span>
+        <Link to={`/post/${post.id}`} onClick={(e) => e.stopPropagation()} className="text-muted-foreground flex-shrink-0 hover:underline" aria-label="查看这条动态">
           {dayjs(post.createdAt).fromNow()}
-        </span>
+        </Link>
       </div>
 
       {/* Post body */}
-      <div className="mt-1 text-base leading-relaxed text-gray-100">
+      <div className="mt-1 text-base leading-relaxed text-foreground">
         <RichTextContent content={post.content} />
       </div>
 
       {/* Linked article card */}
       {post.article && (
-        <div
-          onClick={handleArticleClick}
-          className="mt-3 border border-gray-800 rounded-xl p-3 hover:bg-gray-900/50 transition-colors cursor-pointer"
+        <Link
+          to={post.article.slug ? `/p/${post.article.slug}` : `/article/${post.article.id}`}
+          onClick={(e) => e.stopPropagation()}
+          className="block mt-3 border border-border rounded-xl p-3 hover:bg-muted/60 transition-colors"
         >
-          <h4 className="font-bold text-gray-100 truncate">
+          <h4 className="font-bold text-foreground truncate">
             {post.article.title}
           </h4>
           {post.article.excerpt && (
-            <p className="mt-1 text-sm text-gray-500 line-clamp-2">
+            <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
               {post.article.excerpt}
             </p>
           )}
           {(post.article.imageCount > 0 || post.article.attachmentCount > 0) && (
-            <div className="mt-2 flex items-center gap-3 text-xs text-gray-500">
+            <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
               {post.article.imageCount > 0 && (
                 <span className="flex items-center gap-1">
                   <ImageIcon className="w-3.5 h-3.5" />
@@ -119,7 +112,7 @@ const ProfilePostCard = ({ post }: ProfilePostCardProps) => {
               )}
             </div>
           )}
-        </div>
+        </Link>
       )}
 
       {/* Action buttons */}
@@ -175,36 +168,36 @@ const ProfileArticleCard = ({ article }: ProfileArticleCardProps) => {
   return (
     <article
       onClick={handleClick}
-      className="px-4 py-3 border-b border-gray-800 hover:bg-gray-900/50 transition-colors cursor-pointer"
+      className="px-4 py-3 border-b border-border hover:bg-muted/60 transition-colors cursor-pointer"
       data-ai-section-type="card-list"
     >
       {/* Header */}
       <div className="flex items-baseline gap-1 text-sm">
-        <span className="font-bold text-gray-100 truncate">
+        <span className="font-bold text-foreground truncate">
           {article.authorName}
         </span>
-        <span className="text-gray-500">发布了文章</span>
-        <span className="text-gray-500">·</span>
-        <span className="text-gray-500 flex-shrink-0">
+        <span className="text-muted-foreground">发布了文章</span>
+        <span className="text-muted-foreground">·</span>
+        <span className="text-muted-foreground flex-shrink-0">
           {dayjs(article.createdAt).fromNow()}
         </span>
       </div>
 
       {/* Title */}
-      <h3 className="mt-2 text-xl font-bold text-gray-100 leading-snug">
+      <h3 className="mt-2 text-xl font-bold text-foreground leading-snug">
         {article.title}
       </h3>
 
       {/* Excerpt */}
       {article.excerpt && (
-        <p className="mt-2 text-base text-gray-400 leading-relaxed line-clamp-3">
+        <p className="mt-2 text-base text-muted-foreground leading-relaxed line-clamp-3">
           {article.excerpt}
         </p>
       )}
 
       {/* Media indicators */}
       {(article.imageCount > 0 || article.attachmentCount > 0) && (
-        <div className="mt-3 flex items-center gap-3 text-xs text-gray-500">
+        <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
           {article.imageCount > 0 && (
             <span className="flex items-center gap-1">
               <ImageIcon className="w-3.5 h-3.5" />
@@ -221,7 +214,7 @@ const ProfileArticleCard = ({ article }: ProfileArticleCardProps) => {
       )}
 
       {/* Read count */}
-      <div className="mt-3 text-xs text-gray-500">
+      <div className="mt-3 text-xs text-muted-foreground">
         阅读 · {article.readCount} 次
       </div>
 
@@ -259,10 +252,10 @@ const ProfileArticleCard = ({ article }: ProfileArticleCardProps) => {
 // ---------- Skeleton ----------
 
 const ProfileSkeleton = () => (
-  <div className="px-4 py-3 border-b border-gray-800">
-    <div className="h-4 bg-gray-800 rounded w-1/4 animate-pulse" />
-    <div className="mt-2 h-5 bg-gray-800 rounded w-full animate-pulse" />
-    <div className="mt-2 h-5 bg-gray-800 rounded w-4/5 animate-pulse" />
+  <div className="px-4 py-3 border-b border-border">
+    <div className="h-4 bg-secondary rounded w-1/4 animate-pulse" />
+    <div className="mt-2 h-5 bg-secondary rounded w-full animate-pulse" />
+    <div className="mt-2 h-5 bg-secondary rounded w-4/5 animate-pulse" />
   </div>
 );
 
@@ -353,7 +346,7 @@ const UserProfilePage = () => {
       }
       if (posts.length === 0) {
         return (
-          <div className="px-4 py-16 text-center text-gray-500">
+          <div className="px-4 py-16 text-center text-muted-foreground">
             <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p className="text-lg">暂无帖子</p>
             <p className="text-sm mt-1">该用户还没有发布过帖子</p>
@@ -377,7 +370,7 @@ const UserProfilePage = () => {
       }
       if (articles.length === 0) {
         return (
-          <div className="px-4 py-16 text-center text-gray-500">
+          <div className="px-4 py-16 text-center text-muted-foreground">
             <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p className="text-lg">暂无文章</p>
             <p className="text-sm mt-1">该用户还没有发布过长文</p>
@@ -401,7 +394,7 @@ const UserProfilePage = () => {
       }
       if (reposts.length === 0) {
         return (
-          <div className="px-4 py-16 text-center text-gray-500">
+          <div className="px-4 py-16 text-center text-muted-foreground">
             <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p className="text-lg">暂无转发</p>
             <p className="text-sm mt-1">该用户还没有转发过内容</p>
@@ -425,7 +418,7 @@ const UserProfilePage = () => {
       }
       if (bookmarks.length === 0) {
         return (
-          <div className="px-4 py-16 text-center text-gray-500">
+          <div className="px-4 py-16 text-center text-muted-foreground">
             <Bookmark className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p className="text-lg">暂无收藏</p>
             <p className="text-sm mt-1">你还没有收藏任何文章</p>
@@ -449,7 +442,7 @@ const UserProfilePage = () => {
       }
       if (likedPosts.length === 0) {
         return (
-          <div className="px-4 py-16 text-center text-gray-500">
+          <div className="px-4 py-16 text-center text-muted-foreground">
             <Heart className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p className="text-lg">暂无点赞</p>
             <p className="text-sm mt-1">你还没有点赞过任何帖子</p>
@@ -467,7 +460,7 @@ const UserProfilePage = () => {
   if (error && !profile) {
     return (
       <div className="flex-1 min-w-0">
-        <div className="px-4 py-16 text-center text-gray-500">
+        <div className="px-4 py-16 text-center text-muted-foreground">
           <p className="text-lg">{error}</p>
           <button
             onClick={() => void loadUserHomepage()}
@@ -490,7 +483,7 @@ const UserProfilePage = () => {
 
         {/* Avatar */}
         <div className="px-4 -mt-12">
-          <div className="w-24 h-24 rounded-full bg-gray-700 border-4 border-black flex items-center justify-center overflow-hidden">
+          <div className="w-24 h-24 rounded-full bg-secondary border-4 border-background flex items-center justify-center overflow-hidden">
             {profile?.avatarUrl ? (
               <Image
                 src={profile.avatarUrl}
@@ -498,7 +491,7 @@ const UserProfilePage = () => {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <UserIcon className="w-10 h-10 text-gray-400" />
+              <UserIcon className="w-10 h-10 text-muted-foreground" />
             )}
           </div>
         </div>
@@ -516,7 +509,7 @@ const UserProfilePage = () => {
                     `已复制 ${profile.nickname} 的专栏 RSS 订阅源，可粘贴至阅读器`,
                   );
                 }}
-                className="p-2 min-h-[40px] md:min-h-[44px] min-w-[40px] text-sm font-bold rounded-full border border-gray-600 text-amber-400 hover:bg-gray-800 transition-colors flex items-center justify-center"
+                className="p-2 min-h-[40px] md:min-h-[44px] min-w-[40px] text-sm font-bold rounded-full border border-border text-amber-400 hover:bg-muted transition-colors flex items-center justify-center"
                 title={`复制 ${profile.nickname} 的专栏 RSS 订阅源 (Follow / Reeder)`}
                 aria-label="订阅专栏 RSS"
               >
@@ -526,7 +519,7 @@ const UserProfilePage = () => {
               {isOwnProfile ? (
                  <button
                    onClick={() => navigate('/settings')}
-                   className="px-5 min-h-[40px] md:min-h-[44px] text-sm font-bold rounded-full border border-gray-600 text-gray-100 hover:bg-gray-800 transition-colors flex items-center gap-2"
+                   className="px-5 min-h-[40px] md:min-h-[44px] text-sm font-bold rounded-full border border-border text-foreground hover:bg-muted transition-colors flex items-center gap-2"
                    data-ai-section-type="button"
                  >
                    <Settings className="w-4 h-4" />
@@ -545,7 +538,7 @@ const UserProfilePage = () => {
                            navigate('/messages');
                          }
                        }}
-                       className="px-4 min-h-[40px] md:min-h-[44px] text-sm font-bold rounded-full border border-gray-600 text-gray-100 hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                       className="px-4 min-h-[40px] md:min-h-[44px] text-sm font-bold rounded-full border border-border text-foreground hover:bg-muted transition-colors flex items-center gap-1.5"
                        data-ai-section-type="button"
                      >
                        <Mail className="w-4 h-4" />
@@ -564,15 +557,15 @@ const UserProfilePage = () => {
 
           {loading && !profile ? (
             <div className="space-y-2">
-              <div className="h-7 bg-gray-800 rounded w-1/3 animate-pulse" />
-              <div className="h-5 bg-gray-800 rounded w-1/4 animate-pulse" />
-              <div className="h-5 bg-gray-800 rounded w-2/3 animate-pulse" />
-              <div className="h-4 bg-gray-800 rounded w-1/4 animate-pulse" />
+              <div className="h-7 bg-secondary rounded w-1/3 animate-pulse" />
+              <div className="h-5 bg-secondary rounded w-1/4 animate-pulse" />
+              <div className="h-5 bg-secondary rounded w-2/3 animate-pulse" />
+              <div className="h-4 bg-secondary rounded w-1/4 animate-pulse" />
             </div>
           ) : profile ? (
             <>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-gray-100">
+                <h1 className="text-2xl font-bold text-foreground">
                   {profile.nickname}
                 </h1>
                 {profile.role === 'admin' && (
@@ -582,17 +575,17 @@ const UserProfilePage = () => {
                   </span>
                 )}
               </div>
-              <p className="text-gray-500 mt-0.5">
+              <p className="text-muted-foreground mt-0.5">
                 @{profile.id.slice(0, 8)}
               </p>
 
               {profile.bio && (
-                <p className="mt-2 text-gray-200 leading-relaxed break-words">
+                <p className="mt-2 text-foreground leading-relaxed break-words">
                   {profile.bio}
                 </p>
               )}
 
-              <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
+              <div className="mt-3 flex items-center gap-4 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
                   加入于 {dayjs(profile.createdAt).format('YYYY年MM月')}
@@ -605,28 +598,28 @@ const UserProfilePage = () => {
                   className="hover:underline transition-colors"
                   data-ai-section-type="button"
                 >
-                  <span className="font-bold text-gray-100">
+                  <span className="font-bold text-foreground">
                     {profile.followingCount}
                   </span>
-                  <span className="text-gray-500 ml-1">关注</span>
+                  <span className="text-muted-foreground ml-1">关注</span>
                 </button>
                 <button
                   onClick={() => navigate(`/user/${profile.id}/followers`)}
                   className="hover:underline transition-colors"
                   data-ai-section-type="button"
                 >
-                  <span className="font-bold text-gray-100">
+                  <span className="font-bold text-foreground">
                     {profile.followerCount}
                   </span>
-                  <span className="text-gray-500 ml-1">粉丝</span>
+                  <span className="text-muted-foreground ml-1">粉丝</span>
                 </button>
-                <span className="text-gray-100">
+                <span className="text-foreground">
                   <span className="font-bold">{profile.postCount}</span>
-                  <span className="text-gray-500 ml-1">帖子</span>
+                  <span className="text-muted-foreground ml-1">帖子</span>
                 </span>
-                <span className="text-gray-100">
+                <span className="text-foreground">
                   <span className="font-bold">{profile.articleCount}</span>
-                  <span className="text-gray-500 ml-1">文章</span>
+                  <span className="text-muted-foreground ml-1">文章</span>
                 </span>
               </div>
             </>
@@ -635,15 +628,15 @@ const UserProfilePage = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex overflow-x-auto scrollbar-hide border-b border-gray-800">
+      <div className="flex overflow-x-auto scrollbar-hide border-b border-border">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex-1 relative min-w-16 min-h-[44px] text-sm font-medium transition-colors hover:bg-gray-900/50 flex-shrink-0 px-3 ${
+            className={`flex-1 relative min-w-16 min-h-[44px] text-sm font-medium transition-colors hover:bg-muted/60 flex-shrink-0 px-3 ${
               activeTab === tab.key
-                ? 'text-gray-100'
-                : 'text-gray-500'
+                ? 'text-foreground'
+                : 'text-muted-foreground'
             }`}
             data-ai-section-type="button"
           >

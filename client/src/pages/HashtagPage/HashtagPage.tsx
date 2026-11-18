@@ -13,12 +13,12 @@ import type {
 // ---------- Skeleton ----------
 
 const SkeletonCard = () => (
-  <div className="flex gap-3 px-4 py-3 border-b border-gray-800">
-    <div className="w-12 h-12 rounded-full bg-gray-800 animate-pulse flex-shrink-0" />
+  <div className="flex gap-3 px-4 py-3 border-b border-border">
+    <div className="w-12 h-12 rounded-full bg-muted animate-pulse flex-shrink-0" />
     <div className="flex-1 space-y-2">
-      <div className="h-4 bg-gray-800 rounded w-1/3 animate-pulse" />
-      <div className="h-4 bg-gray-800 rounded w-full animate-pulse" />
-      <div className="h-4 bg-gray-800 rounded w-5/6 animate-pulse" />
+      <div className="h-4 bg-muted rounded w-1/3 animate-pulse" />
+      <div className="h-4 bg-muted rounded w-full animate-pulse" />
+      <div className="h-4 bg-muted rounded w-5/6 animate-pulse" />
     </div>
   </div>
 );
@@ -110,7 +110,7 @@ const HashtagPage: React.FC = () => {
             #{decodeURIComponent(tag ?? '')}
           </h1>
           {hashtagInfo && (
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-muted-foreground mt-1">
               {totalCount.toLocaleString()} 条内容
             </p>
           )}
@@ -128,9 +128,9 @@ const HashtagPage: React.FC = () => {
             <SkeletonCard />
           </>
         ) : error && items.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">{error}</div>
+          <div className="p-8 text-center text-muted-foreground">{error}</div>
         ) : items.length === 0 ? (
-          <div className="px-4 py-16 text-center text-gray-500">
+          <div className="px-4 py-16 text-center text-muted-foreground">
             <Hash className="w-12 h-12 mx-auto mb-3 opacity-50" />
             <p className="text-lg">暂无相关内容</p>
             <p className="text-sm mt-1">
@@ -153,13 +153,13 @@ const HashtagPage: React.FC = () => {
         {/* Loading more indicator */}
         <div ref={sentinelRef} className="py-6 text-center">
           {loadingMore && (
-            <div className="flex items-center justify-center gap-2 text-gray-500">
-              <div className="w-5 h-5 border-2 border-gray-700 border-t-blue-500 rounded-full animate-spin" />
+            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+              <div className="w-5 h-5 border-2 border-border border-t-primary rounded-full animate-spin" />
               <span>加载中...</span>
             </div>
           )}
           {!hasMore && items.length > 0 && !loadingMore && (
-            <p className="text-sm text-gray-600">没有更多了</p>
+            <p className="text-sm text-muted-foreground">没有更多了</p>
           )}
         </div>
       </div>

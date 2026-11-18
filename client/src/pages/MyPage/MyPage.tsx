@@ -49,13 +49,13 @@ const MyPostCard = ({ post, onDelete }: MyPostCardProps) => {
 
   return (
     <article
-      className="flex gap-3 px-4 py-3 border-b border-gray-800 hover:bg-gray-900/50 transition-colors"
+      className="flex gap-3 px-4 py-3 border-b border-border hover:bg-muted/60 transition-colors"
       data-ai-section-type="card-list"
     >
       {/* Avatar */}
       <div className="flex-shrink-0">
-        <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center">
-          <FileText className="w-5 h-5 text-gray-400" />
+        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+          <FileText className="w-5 h-5 text-muted-foreground" />
         </div>
       </div>
 
@@ -63,17 +63,17 @@ const MyPostCard = ({ post, onDelete }: MyPostCardProps) => {
       <div className="flex-1 min-w-0">
         {/* Header */}
         <div className="flex items-baseline gap-1 text-sm">
-          <span className="font-bold text-gray-100 truncate">
+          <span className="font-bold text-foreground truncate">
             {post.authorName}
           </span>
-          <span className="text-gray-500">·</span>
-          <span className="text-gray-500 flex-shrink-0">
+          <span className="text-muted-foreground">·</span>
+          <span className="text-muted-foreground flex-shrink-0">
             {dayjs(post.createdAt).format('YYYY-MM-DD HH:mm')}
           </span>
         </div>
 
         {/* Post body */}
-        <div className="mt-1 text-base leading-relaxed text-gray-100">
+        <div className="mt-1 text-base leading-relaxed text-foreground">
           <RichTextContent content={post.content} />
         </div>
 
@@ -81,13 +81,13 @@ const MyPostCard = ({ post, onDelete }: MyPostCardProps) => {
         {post.article && (
           <div
             onClick={handleArticleClick}
-            className="mt-3 border border-gray-800 rounded-xl p-3 hover:bg-gray-900/50 transition-colors cursor-pointer"
+            className="mt-3 border border-border rounded-xl p-3 hover:bg-muted/60 transition-colors cursor-pointer"
           >
-            <h4 className="font-bold text-gray-100 truncate">
+            <h4 className="font-bold text-foreground truncate">
               {post.article.title}
             </h4>
             {post.article.excerpt && (
-              <p className="mt-1 text-sm text-gray-500 line-clamp-2">
+              <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
                 {post.article.excerpt}
               </p>
             )}
@@ -95,7 +95,7 @@ const MyPostCard = ({ post, onDelete }: MyPostCardProps) => {
         )}
 
         {/* Action bar */}
-        <div className="mt-3 flex items-center gap-4 text-gray-500">
+        <div className="mt-3 flex items-center gap-4 text-muted-foreground">
           <button
             onClick={handleDelete}
             className="flex items-center gap-1 text-sm hover:text-red-500 transition-colors"
@@ -138,13 +138,13 @@ const MyArticleCard = ({ article, onDelete }: MyArticleCardProps) => {
   return (
     <article
       onClick={handleCardClick}
-      className="flex gap-3 px-4 py-3 border-b border-gray-800 hover:bg-gray-900/50 transition-colors cursor-pointer"
+      className="flex gap-3 px-4 py-3 border-b border-border hover:bg-muted/60 transition-colors cursor-pointer"
       data-ai-section-type="card-list"
     >
       {/* Avatar */}
       <div className="flex-shrink-0">
-        <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center">
-          <FileText className="w-5 h-5 text-gray-400" />
+        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+          <FileText className="w-5 h-5 text-muted-foreground" />
         </div>
       </div>
 
@@ -152,28 +152,28 @@ const MyArticleCard = ({ article, onDelete }: MyArticleCardProps) => {
       <div className="flex-1 min-w-0">
         {/* Header */}
         <div className="flex items-baseline gap-1 text-sm">
-          <span className="text-gray-500">发布了文章</span>
-          <span className="text-gray-500">·</span>
-          <span className="text-gray-500 flex-shrink-0">
+          <span className="text-muted-foreground">发布了文章</span>
+          <span className="text-muted-foreground">·</span>
+          <span className="text-muted-foreground flex-shrink-0">
             {dayjs(article.createdAt).format('YYYY-MM-DD HH:mm')}
           </span>
         </div>
 
         {/* Title */}
-        <h3 className="mt-2 text-xl font-bold text-gray-100 leading-snug">
+        <h3 className="mt-2 text-xl font-bold text-foreground leading-snug">
           {article.title}
         </h3>
 
         {/* Excerpt */}
         {article.excerpt && (
-          <p className="mt-2 text-base text-gray-400 leading-relaxed line-clamp-3">
+          <p className="mt-2 text-base text-muted-foreground leading-relaxed line-clamp-3">
             {article.excerpt}
           </p>
         )}
 
         {/* Media indicators */}
         {(article.imageCount > 0 || article.attachmentCount > 0) && (
-          <div className="mt-3 flex items-center gap-3 text-xs text-gray-500">
+          <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground">
             {article.imageCount > 0 && (
               <span className="flex items-center gap-1">
                 <ImageIcon className="w-3.5 h-3.5" />
@@ -190,11 +190,11 @@ const MyArticleCard = ({ article, onDelete }: MyArticleCardProps) => {
         )}
 
         {/* Action bar */}
-        <div className="mt-3 flex items-center gap-6 text-sm text-gray-500">
+        <div className="mt-3 flex items-center gap-6 text-sm text-muted-foreground">
           <span>阅读 · {article.readCount} 次</span>
           <button
             onClick={handleEdit}
-            className="flex items-center gap-1 hover:text-blue-500 transition-colors"
+            className="flex items-center gap-1 hover:text-primary transition-colors"
             data-ai-section-type="button"
           >
             <Edit3 className="w-4 h-4" />
@@ -237,13 +237,13 @@ const BookmarkCard = ({ article, onUnbookmark }: BookmarkCardProps) => {
   return (
     <article
       onClick={handleCardClick}
-      className="flex gap-3 px-4 py-3 border-b border-gray-800 hover:bg-gray-900/50 transition-colors cursor-pointer"
+      className="flex gap-3 px-4 py-3 border-b border-border hover:bg-muted/60 transition-colors cursor-pointer"
       data-ai-section-type="card-list"
     >
       {/* Avatar */}
       <div className="flex-shrink-0">
-        <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center">
-          <Bookmark className="w-5 h-5 text-gray-400" />
+        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+          <Bookmark className="w-5 h-5 text-muted-foreground" />
         </div>
       </div>
 
@@ -251,27 +251,27 @@ const BookmarkCard = ({ article, onUnbookmark }: BookmarkCardProps) => {
       <div className="flex-1 min-w-0">
         {/* Header */}
         <div className="flex items-baseline gap-1 text-sm">
-          <span className="text-gray-500">{article.authorName}</span>
-          <span className="text-gray-500">·</span>
-          <span className="text-gray-500 flex-shrink-0">
+          <span className="text-muted-foreground">{article.authorName}</span>
+          <span className="text-muted-foreground">·</span>
+          <span className="text-muted-foreground flex-shrink-0">
             {dayjs(article.createdAt).format('YYYY-MM-DD HH:mm')}
           </span>
         </div>
 
         {/* Title */}
-        <h3 className="mt-2 text-xl font-bold text-gray-100 leading-snug">
+        <h3 className="mt-2 text-xl font-bold text-foreground leading-snug">
           {article.title}
         </h3>
 
         {/* Excerpt */}
         {article.excerpt && (
-          <p className="mt-2 text-base text-gray-400 leading-relaxed line-clamp-3">
+          <p className="mt-2 text-base text-muted-foreground leading-relaxed line-clamp-3">
             {article.excerpt}
           </p>
         )}
 
         {/* Action bar */}
-        <div className="mt-3 flex items-center gap-6 text-sm text-gray-500">
+        <div className="mt-3 flex items-center gap-6 text-sm text-muted-foreground">
           <span>阅读 · {article.readCount} 次</span>
           <button
             onClick={handleUnbookmark}
@@ -290,7 +290,7 @@ const BookmarkCard = ({ article, onUnbookmark }: BookmarkCardProps) => {
 // ---------- EmptyState ----------
 
 const EmptyState = ({ message }: { message: string }) => (
-  <div className="flex flex-col items-center justify-center py-16 text-gray-500">
+  <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
     <FileText className="w-12 h-12 mb-3 opacity-50" />
     <p className="text-base">{message}</p>
   </div>
@@ -386,7 +386,7 @@ const MyPage = () => {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-500">
+      <div className="min-h-screen flex items-center justify-center text-muted-foreground">
         加载中...
       </div>
     );
@@ -412,9 +412,9 @@ const MyPage = () => {
       </div>
 
       {/* Profile section */}
-      <div className="px-4 py-6 border-b border-gray-800">
+      <div className="px-4 py-6 border-b border-border">
         <div className="flex items-start gap-4">
-          <div className="w-20 h-20 rounded-full bg-gray-700 flex items-center justify-center text-3xl font-bold text-gray-300 flex-shrink-0">
+          <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center text-3xl font-bold text-foreground flex-shrink-0">
             {user.avatarUrl ? (
               <Image
                 src={user.avatarUrl}
@@ -426,11 +426,11 @@ const MyPage = () => {
             )}
           </div>
           <div className="flex-1 min-w-0 pt-1">
-            <h2 className="text-2xl font-bold text-gray-100 truncate">
+            <h2 className="text-2xl font-bold text-foreground truncate">
               {user.nickname}
             </h2>
-            <p className="mt-1 text-gray-500 truncate">@{emailPrefix}</p>
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="mt-1 text-muted-foreground truncate">@{emailPrefix}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
               注册时间：{dayjs(user.createdAt).format('YYYY年MM月DD日')}
             </p>
           </div>
@@ -438,37 +438,37 @@ const MyPage = () => {
 
         {/* Stats */}
         <div className="mt-4 flex gap-6 text-sm">
-          <span className="text-gray-500">
-            <span className="text-gray-100 font-bold">{posts.length}</span>{' '}
+          <span className="text-muted-foreground">
+            <span className="text-foreground font-bold">{posts.length}</span>{' '}
             帖子
           </span>
-          <span className="text-gray-500">
-            <span className="text-gray-100 font-bold">{articles.length}</span>{' '}
+          <span className="text-muted-foreground">
+            <span className="text-foreground font-bold">{articles.length}</span>{' '}
             文章
           </span>
         </div>
       </div>
 
       {/* Quick actions */}
-      <div className="px-4 py-3 border-b border-gray-800 space-y-1">
+      <div className="px-4 py-3 border-b border-border space-y-1">
         <button
           onClick={() => navigate('/settings')}
-          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-900 transition-colors text-left"
+          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-muted transition-colors text-left"
           data-ai-section-type="button"
         >
-          <Settings className="w-5 h-5 text-[#71767b]" />
-          <span className="flex-1 text-base text-gray-100">设置</span>
-          <ChevronRight className="w-4 h-4 text-[#71767b]" />
+          <Settings className="w-5 h-5 text-muted-foreground" />
+          <span className="flex-1 text-base text-foreground">设置</span>
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </button>
         {user?.role === 'admin' && (
           <button
             onClick={() => navigate('/admin')}
-            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-900 transition-colors text-left"
+            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-muted transition-colors text-left"
             data-ai-section-type="button"
           >
-            <Shield className="w-5 h-5 text-blue-500" />
-            <span className="flex-1 text-base text-gray-100">管理后台</span>
-            <ChevronRight className="w-4 h-4 text-[#71767b]" />
+            <Shield className="w-5 h-5 text-primary" />
+            <span className="flex-1 text-base text-foreground">管理后台</span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </button>
         )}
       </div>
@@ -483,47 +483,47 @@ const MyPage = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-gray-800">
+      <div className="flex border-b border-border">
         <button
           onClick={() => setActiveTab('posts')}
           className={`flex-1 py-4 text-base font-medium transition-colors relative ${
             activeTab === 'posts'
-              ? 'text-gray-100 font-bold'
-              : 'text-gray-500 hover:text-gray-300'
+              ? 'text-foreground font-bold'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
           data-ai-section-type="button"
         >
           帖子
           {activeTab === 'posts' && (
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-blue-500 rounded-full" />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-primary rounded-full" />
           )}
         </button>
         <button
           onClick={() => setActiveTab('articles')}
           className={`flex-1 py-4 text-base font-medium transition-colors relative ${
             activeTab === 'articles'
-              ? 'text-gray-100 font-bold'
-              : 'text-gray-500 hover:text-gray-300'
+              ? 'text-foreground font-bold'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
           data-ai-section-type="button"
         >
           文章
           {activeTab === 'articles' && (
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-blue-500 rounded-full" />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-primary rounded-full" />
           )}
         </button>
         <button
           onClick={() => setActiveTab('bookmarks')}
           className={`flex-1 py-4 text-base font-medium transition-colors relative ${
             activeTab === 'bookmarks'
-              ? 'text-gray-100 font-bold'
-              : 'text-gray-500 hover:text-gray-300'
+              ? 'text-foreground font-bold'
+              : 'text-muted-foreground hover:text-foreground'
           }`}
           data-ai-section-type="button"
         >
           收藏
           {activeTab === 'bookmarks' && (
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-blue-500 rounded-full" />
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-primary rounded-full" />
           )}
         </button>
       </div>

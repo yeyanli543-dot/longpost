@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Search, Hash, User as UserIcon } from 'lucide-react';
 import { logger } from '@/lib/logger';
 import { articlesApi } from '@client/src/api';
@@ -24,8 +24,7 @@ const TABS: { key: SearchTab; label: string }[] = [
 ];
 
 export default function SearchPage() {
-  const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const urlQ = searchParams.get('q') || '';
   const urlType = (searchParams.get('type') as SearchTab) || 'all';
 
@@ -35,12 +34,33 @@ export default function SearchPage() {
   );
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<SearchResponse | null>(null);
   const debounceTimer = useRef<number | null>(null);
+  const requestId = useRef(0);
+  // Updating the address should not navigate and remount the search page.
+  const replaceSearchUrl = useCallback((params: URLSearchParams) => {
+    const url = new URL(window.location.href);
+    url.search = params.toString();
+    window.history.replaceState(window.history.state, '', url);
+  }, []);
+
+  useEffect(() => {
+    const restoreFromUrl = () => {
+      const params = new URLSearchParams(window.location.search);
+      const type = params.get('type') as SearchTab | null;
+      setKeyword(params.get('q') || '');
+      setActiveTab(type && TABS.some((tab) => tab.key === type) ? type : 'all');
+    };
+    window.addEventListener('popstate', restoreFromUrl);
+    return () => window.removeEventListener('popstate', restoreFromUrl);
+  }, []);
 
   const doSearch = useCallback(
     async (q: string, type: SearchTab) => {
+      const id = ++requestId.current;
       const trimmed = q.trim();
+      setError(null);
       if (!trimmed) {
         setSearched(false);
         setResults(null);
@@ -54,17 +74,14 @@ export default function SearchPage() {
           trimmed,
           type as 'all' | 'posts' | 'users' | 'hashtags',
         );
-        setResults(data);
+        if (id === requestId.current) setResults(data);
       } catch (error) {
+        if (id !== requestId.current) return;
         logger.error('搜索请求失败', error);
-        setResults({
-          posts: [],
-          articles: [],
-          users: [],
-          hashtags: [],
-        });
+        setResults(null);
+        setError('搜索暂时不可用，请重试。');
       } finally {
-        setLoading(false);
+        if (id === requestId.current) setLoading(false);
       }
     },
     [],
@@ -79,23 +96,16 @@ export default function SearchPage() {
       const params = new URLSearchParams();
       if (keyword.trim()) params.set('q', keyword.trim());
       params.set('type', activeTab);
-      setSearchParams(params, { replace: true });
+      replaceSearchUrl(params);
       void doSearch(keyword, activeTab);
     }, 300);
     return () => {
+      requestId.current += 1;
       if (debounceTimer.current) {
         window.clearTimeout(debounceTimer.current);
       }
     };
-  }, [keyword, activeTab, doSearch, setSearchParams]);
-
-  // Initial load from URL
-  useEffect(() => {
-    if (urlQ && !searched) {
-      void doSearch(urlQ, activeTab);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [keyword, activeTab, doSearch, replaceSearchUrl]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -106,7 +116,7 @@ export default function SearchPage() {
       const params = new URLSearchParams();
       if (keyword.trim()) params.set('q', keyword.trim());
       params.set('type', activeTab);
-      setSearchParams(params, { replace: true });
+      replaceSearchUrl(params);
       void doSearch(keyword, activeTab);
     }
   };
@@ -132,7 +142,7 @@ export default function SearchPage() {
       <div className="sticky top-0 z-10 bg-background/85 backdrop-blur-md px-4 py-2.5 border-b border-border pt-safe">
         <div className="relative max-w-xl mx-auto">
           <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-            <Search className="w-5 h-5 text-gray-500" />
+            <Search className="w-5 h-5 text-muted-foreground" />
           </div>
           <input
             type="text"
@@ -140,12 +150,12 @@ export default function SearchPage() {
             onChange={(e) => setKeyword(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="搜索帖子、用户、话题"
-            className="w-full bg-gray-900 rounded-full pl-12 pr-4 min-h-[48px] text-base text-gray-100 placeholder-gray-500 outline-none focus:ring-2 focus:ring-blue-500/50 transition"
-            autoFocus
+            aria-label="搜索帖子、用户和话题"
+            className="w-full bg-muted rounded-full pl-12 pr-4 min-h-[48px] text-base text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-blue-500/50 transition"
           />
           {loading && (
             <div className="absolute inset-y-0 right-4 flex items-center">
-              <div className="w-5 h-5 border-2 border-gray-600 border-t-blue-500 rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-border border-t-primary rounded-full animate-spin" />
             </div>
           )}
         </div>
@@ -153,22 +163,23 @@ export default function SearchPage() {
 
       {/* 分类 Tabs */}
       {searched && (
-        <div className="sticky top-[56px] z-10 bg-black border-b border-gray-800">
+        <div className="sticky top-[56px] z-10 bg-background border-b border-border">
           <div className="max-w-xl mx-auto flex overflow-x-auto scrollbar-hide">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => handleTabChange(tab.key)}
+                aria-pressed={activeTab === tab.key}
                 className={`flex-1 min-w-16 min-h-[44px] text-sm font-medium transition-colors relative flex-shrink-0 px-4 ${
                   activeTab === tab.key
-                    ? 'text-blue-500'
-                    : 'text-gray-500 hover:text-gray-300'
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
                 data-ai-section-type="button"
               >
                 {tab.label}
                 {activeTab === tab.key && (
-                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-blue-500 rounded-full" />
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-primary rounded-full" />
                 )}
               </button>
             ))}
@@ -179,7 +190,7 @@ export default function SearchPage() {
       {/* 内容区 */}
       <div className="max-w-xl mx-auto">
         {!searched && (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
             <Search className="w-12 h-12 mb-4 opacity-40" />
             <p className="text-lg">搜索帖子和文章</p>
             <p className="text-sm mt-2">输入关键词开始搜索</p>
@@ -187,14 +198,21 @@ export default function SearchPage() {
         )}
 
         {searched && loading && (
-          <div className="flex items-center justify-center py-16 text-gray-500">
-            <div className="w-6 h-6 border-2 border-gray-700 border-t-blue-500 rounded-full animate-spin mr-3" />
+          <div className="flex items-center justify-center py-16 text-muted-foreground">
+            <div className="w-6 h-6 border-2 border-border border-t-primary rounded-full animate-spin mr-3" />
             <span>搜索中...</span>
           </div>
         )}
 
-        {searched && !loading && !hasResults && (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+        {searched && !loading && error && (
+          <div className="flex flex-col items-center justify-center gap-3 py-20 text-muted-foreground" role="alert">
+            <p>{error}</p>
+            <button type="button" className="text-primary font-medium hover:underline" onClick={() => void doSearch(keyword, activeTab)}>重试</button>
+          </div>
+        )}
+
+        {searched && !loading && !error && !hasResults && (
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
             <p className="text-lg">没有找到相关内容</p>
             <p className="text-sm mt-2">换个关键词试试吧</p>
           </div>
@@ -206,7 +224,7 @@ export default function SearchPage() {
             {showUsers && results!.users.length > 0 && (
               <div>
                 {activeTab === 'all' && (
-                  <div className="px-4 py-3 text-sm font-semibold text-gray-500 border-b border-gray-800 bg-gray-900/30">
+                  <div className="px-4 py-3 text-sm font-semibold text-muted-foreground border-b border-border bg-muted/40">
                     用户
                   </div>
                 )}
@@ -220,7 +238,7 @@ export default function SearchPage() {
             {showHashtags && results!.hashtags.length > 0 && (
               <div>
                 {activeTab === 'all' && (
-                  <div className="px-4 py-3 text-sm font-semibold text-gray-500 border-b border-gray-800 bg-gray-900/30">
+                  <div className="px-4 py-3 text-sm font-semibold text-muted-foreground border-b border-border bg-muted/40">
                     话题
                   </div>
                 )}
@@ -234,7 +252,7 @@ export default function SearchPage() {
             {showPosts && results!.posts.length > 0 && (
               <div>
                 {activeTab === 'all' && (
-                  <div className="px-4 py-3 text-sm font-semibold text-gray-500 border-b border-gray-800 bg-gray-900/30">
+                  <div className="px-4 py-3 text-sm font-semibold text-muted-foreground border-b border-border bg-muted/40">
                     帖子
                   </div>
                 )}
@@ -247,7 +265,7 @@ export default function SearchPage() {
             {/* 文章分区 (only in "all" tab) */}
             {activeTab === 'all' && results!.articles.length > 0 && (
               <div>
-                <div className="px-4 py-3 text-sm font-semibold text-gray-500 border-b border-gray-800 bg-gray-900/30">
+                <div className="px-4 py-3 text-sm font-semibold text-muted-foreground border-b border-border bg-muted/40">
                   文章
                 </div>
                 {results!.articles.map((article: ArticleSummary) => (
@@ -269,18 +287,11 @@ interface UserResultItemProps {
 }
 
 function UserResultItem({ user }: UserResultItemProps) {
-  const navigate = useNavigate();
-
-  const handleClick = () => {
-    navigate(`/user/${user.id}`);
-  };
-
   return (
     <div
-      className="flex items-center gap-3 px-4 py-3.5 border-b border-gray-800 hover:bg-gray-900/50 transition cursor-pointer"
-      onClick={handleClick}
+      className="flex items-center gap-3 px-4 py-3.5 border-b border-border hover:bg-muted/60 transition"
     >
-      <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
+      <Link to={`/user/${user.id}`} aria-label={`查看 ${user.nickname} 的主页`} className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 overflow-hidden">
         {user.avatarUrl ? (
           <Image
             src={user.avatarUrl}
@@ -288,24 +299,24 @@ function UserResultItem({ user }: UserResultItemProps) {
             className="w-12 h-12 object-cover"
           />
         ) : (
-          <UserIcon className="w-6 h-6 text-gray-400" />
+          <UserIcon className="w-6 h-6 text-muted-foreground" />
         )}
-      </div>
+      </Link>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-gray-100 truncate">
+          <Link to={`/user/${user.id}`} className="font-bold text-foreground truncate hover:underline">
             {user.nickname}
-          </span>
+          </Link>
           {user.role === 'admin' && (
-            <span className="text-xs bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded">
+            <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
               管理员
             </span>
           )}
         </div>
         {user.bio && (
-          <p className="text-sm text-gray-500 mt-0.5 truncate">{user.bio}</p>
+          <p className="text-sm text-muted-foreground mt-0.5 truncate">{user.bio}</p>
         )}
-        <div className="text-xs text-gray-500 mt-1">
+        <div className="text-xs text-muted-foreground mt-1">
           {user.postCount + user.articleCount} 条内容 ·{' '}
           {user.followerCount} 粉丝
         </div>
@@ -324,30 +335,24 @@ interface HashtagResultItemProps {
 }
 
 function HashtagResultItem({ tag }: HashtagResultItemProps) {
-  const navigate = useNavigate();
-
-  const handleClick = () => {
-    navigate(`/hashtag/${encodeURIComponent(tag.tag)}`);
-  };
-
   const totalCount = tag.postCount + tag.articleCount;
 
   return (
-    <div
-      className="flex items-center gap-3 px-4 py-3.5 border-b border-gray-800 hover:bg-gray-900/50 transition cursor-pointer"
-      onClick={handleClick}
+    <Link
+      to={`/hashtag/${encodeURIComponent(tag.tag)}`}
+      className="flex items-center gap-3 px-4 py-3.5 border-b border-border hover:bg-muted/60 transition"
     >
-      <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-        <Hash className="w-5 h-5 text-blue-500" />
+      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+        <Hash className="w-5 h-5 text-primary" />
       </div>
       <div className="flex-1 min-w-0">
-        <div className="font-bold text-gray-100 truncate">
-          <span className="text-blue-500">#</span>
+        <div className="font-bold text-foreground truncate">
+          <span className="text-primary">#</span>
           {tag.tag}
         </div>
-        <div className="text-sm text-gray-500">{totalCount} 条内容</div>
+        <div className="text-sm text-muted-foreground">{totalCount} 条内容</div>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -358,8 +363,6 @@ interface PostCardProps {
 }
 
 function PostCard({ post }: PostCardProps) {
-  const navigate = useNavigate();
-
   const truncateContent = (text: string, maxLen: number) => {
     if (text.length <= maxLen) return text;
     return text.slice(0, maxLen) + '...';
@@ -380,31 +383,34 @@ function PostCard({ post }: PostCardProps) {
     return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
   };
 
-  const handleClick = () => {
-    navigate(`/post/${post.id}`);
-  };
-
   return (
-    <div
-      className="px-4 py-3.5 border-b border-gray-800 hover:bg-gray-900/50 transition cursor-pointer"
-      onClick={handleClick}
+    <article
+      className="px-4 py-3.5 border-b border-border hover:bg-muted/60 transition"
     >
       <div className="flex items-baseline gap-2 mb-1">
         <Link
           to={`/user/${post.authorId}`}
-          className="font-medium text-gray-100 truncate hover:underline"
+          className="font-medium text-foreground truncate hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
           {post.authorName}
         </Link>
-        <span className="text-sm text-gray-500 shrink-0">
+        <span className="text-sm text-muted-foreground shrink-0">
           {formatTime(post.createdAt)}
         </span>
       </div>
-      <div className="text-base leading-relaxed text-gray-100">
+      <div className="text-base leading-relaxed text-foreground">
         <RichTextContent content={truncateContent(post.content, 140)} />
       </div>
-    </div>
+      <Link className="mt-2 inline-block text-sm font-medium text-primary hover:underline" to={`/post/${post.id}`}>
+        查看动态
+      </Link>
+      {post.article && (
+        <Link className="mt-2 ml-4 inline-block text-sm font-medium text-primary hover:underline" to={post.article.slug ? `/p/${post.article.slug}` : `/article/${post.article.id}`}>
+          阅读关联文章
+        </Link>
+      )}
+    </article>
   );
 }
 
@@ -424,17 +430,17 @@ function ArticleCard({ article }: ArticleCardProps) {
   return (
     <Link
       to={`/article/${article.id}`}
-      className="block px-4 py-3.5 border-b border-gray-800 hover:bg-gray-900/50 transition"
+      className="block px-4 py-3.5 border-b border-border hover:bg-muted/60 transition"
     >
-      <h3 className="text-lg font-semibold text-gray-100 mb-1 line-clamp-2">
+      <h3 className="text-lg font-semibold text-foreground mb-1 line-clamp-2">
         {article.title}
       </h3>
       {article.excerpt && (
-        <p className="text-sm text-gray-500 mb-2 line-clamp-2 leading-relaxed">
+        <p className="text-sm text-muted-foreground mb-2 line-clamp-2 leading-relaxed">
           {truncateExcerpt(article.excerpt, 100)}
         </p>
       )}
-      <div className="flex items-center gap-3 text-xs text-gray-500">
+      <div className="flex items-center gap-3 text-xs text-muted-foreground">
         <span className="truncate">{article.authorName}</span>
         <span>·</span>
         <span>{article.readCount} 阅读</span>

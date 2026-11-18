@@ -488,7 +488,8 @@ const SettingsPage: React.FC = () => {
                 <button
                   key={item.key}
                   onClick={() => setActiveSection(item.key)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full whitespace-nowrap text-sm transition-colors flex-shrink-0 ${
+                  aria-pressed={isActive}
+                  className={`flex min-h-11 items-center gap-1.5 px-3 py-1.5 rounded-full whitespace-nowrap text-sm transition-colors flex-shrink-0 ${
                     isActive
                       ? 'bg-primary/10 text-primary font-bold'
                       : 'text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -514,6 +515,7 @@ const SettingsPage: React.FC = () => {
                   <button
                     key={item.key}
                     onClick={() => setActiveSection(item.key)}
+                    aria-pressed={isActive}
                     className={`w-full flex items-center gap-3 py-2.5 px-3 rounded-lg text-sm transition-colors relative ${
                       isActive
                         ? 'bg-primary/10 text-primary font-bold'
@@ -532,14 +534,14 @@ const SettingsPage: React.FC = () => {
           </aside>
 
           {/* 右侧内容区 */}
-          <main className="flex-1 min-w-0 py-6 md:pl-6 md:border-l border-border">
+          <section className="flex-1 min-w-0 py-6 md:pl-6 md:border-l border-border">
             <div className="md:hidden px-4 mb-4">
               <h1 className="text-xl font-bold text-foreground">
                 {navItems.find((n) => n.key === activeSection)?.label || '设置'}
               </h1>
             </div>
             <div className="px-4 md:px-2">{renderContent()}</div>
-          </main>
+          </section>
         </div>
       </div>
     </div>

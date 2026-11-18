@@ -296,7 +296,7 @@ const ActionButtons = ({
 
   return (
     <>
-      <div className="mt-3 flex items-center justify-between text-gray-500 max-w-md">
+      <div className="mt-3 flex items-center justify-between text-muted-foreground max-w-md">
         {/* Comment */}
         <motion.button
           onClick={handleComment}
@@ -305,6 +305,7 @@ const ActionButtons = ({
           transition={{ duration: 0.1 }}
           className="flex items-center gap-1 group"
           title="评论"
+          aria-label={`评论，${formatCount(commentCount)} 条`}
           data-ai-section-type="button"
         >
           <span className="p-3.5 md:p-1.5 rounded-full group-hover:bg-blue-500/10 group-hover:text-blue-500 transition-colors duration-200">
@@ -332,6 +333,8 @@ const ActionButtons = ({
             localIsReposted ? 'text-green-500' : ''
           }`}
           title="转发"
+          aria-label={`${localIsReposted ? '取消转发' : '转发'}，${formatCount(localRepostCount)} 次`}
+          aria-pressed={localIsReposted}
           data-ai-section-type="button"
         >
           <span
@@ -372,6 +375,8 @@ const ActionButtons = ({
             localIsLiked ? 'text-pink-500' : ''
           }`}
           title="点赞"
+          aria-label={`${localIsLiked ? '取消赞' : '点赞'}，${formatCount(localLikeCount)} 次`}
+          aria-pressed={localIsLiked}
           data-ai-section-type="button"
         >
           <span
@@ -428,6 +433,8 @@ const ActionButtons = ({
               localIsBookmarked ? 'text-yellow-500' : ''
             }`}
             title="收藏"
+            aria-label={`${localIsBookmarked ? '取消收藏' : '收藏'}，${formatCount(localBookmarkCount)} 次`}
+            aria-pressed={localIsBookmarked}
             data-ai-section-type="button"
           >
              <span
@@ -474,6 +481,7 @@ const ActionButtons = ({
           transition={{ duration: 0.1 }}
           className="flex items-center gap-1 group"
           title="分享"
+          aria-label="分享"
           data-ai-section-type="button"
         >
            <span className="p-3.5 md:p-1.5 rounded-full group-hover:bg-blue-500/10 group-hover:text-blue-500 transition-colors duration-200">

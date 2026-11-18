@@ -166,17 +166,17 @@ export default function ShareDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-[#16181c] border border-[#2f3336] text-[#e7e9ea] p-6 rounded-2xl shadow-2xl">
-        <DialogHeader className="pb-2 border-b border-[#2f3336]/60">
+      <DialogContent className="sm:max-w-md bg-popover border border-border text-popover-foreground p-6 rounded-2xl shadow-2xl max-h-[calc(100dvh-2rem)] overflow-y-auto">
+        <DialogHeader className="pb-2 border-b border-border/60">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-white">
-              <Share2 className="w-5 h-5 text-[#1d9bf0]" />
-              {activeTab === 'wechat' ? '微信扫一扫分享' : activeTab === 'qq' ? 'QQ 扫码直达与分享' : '分享长文'}
+            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
+              <Share2 className="w-5 h-5 text-primary" />
+              {activeTab === 'wechat' ? '微信扫一扫分享' : activeTab === 'qq' ? 'QQ 扫码直达与分享' : '分享内容'}
             </DialogTitle>
             {activeTab !== 'platforms' && (
               <button
                 onClick={() => setActiveTab('platforms')}
-                className="text-xs text-[#71767b] hover:text-[#1d9bf0] flex items-center gap-1 transition-colors"
+                className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
                 返回平台列表
@@ -186,7 +186,7 @@ export default function ShareDialog({
         </DialogHeader>
 
         {/* 顶部文章导读微卡片 */}
-        <div className="bg-[#1e2124] border border-[#2f3336] rounded-xl p-3 flex gap-3 items-center">
+        <div className="bg-muted border border-border rounded-xl p-3 flex gap-3 items-center">
           {payload.coverUrl ? (
             <img
               src={payload.coverUrl}
@@ -199,10 +199,10 @@ export default function ShareDialog({
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <h4 className="text-sm font-semibold text-white truncate">
+            <h4 className="text-sm font-semibold text-foreground truncate">
               {payload.title}
             </h4>
-            <p className="text-xs text-[#71767b] truncate mt-0.5">
+            <p className="text-xs text-muted-foreground truncate mt-0.5">
               {payload.authorName ? `@${payload.authorName} · ` : ''}
               {payload.summary || 'LongPost 沉浸式图文长文'}
             </p>
@@ -224,13 +224,13 @@ export default function ShareDialog({
                     setActiveTab('wechat');
                   }
                 }}
-                className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-[#1f2227] active:scale-95 transition-all"
+                className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-muted active:scale-95 transition-all"
                 title="微信分享与扫码"
               >
                 <div className="w-12 h-12 rounded-2xl bg-[#07C160]/15 group-hover:bg-[#07C160]/25 text-[#07C160] flex items-center justify-center transition-colors shadow-sm">
                   <WeChatIcon className="w-7 h-7" />
                 </div>
-                <span className="text-xs font-medium text-gray-200 group-hover:text-[#07C160] transition-colors">
+                <span className="text-xs font-medium text-foreground group-hover:text-foreground transition-colors">
                   微信
                 </span>
               </button>
@@ -244,13 +244,13 @@ export default function ShareDialog({
                     setActiveTab('qq');
                   }
                 }}
-                className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-[#1f2227] active:scale-95 transition-all"
+                className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-muted active:scale-95 transition-all"
                 title="QQ 扫码直达与分享"
               >
                 <div className="w-12 h-12 rounded-2xl bg-[#12B7F5]/15 group-hover:bg-[#12B7F5]/25 text-[#12B7F5] flex items-center justify-center transition-colors shadow-sm">
                   <QQIcon className="w-6 h-6" />
                 </div>
-                <span className="text-xs font-medium text-gray-200 group-hover:text-[#12B7F5] transition-colors">
+                <span className="text-xs font-medium text-foreground group-hover:text-foreground transition-colors">
                   QQ 好友
                 </span>
               </button>
@@ -258,13 +258,13 @@ export default function ShareDialog({
               {/* QQ 空间 */}
               <button
                 onClick={() => openPlatformShare('qzone', payload)}
-                className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-[#1f2227] active:scale-95 transition-all"
+                className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-muted active:scale-95 transition-all"
                 title="分享到 QQ 空间动态"
               >
                 <div className="w-12 h-12 rounded-2xl bg-[#FFCE00]/15 group-hover:bg-[#FFCE00]/25 text-[#FFCE00] flex items-center justify-center transition-colors shadow-sm">
                   <QzoneIcon className="w-6 h-6" />
                 </div>
-                <span className="text-xs font-medium text-gray-200 group-hover:text-[#FFCE00] transition-colors">
+                <span className="text-xs font-medium text-foreground group-hover:text-foreground transition-colors">
                   QQ 空间
                 </span>
               </button>
@@ -272,13 +272,13 @@ export default function ShareDialog({
               {/* 新浪微博 */}
               <button
                 onClick={() => openPlatformShare('weibo', payload)}
-                className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-[#1f2227] active:scale-95 transition-all"
+                className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-muted active:scale-95 transition-all"
                 title="发布到新浪微博"
               >
                 <div className="w-12 h-12 rounded-2xl bg-[#E6162D]/15 group-hover:bg-[#E6162D]/25 text-[#E6162D] flex items-center justify-center transition-colors shadow-sm">
                   <WeiboIcon className="w-6 h-6" />
                 </div>
-                <span className="text-xs font-medium text-gray-200 group-hover:text-[#E6162D] transition-colors">
+                <span className="text-xs font-medium text-foreground group-hover:text-foreground transition-colors">
                   新浪微博
                 </span>
               </button>
@@ -286,13 +286,13 @@ export default function ShareDialog({
               {/* 钉钉 */}
               <button
                 onClick={() => openPlatformShare('dingtalk', payload)}
-                className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-[#1f2227] active:scale-95 transition-all"
+                className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-muted active:scale-95 transition-all"
                 title="分享到钉钉工作圈或消息"
               >
                 <div className="w-12 h-12 rounded-2xl bg-[#0089FF]/15 group-hover:bg-[#0089FF]/25 text-[#0089FF] flex items-center justify-center transition-colors shadow-sm">
                   <DingTalkIcon className="w-6 h-6" />
                 </div>
-                <span className="text-xs font-medium text-gray-200 group-hover:text-[#0089FF] transition-colors">
+                <span className="text-xs font-medium text-foreground group-hover:text-foreground transition-colors">
                   钉钉
                 </span>
               </button>
@@ -300,13 +300,13 @@ export default function ShareDialog({
               {/* X (Twitter) */}
               <button
                 onClick={() => openPlatformShare('twitter', payload)}
-                className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-[#1f2227] active:scale-95 transition-all"
+                className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-muted active:scale-95 transition-all"
                 title="分享到 X (Twitter)"
               >
-                <div className="w-12 h-12 rounded-2xl bg-white/10 group-hover:bg-white/20 text-white flex items-center justify-center transition-colors shadow-sm">
+                <div className="w-12 h-12 rounded-2xl bg-secondary group-hover:bg-accent text-foreground flex items-center justify-center transition-colors shadow-sm">
                   <XIcon className="w-5 h-5" />
                 </div>
-                <span className="text-xs font-medium text-gray-200 group-hover:text-white transition-colors">
+                <span className="text-xs font-medium text-foreground group-hover:text-foreground transition-colors">
                   X
                 </span>
               </button>
@@ -315,20 +315,20 @@ export default function ShareDialog({
               {hasNativeShare ? (
                 <button
                   onClick={handleNativeShare}
-                  className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-[#1f2227] active:scale-95 transition-all"
+                  className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-muted active:scale-95 transition-all"
                   title="调用系统原生分享面板"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 group-hover:bg-emerald-500/25 text-emerald-400 flex items-center justify-center transition-colors shadow-sm">
                     <Smartphone className="w-6 h-6" />
                   </div>
-                  <span className="text-xs font-medium text-gray-200 group-hover:text-emerald-400 transition-colors">
+                  <span className="text-xs font-medium text-foreground group-hover:text-foreground transition-colors">
                     系统分享
                   </span>
                 </button>
               ) : (
                 <button
                   onClick={handleCopyShareText}
-                  className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-[#1f2227] active:scale-95 transition-all"
+                  className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-muted active:scale-95 transition-all"
                   title="复制图文导读文案"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-purple-500/15 group-hover:bg-purple-500/25 text-purple-400 flex items-center justify-center transition-colors shadow-sm">
@@ -338,7 +338,7 @@ export default function ShareDialog({
                       <Copy className="w-6 h-6" />
                     )}
                   </div>
-                  <span className="text-xs font-medium text-gray-200 group-hover:text-purple-400 transition-colors">
+                  <span className="text-xs font-medium text-foreground group-hover:text-foreground transition-colors">
                     复制文案
                   </span>
                 </button>
@@ -347,7 +347,7 @@ export default function ShareDialog({
               {/* 复制链接 */}
               <button
                 onClick={handleCopyLink}
-                className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-[#1f2227] active:scale-95 transition-all"
+                className="group flex flex-col items-center gap-1.5 p-2.5 rounded-xl hover:bg-muted active:scale-95 transition-all"
                 title="复制文章直接访问链接"
               >
                 <div className="w-12 h-12 rounded-2xl bg-blue-500/15 group-hover:bg-blue-500/25 text-blue-400 flex items-center justify-center transition-colors shadow-sm">
@@ -357,15 +357,15 @@ export default function ShareDialog({
                     <Link2 className="w-6 h-6" />
                   )}
                 </div>
-                <span className="text-xs font-medium text-gray-200 group-hover:text-blue-400 transition-colors">
+                <span className="text-xs font-medium text-foreground group-hover:text-foreground transition-colors">
                   复制链接
                 </span>
               </button>
             </div>
 
             {/* 跨应用互联与知识库导出 */}
-            <div className="pt-2 border-t border-[#2f3336]/60">
-              <div className="text-[11px] font-semibold text-[#71767b] mb-2 px-1 flex items-center justify-between">
+            <div className="pt-2 border-t border-border/60">
+              <div className="text-[11px] font-semibold text-muted-foreground mb-2 px-1 flex items-center justify-between">
                 <span>跨应用连结与知识库互通</span>
                 <span className="text-[10px] text-blue-400/80">全生态套件</span>
               </div>
@@ -373,17 +373,17 @@ export default function ShareDialog({
                 {/* 微信公众号排版 */}
                 <button
                   onClick={handleCopyWeChat}
-                  className="flex items-center gap-2 p-2 rounded-xl bg-[#1e2124] hover:bg-[#282c31] border border-[#2f3336] text-left transition-all active:scale-95 group"
+                  className="flex items-center gap-2 p-2 rounded-xl bg-muted hover:bg-accent border border-border text-left transition-all active:scale-95 group"
                   title="复制带内联 CSS 样式的公众号富文本，在微信后台直接粘贴"
                 >
                   <div className="w-8 h-8 rounded-lg bg-[#07C160]/15 text-[#07C160] flex items-center justify-center flex-shrink-0 group-hover:bg-[#07C160]/25 transition-colors">
                     <Sparkles className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-medium text-gray-200 group-hover:text-white truncate">
+                    <div className="text-xs font-medium text-foreground group-hover:text-foreground truncate">
                       公众号排版
                     </div>
-                    <div className="text-[10px] text-gray-500 truncate">
+                    <div className="text-[10px] text-muted-foreground truncate">
                       内联富文本
                     </div>
                   </div>
@@ -392,17 +392,17 @@ export default function ShareDialog({
                 {/* Obsidian 导出 */}
                 <button
                   onClick={handleExportObsidian}
-                  className="flex items-center gap-2 p-2 rounded-xl bg-[#1e2124] hover:bg-[#282c31] border border-[#2f3336] text-left transition-all active:scale-95 group"
+                  className="flex items-center gap-2 p-2 rounded-xl bg-muted hover:bg-accent border border-border text-left transition-all active:scale-95 group"
                   title="导出带完整 YAML Frontmatter 的 Markdown 笔记"
                 >
                   <div className="w-8 h-8 rounded-lg bg-purple-500/15 text-purple-400 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-500/25 transition-colors">
                     <FileText className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-medium text-gray-200 group-hover:text-white truncate">
+                    <div className="text-xs font-medium text-foreground group-hover:text-foreground truncate">
                       Obsidian 笔记
                     </div>
-                    <div className="text-[10px] text-gray-500 truncate">
+                    <div className="text-[10px] text-muted-foreground truncate">
                       Frontmatter
                     </div>
                   </div>
@@ -411,17 +411,17 @@ export default function ShareDialog({
                 {/* RSS 订阅源 */}
                 <button
                   onClick={handleCopyRss}
-                  className="flex items-center gap-2 p-2 rounded-xl bg-[#1e2124] hover:bg-[#282c31] border border-[#2f3336] text-left transition-all active:scale-95 group"
+                  className="flex items-center gap-2 p-2 rounded-xl bg-muted hover:bg-accent border border-border text-left transition-all active:scale-95 group"
                   title="复制 RSS 2.0 订阅链接，导入 Follow / Reeder / NetNewsWire"
                 >
                   <div className="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-400 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-500/25 transition-colors">
                     <Rss className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-medium text-gray-200 group-hover:text-white truncate">
+                    <div className="text-xs font-medium text-foreground group-hover:text-foreground truncate">
                       RSS 订阅源
                     </div>
-                    <div className="text-[10px] text-gray-500 truncate">
+                    <div className="text-[10px] text-muted-foreground truncate">
                       Follow/Reeder
                     </div>
                   </div>
@@ -431,17 +431,18 @@ export default function ShareDialog({
 
             {/* 底部链接展示条 */}
             <div className="pt-2">
-              <div className="flex items-center gap-2 bg-[#0d0e11] border border-[#2f3336] rounded-xl px-3 py-2 text-xs">
-                <Link2 className="w-4 h-4 text-[#71767b] flex-shrink-0" />
+              <div className="flex items-center gap-2 bg-background border border-border rounded-xl px-3 py-2 text-xs">
+                <Link2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 <input
                   type="text"
                   readOnly
+                  aria-label="分享链接"
                   value={fullShareUrl}
-                  className="bg-transparent text-gray-300 w-full outline-none font-mono select-all truncate"
+                  className="bg-transparent text-foreground w-full outline-none font-mono select-all truncate"
                 />
                 <button
                   onClick={handleCopyLink}
-                  className="px-3 py-1 bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white rounded-lg font-medium transition-colors flex-shrink-0"
+                  className="px-3 py-1 bg-primary hover:opacity-90 text-primary-foreground rounded-lg font-medium transition-colors flex-shrink-0"
                 >
                   {copiedLink ? '已复制' : '复制'}
                 </button>
@@ -461,18 +462,18 @@ export default function ShareDialog({
                   className="w-48 h-48 block rounded-lg"
                 />
               ) : (
-                <div className="w-48 h-48 flex items-center justify-center text-gray-400 text-xs">
+                <div className="w-48 h-48 flex items-center justify-center text-gray-700 text-xs">
                   正在生成二维码...
                 </div>
               )}
             </div>
 
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-white flex items-center justify-center gap-1.5">
+              <p className="text-sm font-semibold text-foreground flex items-center justify-center gap-1.5">
                 <WeChatIcon className="w-4 h-4 text-[#07C160]" />
                 打开手机微信「扫一扫」
               </p>
-              <p className="text-xs text-[#71767b] max-w-xs leading-relaxed">
+              <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
                 扫码即可直接阅读，或点击右上角「···」分享给好友、转发至微信群与朋友圈
               </p>
               {isLocal && (
@@ -485,7 +486,7 @@ export default function ShareDialog({
             <div className="flex items-center gap-3 w-full pt-1">
               <button
                 onClick={handleCopyShareText}
-                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-[#1e2124] hover:bg-[#282c31] border border-[#2f3336] text-xs font-medium text-gray-200 rounded-xl transition-colors active:scale-95"
+                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-muted hover:bg-accent border border-border text-xs font-medium text-foreground rounded-xl transition-colors active:scale-95"
               >
                 {copiedText ? (
                   <Check className="w-4 h-4 text-green-400" />
@@ -496,7 +497,7 @@ export default function ShareDialog({
               </button>
               <button
                 onClick={handleDownloadQrCode}
-                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-[#07C160] hover:bg-[#06ad56] text-white text-xs font-medium rounded-xl transition-colors shadow-sm active:scale-95"
+                className="flex-1 flex items-center justify-center gap-2 py-2 px-3 bg-[#087d42] hover:bg-[#076b38] text-white text-xs font-medium rounded-xl transition-colors shadow-sm active:scale-95"
               >
                 <Download className="w-4 h-4" />
                 保存二维码图片
@@ -516,18 +517,18 @@ export default function ShareDialog({
                   className="w-48 h-48 block rounded-lg"
                 />
               ) : (
-                <div className="w-48 h-48 flex items-center justify-center text-gray-400 text-xs">
+                <div className="w-48 h-48 flex items-center justify-center text-gray-700 text-xs">
                   正在生成二维码...
                 </div>
               )}
             </div>
 
             <div className="space-y-1">
-              <p className="text-sm font-semibold text-white flex items-center justify-center gap-1.5">
+              <p className="text-sm font-semibold text-foreground flex items-center justify-center gap-1.5">
                 <QQIcon className="w-4 h-4 text-[#12B7F5]" />
                 打开手机 QQ「扫一扫」直达阅读
               </p>
-              <p className="text-xs text-[#71767b] max-w-xs leading-relaxed">
+              <p className="text-xs text-muted-foreground max-w-xs leading-relaxed">
                 直通本篇长文落地页，扫码即开；也可一键复制专属卡片文案直接发送给 QQ 好友
               </p>
               {isLocal && (
@@ -540,7 +541,7 @@ export default function ShareDialog({
             <div className="grid grid-cols-2 gap-2.5 w-full pt-1">
               <button
                 onClick={handleCopyQQShareText}
-                className="flex items-center justify-center gap-2 py-2 px-3 bg-[#1e2124] hover:bg-[#282c31] border border-[#2f3336] text-xs font-medium text-gray-200 rounded-xl transition-colors active:scale-95"
+                className="flex items-center justify-center gap-2 py-2 px-3 bg-muted hover:bg-accent border border-border text-xs font-medium text-foreground rounded-xl transition-colors active:scale-95"
               >
                 {copiedQQText ? (
                   <Check className="w-4 h-4 text-green-400" />
@@ -551,7 +552,7 @@ export default function ShareDialog({
               </button>
               <button
                 onClick={() => openPlatformShare('qq', { ...payload, url: fullShareUrl })}
-                className="flex items-center justify-center gap-2 py-2 px-3 bg-[#12B7F5] hover:bg-[#0ea5e9] text-white text-xs font-medium rounded-xl transition-colors shadow-sm active:scale-95"
+                className="flex items-center justify-center gap-2 py-2 px-3 bg-[#006fa1] hover:bg-[#005a85] text-white text-xs font-medium rounded-xl transition-colors shadow-sm active:scale-95"
               >
                 <ExternalLink className="w-4 h-4" />
                 QQ 网页分享窗口
@@ -560,7 +561,7 @@ export default function ShareDialog({
             <div className="w-full">
               <button
                 onClick={handleDownloadQrCode}
-                className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-[#1e2124] hover:bg-[#282c31] border border-[#2f3336] text-xs font-medium text-gray-300 rounded-xl transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 bg-muted hover:bg-accent border border-border text-xs font-medium text-foreground rounded-xl transition-colors"
               >
                 <Download className="w-4 h-4 text-[#12B7F5]" />
                 保存 QQ 扫码海报图片

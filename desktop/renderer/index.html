@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="vendor/katex/katex.min.css" />
     <link rel="stylesheet" href="vendor/prism/themes/prism.min.css" />
     <link rel="stylesheet" href="vendor/prism/themes/prism-tomorrow.min.css" />
+    <link rel="stylesheet" href="style-refined.css" />
   </head>
   <body class="mode-apple mode-lite">
     <!--
@@ -110,7 +111,7 @@
             <span class="logo"><svg class="icon" aria-hidden="true"><use href="#i-feather"></use></svg></span>
             <div class="brand-text">
               <div class="brand-name">LongPost</div>
-              <div class="brand-sub">本地写作台 · 离线</div>
+              <div class="brand-sub">你的本地写作空间</div>
             </div>
             <button class="btn mode-pill-btn" id="btnModeSwitch" title="一键切换工作区风格（Alt+M）：极简版 ↔ 专业版">
               <span class="mode-badge" id="modeBadge"></span><span class="mode-label" id="modeLabel">极简</span>
@@ -153,6 +154,7 @@
           </div>
         </header>
 
+        <div class="list-heading"><span>文章</span><span>写下值得留下的事</span></div>
         <div class="list" id="list" role="list"></div>
 
         <footer class="side-foot">
@@ -176,33 +178,29 @@
         <section class="empty" id="empty">
           <div class="empty-inner">
             <div class="empty-mark"><svg class="icon" aria-hidden="true"><use href="#i-feather"></use></svg></div>
-            <div class="empty-hero-badge"><span class="hero-badge-apple"> 极简版 · 官网极简美学</span><span class="hero-badge-google">专业版 · 全功能工作台</span></div>
-            <h2>开始写点什么</h2>
-            <p>
-              正文用 Markdown 写，右边实时预览。<br />
-              工具栏能插图表、图片、附件，手机上还能一键分享出去。<br />
-              所有内容只保存在你自己的设备上，不联网、不上传。
-            </p>
+            <div class="empty-hero-badge"><span class="hero-badge-apple">专注写作，留住想法</span><span class="hero-badge-google">专业工作台</span></div>
+            <h2>让想法，慢慢成篇。</h2>
+            <p>从一个念头开始，用舒服的方式写作、整理和分享。<br />内容保存在当前设备，也可以按需导出或同步。</p>
             <div class="empty-features">
               <div class="feature-card feature-card-1">
-                <div class="feature-icon"></div>
+                <div class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-edit"></use></svg></div>
                 <div class="feature-text">
-                  <div class="feature-title">官网 1:1 双形态</div>
-                  <div class="feature-desc">Alt+M 瞬间丝滑插值蜕变</div>
+                  <div class="feature-title">专注写作</div>
+                  <div class="feature-desc">Markdown 与即时预览</div>
                 </div>
               </div>
               <div class="feature-card feature-card-2">
-                <div class="feature-icon"></div>
+                <div class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-tag"></use></svg></div>
                 <div class="feature-text">
-                  <div class="feature-title">图表卡片复制</div>
-                  <div class="feature-desc">一键 PNG 进系统剪贴板</div>
+                  <div class="feature-title">从容整理</div>
+                  <div class="feature-desc">搜索、标签与历史版本</div>
                 </div>
               </div>
               <div class="feature-card feature-card-3">
-                <div class="feature-icon"></div>
+                <div class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#i-share"></use></svg></div>
                 <div class="feature-text">
-                  <div class="feature-title">全域离线私有</div>
-                  <div class="feature-desc">数据零出网 · 本地优先</div>
+                  <div class="feature-title">随时分享</div>
+                  <div class="feature-desc">导出长图、网页与文档</div>
                 </div>
               </div>
             </div>
@@ -215,7 +213,7 @@
               </button>
             </div>
             <div class="kbd-hints">
-              <span><kbd>Alt</kbd>+<kbd>M</kbd> 切换官网双形态</span>
+              <span><kbd>Alt</kbd>+<kbd>M</kbd> 切换工作区</span>
               <span><kbd>Ctrl</kbd>+<kbd>B</kbd> 加粗</span>
               <span><kbd>Ctrl</kbd>+<kbd>F</kbd> 查找替换</span>
               <span><kbd>Ctrl</kbd>+<kbd>S</kbd> 保存</span>
@@ -534,7 +532,7 @@
               <div class="field">
                 <label>皮肤</label>
                 <div class="segmented" id="skinSwitch"></div>
-                <p class="field-help">经典：目前的青绿与紧凑留白；Argon：深蓝主色、大圆角、宽留白。只换视觉，不改布局。</p>
+                <p class="field-help">选择你喜欢的界面配色，不影响文章内容。</p>
               </div>
               <div class="field">
                 <label>编辑区字号 <span class="hint" id="fontSizeHint">16 px</span></label>

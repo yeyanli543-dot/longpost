@@ -9,14 +9,29 @@ export function cn(...inputs: ClassValue[]): string {
 }
 
 /**
- * 生成包含完整前缀的站点应用内部链接
+ * 从页面的同源 base 读取应用部署路径
  */
+export function getAppBasePath(): string {
+  if (typeof window === 'undefined' || typeof document === 'undefined' || window.location.protocol === 'file:') return '/';
+  try {
+    const base = new URL(document.baseURI);
+    if (base.origin !== window.location.origin) return '/';
+    return base.pathname.replace(/\/+$/, '') || '/';
+  } catch {
+    return '/';
+  }
+}
+
+/** 生成包含部署前缀的站点应用内部链接。 */
 export function resolveAppUrl(path: string): string {
   if (typeof window === 'undefined') return path;
   if (!path) return window.location.origin;
   if (/^https?:\/\//i.test(path)) return path;
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  return `${window.location.origin}${normalizedPath}`;
+  // The server supplies a same-origin <base> for installations mounted in a
+  // subdirectory. Share links need that mount path as well as the assets do.
+  const basePath = getAppBasePath().replace(/\/$/, '');
+  return `${window.location.origin}${basePath}${normalizedPath}`;
 }
 
 /**

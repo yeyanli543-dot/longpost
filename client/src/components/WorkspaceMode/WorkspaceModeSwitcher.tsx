@@ -1,7 +1,7 @@
 import { FC } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, Layers, Apple, Command } from 'lucide-react';
-import { useWorkspaceMode, WorkspaceMode } from '@client/src/hooks/useWorkspaceMode';
+import { Feather, Layers } from 'lucide-react';
+import { useWorkspaceMode } from '@client/src/hooks/useWorkspaceMode';
 
 interface WorkspaceModeSwitcherProps {
   compact?: boolean;
@@ -29,14 +29,15 @@ export const WorkspaceModeSwitcher: FC<WorkspaceModeSwitcherProps> = ({
       <button
         type="button"
         onClick={() => setMode('lite')}
-        className={`relative z-10 flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 ${
+        aria-pressed={mode === 'lite'}
+        className={`relative z-10 flex min-h-11 sm:min-h-8 items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 ${
           mode === 'lite'
             ? 'text-zinc-900 dark:text-zinc-100 font-semibold'
             : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
         } ${compact ? 'px-2.5 py-0.5' : ''}`}
       >
-        <span className="text-sm leading-none">🍏</span>
-        <span className={compact ? 'hidden sm:inline' : ''}>极简版</span>
+        <Feather className="w-3.5 h-3.5" aria-hidden="true" />
+        <span>极简</span>
         {mode === 'lite' && (
           <motion.div
             layoutId="mode-pill-active"
@@ -50,14 +51,15 @@ export const WorkspaceModeSwitcher: FC<WorkspaceModeSwitcherProps> = ({
       <button
         type="button"
         onClick={() => setMode('pro')}
-        className={`relative z-10 flex items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 ${
+        aria-pressed={mode === 'pro'}
+        className={`relative z-10 flex min-h-11 sm:min-h-8 items-center gap-1.5 px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 ${
           mode === 'pro'
             ? 'text-[#1967d2] dark:text-[#8ab4f8] font-semibold'
             : 'text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
         } ${compact ? 'px-2.5 py-0.5' : ''}`}
       >
-        <span className="text-sm leading-none">🔷</span>
-        <span className={compact ? 'hidden sm:inline' : ''}>专业版</span>
+        <Layers className="w-3.5 h-3.5" aria-hidden="true" />
+        <span>专业</span>
         {mode === 'pro' && (
           <motion.div
             layoutId="mode-pill-active"

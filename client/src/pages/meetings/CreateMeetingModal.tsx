@@ -194,12 +194,12 @@ const CreateMeetingModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[#16181c] border border-[#2f3336] text-[#e7e9ea] max-w-lg max-h-[90vh] overflow-hidden p-0">
+      <DialogContent className="bg-card border border-border text-foreground max-w-lg max-h-[90vh] overflow-hidden p-0">
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle className="text-xl font-bold">
             {mode === 'edit' ? '编辑会议' : '创建会议'}
           </DialogTitle>
-          <DialogDescription className="text-[#71767b]">
+          <DialogDescription className="text-muted-foreground">
             {mode === 'edit'
               ? '修改会议的基本信息'
               : '填写会议信息并邀请参会人'}
@@ -209,7 +209,7 @@ const CreateMeetingModal = ({
         <div className="px-6 pb-6 space-y-4 overflow-y-auto max-h-[calc(90vh-140px)]">
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="title" className="text-[#e7e9ea]">
+            <Label htmlFor="title" className="text-foreground">
               会议标题 <span className="text-red-400">*</span>
             </Label>
             <Input
@@ -217,7 +217,7 @@ const CreateMeetingModal = ({
               value={formData.title}
               onChange={(e) => setFormData((p) => ({ ...p, title: e.target.value }))}
               placeholder="输入会议标题"
-              className={`bg-black border-[#2f3336] text-[#e7e9ea] ${errors.title ? 'border-red-500' : ''}`}
+              className={`bg-background border-border text-foreground ${errors.title ? 'border-red-500' : ''}`}
             />
             {errors.title && (
               <p className="text-xs text-red-400">{errors.title}</p>
@@ -226,7 +226,7 @@ const CreateMeetingModal = ({
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-[#e7e9ea]">
+            <Label htmlFor="description" className="text-foreground">
               会议描述
             </Label>
             <Textarea
@@ -236,13 +236,13 @@ const CreateMeetingModal = ({
                 setFormData((p) => ({ ...p, description: e.target.value }))
               }
               placeholder="输入会议描述（可选）"
-              className="bg-black border-[#2f3336] text-[#e7e9ea] min-h-[80px] resize-y"
+              className="bg-background border-border text-foreground min-h-[80px] resize-y"
             />
           </div>
 
           {/* Start time */}
           <div className="space-y-2">
-            <Label htmlFor="startTime" className="text-[#e7e9ea]">
+            <Label htmlFor="startTime" className="text-foreground">
               开始时间 <span className="text-red-400">*</span>
             </Label>
             <Input
@@ -252,7 +252,7 @@ const CreateMeetingModal = ({
               onChange={(e) =>
                 setFormData((p) => ({ ...p, startTime: e.target.value }))
               }
-              className={`bg-black border-[#2f3336] text-[#e7e9ea] ${errors.startTime ? 'border-red-500' : ''}`}
+              className={`bg-background border-border text-foreground ${errors.startTime ? 'border-red-500' : ''}`}
             />
             {errors.startTime && (
               <p className="text-xs text-red-400">{errors.startTime}</p>
@@ -261,7 +261,7 @@ const CreateMeetingModal = ({
 
           {/* Duration */}
           <div className="space-y-2">
-            <Label className="text-[#e7e9ea]">会议时长</Label>
+            <Label className="text-foreground">会议时长</Label>
             <div className="grid grid-cols-3 gap-2">
               {DURATION_OPTIONS.map((opt) => (
                 <button
@@ -275,8 +275,8 @@ const CreateMeetingModal = ({
                   }
                   className={`py-2 px-3 text-sm rounded-lg border transition-colors ${
                     formData.durationMinutes === opt.value
-                      ? 'bg-[#1d9bf0] border-[#1d9bf0] text-white'
-                      : 'bg-black border-[#2f3336] text-[#e7e9ea] hover:border-[#1d9bf0]'
+                      ? 'bg-primary border-primary text-primary-foreground'
+                      : 'bg-background border-border text-foreground hover:border-primary'
                   }`}
                   data-ai-section-type="button"
                 >
@@ -289,8 +289,8 @@ const CreateMeetingModal = ({
           {/* Is public */}
           <div className="flex items-center justify-between py-2">
             <div>
-              <p className="text-sm font-medium text-[#e7e9ea]">公开会议</p>
-              <p className="text-xs text-[#71767b]">
+              <p className="text-sm font-medium text-foreground">公开会议</p>
+              <p className="text-xs text-muted-foreground">
                 开启后任何人都可以查看并加入
               </p>
             </div>
@@ -306,14 +306,14 @@ const CreateMeetingModal = ({
           {mode === 'create' && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-[#e7e9ea] flex items-center gap-2">
+                <Label className="text-foreground flex items-center gap-2">
                   <Users className="w-4 h-4" />
                   参会人
                 </Label>
                 <button
                   type="button"
                   onClick={() => setShowSearch((s) => !s)}
-                  className="flex items-center gap-1 text-sm text-[#1d9bf0] hover:text-[#1a8cd8]"
+                  className="flex items-center gap-1 text-sm text-primary hover:text-primary/80"
                   data-ai-section-type="button"
                 >
                   <Plus className="w-4 h-4" />
@@ -323,21 +323,21 @@ const CreateMeetingModal = ({
 
               {showSearch && (
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71767b]" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     value={searchQuery}
                     onChange={(e) => handleSearch(e.target.value)}
                     placeholder="搜索用户..."
-                    className="pl-9 bg-black border-[#2f3336] text-[#e7e9ea]"
+                    className="pl-9 bg-background border-border text-foreground"
                     autoFocus
                   />
                   {searching && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <Loader2 className="w-4 h-4 text-[#1d9bf0] animate-spin" />
+                      <Loader2 className="w-4 h-4 text-primary animate-spin" />
                     </div>
                   )}
                   {searchQuery && !searching && searchResults.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-[#16181c] border border-[#2f3336] rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
                       {searchResults.map((user) => {
                         const initial = user.nickname
                           ? user.nickname.charAt(0).toUpperCase()
@@ -350,7 +350,7 @@ const CreateMeetingModal = ({
                             className="w-full flex items-center gap-3 px-3 py-2 hover:bg-white/5 text-left transition-colors"
                             data-ai-section-type="button"
                           >
-                            <div className="w-8 h-8 rounded-full bg-[#2f3336] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 overflow-hidden">
                               {user.avatarUrl ? (
                                 <Image
                                   src={user.avatarUrl}
@@ -358,20 +358,20 @@ const CreateMeetingModal = ({
                                   className="w-full h-full object-cover"
                                 />
                               ) : (
-                                <span className="text-xs font-bold text-gray-300">
+                                <span className="text-xs font-bold text-foreground/90">
                                   {initial}
                                 </span>
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm text-[#e7e9ea] truncate">
+                              <p className="text-sm text-foreground truncate">
                                 {user.nickname}
                               </p>
-                              <p className="text-xs text-[#71767b] truncate">
+                              <p className="text-xs text-muted-foreground truncate">
                                 {user.email}
                               </p>
                             </div>
-                            <Plus className="w-4 h-4 text-[#1d9bf0]" />
+                            <Plus className="w-4 h-4 text-primary" />
                           </button>
                         );
                       })}
@@ -380,7 +380,7 @@ const CreateMeetingModal = ({
                   {searchQuery &&
                     !searching &&
                     searchResults.length === 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-1 bg-[#16181c] border border-[#2f3336] rounded-lg shadow-lg z-10 p-4 text-center text-sm text-[#71767b]">
+                      <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg z-10 p-4 text-center text-sm text-muted-foreground">
                         未找到用户
                       </div>
                     )}
@@ -396,9 +396,9 @@ const CreateMeetingModal = ({
                     return (
                       <div
                         key={p.id}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-[#2f3336] rounded-full"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-secondary rounded-full"
                       >
-                        <div className="w-5 h-5 rounded-full bg-[#16181c] flex items-center justify-center overflow-hidden">
+                        <div className="w-5 h-5 rounded-full bg-card flex items-center justify-center overflow-hidden">
                           {p.avatarUrl ? (
                             <Image
                               src={p.avatarUrl}
@@ -406,18 +406,18 @@ const CreateMeetingModal = ({
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <span className="text-[10px] font-bold text-gray-400">
+                            <span className="text-[10px] font-bold text-muted-foreground">
                               {initial}
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-[#e7e9ea] truncate max-w-[100px]">
+                        <span className="text-xs text-foreground truncate max-w-[100px]">
                           {p.nickname}
                         </span>
                         <button
                           type="button"
                           onClick={() => removeParticipant(p.id)}
-                          className="p-0.5 rounded-full hover:bg-white/10 text-[#71767b] hover:text-[#e7e9ea] transition-colors"
+                          className="p-0.5 rounded-full hover:bg-accent text-muted-foreground hover:text-foreground transition-colors"
                           data-ai-section-type="button"
                         >
                           <X className="w-3 h-3" />
@@ -429,18 +429,18 @@ const CreateMeetingModal = ({
               )}
 
               {formData.participantIds.length === 0 && !showSearch && (
-                <p className="text-sm text-[#71767b]">暂未添加参会人</p>
+                <p className="text-sm text-muted-foreground">暂未添加参会人</p>
               )}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-[#2f3336] bg-[#16181c]">
+        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border bg-card">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm text-[#71767b] hover:text-[#e7e9ea] transition-colors"
+            className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             data-ai-section-type="button"
           >
             取消
@@ -449,7 +449,7 @@ const CreateMeetingModal = ({
             type="button"
             onClick={handleSubmit}
             disabled={submitting}
-            className="px-6 py-2 bg-[#1d9bf0] hover:bg-[#1a8cd8] disabled:opacity-50 text-white font-bold rounded-full transition-colors text-sm flex items-center gap-2"
+            className="px-6 py-2 bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground font-bold rounded-full transition-colors text-sm flex items-center gap-2"
             data-ai-section-type="button"
           >
             {submitting && <Loader2 className="w-4 h-4 animate-spin" />}

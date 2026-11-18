@@ -130,38 +130,38 @@ const LoginPageContent: React.FC = () => {
   const showEmailForm = showEmailLogin || registrationMode === 'email_and_google';
 
   return (
-    <div className="min-h-screen w-full bg-black flex items-start md:items-center justify-center px-4 pt-8 md:pt-0 pb-[env(safe-area-inset-bottom)]">
+    <div className="min-h-screen w-full bg-background flex items-start md:items-center justify-center px-4 pt-8 md:pt-0 pb-[env(safe-area-inset-bottom)]">
       <div className="w-full max-w-md">
         <div className="flex items-center justify-center gap-2 mb-6 md:mb-8">
-          <Feather className="w-7 h-7 md:w-8 md:h-8 text-blue-500" strokeWidth={1.5} />
-          <span className="text-xl md:text-2xl font-bold text-gray-100">LongPost</span>
+          <Feather className="w-7 h-7 md:w-8 md:h-8 text-primary" strokeWidth={1.5} />
+          <span className="text-xl md:text-2xl font-bold text-foreground">LongPost</span>
         </div>
 
-        <div className="bg-gray-950 border border-gray-800 rounded-xl p-4 md:p-6">
-          <h1 className="text-xl font-bold text-gray-100 mb-2">登录到 LongPost</h1>
+        <div className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-sm">
+          <h1 className="text-xl font-bold text-foreground mb-2">登录到 LongPost</h1>
 
           {settingsLoading ? null : (
-            <p className="text-sm text-gray-500 mb-6">选择登录方式</p>
+            <p className="text-sm text-muted-foreground mb-6">选择登录方式</p>
           )}
 
           {settingsLoading ? (
-            <div className="py-8 text-center text-gray-500">加载中...</div>
+            <div className="py-8 text-center text-muted-foreground">加载中...</div>
           ) : (
             <>
               {/* Tab 切换 */}
-              <div className="flex border-b border-gray-800 mb-4 md:mb-6">
+              <div className="flex border-b border-border mb-4 md:mb-6">
                 <button
                   type="button"
                   onClick={() => setLoginMode('code')}
                   className={`flex-1 min-h-11 md:min-h-0 py-2.5 md:py-3 text-sm font-medium transition-colors relative ${
                     loginMode === 'code'
-                      ? 'text-blue-500'
-                      : 'text-gray-500 hover:text-gray-300'
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   通行码
                   {loginMode === 'code' && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500" />
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
                   )}
                 </button>
                 <button
@@ -169,13 +169,13 @@ const LoginPageContent: React.FC = () => {
                   onClick={() => setLoginMode('email')}
                   className={`flex-1 min-h-11 md:min-h-0 py-2.5 md:py-3 text-sm font-medium transition-colors relative ${
                     loginMode === 'email'
-                      ? 'text-blue-500'
-                      : 'text-gray-500 hover:text-gray-300'
+                      ? 'text-primary'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   邮箱
                   {loginMode === 'email' && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500" />
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
                   )}
                 </button>
                 {googleEnabled && (
@@ -184,13 +184,13 @@ const LoginPageContent: React.FC = () => {
                     onClick={() => setLoginMode('google')}
                     className={`flex-1 min-h-11 md:min-h-0 py-2.5 md:py-3 text-sm font-medium transition-colors relative ${
                       loginMode === 'google'
-                        ? 'text-blue-500'
-                        : 'text-gray-500 hover:text-gray-300'
+                        ? 'text-primary'
+                        : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     Google
                     {loginMode === 'google' && (
-                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-500" />
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
                     )}
                   </button>
                 )}
@@ -204,7 +204,7 @@ const LoginPageContent: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setShowEmailLogin(true)}
-                        className="text-sm text-gray-500 hover:text-gray-400"
+                        className="text-sm text-muted-foreground hover:text-foreground"
                       >
                         已有账号？使用邮箱登录
                       </button>
@@ -212,7 +212,7 @@ const LoginPageContent: React.FC = () => {
                   ) : (
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="email" className="text-gray-300">
+                        <Label htmlFor="email" className="text-foreground">
                           邮箱
                         </Label>
                         <Input
@@ -222,7 +222,7 @@ const LoginPageContent: React.FC = () => {
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="your@email.com"
                           disabled={submitting}
-                          className="h-11 md:h-9 bg-transparent border-gray-700 text-gray-100 placeholder:text-gray-600 focus-visible:border-blue-500"
+                          className="h-11 md:h-9 bg-transparent border-input text-foreground placeholder:text-muted-foreground focus-visible:border-primary"
                         />
                         {errors.email && (
                           <p className="text-sm text-red-500">{errors.email}</p>
@@ -230,7 +230,7 @@ const LoginPageContent: React.FC = () => {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="password" className="text-gray-300">
+                        <Label htmlFor="password" className="text-foreground">
                           密码
                         </Label>
                         <Input
@@ -240,7 +240,7 @@ const LoginPageContent: React.FC = () => {
                           onChange={(e) => setPassword(e.target.value)}
                           placeholder="至少 6 位"
                           disabled={submitting}
-                          className="h-11 md:h-9 bg-transparent border-gray-700 text-gray-100 placeholder:text-gray-600 focus-visible:border-blue-500"
+                          className="h-11 md:h-9 bg-transparent border-input text-foreground placeholder:text-muted-foreground focus-visible:border-primary"
                         />
                         {errors.password && (
                           <p className="text-sm text-red-500">{errors.password}</p>
@@ -250,7 +250,7 @@ const LoginPageContent: React.FC = () => {
                       <Button
                         type="submit"
                         disabled={submitting}
-                        className="w-full min-h-11 md:min-h-9 bg-blue-500 hover:bg-blue-600 text-white border-transparent mt-2"
+                        className="w-full min-h-11 md:min-h-9 bg-primary hover:opacity-90 text-primary-foreground border-transparent mt-2"
                       >
                         {submitting ? '登录中...' : '登录'}
                       </Button>
@@ -278,7 +278,7 @@ const LoginPageContent: React.FC = () => {
                     </button>
                   ) : (
                     <div className="text-center py-4">
-                      <p className="text-sm text-gray-500">Google 登录暂未启用</p>
+                      <p className="text-sm text-muted-foreground">Google 登录暂未启用</p>
                     </div>
                   )}
                 </div>
@@ -288,7 +288,7 @@ const LoginPageContent: React.FC = () => {
               {loginMode === 'code' && (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="accessCode" className="text-gray-300">
+                    <Label htmlFor="accessCode" className="text-foreground">
                       专属通行码
                     </Label>
                     <div className="relative">
@@ -305,12 +305,12 @@ const LoginPageContent: React.FC = () => {
                             void handleCodeLogin();
                           }
                         }}
-                        className="h-11 md:h-9 bg-transparent border-gray-700 text-gray-100 placeholder:text-gray-600 focus-visible:border-blue-500 pr-10"
+                        className="h-11 md:h-9 bg-transparent border-input text-foreground placeholder:text-muted-foreground focus-visible:border-primary pr-10"
                       />
                       <button
                         type="button"
                         onClick={() => setShowAccessCode((v) => !v)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                         tabIndex={-1}
                       >
                         {showAccessCode ? (
@@ -320,7 +320,7 @@ const LoginPageContent: React.FC = () => {
                         )}
                       </button>
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-muted-foreground">
                       输入通行码即可直接登录，无需注册账号
                     </p>
                   </div>
@@ -329,7 +329,7 @@ const LoginPageContent: React.FC = () => {
                     type="button"
                     onClick={handleCodeLogin}
                     disabled={codeSubmitting || !accessCode.trim()}
-                    className="w-full min-h-11 md:min-h-9 bg-blue-500 hover:bg-blue-600 text-white border-transparent"
+                    className="w-full min-h-11 md:min-h-9 bg-primary hover:opacity-90 text-primary-foreground border-transparent"
                   >
                     {codeSubmitting ? '登录中...' : '使用通行码登录'}
                   </Button>

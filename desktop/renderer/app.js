@@ -406,6 +406,14 @@
   function openSheet(id) {
     const modal = $(id);
     if (!modal || !modal.hidden) return;
+    // 手机大纲和对话框共用底部空间。打开对话框前收起大纲，避免两层抽屉重叠。
+    if (isNarrow() && !$('outlinePanel').hidden) {
+      applyOutlineState(false);
+      state.settings.showOutline = false;
+      LP.setSettings({ showOutline: false })
+        .then((next) => { state.settings = next; })
+        .catch(() => { toast('无法保存大纲设置', 'err'); });
+    }
     modal.hidden = false;
     openLayer(id, () => {
       modal.hidden = true;
@@ -3174,7 +3182,7 @@
     document.body.classList.toggle('mode-google', !isLite);
     document.body.classList.toggle('mode-pro', !isLite);
 
-    const badge = isLite ? '' : '';
+    const badge = isLite ? '简' : '专';
     const label = isLite ? '极简' : '专业';
     const title = isLite
       ? '当前：极简版（点击切换至 专业版，快捷键 Alt+M）'
@@ -3183,19 +3191,21 @@
     const btn1 = $('btnModeSwitch');
     if (btn1) {
       btn1.title = title;
-      $('modeBadge').textContent = badge;
+      btn1.setAttribute('aria-label', title);
+      $('modeBadge').textContent = '';
       $('modeLabel').textContent = label;
     }
     const btn2 = $('btnModeSwitchMobile');
     if (btn2) {
       btn2.title = title;
+      btn2.setAttribute('aria-label', title);
       $('modeBadgeMobile').textContent = badge;
       $('modeLabelMobile').textContent = label;
     }
     $('modeSwitch') && syncSegmentedActive('modeSwitch', actual);
     $('modeSwitchHelp') && ($('modeSwitchHelp').textContent = isLite
-      ? '当前生效：极简版 —— 纯净留白、毛玻璃材质、细腻的窗口质感、沉浸式心流写作。'
-      : '当前生效：专业版 —— 全局工具带、大药丸搜索、浮动主按钮、全功能专业工具。');
+      ? '极简版保留常用工具，让你专注于内容。'
+      : '专业版提供更多工具，适合整理和分析长文。');
   }
 
   function setupMaterialRipple() {
@@ -3304,6 +3314,19 @@
           document.documentElement.classList.remove('mode-morphing');
         }, 400);
         toast(key === 'lite' ? '已切换为 极简版' : '已切换为 专业版');
+      },
+    );
+
+    buildSegmented(
+      'skinSwitch',
+      [
+        { key: 'classic', label: '经典' },
+        { key: 'argon', label: 'Argon' },
+      ],
+      state.settings.skin || 'classic',
+      async (key) => {
+        state.settings = await LP.setSettings({ skin: key });
+        applySkin(key);
       },
     );
 
@@ -4411,7 +4434,7 @@
       ((state.appInfo && state.appInfo.platform) || 'web') +
       ' · 当前环境：' +
       (LP && LP.platformLabel ? LP.platformLabel : '未知') +
-      '。正文、图片、附件全部保存在你自己的设备上，不联网、不上传。';
+      '。正文、图片和附件保存在当前设备；分享、同步和 AI 等功能可能需要联网。';
     $('openDataDir').hidden = !CAPS.openDataDir;
     openSheet('settingsModal');
   }
@@ -4748,6 +4771,10 @@
     $('paneWrite').classList.toggle('on', ok === 'write');
     $('paneSplit').classList.toggle('on', ok === 'split');
     $('panePreview').classList.toggle('on', ok === 'preview');
+    ['paneWrite', 'paneSplit', 'panePreview'].forEach((id) => {
+      const tab = $(id);
+      tab.setAttribute('aria-selected', tab.dataset.mode === ok ? 'true' : 'false');
+    });
     // 从「写作」切回对照/预览时预览容器才有宽度，得重画一次图表
     if (ok !== 'write') renderPreview();
     setTimeout(resizeCharts, 60);
@@ -4855,6 +4882,11 @@
     $('tabEdit').classList.toggle('on', view === 'editor' && !outlineOn && !settingsOn);
     $('tabOutline').classList.toggle('on', outlineOn);
     $('tabSettings').classList.toggle('on', settingsOn);
+    ['tabList', 'tabEdit', 'tabOutline', 'tabSettings'].forEach((id) => {
+      const tab = $(id);
+      if (tab.classList.contains('on')) tab.setAttribute('aria-current', 'page');
+      else tab.removeAttribute('aria-current');
+    });
   }
 
   async function showList() {
